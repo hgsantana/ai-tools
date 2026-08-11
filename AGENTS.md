@@ -24,7 +24,11 @@ Skills and workflows name **categories**, never model product names. The running
 1. Never hard-code a vendor model name (Opus, Sonnet, Grok, GPT, …) as an agent identity.
 2. The current session acts as **planner** while running `/plan-ai-tools` or `/dev-ai-tools`.
 3. Where the harness has no separate subagents, one model still **behaves** in the assigned category for that turn.
-4. Use the cheapest capable category: **mechanical** for execution and evidence, **implementer** for code, **planner** for planning and validation.
+4. Use the cheapest capable category for the work itself: **mechanical** for execution and evidence, **implementer** for code, **planner** for planning and validation.
+5. Model selection within a category is a separate axis from category choice, and matters whenever the harness exposes more than one model for a role (a picker, several tiers, multiple models labeled for the same job) — never accept whatever the harness defaults to without checking it fits the rule below:
+   - **planner** — pick the strongest model available for planning and analysis, regardless of its cost. Decomposition and acceptance-judgment mistakes made here propagate into every downstream stage, so this is not the place to economize, and a harness offering several "planning" models does not mean they are equally capable.
+   - **implementer** — pick the model with the best code-quality-to-cost ratio, not automatically the most expensive or most capable option offered. Treat a flagship-tier model priced well above the next tier down as a prompt to check whether it buys a real jump in code quality for the task at hand, not as the default pick.
+   - **mechanical** — pick the cheapest and fastest model that reliably completes fully specified, low-ambiguity work. Upgrade only when the current choice is actually failing at the task, never preemptively.
 
 ## Change flow
 
