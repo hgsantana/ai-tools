@@ -1,7 +1,7 @@
 ---
-name: plan
+name: plan-ai-tools
 description: >
-  Restricted-invocation skill — invoke only when (a) the user explicitly runs "/plan",
+  Restricted-invocation skill — invoke only when (a) the user explicitly runs "/plan-ai-tools",
   (b) another skill's documented workflow calls it by name, or (c) global AGENTS.md
   Mandatory Steps call it for a non-trivial code change. Produces a multi-file
   implementation plan under plans/ and stops — never implements code.
@@ -47,7 +47,7 @@ Never hard-code vendor model names. The harness maps **planner** / **implementer
    - Documentation updates as a last stage when behavior or public surface changes
    - Suggested Conventional Commits boundaries (describe; do not run git writes)
    - For every stage: **sequential** vs **parallel-safe** relative to other stages (feeds the
-     execution graph and `/dev` fan-out)
+     execution graph and `/dev-ai-tools` fan-out)
 
 5. **Iterate with the user.** Present the plan and revise until the user explicitly accepts it.
    Do not write plan files to disk before acceptance.
@@ -62,7 +62,7 @@ Never hard-code vendor model names. The harness maps **planner** / **implementer
 
 7. **Stop.** Confirm saved paths and end. Do not offer to implement, do not spawn **implementer**,
    do not run builds/tests as delivery, do not move files to `plans/finished/`.
-   If the user wants implementation, they run `/dev` separately.
+   If the user wants implementation, they run `/dev-ai-tools` separately.
 
 ## Multi-file layout
 
@@ -73,7 +73,7 @@ plans/
   i18n-ui-and-content-language.md      # base
   i18n-ui-and-content-language-1.md    # stage 1
   i18n-ui-and-content-language-2.md    # stage 2
-  finished/                            # /dev moves completed files here
+  finished/                            # /dev-ai-tools moves completed files here
 ```
 
 ### Base file (`plans/<slug>.md`)
@@ -109,7 +109,7 @@ Example: Stage 1 before 2 and 3 (parallel-safe with each other); stage 4 after 2
 Optional: commit strategy overview, risks, out of scope.
 ```
 
-**Status codes** (maintained mainly by `/dev`; leave empty when creating):
+**Status codes** (maintained mainly by `/dev-ai-tools`; leave empty when creating):
 
 | Code | Meaning | Who sets it |
 |------|---------|-------------|
@@ -170,12 +170,12 @@ Suggested message: `feat: …` (or fix/chore/…)
 
 ## Implementation log
 
-(Append-only. Implementers and orchestrator add sections below during `/dev`.)
+(Append-only. Implementers and orchestrator add sections below during `/dev-ai-tools`.)
 ```
 
 ## Boundaries
 
 - Only write under `plans/` (and `.gitignore` if adding `plans/`).
 - Never spawn **implementer** for production code from this skill.
-- Never chain into `/dev` automatically.
-- Activate only on explicit `/plan`, a skill that names this step, or global AGENTS.md mandatory steps.
+- Never chain into `/dev-ai-tools` automatically.
+- Activate only on explicit `/plan-ai-tools`, a skill that names this step, or global AGENTS.md mandatory steps.

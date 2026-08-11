@@ -1,8 +1,8 @@
 ---
-name: dev
+name: dev-ai-tools
 description: >
   Implement plans or ad-hoc work using harness-agnostic agent categories. Use when the user
-  runs "/dev". With no argument or argument starting with "plans", process every base plan at
+  runs "/dev-ai-tools". With no argument or argument starting with "plans", process every base plan at
   plans/*.md (not stage files, not finished/). Otherwise treat the argument as an ad-hoc
   implementation request. Planner validates; implementer codes; mechanical gathers evidence.
 argument-hint: [plans | implementation request]
@@ -10,7 +10,7 @@ argument-hint: [plans | implementation request]
 
 # Dev
 
-Harness-agnostic implementation skill. **You (the session running `/dev`) act as planner** for
+Harness-agnostic implementation skill. **You (the session running `/dev-ai-tools`) act as planner** for
 orchestration and judgment. You never write production or test code in the target repository
 while this skill is active — you delegate that to **implementer**. Evidence gathering and
 mechanical text go to **mechanical**.
@@ -55,7 +55,7 @@ This is mandatory: other stages stay out of context.
 
 ## Status protocol
 
-Base plan table (created by `/plan`):
+Base plan table (created by `/plan-ai-tools`):
 
 | Stage | Status | Session |
 |------:|:------:|---------|
@@ -122,7 +122,7 @@ Base plan table (created by `/plan`):
       commit after validation — Conventional Commits, check staged files for secrets/binaries).
    7. Next stage/wave.
 7. If a stage hits `E` and others are independent, continue those; then escalate `E` stages with
-   the user (re-plan options). Do not invent a new plan file without user direction; `/plan` may
+   the user (re-plan options). Do not invent a new plan file without user direction; `/plan-ai-tools` may
    be suggested for a replacement stage design.
 8. When a base plan is fully done, move it to `plans/finished/`.
 9. Wrap-up: which plans finished, which stages are `E`/blocked, correction counts.
@@ -144,11 +144,11 @@ Base plan table (created by `/plan`):
    Minimum: Original request (verbatim), Goal, Context, Source of truth, Tasks with paths, Tests by
    type, Docs, Acceptance criteria, Commits, Required report back to planner.
 6. Warn on dirty git status.
-7. Spawn **implementer** on the brief (single task unless you split into a mini plan via `/plan`).
+7. Spawn **implementer** on the brief (single task unless you split into a mini plan via `/plan-ai-tools`).
 8. Validate; correction rounds with `plans/dev/<slug>-feedback-<n>.md`; same 1+3 limit.
 9. Commit only after validation if the brief authorized it.
 
-Mode B does not require the multi-file status table unless you create a full `/plan` structure.
+Mode B does not require the multi-file status table unless you create a full `/plan-ai-tools` structure.
 
 ## Validation (planner)
 
@@ -177,5 +177,5 @@ Implementer report and status `V` are claims, not proof.
 - Only **implementer** writes repository code (and stage/base status + logs as specified).
 - **planner** does not implement; does set `E` / `TV` / `F` and performs commits after validation.
 - Always warn on dirty worktree before first implementer spawn.
-- Do not chain into `/plan` automatically; on `E`, discuss with the user and offer `/plan` if redesign is needed.
+- Do not chain into `/plan-ai-tools` automatically; on `E`, discuss with the user and offer `/plan-ai-tools` if redesign is needed.
 - Do not use this skill for pure Q&A.
