@@ -40,7 +40,7 @@ Either way, this skill itself never implements.
 
 2. **Read the source of truth.** `README.md` and `AGENTS.md` at the repository root and in relevant subdirectories; their conventions override generic assumptions. The global `AGENTS.md` categories and change flow still apply.
 
-3. **Explore the codebase.** Dispatch read-only explore agents (**mechanical** or the harness explore type) to find entry points, patterns, related modules, test conventions, and build config. Launch independent explorations in parallel; use direct read/grep for pinpoint lookups.
+3. **Explore the codebase.** Dispatch read-only explore agents (**mechanical** or the harness explore type) to find entry points, patterns, related modules, test conventions, and build config. Launch independent explorations in parallel; use direct read/grep for pinpoint lookups. Announce each spawn per the global `AGENTS.md` category rules: name the category and the concrete model the harness assigned it, in the user's language, at the point of spawning.
 
 4. **Draft the plan** as a base file plus one file per stage (format below):
    - Numbered stages, each implementable from its own stage file plus the base Goal and Execution graph alone

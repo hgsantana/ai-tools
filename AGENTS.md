@@ -29,6 +29,7 @@ Skills and workflows name **categories**, never model product names. The running
    - **planner** — pick the strongest model available for planning and analysis, regardless of its cost. Decomposition and acceptance-judgment mistakes made here propagate into every downstream stage, so this is not the place to economize, and a harness offering several "planning" models does not mean they are equally capable.
    - **implementer** — pick the model with the best code-quality-to-cost ratio, not automatically the most expensive or most capable option offered. Treat a flagship-tier model priced well above the next tier down as a prompt to check whether it buys a real jump in code quality for the task at hand, not as the default pick.
    - **mechanical** — pick the cheapest and fastest model that reliably completes fully specified, low-ambiguity work. Upgrade only when the current choice is actually failing at the task, never preemptively.
+6. Announce every spawn in chat, in the user's language, naming both the category and the concrete model the harness assigned it: "Planning with `<model>`", "Calling implementer `<model>`", "Dispatching mechanical `<model>`". Say this at the point of spawning, not buried in a later summary. This is chat-only disclosure — it never becomes a hard-coded model name inside skills, prompts, or plan files, so it does not conflict with rule 1.
 
 ## Change flow
 

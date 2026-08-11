@@ -141,6 +141,7 @@ An implementer report and a `V` status are claims, not proof.
 - Parallel-safe batch: several **implementer** spawns with no shared file ownership.
 - Correction: resume via the Session id in the status table when the harness supports it; otherwise spawn a new **implementer** with base + stage file, which now carries the prior logs and feedback.
 - **mechanical** never edits production or test code under this skill.
+- Every spawn — **implementer** or **mechanical**, in Mode A, Mode B, or validation — gets announced per the global `AGENTS.md` category rules: name the category and the concrete model the harness assigned it, in the user's language, at the point of spawning, not folded into a later summary.
 
 ## Boundaries
 
