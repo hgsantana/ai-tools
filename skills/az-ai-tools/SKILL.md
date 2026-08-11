@@ -15,7 +15,8 @@ Use the `az` CLI for Azure inventory, cost, and operations work.
 - Freely use `az` for **read-only / query** operations (list, show, query costs, describe resources).
 - You may **suggest** creating, modifying, or removing Azure resources; only the user decides.
 - **NEVER** create, modify, or remove any Azure resource without **explicit** user authorization
-  for that specific action. Prior approval does not carry over.
+  for that specific action. Prior approval does not carry over, and this gate holds even inside an
+  unattended `/dev-ai-tools` run.
 - Before any suggested mutating change, make **cost impact** clear (SKU, ongoing cost, billable or not).
 
 ## Useful commands

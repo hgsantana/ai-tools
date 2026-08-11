@@ -1,70 +1,68 @@
 ---
 name: plan-ai-tools
 description: >
-  Restricted-invocation skill — invoke only when (a) the user explicitly runs "/plan-ai-tools",
-  (b) another skill's documented workflow calls it by name, or (c) global AGENTS.md
-  Mandatory Steps call it for a non-trivial code change. Produces a multi-file
-  implementation plan under plans/ and stops — never implements code.
+  Restricted-invocation skill — invoke only when (a) the user runs "/plan-ai-tools",
+  (b) another skill's documented workflow calls it by name, or (c) the global AGENTS.md
+  change flow calls it for a non-trivial change. Explores the repository and writes a
+  multi-file implementation plan under plans/, then stops. Never implements code.
 argument-hint: [description of the change, feature, or fix to plan]
 disable-model-invocation: false
 ---
 
 # Plan
 
-Produce a step-by-step implementation plan for a change to the current repository, then stop.
-This skill never writes, edits, or removes production source code, never runs builds or tests
-as a delivery step, and never hands off to an implementer.
+Produce a step-by-step implementation plan for a change to the current repository, save it under `plans/`, and stop.
 
-**Category roles (see global `AGENTS.md`)**
+This skill never writes, edits, or deletes source code; never runs builds or tests as a delivery step; and never hands work to an implementer. Its only output is plan files on disk.
 
-| Role in this skill | Category |
-|--------------------|----------|
-| You (orchestrating this skill) | **planner** |
-| Codebase exploration subagents | **mechanical** (read-only explore) or harness explore type |
+**Category roles** (see global `AGENTS.md`)
+
+| Role here | Category |
+|-----------|----------|
+| You, orchestrating this skill | **planner** |
+| Codebase exploration subagents | **mechanical** (read-only) or the harness explore type |
 | Implementation | not used |
 
-Never hard-code vendor model names. The harness maps **planner** / **implementer** / **mechanical**.
+## Invocation modes
+
+| Invoked by | After the plan is saved |
+|------------|-------------------------|
+| The user typing `/plan-ai-tools` — direct mode | Stop. Never implement, never offer to implement, never name `/dev-ai-tools` as a next step you would take. |
+| The global `AGENTS.md` change flow, or another skill that names this step — flow mode | Stop and return control to the caller, which decides what happens next. |
+
+In flow mode the caller implements immediately after acceptance, so the acceptance request (step 5) must state that accepting starts implementation now, and list the base plans already under `plans/` that the run will also cover (`plans/*.md`, excluding `-<n>.md` stage files and `plans/finished/**`). In direct mode, say nothing about implementing.
+
+Either way, this skill itself never implements.
 
 ## Workflow
 
-1. **Determine the task.** Use the user's arguments if provided; otherwise ask what to plan.
-   If the request is vague, ask targeted clarifying questions before exploring.
+1. **Determine the task.** Use the user's argument if given, otherwise ask what to plan. Ask targeted clarifying questions while the request is vague — this is the phase where questions belong.
 
-2. **Read the source of truth.** Check for `README.md` and `AGENTS.md` at the repository root
-   (and relevant subdirectories). Their conventions override generic assumptions. Also honor
-   the global `AGENTS.md` agent categories and mandatory steps.
+2. **Read the source of truth.** `README.md` and `AGENTS.md` at the repository root and in relevant subdirectories; their conventions override generic assumptions. The global `AGENTS.md` categories and change flow still apply.
 
-3. **Explore the codebase.** Dispatch one or more read-only explore agents (**mechanical** or
-   harness explore) to locate entry points, patterns, related modules, test conventions, and
-   build config. Launch independent explores in parallel. Use direct read/grep for pinpoint lookups.
+3. **Explore the codebase.** Dispatch read-only explore agents (**mechanical** or the harness explore type) to find entry points, patterns, related modules, test conventions, and build config. Launch independent explorations in parallel; use direct read/grep for pinpoint lookups.
 
-4. **Synthesize the plan** as a **base file + one file per stage** (see format below):
-   - Numbered stages, each independently reviewable and implementable from its own file alone
-     plus the base goal section
-   - Exact file paths to create / modify / remove, with a short reason
-   - Tests split by type where relevant: unit, integration, mutation, security/intrusion,
-     performance, etc.
-   - Documentation updates as a last stage when behavior or public surface changes
-   - Suggested Conventional Commits boundaries (describe; do not run git writes)
-   - For every stage: **sequential** vs **parallel-safe** relative to other stages (feeds the
-     execution graph and `/dev-ai-tools` fan-out)
+4. **Draft the plan** as a base file plus one file per stage (format below):
+   - Numbered stages, each implementable from its own stage file plus the base Goal and Execution graph alone
+   - Exact paths to create, modify, or remove, each with a reason
+   - Tests split by type where relevant: unit, integration, mutation, security, performance
+   - Documentation updates as the last stage when behavior or public surface changes
+   - Conventional Commits boundaries described, never executed
+   - Per stage: **sequential** or **parallel-safe** relative to the others, feeding the execution graph and `/dev-ai-tools` fan-out
 
-5. **Iterate with the user.** Present the plan and revise until the user explicitly accepts it.
-   Do not write plan files to disk before acceptance.
+5. **Get acceptance.** Present the plan and revise until the user accepts it. Nothing reaches `plans/` before acceptance. This is the one place where chat detail is wanted: give enough for the user to judge each stage — goal, stages with their files, tests, risks — without dumping whole file contents. Present it in the user's language; the saved files are English either way.
 
-6. **Save the plan** (after acceptance):
-   - Ensure `plans/` exists and is listed in the repository `.gitignore` (append if missing;
-     plan files are local working state)
-   - Write the base file: `plans/<slug>.md`
-   - Write each stage: `plans/<slug>-<n>.md` for n = 1, 2, …
-   - Do not overwrite an unrelated existing base slug; pick a distinct name
-   - Initialize the status table with empty Status and Session cells
+6. **Save** (after acceptance):
+   - Ensure `plans/` exists and is listed in the repository `.gitignore`; append it if missing
+   - Base file `plans/<slug>.md`, stage files `plans/<slug>-<n>.md` for n = 1, 2, …
+   - Pick a distinct slug rather than overwriting an unrelated existing base plan
+   - Leave every Status and Session cell empty
 
-7. **Stop.** Confirm saved paths and end. Do not offer to implement, do not spawn **implementer**,
-   do not run builds/tests as delivery, do not move files to `plans/finished/`.
-   If the user wants implementation, they run `/dev-ai-tools` separately.
+7. **Stop.** Report only the saved paths and the stage count, in a few lines. An accepted plan is always on disk before this skill ends.
 
-## Multi-file layout
+## Plan file format
+
+This section is the canonical definition of the plan layout and status codes; `/dev-ai-tools` reproduces the codes to stay self-contained.
 
 Example slug `i18n-ui-and-content-language`:
 
@@ -77,8 +75,6 @@ plans/
 ```
 
 ### Base file (`plans/<slug>.md`)
-
-Must start with a status table, then goal, execution graph, and stage index.
 
 ```markdown
 # <Title>
@@ -96,8 +92,8 @@ Must start with a status table, then goal, execution graph, and stage index.
 
 ## Execution graph
 
-Terse dependency list. Every stage appears in exactly one place.
-Example: Stage 1 before 2 and 3 (parallel-safe with each other); stage 4 after 2 and 3.
+Terse dependency list; every stage appears exactly once.
+Example: stage 1 before 2 and 3 (parallel-safe with each other); stage 4 after 2 and 3.
 
 ## Stages
 
@@ -106,29 +102,27 @@ Example: Stage 1 before 2 and 3 (parallel-safe with each other); stage 4 after 2
 
 ## Notes
 
-Optional: commit strategy overview, risks, out of scope.
+Optional: commit strategy, risks, out of scope.
 ```
 
-**Status codes** (maintained mainly by `/dev-ai-tools`; leave empty when creating):
+**Status codes** — maintained by `/dev-ai-tools`; leave empty when creating the plan.
 
 | Code | Meaning | Who sets it |
 |------|---------|-------------|
 | *(empty)* | Not started | — |
-| `W` | Working — implementer in progress | **implementer** (also writes Session) |
-| `V` | Validating — implementer handed off for judgment | **implementer** |
-| `R` | Retry — implementer reworking after feedback | **implementer** (updates Session) |
-| `E` | Error — failed after correction limit | **planner** (orchestrator) |
-| `T` | Testing — tests being written/run | agent doing that work (also Session) |
-| `TV` | Testing validation — orchestrator judging tests | **planner** (orchestrator) |
-| `F` | Finished — stage accepted | **planner** (orchestrator) |
+| `W` | Working — implementation in progress | **implementer**, also writes Session |
+| `V` | Validating — handed to the planner for judgment | **implementer** |
+| `R` | Retry — reworking after planner feedback | **implementer**, updates Session |
+| `T` | Testing — dedicated test-writing/running pass | the agent doing it, also writes Session |
+| `TV` | Testing validation — planner judging tests | **planner** |
+| `E` | Error — correction limit exhausted | **planner** |
+| `F` | Finished — stage accepted | **planner** |
 
-**Session** column: harness session / agent id (or equivalent resume handle) for the active worker
-on that stage. Critical for resume after network or budget failure.
+**Session** column: harness session or agent id (or equivalent resume handle) for the worker active on that stage. Critical for resuming after a network or budget failure.
 
 ### Stage file (`plans/<slug>-<n>.md`)
 
-Self-contained enough that an **implementer** given **only** the base file’s Goal + Execution
-graph context **and this stage file** can complete the stage without reading other stage files.
+Self-contained: an **implementer** given the base Goal and Execution graph plus this file alone can finish the stage without reading other stage files.
 
 ```markdown
 # Stage <n>: <Title>
@@ -146,7 +140,6 @@ What this stage delivers.
 ## Steps
 
 1. …
-2. …
 
 ## Tests
 
@@ -155,9 +148,8 @@ What this stage delivers.
 
 ## Acceptance criteria
 
-- [ ] Observable criterion 1
-- [ ] Build/tests required for this stage pass
-- [ ] …
+- [ ] Observable criterion
+- [ ] Build and tests required for this stage pass
 
 ## Commit
 
@@ -170,12 +162,11 @@ Suggested message: `feat: …` (or fix/chore/…)
 
 ## Implementation log
 
-(Append-only. Implementers and orchestrator add sections below during `/dev-ai-tools`.)
+(Append-only. Implementers and planner add sections here during `/dev-ai-tools`.)
 ```
 
 ## Boundaries
 
-- Only write under `plans/` (and `.gitignore` if adding `plans/`).
-- Never spawn **implementer** for production code from this skill.
-- Never chain into `/dev-ai-tools` automatically.
-- Activate only on explicit `/plan-ai-tools`, a skill that names this step, or global AGENTS.md mandatory steps.
+- Write only under `plans/`, plus `.gitignore` when adding the `plans/` entry.
+- Never spawn an **implementer** for production code, and never invoke `/dev-ai-tools` from inside this skill. In flow mode the caller starts it after this skill has ended — that is the caller's step, not yours.
+- Activate only on explicit `/plan-ai-tools`, a skill that names this step, or the global `AGENTS.md` change flow.

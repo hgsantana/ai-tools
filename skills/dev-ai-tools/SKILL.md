@@ -1,181 +1,150 @@
 ---
 name: dev-ai-tools
 description: >
-  Implement plans or ad-hoc work using harness-agnostic agent categories. Use when the user
-  runs "/dev-ai-tools". With no argument or argument starting with "plans", process every base plan at
-  plans/*.md (not stage files, not finished/). Otherwise treat the argument as an ad-hoc
-  implementation request. Planner validates; implementer codes; mechanical gathers evidence.
-argument-hint: [plans | implementation request]
+  Implement plans or ad-hoc work using harness-agnostic agent categories. Use when the user runs
+  "/dev-ai-tools". With no argument, or an argument starting with "plans", process base plans at
+  plans/*.md (not stage files, not finished/). Any other argument is an ad-hoc implementation
+  request. Planner validates; implementer codes; mechanical gathers evidence. Runs unattended.
+argument-hint: [plans [path…] | implementation request]
 ---
 
 # Dev
 
-Harness-agnostic implementation skill. **You (the session running `/dev-ai-tools`) act as planner** for
-orchestration and judgment. You never write production or test code in the target repository
-while this skill is active — you delegate that to **implementer**. Evidence gathering and
-mechanical text go to **mechanical**.
+Harness-agnostic implementation skill. **The session running `/dev-ai-tools` acts as planner** for orchestration and judgment: it never writes production or test code in the target repository while this skill is active. Code goes to **implementer**; evidence gathering and mechanical text go to **mechanical**.
 
-See global `AGENTS.md` for category definitions. Map categories to whatever subagents/models the
-current harness provides; never require a vendor-specific agent name.
+See the global `AGENTS.md` for category definitions. Map categories to whatever subagents or models the harness provides; never require a vendor-specific agent name.
 
 ## Routing
 
-| Arguments | Mode |
-|-----------|------|
-| empty | **A** — plan queue |
-| starts with `plans` | **A** — plan queue (remainder = extra instructions) |
+| Argument | Mode |
+|----------|------|
+| empty | **A** — every base plan under `plans/` |
+| `plans` (plus optional extra instructions) | **A** — every base plan under `plans/` |
+| `plans/<file>.md …` — one or more base plan paths | **A** — only the named plans |
 | anything else | **B** — ad-hoc implementation |
 
-## Category division of labor
+## Execution contract
+
+This skill runs **unattended**. The user already approved the work before it started.
+
+- Do not ask for confirmation, do not pause for checkpoints, do not request permission to continue.
+- Record blockers on the plan as status `E` with a failure report in the stage file, keep running every stage that does not depend on them, and surface the blockers in the final summary.
+- Exception: the security gates in the global `AGENTS.md` still hold. Cloud mutations and destructive or shared-state operations need explicit per-action approval, even mid-run.
+
+### Output discipline
+
+- Detail goes to the plan files: stage steps, implementation logs, validation notes, diffs, command output, failure reports. Never paste them into chat.
+- No progress narration. No per-stage chat updates.
+- Chat gets one short summary at the end, in the user's language — per plan, one line of stage counts by status, plus paths to read for detail, plus any `E` stage with its one-line cause and the recommended recovery. Plan files, logs, and implementer prompts stay English.
+
+## Division of labor
 
 | Work | Category |
 |------|----------|
-| Orchestrate stages, write briefs, decide acceptance, anti-cheat test audit, commit after validation, set `E` / `TV` / `F` | **planner** (this session) |
-| Implement a stage or brief (edit production/test code) | **implementer** only |
-| Run build/test and return raw output; list diffs; extract logs; draft mechanical feedback text | **mechanical** |
-| Explore codebase for brief prep (Mode B) | **mechanical** / harness explore |
+| Orchestrate stages, write briefs, judge acceptance, audit tests for cheating, commit after validation, set `TV` / `E` / `F` | **planner** — this session |
+| Implement a stage or brief, editing production and test code | **implementer** only |
+| Run build/test and return raw output, list diffs, extract logs, draft mechanical feedback text, explore for brief prep | **mechanical** |
 
-Gathering agents return **facts**, not verdicts. Re-evaluate any “it looks correct” claim yourself.
+Gathering agents return **facts**, not verdicts. Re-evaluate any "it looks correct" claim yourself.
 
-**Hard limit:** initial attempt + up to **3** correction rounds per stage/task. Then set `E` and stop that stage.
+**Hard limit:** 1 initial attempt + up to 3 correction rounds per stage or task, then set `E` and move on.
 
 ## Context isolation (token discipline)
 
-When spawning an **implementer** for a stage:
+When spawning an **implementer** for a stage, give it **only**:
 
-1. Give it **only**:
-   - The **base plan file** (or a short extract: Goal + Execution graph + this stage’s status row), and
-   - The **single stage file** `plans/<slug>-<n>.md` for that stage
-2. Instruct it **not** to open other `plans/<slug>-*.md` stage files, other base plans, or
-   `plans/finished/**` unless a path is explicitly listed inside the assigned stage file as a
-   dependency artifact (rare).
-3. Do not paste the full contents of other stages into the prompt.
+1. The base plan file, or an extract of it: Goal, Execution graph, and this stage's status row
+2. The single stage file `plans/<slug>-<n>.md`
 
-This is mandatory: other stages stay out of context.
+Instruct it not to open other stage files, other base plans, or `plans/finished/**` unless the assigned stage file explicitly lists a path as a dependency artifact (rare). Never paste other stages into the prompt. This is mandatory: other stages stay out of context.
 
 ## Status protocol
 
-Base plan table (created by `/plan-ai-tools`):
+The base plan carries the status table created by `/plan-ai-tools`, which holds the canonical definition; the codes are reproduced here so this skill is self-contained.
 
-| Stage | Status | Session |
-|------:|:------:|---------|
-| 1 | | |
-| … | | |
-
-| Code | Meaning | Who sets |
-|------|---------|----------|
-| `W` | Working — implementation in progress | **implementer** first action; also writes Session |
-| `V` | Validating — work handed to planner for judgment | **implementer** when done |
-| `R` | Retry — reworking after planner feedback | **implementer** when starting a correction; updates Session |
-| `E` | Error — exhausted retries | **planner** |
-| `T` | Testing — writing/running tests as a dedicated pass | agent doing it (Session) |
-| `TV` | Testing validation | **planner** |
-| `F` | Finished | **planner** |
+| Code | Meaning | Who sets it |
+|------|---------|-------------|
+| `W` | Working — implementation in progress | **implementer**, also writes Session |
+| `V` | Validating — handed to the planner for judgment | **implementer** |
+| `R` | Retry — reworking after planner feedback | **implementer**, updates Session |
+| `T` | Testing — dedicated test-writing/running pass | the agent doing it, also writes Session |
+| `TV` | Testing validation — planner judging tests | **planner** |
+| `E` | Error — correction limit exhausted | **planner** |
+| `F` | Finished — stage accepted | **planner** |
 
 ### Implementer obligations (put these in every implementer prompt)
 
-1. **First action:** open the base plan, set this stage’s Status to `W` (or `R` on correction) and
-   Session to the current harness session/agent id (or best available resume handle).
+1. **First action:** open the base plan, set this stage's Status to `W` (or `R` on a correction) and Session to the current harness session or agent id.
 2. Implement only the assigned stage.
-3. Append an **Implementation log** section at the end of the stage file: what changed, files
-   touched, commands run, results, anything incomplete.
-4. **Last action before returning:** set Status to `V` on the base plan (implementer marks ready
-   for validation — planner does not set `V`).
-5. Do not set `F`, `E`, or `TV`.
+3. Append an **Implementation log** section to the stage file: what changed, files touched, commands run, results, anything left incomplete.
+4. **Last action:** set Status to `V` on the base plan. The implementer marks work ready for validation; the planner never sets `V`.
+5. Never set `T`, `TV`, `E`, or `F`.
 
 ### Planner obligations
 
-- After `V`: validate (diff, acceptance criteria, test quality, build/tests via **mechanical**).
-- On success: set `F`, then move `plans/<slug>-<n>.md` → `plans/finished/<slug>-<n>.md`.
-  Update the base Stages link if useful (optional note “finished”).
-- On failure within retry budget: append correction notes to the **same stage file** (keep full
-  history), leave or set instructions, spawn **implementer** again; implementer sets `R` + Session.
-- After 3 failed correction rounds: set `E`, append a failure report to the stage file, and
-  **discuss recovery options with the user** (re-plan that stage, drop it, change approach).
-  Prefer deferring `E` stages if other stages do not depend on them; run independent stages first.
-- When **all** stages are `F` (or intentionally skipped with user OK): move base
-  `plans/<slug>.md` → `plans/finished/<slug>.md`.
+- After `V`, validate (see Validation).
+- On pass: set `F`, move `plans/<slug>-<n>.md` to `plans/finished/`, and commit if the stage describes a commit boundary.
+- On failure within the retry budget: append concrete correction tasks to the **same stage file**, keeping full history, then spawn an **implementer** again, which sets `R` and Session.
+- After 3 failed corrections: set `E`, append a failure report with the recommended recovery to the stage file, and continue with stages that do not depend on it.
+- When every stage is `F` (or `E` stages are all reported), move the base `plans/<slug>.md` to `plans/finished/`.
 
 ## Mode A — plan queue
 
-1. Repository root (`git rev-parse --show-toplevel`). Stop if not a git repo.
-2. Discover **base plans only**: `plans/*.md` at the root of `plans/`, excluding names that match
-   `*-<digits>.md` (stage files) and excluding `plans/finished/**`.
-   A base plan is a file that has a `## Status` table and links to `./<slug>-N.md` stages,
-   or any `plans/<name>.md` that is not a stage suffix file.
-3. If none: warn and stop.
-4. `git status --short`: if uncommitted work exists, warn the user before spawning implementers.
-5. Ensure `plans/` is in `.gitignore`.
-6. Order plans (oldest first unless extra instructions say otherwise). For each base plan:
-   1. Read **only that base plan** to learn the execution graph and status table.
-   2. Build stage waves from the graph. Skip stages already `F`. Prefer unfinished non-`E` stages;
-      leave `E` for the end or user discussion.
-   3. For each wave:
-      - **Sequential** stages: one after another.
-      - **Parallel-safe** stages: spawn multiple **implementer** agents in one batch; never two
-        implementers on the same files.
-      - Each implementer gets base + **one** stage file only (context isolation).
-   4. When an implementer returns with `V`: **planner** validates (see Validation).
-   5. Optional test-focused pass: if the stage requires a separate test agent, that agent sets `T`
-      and Session; then planner sets `TV` while judging, then `F` or correction.
-   6. On `F`: commit for that stage if the stage/base describes a commit boundary (planner runs
-      commit after validation — Conventional Commits, check staged files for secrets/binaries).
-   7. Next stage/wave.
-7. If a stage hits `E` and others are independent, continue those; then escalate `E` stages with
-   the user (re-plan options). Do not invent a new plan file without user direction; `/plan-ai-tools` may
-   be suggested for a replacement stage design.
-8. When a base plan is fully done, move it to `plans/finished/`.
-9. Wrap-up: which plans finished, which stages are `E`/blocked, correction counts.
+1. Find the repository root (`git rev-parse --show-toplevel`); stop if this is not a git repository.
+2. Discover **base plans only**: `plans/*.md` at the root of `plans/`, excluding `*-<digits>.md` stage files and `plans/finished/**`. A base plan has a `## Status` table and links to `./<slug>-N.md` stages. If the argument named specific paths, use exactly those.
+3. Stop if none exist; say so in one line.
+4. Ensure `plans/` is in `.gitignore`.
+5. Check `git status --short`. If the worktree is dirty, note it in the final summary and stage commits **path by path** for the files each stage touched — never `git add -A`, so pre-existing work stays out of the commits.
+6. Order plans oldest first unless extra instructions say otherwise. For each base plan:
+   1. Read **only that base plan** for its execution graph and status table.
+   2. Build stage waves from the graph. Skip stages already `F`; leave `E` stages for the end.
+   3. Run each wave: **sequential** stages one after another; **parallel-safe** stages as one batch of **implementer** spawns, never two implementers on the same files. Each gets base + one stage file.
+   4. When an implementer returns `V`, validate.
+   5. If a stage needs a dedicated test pass, that agent sets `T` and Session; the planner then sets `TV` while judging, then `F` or a correction round.
+   6. On `F`, commit that stage if the plan describes a commit boundary — Conventional Commits, and check staged files for secrets and binaries first.
+7. When a base plan is fully resolved, move it to `plans/finished/`.
+8. Close with the final summary described in Output discipline.
 
-### Identifying base vs stage files
+### Base vs stage files
 
-- Stage file pattern: `plans/<slug>-<n>.md` where `<n>` is a positive integer.
-- Base file: `plans/<slug>.md` without the `-<n>` suffix.
-- Never treat `plans/finished/**` as queue input.
+- Stage file: `plans/<slug>-<n>.md`, `<n>` a positive integer. Base file: `plans/<slug>.md` with no `-<n>` suffix.
+- Never treat `plans/finished/**` or `plans/dev/**` as queue input.
 - Never execute a stage file without its base.
 
 ## Mode B — ad-hoc request
 
-1. Derive kebab-case `<slug>` from the request.
-2. If a relevant base plan already exists under `plans/`, prefer Mode A for that plan.
-3. If vague, ask clarifying questions before spawning **implementer**.
-4. Explore with **mechanical**/explore enough for real paths.
-5. Write `plans/dev/<slug>-brief.md` (handoff only; not a base plan unless you also structure stages).
-   Minimum: Original request (verbatim), Goal, Context, Source of truth, Tasks with paths, Tests by
-   type, Docs, Acceptance criteria, Commits, Required report back to planner.
-6. Warn on dirty git status.
-7. Spawn **implementer** on the brief (single task unless you split into a mini plan via `/plan-ai-tools`).
-8. Validate; correction rounds with `plans/dev/<slug>-feedback-<n>.md`; same 1+3 limit.
-9. Commit only after validation if the brief authorized it.
+1. Derive a kebab-case `<slug>` from the request.
+2. If a base plan under `plans/` already covers it, run Mode A for that plan instead.
+3. Ask clarifying questions only here, before any implementer starts; after that the run is unattended.
+4. Explore with **mechanical** or the harness explore type until the paths are real.
+5. Write `plans/dev/<slug>-brief.md` — a handoff, not a base plan. Minimum: the original request verbatim, goal, context, source of truth, tasks with paths, tests by type, docs, acceptance criteria, commits, and the report the implementer owes the planner.
+6. Spawn an **implementer** on the brief. If the work is too large for one brief, split it into several briefs yourself and sequence them — do not call `/plan-ai-tools`.
+7. Validate; run correction rounds with `plans/dev/<slug>-feedback-<n>.md`, same 1 + 3 limit.
+8. Commit only after validation, and only if the brief authorized it.
 
-Mode B does not require the multi-file status table unless you create a full `/plan-ai-tools` structure.
+Mode B needs no status table unless you build a full plan structure.
 
 ## Validation (planner)
 
-Implementer report and status `V` are claims, not proof.
+An implementer report and a `V` status are claims, not proof.
 
-1. Read the stage file log and the allowed paths.
-2. `git status` / `git diff` / recent log — what actually changed.
-3. Read changed files against acceptance criteria.
-4. **Test audit:** Do tests exercise observable behavior? Would they pass if the feature were
-   broken? Were existing tests weakened? Are types split into separate files when required?
-5. Run build/tests via **mechanical**; require project thresholds (e.g. 80% coverage when the repo
-   mandates it).
-6. On pass → `F` + move stage file + commit if applicable.
-7. On fail → append concrete correction tasks to the stage file; implementer resumes with `R`.
+1. Read the stage file log and the paths it was allowed to touch.
+2. Run `git status`, `git diff`, and recent log to see what actually changed.
+3. Read the changed files against the acceptance criteria.
+4. **Test audit:** do the tests exercise observable behavior? Would they fail if the feature were broken? Were existing tests weakened? Are types split into separate files where the project requires it?
+5. Run build and tests via **mechanical**, and enforce project thresholds (for example 80% coverage when the repository mandates it).
+6. Pass → `F`, move the stage file, commit if applicable. Fail → append concrete correction tasks to the stage file; the implementer resumes at `R`.
 
 ## Spawning conventions
 
-- Sequential item: one **implementer**, wait for result.
-- Parallel-safe batch: multiple **implementer** spawns without shared file ownership.
-- Correction: prefer resume via Session id in the status table when the harness supports it;
-  otherwise new **implementer** with base + stage file (which now includes prior logs and feedback).
-- **mechanical** never edits production/test code in the target repo under this skill.
+- Sequential item: one **implementer**, wait for the result.
+- Parallel-safe batch: several **implementer** spawns with no shared file ownership.
+- Correction: resume via the Session id in the status table when the harness supports it; otherwise spawn a new **implementer** with base + stage file, which now carries the prior logs and feedback.
+- **mechanical** never edits production or test code under this skill.
 
 ## Boundaries
 
-- Only **implementer** writes repository code (and stage/base status + logs as specified).
-- **planner** does not implement; does set `E` / `TV` / `F` and performs commits after validation.
-- Always warn on dirty worktree before first implementer spawn.
-- Do not chain into `/plan-ai-tools` automatically; on `E`, discuss with the user and offer `/plan-ai-tools` if redesign is needed.
-- Do not use this skill for pure Q&A.
+- Only **implementer** writes repository code, plus the status and log updates specified above.
+- **planner** does not implement; it sets `TV` / `E` / `F` and commits after validation.
+- Never chain into `/plan-ai-tools`. If an `E` stage needs a redesign, say so in the final summary and let the user start a new plan.
+- Do not use this skill for pure question answering.

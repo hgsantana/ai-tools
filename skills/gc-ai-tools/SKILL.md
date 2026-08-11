@@ -15,7 +15,8 @@ Use the `gcloud` CLI for Google Cloud inventory, cost, and operations work.
 - Freely use `gcloud` for **read-only / query** operations (list, describe, query costs).
 - You may **suggest** creating, modifying, or removing resources; only the user decides.
 - **NEVER** create, modify, or remove any Google Cloud resource without **explicit** user
-  authorization for that specific action. Prior approval does not carry over.
+  authorization for that specific action. Prior approval does not carry over, and this gate holds
+  even inside an unattended `/dev-ai-tools` run.
 - Before any suggested mutating change, make **cost impact** clear (SKU, ongoing cost, billable or not).
 
 ## Useful commands

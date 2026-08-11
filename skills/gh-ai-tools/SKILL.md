@@ -16,7 +16,9 @@ Use the `gh` CLI for issues, pull requests, checks, releases, and repos.
 - You may **suggest** creating, modifying, or closing issues/PRs, pushing, or other changes;
   only the user decides.
 - **NEVER** create, modify, close, merge, comment on, or remove any GitHub resource without
-  **explicit** user authorization for that specific action. Prior approval does not carry over.
+  **explicit** user authorization for that specific action. Prior approval does not carry over, and
+  this gate holds even inside an unattended `/dev-ai-tools` run. Local commits are not covered here;
+  pushing is.
 - Before side effects visible to others (PR open/close, comments, push, release), state what will
   happen and who will see it.
 
