@@ -2,7 +2,7 @@
 
 ## Introduction
 
-A **harness-agnostic** home for shared AI coding configuration: one global `AGENTS.md` plus the skills `/plan-ai-tools`, `/dev-ai-tools`, `/az-ai-tools`, `/gh-ai-tools`, and `/gc-ai-tools`. It lives at `~/.config/ai-tools/` and is linked into whichever AI CLIs or IDEs you use (Claude Code, Grok, Cursor, and similar).
+A **harness-agnostic** home for shared AI coding configuration: one global `AGENTS.md` plus the skills `/plan-ai-tools`, `/dev-ai-tools`, `/az-ai-tools`, `/gh-ai-tools`, and `/gc-ai-tools`. It lives at `~/.config/ai-tools/` and is linked into whichever AI CLIs or IDEs you use (Claude Code, Grok, Cursor, Gemini, and similar).
 
 Goals:
 
@@ -148,9 +148,57 @@ Check project-local harness directories only when the user asked to wire project
 find "$HOME/projetos" -maxdepth 3 \( -name '.claude' -o -name '.grok' -o -name '.cursor' \) 2>/dev/null
 ```
 
+Some harnesses manifest only as an installed **IDE extension** — no standalone CLI, no dedicated
+home directory to `test -d`. Scan the usual IDE extension roots (VS Code family and JetBrains) and
+match against a small known-extension table that drives real install actions:
+
+| Extension ID (prefix match) | Harness | Config home |
+|---|---|---|
+| `google.geminicodeassist-*` | Gemini | `$HOME/.gemini` |
+| `anthropic.claude-code-*` | Claude Code | `$HOME/.claude` |
+
+(The Claude Code row exists for machines where only the VS Code extension is present, with no CLI
+install; when both exist, `safe_link` idempotency already handles the overlap.)
+
+```bash
+EXT_ROOTS="$HOME/.vscode/extensions $HOME/.vscode-server/extensions $HOME/.vscode-insiders/extensions $HOME/.vscode-server-insiders/extensions $HOME/.vscodium/extensions"
+
+# JetBrains plugin roots (Linux layout; Windows/Mac paths differ, confirm on those machines)
+JETBRAINS_ROOTS=""
+for jb in "$HOME"/.local/share/JetBrains/*/plugins; do
+  [ -d "$jb" ] && JETBRAINS_ROOTS="$JETBRAINS_ROOTS $jb"
+done
+
+# Known-extension table: prefix match -> harness with a confirmed config convention
+for root in $EXT_ROOTS; do
+  [ -d "$root" ] || continue
+  for ext in "$root"/*/; do
+    [ -d "$ext" ] || continue
+    name=$(basename "$ext")
+    case "$name" in
+      google.geminicodeassist-*) echo "found: Gemini (extension $name in $root)" ;;
+      anthropic.claude-code-*)   echo "found: Claude Code (extension $name in $root)" ;;
+    esac
+  done
+done
+
+# Informational-only: grep the same roots plus JetBrains plugin roots for AI-related
+# keywords. No confirmed instructions/skills convention for these in this repo yet,
+# so nothing here is offered as an install target unless the user names one explicitly.
+for root in $EXT_ROOTS $JETBRAINS_ROOTS; do
+  [ -d "$root" ] || continue
+  ls "$root" 2>/dev/null | grep -iE 'gemini|claude|copilot|codeium|windsurf|continue|cody|cursor|tabnine' | while read -r name; do
+    echo "info: possible AI extension '$name' in $root"
+  done
+done
+```
+
 ### 2. Ask which targets to install
 
-Present the discovery list and let the user choose. Do not install into every tool by default when the user only uses one.
+Present the discovery list and let the user choose — both CLI/home-dir harnesses and
+extension-discovered harnesses from the known table. Keyword-only matches are informational, not
+offered as install targets unless the user names one explicitly. Do not install into every tool by
+default when the user only uses one.
 
 ### 3. Install global instructions
 
@@ -161,10 +209,12 @@ Link `AGENTS.md` to each selected harness's user-wide instruction file.
 | Claude Code | `$HOME/.claude/CLAUDE.md` | Claude loads the user `CLAUDE.md` |
 | Grok | User-wide agents file when supported, otherwise project `AGENTS.md` | Alternatively add `$AI_TOOLS` to the tool's config paths and ensure sessions read `$AI_TOOLS/AGENTS.md` |
 | Cursor | User rules / `AGENTS.md` location for the installed version | Confirm the current path before linking |
+| Gemini | `$HOME/.gemini/GEMINI.md` | Detected via the google.geminicodeassist VS Code extension even without a gemini CLI on PATH; Gemini CLI's documented convention loads this as user-level context — confirm against the installed extension/CLI version before linking |
 | Generic | Point the tool at `$AI_TOOLS/AGENTS.md` | This file is the source of truth |
 
 ```bash
 safe_link "$AI_TOOLS/AGENTS.md" "$HOME/.claude/CLAUDE.md"
+safe_link "$AI_TOOLS/AGENTS.md" "$HOME/.gemini/GEMINI.md"   # if Gemini selected
 ```
 
 When a harness cannot use a symlink for instructions, offer a one-line include pointer instead of copying the file, so this repo stays the single source of truth.
@@ -190,10 +240,17 @@ done
 
 If Grok is configured with `[skills] paths`, adding `$AI_TOOLS/skills` as a scan path is an option, but only when it cannot clobber existing names. Prefer explicit per-skill links.
 
+**Gemini is excluded from this loop.** Gemini's command mechanism is a single-file, TOML-based
+custom-command format (plus a separate VS Code-settings-based "custom commands" feature in the
+extension itself) — incompatible with this repo's directory-based `SKILL.md` skills. Skill
+installation for Gemini is out of scope until a translation exists; this is a stated limitation,
+not a silent gap, per the "skip it, report it" safety rule.
+
 ### 5. Verify
 
 ```bash
 readlink -f "$HOME/.claude/CLAUDE.md" 2>/dev/null
+readlink -f "$HOME/.gemini/GEMINI.md" 2>/dev/null
 ls -la "$HOME/.claude/skills" "$HOME/.grok/skills" 2>/dev/null
 
 for path in "$AI_TOOLS/skills"/*-ai-tools; do
@@ -225,9 +282,15 @@ done
 if [ -L "$HOME/.claude/CLAUDE.md" ]; then
   echo "instructions: $HOME/.claude/CLAUDE.md -> $(readlink "$HOME/.claude/CLAUDE.md")"
 fi
+
+if [ -L "$HOME/.gemini/GEMINI.md" ]; then
+  echo "instructions: $HOME/.gemini/GEMINI.md -> $(readlink "$HOME/.gemini/GEMINI.md")"
+fi
 ```
 
-Note any legacy bare names (`plan`, `dev`, `az`, `gh`, `gc`) still pointing at `$AI_TOOLS`.
+Note any legacy bare names (`plan`, `dev`, `az`, `gh`, `gc`) still pointing at `$AI_TOOLS`. Re-run
+Installation §1's extension scan to know which extension-only harnesses (like Gemini) are even in
+scope for removal — installed extensions can change between runs.
 
 ### 2. Remove skills
 
@@ -239,6 +302,9 @@ for name in plan-ai-tools dev-ai-tools az-ai-tools gh-ai-tools gc-ai-tools \
   safe_unlink "$HOME/.cursor/skills/$name"   # if Cursor selected
 done
 ```
+
+No Gemini line here: no skills were ever linked for Gemini (see Installation §4's incompatibility
+note), so there is nothing to unlink for it in this step.
 
 If `$AI_TOOLS/skills` was added to a harness scan path (Grok `[skills] paths`), remove **only that entry** when asked — never wipe the config file.
 
@@ -263,6 +329,7 @@ Only when the user wants the harness to stop loading this repo's `AGENTS.md`:
 
 ```bash
 safe_unlink "$HOME/.claude/CLAUDE.md"
+safe_unlink "$HOME/.gemini/GEMINI.md"
 # Other harnesses: unlink only destinations created as links into $AI_TOOLS/AGENTS.md
 ```
 
@@ -313,6 +380,9 @@ If `$AI_TOOLS` is missing, stop and offer a fresh [Installation](#installation),
 2. Whether to refresh **instructions** as well as skills
 3. Whether to clean **legacy** bare names from older installs
 4. That the update **resets `$AI_TOOLS` to `origin/master`**, discarding local commits and uncommitted changes in this repo unless they opt out
+5. Installed IDE extensions can change between reinstalls — an extension-only harness like Gemini
+   may have been added or removed since the last run. Re-run Installation §1's extension scan
+   rather than reuse a stale harness list.
 
 ### 2. Reset the repository to `origin/master`
 
@@ -375,6 +445,10 @@ Run the [Installation](#installation) link steps for the same harnesses — disc
 # Source tree must be master == origin/master, clean
 git -C "$AI_TOOLS" status -sb
 git -C "$AI_TOOLS" rev-parse HEAD origin/master   # expect the same SHA twice
+
+# Instructions link, including extension-only harnesses like Gemini
+readlink -f "$HOME/.claude/CLAUDE.md" 2>/dev/null
+readlink -f "$HOME/.gemini/GEMINI.md" 2>/dev/null
 
 # Skills present and linked
 for path in "$AI_TOOLS/skills"/*-ai-tools; do
