@@ -1,6 +1,6 @@
 # Global agent instructions
 
-Harness-agnostic, user-wide rules for any AI coding tool (Claude Code, Grok, Cursor, Codex, and others). A repository's own `AGENTS.md` or `README.md` overrides these rules inside that repository.
+Harness-agnostic, user-wide rules for any AI coding tool (Claude Code, Grok, Cursor, Codex, GitHub Copilot, and others). A repository's own `AGENTS.md` or `README.md` overrides these rules inside that repository.
 
 ## Language
 
@@ -29,7 +29,8 @@ Skills and workflows name **categories**, never model product names. The running
    - **planner** — pick the strongest model available for planning and analysis, regardless of its cost. Decomposition and acceptance-judgment mistakes made here propagate into every downstream stage, so this is not the place to economize, and a harness offering several "planning" models does not mean they are equally capable.
    - **implementer** — pick the model with the best code-quality-to-cost ratio, not automatically the most expensive or most capable option offered. Treat a flagship-tier model priced well above the next tier down as a prompt to check whether it buys a real jump in code quality for the task at hand, not as the default pick.
    - **mechanical** — pick the cheapest and fastest model that reliably completes fully specified, low-ambiguity work. Upgrade only when the current choice is actually failing at the task, never preemptively.
-6. Announce every spawn in chat, in the user's language, naming both the category and the concrete model the harness assigned it: "Planning with `<model>`", "Calling implementer `<model>`", "Dispatching mechanical `<model>`". Say this at the point of spawning, not buried in a later summary. This is chat-only disclosure — it never becomes a hard-coded model name inside skills, prompts, or plan files, so it does not conflict with rule 1.
+6. When a harness does not expose enough distinct models to differentiate categories by model choice (for example, a CLI that currently offers a single model), fulfill a category by invoking a specific skill or prompt-mode built for that role instead, if the harness supports invoking skills as a distinct execution context. This changes only the mechanism satisfying the category, never its responsibilities or boundaries from the table above.
+7. Announce every spawn in chat, in the user's language, naming both the category and what the harness assigned it — a concrete model ("Planning with `<model>`", "Calling implementer `<model>`", "Dispatching mechanical `<model>`") or, when rule 6 applies, the skill invoked instead ("Planning via `<skill-name>` skill", "Calling implementer via `<skill-name>` skill", "Dispatching mechanical via `<skill-name>` skill"). Say this at the point of spawning, not buried in a later summary. This is chat-only disclosure — it never becomes a hard-coded model or skill name inside skills, prompts, or plan files, so it does not conflict with rule 1.
 
 ## Change flow
 
@@ -90,3 +91,4 @@ Continuity between plan and implementation exists **only here**. A direct `/plan
 - Plans live in the repository's `plans/` directory: local working state, kept out of git unless the project says otherwise.
 - Finished base and stage files move to `plans/finished/`.
 - Never commit `plans/` unless the project explicitly tracks it.
+- When the current working directory is not inside a git repository, save plans to a user-level directory outside any project instead — `$HOME/.ai-tools-plans` on Linux/Mac, or the equivalent user-level location on Windows (e.g. `%USERPROFILE%\.ai-tools-plans`) — creating it if it does not exist.
