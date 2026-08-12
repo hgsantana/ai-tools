@@ -2,7 +2,7 @@
 
 ## Introduction
 
-A **harness-agnostic** home for shared AI coding configuration: one global `AGENTS.md` plus the skills `/plan-ai-tools`, `/dev-ai-tools`, `/az-ai-tools`, `/gh-ai-tools`, and `/gc-ai-tools`. It lives at `~/.config/ai-tools/` and is linked into whichever AI CLIs or IDEs you use (Claude Code, Grok, Cursor, Gemini, and similar).
+A **harness-agnostic** home for shared AI coding configuration: one global `AGENTS.md` plus the skills `/plan-ai-tools`, `/dev-ai-tools`, `/az-ai-tools`, `/gh-ai-tools`, and `/gc-ai-tools`. It lives at a user-level directory — `$HOME/.ai-tools/` on Linux/Mac, or the equivalent user-level location on Windows — and is linked into whichever AI CLIs or IDEs you use (Claude Code, Grok, Cursor, Gemini, OpenAI Codex, GitHub Copilot, and similar).
 
 Goals:
 
@@ -13,6 +13,21 @@ Goals:
 **Naming rule:** everything installed from this repo — skill directory, frontmatter `name:`, slash command, and any future agent — ends in `-ai-tools`, so nothing collides with harness-bundled names. Never install a bare name like `plan` or `dev`.
 
 **No shipped agents:** this repo has no agent definition files, only the empty `agents/` directory. Harnesses map the three categories with their own subagent mechanisms. Do not create stubs unless the user asks.
+
+### Cross-platform paths
+
+Every command in this document is written in POSIX/bash, which already covers Linux and Mac unchanged. A harness running natively on Windows (no WSL, no Git Bash) follows the same steps by translating:
+
+| POSIX (this doc) | Windows (PowerShell) |
+|---|---|
+| `$HOME` | `$env:USERPROFILE` |
+| `ln -s <target> <dest>` | `New-Item -ItemType SymbolicLink -Path <dest> -Target <target>` (needs Developer Mode or an elevated shell) |
+| `readlink <dest>` / `readlink -f <dest>` | `(Get-Item <dest>).Target` |
+| `test -e`/`-f`/`-d`/`-L <path>` | `Test-Path <path>` (add `-PathType Leaf`/`Container`; symlink check: `(Get-Item <path>).LinkType -eq 'SymbolicLink'`) |
+| `find <dir> -maxdepth 1 -type l` | `Get-ChildItem <dir> -Depth 0 \| Where-Object { $_.LinkType -eq 'SymbolicLink' }` |
+| `mkdir -p <dir>` | `New-Item -ItemType Directory -Force -Path <dir>` |
+
+The safety semantics — idempotent, never overwrite a non-ai-tools destination, skip and report instead of failing — apply identically no matter which shell executes them.
 
 ## Contents
 
@@ -63,7 +78,7 @@ These apply to [Installation](#installation), [Removal](#removal), and [Reinstal
 Helpers used by every section below:
 
 ```bash
-export AI_TOOLS="${AI_TOOLS:-$HOME/.config/ai-tools}"
+export AI_TOOLS="${AI_TOOLS:-$HOME/.ai-tools}"
 
 safe_link() {
   # usage: safe_link <target-in-ai-tools> <destination-path>
@@ -122,10 +137,10 @@ safe_unlink() {
 
 ### 0. Preconditions
 
-The repository is cloned at `~/.config/ai-tools`, or another path the user names. `$AI_TOOLS` defaults to `~/.config/ai-tools`; expand `~` to the current user's real home.
+The repository is cloned at `$HOME/.ai-tools`, or another path the user names — always user-level, never inside a project. `$AI_TOOLS` defaults to `$HOME/.ai-tools`; resolve `$HOME` (or `%USERPROFILE%` on native Windows) to the current user's real home. See [Cross-platform paths](#cross-platform-paths) above for the Windows-shell equivalents of every command in this document.
 
 ```bash
-export AI_TOOLS="${AI_TOOLS:-$HOME/.config/ai-tools}"
+export AI_TOOLS="${AI_TOOLS:-$HOME/.ai-tools}"
 test -f "$AI_TOOLS/AGENTS.md" && test -d "$AI_TOOLS/skills"
 ```
 
@@ -139,6 +154,9 @@ test -d "$HOME/.grok"   && echo "found: Grok ($HOME/.grok)"
 command -v grok >/dev/null && echo "found: grok CLI"
 test -d "$HOME/.cursor" && echo "found: Cursor ($HOME/.cursor)"
 test -d "$HOME/.codex"  && echo "found: Codex ($HOME/.codex)"
+command -v codex >/dev/null && echo "found: codex CLI"
+test -d "$HOME/.copilot" && echo "found: GitHub Copilot ($HOME/.copilot)"
+command -v copilot >/dev/null && echo "found: copilot CLI"
 test -d "$HOME/.agents" && echo "found: $HOME/.agents"
 ```
 
@@ -156,6 +174,8 @@ match against a small known-extension table that drives real install actions:
 |---|---|---|
 | `google.geminicodeassist-*` | Gemini | `$HOME/.gemini` |
 | `anthropic.claude-code-*` | Claude Code | `$HOME/.claude` |
+| `openai.chatgpt-*` | OpenAI Codex | `$HOME/.codex` |
+| `github.copilot-chat-*` | GitHub Copilot | `$HOME/.copilot` |
 
 (The Claude Code row exists for machines where only the VS Code extension is present, with no CLI
 install; when both exist, `safe_link` idempotency already handles the overlap.)
@@ -178,6 +198,8 @@ for root in $EXT_ROOTS; do
     case "$name" in
       google.geminicodeassist-*) echo "found: Gemini (extension $name in $root)" ;;
       anthropic.claude-code-*)   echo "found: Claude Code (extension $name in $root)" ;;
+      openai.chatgpt-*)          echo "found: OpenAI Codex (extension $name in $root)" ;;
+      github.copilot-chat-*)     echo "found: GitHub Copilot (extension $name in $root)" ;;
     esac
   done
 done
@@ -187,7 +209,7 @@ done
 # so nothing here is offered as an install target unless the user names one explicitly.
 for root in $EXT_ROOTS $JETBRAINS_ROOTS; do
   [ -d "$root" ] || continue
-  ls "$root" 2>/dev/null | grep -iE 'gemini|claude|copilot|codeium|windsurf|continue|cody|cursor|tabnine' | while read -r name; do
+  ls "$root" 2>/dev/null | grep -iE 'gemini|claude|codeium|windsurf|continue|cody|cursor|tabnine' | while read -r name; do
     echo "info: possible AI extension '$name' in $root"
   done
 done
@@ -207,14 +229,23 @@ Link `AGENTS.md` to each selected harness's user-wide instruction file.
 | Harness | Typical destination | Notes |
 |---------|---------------------|-------|
 | Claude Code | `$HOME/.claude/CLAUDE.md` | Claude loads the user `CLAUDE.md` |
-| Grok | User-wide agents file when supported, otherwise project `AGENTS.md` | Alternatively add `$AI_TOOLS` to the tool's config paths and ensure sessions read `$AI_TOOLS/AGENTS.md` |
-| Cursor | User rules / `AGENTS.md` location for the installed version | Confirm the current path before linking |
+| Grok | `$HOME/.grok/AGENTS.md` | Grok Build CLI auto-reads the `AGENTS.md` family at the user level |
+| Codex | `$HOME/.codex/AGENTS.md` | Codex reads `~/.codex/AGENTS.override.md` first if it exists, else `~/.codex/AGENTS.md`; never create, edit, or remove an existing `AGENTS.override.md` — it is user-authored and out of scope for `safe_link`/`safe_unlink` |
+| GitHub Copilot | `$HOME/.copilot/instructions/ai-tools.instructions.md` | Copilot's Agent Host reads every file under `~/.copilot/instructions/` recursively; plain Markdown works with no frontmatter for an always-applied global file |
 | Gemini | `$HOME/.gemini/GEMINI.md` | Detected via the google.geminicodeassist VS Code extension even without a gemini CLI on PATH; Gemini CLI's documented convention loads this as user-level context — confirm against the installed extension/CLI version before linking |
+| Cursor | Not linked | No confirmed, documented file path for Cursor's global "User Rules" as of this writing — Cursor's own docs describe it only as a Settings UI concept, not a file. Cursor already reads project-root `AGENTS.md` natively, so project-level coverage exists without this step; revisit once Cursor documents a stable path |
 | Generic | Point the tool at `$AI_TOOLS/AGENTS.md` | This file is the source of truth |
 
 ```bash
 safe_link "$AI_TOOLS/AGENTS.md" "$HOME/.claude/CLAUDE.md"
-safe_link "$AI_TOOLS/AGENTS.md" "$HOME/.gemini/GEMINI.md"   # if Gemini selected
+safe_link "$AI_TOOLS/AGENTS.md" "$HOME/.grok/AGENTS.md"      # if Grok selected
+
+# Codex: AGENTS.override.md always wins over AGENTS.md while it exists; link anyway as the fallback layer
+test -f "$HOME/.codex/AGENTS.override.md" && echo "NOTE: ~/.codex/AGENTS.override.md exists and takes precedence over AGENTS.md while present"
+safe_link "$AI_TOOLS/AGENTS.md" "$HOME/.codex/AGENTS.md"     # if Codex selected
+
+safe_link "$AI_TOOLS/AGENTS.md" "$HOME/.copilot/instructions/ai-tools.instructions.md"   # if GitHub Copilot selected
+safe_link "$AI_TOOLS/AGENTS.md" "$HOME/.gemini/GEMINI.md"    # if Gemini selected
 ```
 
 When a harness cannot use a symlink for instructions, offer a one-line include pointer instead of copying the file, so this repo stays the single source of truth.
@@ -227,7 +258,9 @@ Link each skill directory into the harness user skills root: `plan-ai-tools`, `d
 |---------|------------------|
 | Claude Code | `$HOME/.claude/skills/` |
 | Grok | `$HOME/.grok/skills/` |
-| Cursor | `$HOME/.cursor/skills/` (when skills are enabled) |
+| Codex | `$HOME/.codex/skills/` |
+| GitHub Copilot | `$HOME/.copilot/skills/` |
+| Cursor | `$HOME/.cursor/skills/` (confirmed user-level location per Cursor's docs; `~/.agents/skills/` is also documented as an equivalent shared location, left out of scope here to avoid linking the same skill twice into one harness) |
 
 ```bash
 for path in "$AI_TOOLS/skills"/*-ai-tools; do
@@ -235,6 +268,9 @@ for path in "$AI_TOOLS/skills"/*-ai-tools; do
   name=$(basename "$path")
   safe_link "$path" "$HOME/.claude/skills/$name"   # if Claude selected
   safe_link "$path" "$HOME/.grok/skills/$name"     # if Grok selected
+  safe_link "$path" "$HOME/.codex/skills/$name"    # if Codex selected
+  safe_link "$path" "$HOME/.copilot/skills/$name"  # if GitHub Copilot selected
+  safe_link "$path" "$HOME/.cursor/skills/$name"   # if Cursor selected
 done
 ```
 
@@ -250,8 +286,11 @@ not a silent gap, per the "skip it, report it" safety rule.
 
 ```bash
 readlink -f "$HOME/.claude/CLAUDE.md" 2>/dev/null
+readlink -f "$HOME/.grok/AGENTS.md" 2>/dev/null
+readlink -f "$HOME/.codex/AGENTS.md" 2>/dev/null
+readlink -f "$HOME/.copilot/instructions/ai-tools.instructions.md" 2>/dev/null
 readlink -f "$HOME/.gemini/GEMINI.md" 2>/dev/null
-ls -la "$HOME/.claude/skills" "$HOME/.grok/skills" 2>/dev/null
+ls -la "$HOME/.claude/skills" "$HOME/.grok/skills" "$HOME/.codex/skills" "$HOME/.copilot/skills" "$HOME/.cursor/skills" 2>/dev/null
 
 for path in "$AI_TOOLS/skills"/*-ai-tools; do
   test -f "$path/SKILL.md" && echo "skill ok: $(basename "$path")"
@@ -270,6 +309,7 @@ Report findings; remove nothing until the user confirms the targets.
 
 ```bash
 for root in "$HOME/.claude/skills" "$HOME/.grok/skills" "$HOME/.cursor/skills" \
+            "$HOME/.codex/skills" "$HOME/.copilot/skills" \
             "$HOME/.claude/agents" "$HOME/.grok/agents"; do
   [ -d "$root" ] || continue
   echo "=== $root ==="
@@ -282,7 +322,15 @@ done
 if [ -L "$HOME/.claude/CLAUDE.md" ]; then
   echo "instructions: $HOME/.claude/CLAUDE.md -> $(readlink "$HOME/.claude/CLAUDE.md")"
 fi
-
+if [ -L "$HOME/.grok/AGENTS.md" ]; then
+  echo "instructions: $HOME/.grok/AGENTS.md -> $(readlink "$HOME/.grok/AGENTS.md")"
+fi
+if [ -L "$HOME/.codex/AGENTS.md" ]; then
+  echo "instructions: $HOME/.codex/AGENTS.md -> $(readlink "$HOME/.codex/AGENTS.md")"
+fi
+if [ -L "$HOME/.copilot/instructions/ai-tools.instructions.md" ]; then
+  echo "instructions: $HOME/.copilot/instructions/ai-tools.instructions.md -> $(readlink "$HOME/.copilot/instructions/ai-tools.instructions.md")"
+fi
 if [ -L "$HOME/.gemini/GEMINI.md" ]; then
   echo "instructions: $HOME/.gemini/GEMINI.md -> $(readlink "$HOME/.gemini/GEMINI.md")"
 fi
@@ -299,6 +347,8 @@ for name in plan-ai-tools dev-ai-tools az-ai-tools gh-ai-tools gc-ai-tools \
             plan dev az gh gc; do   # legacy bare names included
   safe_unlink "$HOME/.claude/skills/$name"   # if Claude selected
   safe_unlink "$HOME/.grok/skills/$name"     # if Grok selected
+  safe_unlink "$HOME/.codex/skills/$name"    # if Codex selected
+  safe_unlink "$HOME/.copilot/skills/$name"  # if GitHub Copilot selected
   safe_unlink "$HOME/.cursor/skills/$name"   # if Cursor selected
 done
 ```
@@ -329,6 +379,9 @@ Only when the user wants the harness to stop loading this repo's `AGENTS.md`:
 
 ```bash
 safe_unlink "$HOME/.claude/CLAUDE.md"
+safe_unlink "$HOME/.grok/AGENTS.md"
+safe_unlink "$HOME/.codex/AGENTS.md"
+safe_unlink "$HOME/.copilot/instructions/ai-tools.instructions.md"
 safe_unlink "$HOME/.gemini/GEMINI.md"
 # Other harnesses: unlink only destinations created as links into $AI_TOOLS/AGENTS.md
 ```
@@ -338,7 +391,8 @@ If the instructions file is an include pointer rather than a symlink, edit out t
 ### 5. Verify removal
 
 ```bash
-for root in "$HOME/.claude/skills" "$HOME/.grok/skills" "$HOME/.cursor/skills"; do
+for root in "$HOME/.claude/skills" "$HOME/.grok/skills" "$HOME/.cursor/skills" \
+            "$HOME/.codex/skills" "$HOME/.copilot/skills"; do
   [ -d "$root" ] || continue
   echo "=== remaining ai-tools links in $root ==="
   find "$root" -maxdepth 1 -type l -print 2>/dev/null | while read -r p; do
@@ -368,7 +422,7 @@ One process covers every case: **update the source** to `origin/master`, then **
 ### 0. Preconditions
 
 ```bash
-export AI_TOOLS="${AI_TOOLS:-$HOME/.config/ai-tools}"
+export AI_TOOLS="${AI_TOOLS:-$HOME/.ai-tools}"
 test -d "$AI_TOOLS/.git" && test -f "$AI_TOOLS/AGENTS.md" && test -d "$AI_TOOLS/skills"
 ```
 
@@ -448,6 +502,9 @@ git -C "$AI_TOOLS" rev-parse HEAD origin/master   # expect the same SHA twice
 
 # Instructions link, including extension-only harnesses like Gemini
 readlink -f "$HOME/.claude/CLAUDE.md" 2>/dev/null
+readlink -f "$HOME/.grok/AGENTS.md" 2>/dev/null
+readlink -f "$HOME/.codex/AGENTS.md" 2>/dev/null
+readlink -f "$HOME/.copilot/instructions/ai-tools.instructions.md" 2>/dev/null
 readlink -f "$HOME/.gemini/GEMINI.md" 2>/dev/null
 
 # Skills present and linked
@@ -455,14 +512,14 @@ for path in "$AI_TOOLS/skills"/*-ai-tools; do
   [ -d "$path" ] || continue
   name=$(basename "$path")
   test -f "$path/SKILL.md" && echo "source ok: $name"
-  for root in "$HOME/.claude/skills" "$HOME/.grok/skills"; do
+  for root in "$HOME/.claude/skills" "$HOME/.grok/skills" "$HOME/.codex/skills" "$HOME/.copilot/skills" "$HOME/.cursor/skills"; do
     [ -L "$root/$name" ] && echo "link ok: $root/$name -> $(readlink "$root/$name")"
   done
 done
 
 # No legacy bare names should remain
 for name in plan dev az gh gc; do
-  for root in "$HOME/.claude/skills" "$HOME/.grok/skills"; do
+  for root in "$HOME/.claude/skills" "$HOME/.grok/skills" "$HOME/.codex/skills" "$HOME/.copilot/skills" "$HOME/.cursor/skills"; do
     [ -L "$root/$name" ] && echo "WARN legacy link still present: $root/$name"
   done
 done
@@ -481,4 +538,4 @@ Restart or reload the harness, then confirm a slash command for every skill unde
 
 ## Ownership
 
-Personal configuration repository for multi-tool AI workflows. If you host a clone elsewhere, adjust the paths and keep `$AI_TOOLS` consistent across installation, removal, and update.
+Personal configuration repository for multi-tool AI workflows, kept at user level on every OS — never inside a project repository. If you host a clone elsewhere, adjust `$AI_TOOLS` and keep it consistent across installation, removal, and update; see [Cross-platform paths](#cross-platform-paths) for translating the bash helpers to a native Windows shell.
