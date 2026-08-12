@@ -137,7 +137,7 @@ safe_unlink() {
 
 ### 0. Preconditions
 
-The repository is cloned at `$HOME/.ai-tools`, or another path the user names — always user-level, never inside a project. `$AI_TOOLS` defaults to `$HOME/.ai-tools`; resolve `$HOME` (or `%USERPROFILE%` on native Windows) to the current user's real home. See [Cross-platform paths](#cross-platform-paths) above for the Windows-shell equivalents of every command in this document.
+The repository is cloned at `$HOME/.ai-tools`, or another path the user names — always user-level, never inside a project. `$AI_TOOLS` defaults to `$HOME/.ai-tools`; resolve `$HOME` to the current user's real home. See [Cross-platform paths](#cross-platform-paths) above for the Windows-shell equivalent and every other command translation in this document.
 
 ```bash
 export AI_TOOLS="${AI_TOOLS:-$HOME/.ai-tools}"
@@ -240,7 +240,7 @@ Link `AGENTS.md` to each selected harness's user-wide instruction file.
 safe_link "$AI_TOOLS/AGENTS.md" "$HOME/.claude/CLAUDE.md"
 safe_link "$AI_TOOLS/AGENTS.md" "$HOME/.grok/AGENTS.md"      # if Grok selected
 
-# Codex: AGENTS.override.md always wins over AGENTS.md while it exists; link anyway as the fallback layer
+# Codex: link anyway as the fallback layer even though override.md wins while present (see table above)
 test -f "$HOME/.codex/AGENTS.override.md" && echo "NOTE: ~/.codex/AGENTS.override.md exists and takes precedence over AGENTS.md while present"
 safe_link "$AI_TOOLS/AGENTS.md" "$HOME/.codex/AGENTS.md"     # if Codex selected
 
