@@ -4,6 +4,8 @@
 
 A **harness-agnostic** home for shared AI coding configuration: one global `AGENTS.md` plus the skills `/plan-ai-tools`, `/dev-ai-tools`, `/az-ai-tools`, `/gh-ai-tools`, and `/gc-ai-tools`. It lives at a user-level directory — `$HOME/.ai-tools/` on Linux/Mac, or the equivalent user-level location on Windows — and is linked into whichever AI CLIs or IDEs you use (Claude Code, Grok, Cursor, Gemini, OpenAI Codex, GitHub Copilot, and similar).
 
+This repo's `AGENTS.md` is the linked global source of truth; `$HOME/AGENTS.md` (`%USERPROFILE%\AGENTS.md` on Windows) is a separate user overlay that agents are instructed to read after it — never a symlink of this file.
+
 Goals:
 
 - One global `AGENTS.md` built on **agent categories** (`planner`, `implementer`, `mechanical`), so any model can map roles without hard-coded vendor model names
@@ -73,6 +75,7 @@ These apply to [Installation](#installation), [Removal](#removal), and [Reinstal
 - **Never** `rm -rf` a harness skills root; remove individual links only.
 - Remove a destination only when it is a symlink resolving under `$AI_TOOLS`.
 - Never touch vendor bundles such as `~/.grok/bundled/`, unrelated user skills, or a repository's own `AGENTS.md` describing that application's architecture.
+- **Never overwrite, unlink, edit, or delete `$HOME/AGENTS.md`** (`%USERPROFILE%\AGENTS.md` / `$env:USERPROFILE\AGENTS.md` on Windows). It is user-authored (or an empty placeholder created only when missing) and lives outside `$AI_TOOLS`. Do not symlink it to `$AI_TOOLS/AGENTS.md`.
 - Ask which harnesses are in scope before changing anything, and report findings first.
 
 Helpers used by every section below:
@@ -250,7 +253,30 @@ safe_link "$AI_TOOLS/AGENTS.md" "$HOME/.gemini/GEMINI.md"    # if Gemini selecte
 
 When a harness cannot use a symlink for instructions, offer a one-line include pointer instead of copying the file, so this repo stays the single source of truth.
 
-### 4. Install skills
+### 4. Ensure user-level `$HOME/AGENTS.md`
+
+Create an empty user overlay file if it is missing. This is **not** a harness link and must **not** use `safe_link`. Agents are instructed (in this repo's `AGENTS.md`) to read this file after the global defaults; it overrides them when the two conflict, and a project's own `AGENTS.md` / `README.md` still wins over both.
+
+| POSIX | Windows |
+|---|---|
+| `$HOME/AGENTS.md` | `%USERPROFILE%\AGENTS.md` / `$env:USERPROFILE\AGENTS.md` |
+
+```bash
+if [ -e "$HOME/AGENTS.md" ]; then
+  echo "ok (already present): $HOME/AGENTS.md"
+else
+  : > "$HOME/AGENTS.md"
+  echo "created (empty): $HOME/AGENTS.md"
+fi
+```
+
+Rules for this step:
+
+- If the path exists (file or otherwise), leave it untouched — never overwrite, replace, truncate, or symlink it to `$AI_TOOLS/AGENTS.md`.
+- Do **not** ask whether the user wants to add instructions.
+- Write or edit contents only if the user later asks for that **directly** (not during install).
+
+### 5. Install skills
 
 Link each skill directory into the harness user skills root: `plan-ai-tools`, `dev-ai-tools`, `az-ai-tools`, `gh-ai-tools`, `gc-ai-tools`.
 
@@ -282,7 +308,7 @@ extension itself) — incompatible with this repo's directory-based `SKILL.md` s
 installation for Gemini is out of scope until a translation exists; this is a stated limitation,
 not a silent gap, per the "skip it, report it" safety rule.
 
-### 5. Verify
+### 6. Verify
 
 ```bash
 readlink -f "$HOME/.claude/CLAUDE.md" 2>/dev/null
@@ -290,6 +316,8 @@ readlink -f "$HOME/.grok/AGENTS.md" 2>/dev/null
 readlink -f "$HOME/.codex/AGENTS.md" 2>/dev/null
 readlink -f "$HOME/.copilot/instructions/ai-tools.instructions.md" 2>/dev/null
 readlink -f "$HOME/.gemini/GEMINI.md" 2>/dev/null
+# User overlay (not a harness link): expect a regular file at $HOME/AGENTS.md
+test -e "$HOME/AGENTS.md" && echo "user overlay present: $HOME/AGENTS.md" || echo "WARN: missing $HOME/AGENTS.md"
 ls -la "$HOME/.claude/skills" "$HOME/.grok/skills" "$HOME/.codex/skills" "$HOME/.copilot/skills" "$HOME/.cursor/skills" 2>/dev/null
 
 for path in "$AI_TOOLS/skills"/*-ai-tools; do
@@ -353,7 +381,7 @@ for name in plan-ai-tools dev-ai-tools az-ai-tools gh-ai-tools gc-ai-tools \
 done
 ```
 
-No Gemini line here: no skills were ever linked for Gemini (see Installation §4's incompatibility
+No Gemini line here: no skills were ever linked for Gemini (see Installation §5's incompatibility
 note), so there is nothing to unlink for it in this step.
 
 If `$AI_TOOLS/skills` was added to a harness scan path (Grok `[skills] paths`), remove **only that entry** when asked — never wipe the config file.
@@ -375,7 +403,7 @@ fi
 
 ### 4. Remove the global instructions link, optional
 
-Only when the user wants the harness to stop loading this repo's `AGENTS.md`:
+Only when the user wants the harness to stop loading this repo's `AGENTS.md`. Unlink only harness destinations that are links into `$AI_TOOLS/AGENTS.md`. **Do not** `safe_unlink` or otherwise touch `$HOME/AGENTS.md` — it is not a harness link and is never part of removal.
 
 ```bash
 safe_unlink "$HOME/.claude/CLAUDE.md"
@@ -384,6 +412,7 @@ safe_unlink "$HOME/.codex/AGENTS.md"
 safe_unlink "$HOME/.copilot/instructions/ai-tools.instructions.md"
 safe_unlink "$HOME/.gemini/GEMINI.md"
 # Other harnesses: unlink only destinations created as links into $AI_TOOLS/AGENTS.md
+# Never: safe_unlink "$HOME/AGENTS.md"
 ```
 
 If the instructions file is an include pointer rather than a symlink, edit out that one line instead of deleting the file.
@@ -406,10 +435,10 @@ Expected: no links into `$AI_TOOLS` for the cleaned harnesses. Restart the harne
 
 ### 6. Remove the repository clone, optional
 
-Only when the user explicitly asks to delete the config tree itself:
+Only when the user explicitly asks to delete the config tree itself. This never includes `$HOME/AGENTS.md`.
 
 ```bash
-# Confirm the path first — destructive
+# Confirm the path first — destructive; does not touch $HOME/AGENTS.md
 # rm -rf "$AI_TOOLS"
 ```
 
@@ -475,7 +504,7 @@ git reset --hard origin/master
 
 Notes:
 
-- This is destructive **inside `$AI_TOOLS` only**: it discards local commits on `master` and uncommitted edits. It never touches harness config outside this directory.
+- This is destructive **inside `$AI_TOOLS` only**: it discards local commits on `master` and uncommitted edits. It never touches harness config outside this directory, and never touches `$HOME/AGENTS.md`.
 - If the user has local work they care about, stop, show `git status` and `git log`, and get explicit approval before `reset --hard`, or help them branch or stash first.
 - If the default branch is ever renamed (for example `main`), use that name only once the user or remote confirms it.
 - Skip the reset **only** when the user explicitly asks for re-link with no git update; still verify `AGENTS.md` and `skills/` exist.
@@ -493,6 +522,8 @@ Run [Removal](#removal) steps 2–4 for the harnesses in scope, including legacy
 
 Run the [Installation](#installation) link steps for the same harnesses — discovery is optional when scope was already confirmed. Prefer listing `$AI_TOOLS/skills/*-ai-tools` after the reset over a hard-coded list, since the set may have changed. `safe_link` stays non-destructive: an existing destination that is not already the correct link is skipped and reported.
 
+Also re-run Installation §4 (ensure user-level `$HOME/AGENTS.md`): create it empty only if missing; if present, leave it untouched. Do not ask the user to fill it or add instructions.
+
 ### 5. Verify update and reinstall
 
 ```bash
@@ -506,6 +537,9 @@ readlink -f "$HOME/.grok/AGENTS.md" 2>/dev/null
 readlink -f "$HOME/.codex/AGENTS.md" 2>/dev/null
 readlink -f "$HOME/.copilot/instructions/ai-tools.instructions.md" 2>/dev/null
 readlink -f "$HOME/.gemini/GEMINI.md" 2>/dev/null
+
+# User overlay (not a harness link)
+test -e "$HOME/AGENTS.md" && echo "user overlay present: $HOME/AGENTS.md" || echo "WARN: missing $HOME/AGENTS.md"
 
 # Skills present and linked
 for path in "$AI_TOOLS/skills"/*-ai-tools; do
