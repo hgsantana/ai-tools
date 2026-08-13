@@ -39,7 +39,7 @@ Skills and workflows name **categories**, never model product names. The running
 
 Once per session, before the first categorized work — any skill invocation, any spawn, any change-flow step — resolve all three categories against what the harness actually exposes. Each resolves to a **model or a bundled skill**: rule 5 governs the choice within a category, rule 6 the case where a skill rather than a model carries the role. Resolve once, reuse it for the session, and re-resolve only if the roster changes mid-session.
 
-The resolved map is context, never a file. Restate it **in full** inside every spawn prompt: a spawned planner needs it to spawn its own implementers and mechanicals, and it starts with none of your context.
+The resolved map is context, never a file. Restate it **in full** inside every spawn prompt: a spawned agent starts with none of your context and may need it to spawn its own subagents.
 
 A pure question that spawns nothing and invokes no skill does not trigger resolution. The entry gate below catches anything that slips through.
 
@@ -48,27 +48,25 @@ A pure question that spawns nothing and invokes no skill does not trigger resolu
 A skill declares the category it requires. Before executing one, check yourself against that requirement:
 
 1. **You satisfy it** — run the skill yourself, spawning the subagents it names. Being the best available option for the category means you are the one who runs it; never spawn a copy of yourself.
-2. **You do not satisfy it** — spawn the required category and become a **relay layer** between it and the user. You do not execute the skill's workflow at all.
-3. **You are the agent that was spawned to run the skill** — the gate is satisfied by construction. Go straight to the workflow, never re-run this gate, never delegate the skill onward.
-4. **You cannot enumerate the roster and cannot spawn** — run the skill yourself and say so in chat, naming the requirement you could not resolve.
+2. **You do not, or cannot tell** — the user decides. Do not start the workflow; ask first, per **Under-qualified disclosure** below.
 
-### Delegation targets
+A skill runs in the session that received it, or it does not run: never hand a whole skill to a spawned agent, which has no channel to the user and would make every question cross the boundary twice. Subagents spawned *inside* a running skill are the skill's own workflow and are untouched by this.
 
-Whatever the resolution mapped the required category to:
+### Under-qualified disclosure
 
-- **A model** — spawn a fresh agent on it with the skill invocation.
-- **A bundled skill of the harness** — invoke that skill with the user's request **and** the requirements of the skill being delegated. The bundled skill follows its own rules and those requirements together; ours never replace its own.
+Before doing anything the skill would do, send one chat message, in the user's language, carrying all four:
 
-Either target starts with zero context. The delegation prompt carries the user's request **in full and never summarized**, the working directory or repository, the resolved category map, every decision already settled with the user, and the language the user writes in — so what comes back is ready to relay unchanged.
+1. **The gap** — which category the skill requires, and that this session does not satisfy it (or that you cannot tell).
+2. **Who is running** — the concrete model behind this session, named. If the harness genuinely does not expose it, say that instead of guessing.
+3. **The question** — run the skill anyway with this model? Say what that category risks: a planner's decomposition and acceptance mistakes propagate into every downstream stage.
+4. **The way out** — how to switch model in *this* harness (its picker, command, or setting, named concretely), and which available model or bundled skill best fits the required category here, per rules 5 and 6.
 
-### Relay layer
+Then wait.
 
-A spawned agent has no channel to the user. While delegating, you are that channel and nothing else.
+- **Authorized** — run the skill yourself, in full: no degraded mode, no repeated warnings. The authorization holds for the rest of the session, across skills; ask again only if the model changes.
+- **Declined, or unanswered** — stop. Nothing the skill would have done happens: no exploration, no writes, no spawns. The user switches model and invokes it again.
 
-- Pass its questions, drafts, and authorization requests to the user **verbatim**; pass the user's answers back **verbatim**. Never summarize, reorder, rewrite, answer, or approve on either side's behalf — an approval the Security rules require is the user's to give, never the relay's.
-- Resume the same agent when the harness supports it. When it does not, spawn a new one with the original request, the path to its context file, and the accumulated question-and-answer history.
-- The specialist keeps its working context in `<plans-root>/dev/<slug>-planning.md` — what it explored, what it found, what is settled, the current draft. Relay the path, never the contents.
-- Add nothing of your own beyond the spawn announcements rule 7 requires.
+Naming the model is chat-only disclosure, like rule 7: it never enters a skill, prompt, or plan file.
 
 ## Change flow
 
@@ -89,17 +87,17 @@ Apply the flow to any request that changes product code, tests guarding product 
 
 ### Steps
 
-1. Run `/plan-ai-tools`. Its own entry gate decides who executes it — you may end up relaying between the user and a spawned planner instead of planning yourself. It owns planning detail — source of truth, per-type tests, docs, commit boundaries, execution graph, multi-file stage layout, `.gitignore`. Do not restate that machinery here and do not touch product code while planning.
+1. Run `/plan-ai-tools`. Its own entry gate checks this session against **planner** and asks the user before running under-qualified. It owns planning detail — source of truth, per-type tests, docs, commit boundaries, execution graph, multi-file stage layout, `.gitignore`. Do not restate that machinery here and do not touch product code while planning.
 2. That skill iterates the plan with the user and saves it. **Plan acceptance is this flow's single approval point**: the acceptance request must state that accepting starts implementation immediately, and name the plans the run will cover.
 3. If the user does not accept, stop — the saved plan is the deliverable.
-4. On acceptance, run `/dev-ai-tools` (bare form) right away: no second confirmation, no hand-implementing outside the skill. Its entry gate decides who executes it, the same way.
+4. On acceptance, run `/dev-ai-tools` (bare form) right away: no second confirmation, no hand-implementing outside the skill. Its entry gate applies the same check.
 5. `/dev-ai-tools` owns implementation, validation, correction rounds, plan status updates, and moving finished files to `plans/finished/`. Do not re-validate its work or duplicate its logic.
 
 Continuity between plan and implementation exists **only here**. A direct `/plan-ai-tools` invocation always ends with the plan on disk and never implements.
 
 ### Interaction contract
 
-- Every question, clarification, and choice belongs to the planning phase, before implementation starts.
+- Every question, clarification, and choice belongs to the planning phase, before implementation starts. An entry-gate question comes earlier still: before the workflow starts, never inside it, and it authorizes **who runs**, not the work.
 - Once implementation starts, run to completion unattended. Record blockers on the plan (status `E`) and report them at the end instead of stopping to ask.
 - The security gates below always override this contract. A plan needing one must surface it during planning.
 
@@ -127,7 +125,7 @@ Continuity between plan and implementation exists **only here**. A direct `/plan
 ## Plans location
 
 - Plans live in the repository's `plans/` directory: local working state, kept out of git unless the project says otherwise. `<plans-root>` elsewhere in this file means that directory, or the user-level fallback below when there is no repository.
-- `<plans-root>/dev/` holds `/dev-ai-tools` ad-hoc briefs and correction feedback (Mode B), plus the `<slug>-planning.md` working context a delegated specialist keeps while a relay layer is in place; never treated as plan-queue input.
+- `<plans-root>/dev/` holds `/dev-ai-tools` ad-hoc briefs and correction feedback (Mode B); never treated as plan-queue input.
 - Finished base and stage files move to `plans/finished/`.
 - Never commit `plans/` unless the project explicitly tracks it.
 - When the current working directory is not inside a git repository, save plans to a user-level directory outside any project instead — `$HOME/.ai-tools-plans` on Linux/Mac, or the equivalent user-level location on Windows (e.g. `%USERPROFILE%\.ai-tools-plans`) — creating it if it does not exist.

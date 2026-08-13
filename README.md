@@ -51,11 +51,11 @@ The safety semantics — idempotent, never overwrite a non-ai-tools destination,
 | **implementer** | Write and edit code for one specified stage or brief |
 | **mechanical** | Fully specified low-ambiguity work and evidence gathering |
 
-A category is what an agent **is**, not what it was asked to do. Receiving a request grants no category; the entry gate below is what puts an agent in the role a skill requires.
+A category is what an agent **is**, not what it was asked to do. Receiving a request grants no category; the entry gate below checks the session against the category a skill requires, and asks the user before running under-qualified.
 
 ### Skill authoring standard
 
-Every `SKILL.md` in this repository — the five that exist and any added later — **must** open its body with the entry-gate block below, verbatim, changing only the category it declares:
+Every `SKILL.md` in this repository — the five that exist and any added later — **must** open its body with the entry-gate block below, verbatim, changing only the category it declares. The gate is absolute: nothing precedes it but the frontmatter and the H1 title — no purpose blurb, no usage note. Whatever the skill used to say up front moves below the block.
 
 ```markdown
 ## Entry gate — required category: planner
@@ -64,15 +64,18 @@ Before anything else in this skill:
 
 1. Identify whether you satisfy **planner** (global `AGENTS.md` → Agent categories).
 2. **You satisfy it** — run this skill here, spawning the subagents it names.
-3. **You do not** — spawn the harness's planner (a model, or a bundled skill invoked with this skill's
-   requirements added to its own rules), hand it this skill and the user's request in full, and become a
-   relay layer: pass messages verbatim in both directions, summarizing nothing, approving nothing.
-4. **You are the agent spawned to run this skill** — the gate is already satisfied. Go straight to the
-   workflow and never delegate this skill onward.
-5. **Roster not enumerable and no spawning available** — run here and say so in chat.
+3. **You do not, or cannot tell** — never delegate this skill and never start its workflow yet. Send one
+   chat message, in the user's language: the required category is not met; the model running this session,
+   named (or that the harness does not expose it); the question — run it anyway?; and how to switch model
+   in this harness plus which model or bundled skill fits **planner** best here. Then wait.
+4. Run here only if the user authorizes it. That authorization holds for the rest of the session and is
+   asked again only if the model changes. Declined or unanswered — stop: no exploration, no writes, no
+   spawns.
 ```
 
 It is duplicated into every skill rather than referenced, because skills can be installed without this repo's `AGENTS.md` being linked into the harness — each one has to carry its own gate. Identical wording is the point: any drift shows up in a diff.
+
+A skill runs in the session that received it, or it does not run. Delegating a whole skill to a spawned agent — the earlier design — was dropped for cost: relaying an interactive workflow sends every question and answer across the boundary twice, buying nothing the user's own model choice does not.
 
 **Choosing the declared category:** the lowest category that can carry the skill's *own* decisions. A skill that can run destructive or externally visible commands requires **planner**, because approving those is planner judgment — which is why all five skills here declare it. Exploration subagents a planner spawns stay read-only and return facts, never verdicts.
 
@@ -80,7 +83,7 @@ It is duplicated into every skill rather than referenced, because skills can be 
 
 `/plan-ai-tools` iterates a plan with the user and saves it. Accepting the plan is the **only** approval point: from there `/dev-ai-tools` runs to completion unattended, recording detail in the plan files and reporting a short summary at the end. A direct `/plan-ai-tools` invocation always stops at the saved plan and never implements.
 
-Each skill's entry gate decides who executes it, so the session that received the request may end up relaying between the user and a spawned specialist instead of running the workflow itself. A relay passes messages verbatim in both directions and never approves anything on the user's behalf.
+Each skill's entry gate checks the session against the category it declares. Satisfied, the session runs the skill. Not satisfied — or undecidable — it names its own model, asks whether to run anyway, and says how to switch model and to what. Authorized, it runs in full and the answer holds for the session; declined, nothing happens.
 
 ### Language
 
@@ -100,8 +103,7 @@ plans/
   <slug>.md           # base: status table, goal, execution graph, stage links
   <slug>-1.md         # stage 1 detail + implementation log
   <slug>-2.md
-  dev/                # /dev-ai-tools ad-hoc briefs and feedback,
-                      # plus <slug>-planning.md working context under a relay
+  dev/                # /dev-ai-tools ad-hoc briefs and feedback
   finished/           # completed stage and base files
 ```
 

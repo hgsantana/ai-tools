@@ -10,24 +10,23 @@ argument-hint: "[plans [path…] | implementation request]"
 
 # Dev
 
-Harness-agnostic implementation skill.
-
 ## Entry gate — required category: planner
 
 Before anything else in this skill:
 
 1. Identify whether you satisfy **planner** (global `AGENTS.md` → Agent categories).
 2. **You satisfy it** — run this skill here, spawning the subagents it names.
-3. **You do not** — spawn the harness's planner (a model, or a bundled skill invoked with this skill's
-   requirements added to its own rules), hand it this skill and the user's request in full, and become a
-   relay layer: pass messages verbatim in both directions, summarizing nothing, approving nothing.
-4. **You are the agent spawned to run this skill** — the gate is already satisfied. Go straight to the
-   workflow and never delegate this skill onward.
-5. **Roster not enumerable and no spawning available** — run here and say so in chat.
+3. **You do not, or cannot tell** — never delegate this skill and never start its workflow yet. Send one
+   chat message, in the user's language: the required category is not met; the model running this session,
+   named (or that the harness does not expose it); the question — run it anyway?; and how to switch model
+   in this harness plus which model or bundled skill fits **planner** best here. Then wait.
+4. Run here only if the user authorizes it. That authorization holds for the rest of the session and is
+   asked again only if the model changes. Declined or unanswered — stop: no exploration, no writes, no
+   spawns.
 
-**The agent running this skill is planner-category**, guaranteed by that gate, and it holds orchestration and judgment: it never writes production or test code in the target repository while this skill is active. Code goes to **implementer**; evidence gathering and mechanical text go to **mechanical**.
+**The agent running this skill holds the planner role**, settled by that gate: it orchestrates and judges, and never writes production or test code in the target repository while this skill is active. Code goes to **implementer**; evidence gathering and mechanical text go to **mechanical**.
 
-See the global `AGENTS.md` for category definitions. Map categories to whatever subagents or models the harness provides; never require a vendor-specific agent name.
+Harness-agnostic implementation skill: see the global `AGENTS.md` for category definitions, and map categories to whatever subagents or models the harness provides; never require a vendor-specific agent name.
 
 ## Routing
 
@@ -51,7 +50,6 @@ This skill runs **unattended**. The user already approved the work before it sta
 - Detail goes to the plan files: stage steps, implementation logs, validation notes, diffs, command output, failure reports. Never paste them into chat.
 - No progress narration. No per-stage chat updates.
 - Chat gets one short summary at the end, in the user's language — per plan, one line of stage counts by status, plus paths to read for detail, plus any `E` stage with its one-line cause and the recommended recovery. Plan files, logs, and implementer prompts follow the global Disk rule in `AGENTS.md` (concise English unless an exception applies).
-- Under a relay, that summary is the only thing the run sends back through it, and it is passed to the user unchanged. Write it ready to read.
 
 ## Division of labor
 
@@ -144,7 +142,7 @@ The base plan carries the status table created by `/plan-ai-tools`, which holds 
 
 1. Derive a kebab-case `<slug>` from the request.
 2. If a base plan under `plans/` already covers it, run Mode A for that plan instead.
-3. Ask clarifying questions only here, before any implementer starts; after that the run is unattended. This is the skill's one interactive point: under a relay, address the user directly in the user's language, phrased to be passed on as written, and treat the answer that comes back as the user's own words.
+3. Ask clarifying questions only here, before any implementer starts; after that the run is unattended. This is the skill's one interactive point.
 4. Explore with **mechanical** or the harness explore type until the paths are real.
 5. Write `plans/dev/<slug>-brief.md` — a handoff, not a base plan. Minimum: the original request verbatim, goal, context, source of truth, tasks with paths, tests by type, docs, acceptance criteria, commits, and the report the implementer owes the planner.
 6. Spawn an **implementer** on the brief. If the work is too large for one brief, split it into several briefs yourself and sequence them — do not call `/plan-ai-tools`.
@@ -183,5 +181,5 @@ An implementer report and a `V` status are claims, not proof. A green build and 
 - Only **implementer** writes repository code, plus the status and log updates specified above.
 - **planner** does not implement; it sets `TV` / `E` / `F` and commits after validation.
 - Never chain into `/plan-ai-tools`. If an `E` stage needs a redesign, say so in the final summary and let the user start a new plan.
-- If you are the agent the entry gate spawned to run this skill, never delegate it onward. That is about who runs **this** skill; the rule above is about which skill runs next.
+- Never delegate this skill to another agent; the entry gate decides whether it runs here or does not run. That is about who runs **this** skill; the rule above is about which skill runs next.
 - Do not use this skill for pure question answering.

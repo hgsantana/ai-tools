@@ -8,22 +8,23 @@ description: >
 
 # Google Cloud CLI (gcloud)
 
-Use the `gcloud` CLI for Google Cloud inventory, cost, and operations work.
-
 ## Entry gate — required category: planner
 
 Before anything else in this skill:
 
 1. Identify whether you satisfy **planner** (global `AGENTS.md` → Agent categories).
 2. **You satisfy it** — run this skill here, spawning the subagents it names.
-3. **You do not** — spawn the harness's planner (a model, or a bundled skill invoked with this skill's
-   requirements added to its own rules), hand it this skill and the user's request in full, and become a
-   relay layer: pass messages verbatim in both directions, summarizing nothing, approving nothing.
-4. **You are the agent spawned to run this skill** — the gate is already satisfied. Go straight to the
-   workflow and never delegate this skill onward.
-5. **Roster not enumerable and no spawning available** — run here and say so in chat.
+3. **You do not, or cannot tell** — never delegate this skill and never start its workflow yet. Send one
+   chat message, in the user's language: the required category is not met; the model running this session,
+   named (or that the harness does not expose it); the question — run it anyway?; and how to switch model
+   in this harness plus which model or bundled skill fits **planner** best here. Then wait.
+4. Run here only if the user authorizes it. That authorization holds for the rest of the session and is
+   asked again only if the model changes. Declined or unanswered — stop: no exploration, no writes, no
+   spawns.
 
 ## Rules
+
+Use the `gcloud` CLI for Google Cloud inventory, cost, and operations work.
 
 - Freely use `gcloud` for **read-only / query** operations (list, describe, query costs).
 - You may **suggest** creating, modifying, or removing resources; only the user decides.
@@ -40,7 +41,7 @@ The planner running this skill may spawn **mechanical** or **implementer** subag
 - Strictly read-only. Query commands only — never create, modify, or remove anything.
 - They return facts, never verdicts. They do not judge what should change.
 - Only the planner decides on a mutating command and runs it, after presenting cost, risk, and reason, and getting explicit authorization for that specific action.
-- When the planner is itself a spawned agent, that authorization request travels the relay verbatim. The relay never approves in the user's place.
+- An entry-gate authorization to run this skill is not authorization to mutate anything. Every mutating action still needs its own explicit approval.
 
 ## Useful commands
 
