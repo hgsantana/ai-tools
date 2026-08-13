@@ -49,6 +49,17 @@ Gathering agents return **facts**, not verdicts. Re-evaluate any "it looks corre
 
 **Hard limit:** 1 initial attempt + up to 3 correction rounds per stage or task, then set `E` and move on.
 
+## Plan intake (planner, once per plan)
+
+Before dispatching the first stage of a base plan, the planner loads that plan **in full**: the base file plus every stage file belonging to it — including stages already `F`, whose files live in `plans/finished/<slug>-<n>.md`. Read those files, do not skim them.
+
+- Scope is the base plan about to run: `plans/<slug>-*.md` plus `plans/finished/<slug>-*.md`. Never another plan's stages, never the rest of `plans/finished/**`, never `plans/dev/**`.
+- Skip whatever is already in context — if this session just produced the plan, its stages are loaded; read only the files that are missing.
+- Do it **once**, at the start of that plan's execution. Do not re-read stage files per wave, per spawn, or per correction round; work from context and re-open only the single file a validation or correction round actually needs.
+- When the run covers several base plans, do the intake per plan, at the moment that plan starts — never all plans up front.
+
+Why: the planner authors every spawn prompt, and a prompt is only as good as its author's picture of the whole plan — what finished stages already delivered, what later stages will assume, which files are already spoken for. This context stays with the planner; it never widens what a spawn receives.
+
 ## Context isolation (token discipline)
 
 When spawning an **implementer** for a stage, give it **only**:
@@ -57,6 +68,8 @@ When spawning an **implementer** for a stage, give it **only**:
 2. The single stage file `plans/<slug>-<n>.md`
 
 Instruct it not to open other stage files, other base plans, or `plans/finished/**` unless the assigned stage file explicitly lists a path as a dependency artifact (rare). Never paste other stages into the prompt. This is mandatory: other stages stay out of context.
+
+Plan intake does not widen this budget. Carry forward only what the stage genuinely needs, distilled into a couple of lines of the prompt — an interface a finished stage produced, a convention set earlier, a file another stage owns. Never attach or quote other stage files to do it.
 
 ## Status protocol
 
@@ -96,7 +109,7 @@ The base plan carries the status table created by `/plan-ai-tools`, which holds 
 4. Ensure `plans/` is in `.gitignore`.
 5. Check `git status --short`. If the worktree is dirty, note it in the final summary and stage commits **path by path** for the files each stage touched — never `git add -A`, so pre-existing work stays out of the commits.
 6. Order plans oldest first unless extra instructions say otherwise. For each base plan:
-   1. Read **only that base plan** for its execution graph and status table.
+   1. Do the Plan intake for that base plan — base file plus all of its stage files, finished ones included. Take the execution graph and status table from the base file.
    2. Build stage waves from the graph. Skip stages already `F`; leave `E` stages for the end.
    3. Run each wave: **sequential** stages one after another; **parallel-safe** stages as one batch of **implementer** spawns, never two implementers on the same files. Each gets base + one stage file.
    4. When an implementer returns `V`, validate by reading the actual diff and judging it against the plan (see Validation). Do not accept on build/test success alone.
