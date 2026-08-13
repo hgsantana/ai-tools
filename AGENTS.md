@@ -6,10 +6,13 @@ Harness-agnostic, user-wide rules for any AI coding tool (Claude Code, Grok, Cur
 
 Two destinations, two rules.
 
-- **Chat — the user's language.** Everything addressed to the user: summaries, what is running now, which agent you are spawning and why, questions, plan iteration, and the plan as presented for acceptance. Match the language the user writes in, and follow them if they switch.
-- **Disk — concise English.** Everything written into a repository: code, comments, commit messages, documentation, plan and stage files, briefs, implementation logs, and the prompts handed to subagents. Use another language only when the user explicitly asks, or when the task itself is translation.
+- **Chat — the user's language.** Everything addressed to the user: summaries, what is running now, which agent you are spawning and why, questions, plan iteration, and the plan as presented for acceptance. Match the language the user writes in, and follow them if they switch. Spawn announcements stay in the user's language.
+- **Disk — concise English by default.** Everything written into a repository: code, comments, commit messages, documentation, plan and stage files, briefs, implementation logs, and the prompts handed to subagents. Any one of these exceptions drops the English requirement:
+  1. The user explicitly names another language.
+  2. The task itself is translation — write in the translation's target language.
+  3. The **working repository** is already in another language. Heuristic, in order: that repository's `AGENTS.md` / `README.md` prose; then the dominant language of comments and docs in the files being edited. If mixed or unclear, stay English. The working repository is the project being changed — never treat `$HOME/.ai-tools` being English as a reason to write English elsewhere.
 
-So a plan is discussed in the user's language and stored in English. Translating for the chat is expected and never changes what lands on disk.
+When no exception applies, chat is translated to English on disk. When an exception applies, disk matches that language, not English. These exceptions override every later restatement (skills, README, future agents).
 
 ## Agent categories
 
