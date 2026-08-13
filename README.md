@@ -8,7 +8,7 @@ This repo's `AGENTS.md` is the linked global source of truth; `$HOME/AGENTS.md` 
 
 Goals:
 
-- One global `AGENTS.md` built on **agent categories** (`planner`, `implementer`, `mechanical`), so any model can map roles without hard-coded vendor model names
+- One global `AGENTS.md` built on **agent categories** (`planner`, `implementer`, `mechanical`), so any model can map roles without hard-coded vendor model names — each session resolves the three against its own harness once, to a model or a bundled skill
 - Skills that behave the same across tools: multi-file plans, token-efficient stage execution, safe cloud and GitHub CLIs
 - Install by **symlinks**, never by forked copies that drift
 
@@ -51,9 +51,36 @@ The safety semantics — idempotent, never overwrite a non-ai-tools destination,
 | **implementer** | Write and edit code for one specified stage or brief |
 | **mechanical** | Fully specified low-ambiguity work and evidence gathering |
 
+A category is what an agent **is**, not what it was asked to do. Receiving a request grants no category; the entry gate below is what puts an agent in the role a skill requires.
+
+### Skill authoring standard
+
+Every `SKILL.md` in this repository — the five that exist and any added later — **must** open its body with the entry-gate block below, verbatim, changing only the category it declares:
+
+```markdown
+## Entry gate — required category: planner
+
+Before anything else in this skill:
+
+1. Identify whether you satisfy **planner** (global `AGENTS.md` → Agent categories).
+2. **You satisfy it** — run this skill here, spawning the subagents it names.
+3. **You do not** — spawn the harness's planner (a model, or a bundled skill invoked with this skill's
+   requirements added to its own rules), hand it this skill and the user's request in full, and become a
+   relay layer: pass messages verbatim in both directions, summarizing nothing, approving nothing.
+4. **You are the agent spawned to run this skill** — the gate is already satisfied. Go straight to the
+   workflow and never delegate this skill onward.
+5. **Roster not enumerable and no spawning available** — run here and say so in chat.
+```
+
+It is duplicated into every skill rather than referenced, because skills can be installed without this repo's `AGENTS.md` being linked into the harness — each one has to carry its own gate. Identical wording is the point: any drift shows up in a diff.
+
+**Choosing the declared category:** the lowest category that can carry the skill's *own* decisions. A skill that can run destructive or externally visible commands requires **planner**, because approving those is planner judgment — which is why all five skills here declare it. Exploration subagents a planner spawns stay read-only and return facts, never verdicts.
+
 ### Change flow
 
 `/plan-ai-tools` iterates a plan with the user and saves it. Accepting the plan is the **only** approval point: from there `/dev-ai-tools` runs to completion unattended, recording detail in the plan files and reporting a short summary at the end. A direct `/plan-ai-tools` invocation always stops at the saved plan and never implements.
+
+Each skill's entry gate decides who executes it, so the session that received the request may end up relaying between the user and a spawned specialist instead of running the workflow itself. A relay passes messages verbatim in both directions and never approves anything on the user's behalf.
 
 ### Language
 
@@ -73,7 +100,8 @@ plans/
   <slug>.md           # base: status table, goal, execution graph, stage links
   <slug>-1.md         # stage 1 detail + implementation log
   <slug>-2.md
-  dev/                # /dev-ai-tools ad-hoc briefs and feedback
+  dev/                # /dev-ai-tools ad-hoc briefs and feedback,
+                      # plus <slug>-planning.md working context under a relay
   finished/           # completed stage and base files
 ```
 
