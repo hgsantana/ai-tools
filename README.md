@@ -35,7 +35,7 @@ The safety semantics — idempotent, never overwrite a non-ai-tools destination,
 
 | Path | Description |
 |------|-------------|
-| [`AGENTS.md`](AGENTS.md) | Global instructions: agent categories, the change flow, interaction and output discipline, CLI skill pointers, security defaults |
+| [`AGENTS.md`](AGENTS.md) | Global instructions: agent categories, language (chat vs disk; English default; three exceptions), the change flow, interaction and output discipline, CLI skill pointers, security defaults |
 | [`skills/plan-ai-tools/`](skills/plan-ai-tools/) | `/plan-ai-tools` — explore, then write a **base plan** plus **one file per stage** under `plans/`; stops without implementing |
 | [`skills/dev-ai-tools/`](skills/dev-ai-tools/) | `/dev-ai-tools` — run the plan queue or ad-hoc work unattended; **implementer** codes, **planner** validates; status table (`W`/`V`/`R`/`T`/`TV`/`E`/`F`); stage context isolation |
 | [`skills/az-ai-tools/`](skills/az-ai-tools/) | `/az-ai-tools` — Azure CLI: read freely, mutate only with explicit per-action approval, surface cost |
@@ -54,6 +54,17 @@ The safety semantics — idempotent, never overwrite a non-ai-tools destination,
 ### Change flow
 
 `/plan-ai-tools` iterates a plan with the user and saves it. Accepting the plan is the **only** approval point: from there `/dev-ai-tools` runs to completion unattended, recording detail in the plan files and reporting a short summary at the end. A direct `/plan-ai-tools` invocation always stops at the saved plan and never implements.
+
+### Language
+
+Two destinations, two rules (full detail in [`AGENTS.md`](AGENTS.md)):
+
+- **Chat** — the user's language.
+- **Disk** — concise English by default for everything written into a repository (code, comments, commits, docs, plans, briefs, logs, subagent prompts).
+
+Any one of these exceptions drops the English requirement: (1) the user explicitly names another language; (2) the task is translation — write in the target language; (3) the **working repository** is already in another language (check that repo's `AGENTS.md` / `README.md` prose first, then the dominant language of comments and docs in the files being edited; if mixed or unclear, stay English). The working repository is the project being changed — this clone being English does not force English elsewhere.
+
+When an exception applies, disk matches that language, not English. Skills, future agents, and these instructions yield to that rule; they must not restate a hard "always English on disk". `agents/` stays empty; no stubs.
 
 ### Plan file layout
 
