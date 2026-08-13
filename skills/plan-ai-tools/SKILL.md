@@ -38,7 +38,7 @@ Either way, this skill itself never implements.
 
 1. **Determine the task.** Use the user's argument if given, otherwise ask what to plan. Ask targeted clarifying questions while the request is vague — this is the phase where questions belong.
 
-2. **Read the source of truth.** `README.md` and `AGENTS.md` at the repository root and in relevant subdirectories; their conventions override generic assumptions. The global `AGENTS.md` categories and change flow still apply.
+2. **Read the source of truth.** `README.md` and `AGENTS.md` at the repository root and in relevant subdirectories; their conventions override generic assumptions. Also read `$HOME/AGENTS.md` if it exists (Windows: `%USERPROFILE%\AGENTS.md`); it overrides this repository's global `AGENTS.md` defaults, but not the current project's `AGENTS.md` or `README.md`. The global `AGENTS.md` categories and change flow still apply unless the user file overrides them.
 
 3. **Explore the codebase.** Dispatch read-only explore agents (**mechanical** or the harness explore type) to find entry points, patterns, related modules, test conventions, and build config. Launch independent explorations in parallel; use direct read/grep for pinpoint lookups. Announce each spawn per the global `AGENTS.md` category rules: name the category and the concrete model the harness assigned it, in the user's language, at the point of spawning.
 

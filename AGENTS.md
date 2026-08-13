@@ -92,3 +92,11 @@ Continuity between plan and implementation exists **only here**. A direct `/plan
 - Finished base and stage files move to `plans/finished/`.
 - Never commit `plans/` unless the project explicitly tracks it.
 - When the current working directory is not inside a git repository, save plans to a user-level directory outside any project instead — `$HOME/.ai-tools-plans` on Linux/Mac, or the equivalent user-level location on Windows (e.g. `%USERPROFILE%\.ai-tools-plans`) — creating it if it does not exist.
+
+## User-specific overrides
+
+After reading this file, also read `$HOME/AGENTS.md` if it exists (Windows: `%USERPROFILE%\AGENTS.md`). That file is written by the user, not by this repository.
+
+- When the two conflict, `$HOME/AGENTS.md` wins over this file.
+- It does not override a repository's own `AGENTS.md` or `README.md` inside that repository.
+- If `$HOME/AGENTS.md` is missing, continue with this file only. Do not create or edit it unless the user asked directly, or an install/update step is creating the empty file.
