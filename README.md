@@ -298,6 +298,7 @@ Link each skill directory into the harness user skills root: `plan-ai-tools`, `d
 | Codex | `$HOME/.codex/skills/` |
 | GitHub Copilot | `$HOME/.copilot/skills/` |
 | Cursor | `$HOME/.cursor/skills/` (confirmed user-level location per Cursor's docs; `~/.agents/skills/` is also documented as an equivalent shared location, left out of scope here to avoid linking the same skill twice into one harness) |
+| Gemini | `$HOME/.gemini/config/skills/` |
 
 ```bash
 for path in "$AI_TOOLS/skills"/*-ai-tools; do
@@ -308,16 +309,11 @@ for path in "$AI_TOOLS/skills"/*-ai-tools; do
   safe_link "$path" "$HOME/.codex/skills/$name"    # if Codex selected
   safe_link "$path" "$HOME/.copilot/skills/$name"  # if GitHub Copilot selected
   safe_link "$path" "$HOME/.cursor/skills/$name"   # if Cursor selected
+  safe_link "$path" "$HOME/.gemini/config/skills/$name" # if Gemini selected
 done
 ```
 
 If Grok is configured with `[skills] paths`, adding `$AI_TOOLS/skills` as a scan path is an option, but only when it cannot clobber existing names. Prefer explicit per-skill links.
-
-**Gemini is excluded from this loop.** Gemini's command mechanism is a single-file, TOML-based
-custom-command format (plus a separate VS Code-settings-based "custom commands" feature in the
-extension itself) — incompatible with this repo's directory-based `SKILL.md` skills. Skill
-installation for Gemini is out of scope until a translation exists; this is a stated limitation,
-not a silent gap, per the "skip it, report it" safety rule.
 
 ### 6. Verify
 
@@ -329,7 +325,7 @@ readlink -f "$HOME/.copilot/instructions/ai-tools.instructions.md" 2>/dev/null
 readlink -f "$HOME/.gemini/GEMINI.md" 2>/dev/null
 # User overlay (not a harness link): expect a regular file at $HOME/AGENTS.md
 test -e "$HOME/AGENTS.md" && echo "user overlay present: $HOME/AGENTS.md" || echo "WARN: missing $HOME/AGENTS.md"
-ls -la "$HOME/.claude/skills" "$HOME/.grok/skills" "$HOME/.codex/skills" "$HOME/.copilot/skills" "$HOME/.cursor/skills" 2>/dev/null
+ls -la "$HOME/.claude/skills" "$HOME/.grok/skills" "$HOME/.codex/skills" "$HOME/.copilot/skills" "$HOME/.cursor/skills" "$HOME/.gemini/config/skills" 2>/dev/null
 
 for path in "$AI_TOOLS/skills"/*-ai-tools; do
   test -f "$path/SKILL.md" && echo "skill ok: $(basename "$path")"
@@ -348,7 +344,7 @@ Report findings; remove nothing until the user confirms the targets.
 
 ```bash
 for root in "$HOME/.claude/skills" "$HOME/.grok/skills" "$HOME/.cursor/skills" \
-            "$HOME/.codex/skills" "$HOME/.copilot/skills" \
+            "$HOME/.codex/skills" "$HOME/.copilot/skills" "$HOME/.gemini/config/skills" \
             "$HOME/.claude/agents" "$HOME/.grok/agents"; do
   [ -d "$root" ] || continue
   echo "=== $root ==="
@@ -389,11 +385,9 @@ for name in plan-ai-tools dev-ai-tools az-ai-tools gh-ai-tools gc-ai-tools \
   safe_unlink "$HOME/.codex/skills/$name"    # if Codex selected
   safe_unlink "$HOME/.copilot/skills/$name"  # if GitHub Copilot selected
   safe_unlink "$HOME/.cursor/skills/$name"   # if Cursor selected
+  safe_unlink "$HOME/.gemini/config/skills/$name" # if Gemini selected
 done
 ```
-
-No Gemini line here: no skills were ever linked for Gemini (see Installation §5's incompatibility
-note), so there is nothing to unlink for it in this step.
 
 If `$AI_TOOLS/skills` was added to a harness scan path (Grok `[skills] paths`), remove **only that entry** when asked — never wipe the config file.
 
@@ -432,7 +426,7 @@ If the instructions file is an include pointer rather than a symlink, edit out t
 
 ```bash
 for root in "$HOME/.claude/skills" "$HOME/.grok/skills" "$HOME/.cursor/skills" \
-            "$HOME/.codex/skills" "$HOME/.copilot/skills"; do
+            "$HOME/.codex/skills" "$HOME/.copilot/skills" "$HOME/.gemini/config/skills"; do
   [ -d "$root" ] || continue
   echo "=== remaining ai-tools links in $root ==="
   find "$root" -maxdepth 1 -type l -print 2>/dev/null | while read -r p; do
@@ -557,14 +551,14 @@ for path in "$AI_TOOLS/skills"/*-ai-tools; do
   [ -d "$path" ] || continue
   name=$(basename "$path")
   test -f "$path/SKILL.md" && echo "source ok: $name"
-  for root in "$HOME/.claude/skills" "$HOME/.grok/skills" "$HOME/.codex/skills" "$HOME/.copilot/skills" "$HOME/.cursor/skills"; do
+  for root in "$HOME/.claude/skills" "$HOME/.grok/skills" "$HOME/.codex/skills" "$HOME/.copilot/skills" "$HOME/.cursor/skills" "$HOME/.gemini/config/skills"; do
     [ -L "$root/$name" ] && echo "link ok: $root/$name -> $(readlink "$root/$name")"
   done
 done
 
 # No legacy bare names should remain
 for name in plan dev az gh gc; do
-  for root in "$HOME/.claude/skills" "$HOME/.grok/skills" "$HOME/.codex/skills" "$HOME/.copilot/skills" "$HOME/.cursor/skills"; do
+  for root in "$HOME/.claude/skills" "$HOME/.grok/skills" "$HOME/.codex/skills" "$HOME/.copilot/skills" "$HOME/.cursor/skills" "$HOME/.gemini/config/skills"; do
     [ -L "$root/$name" ] && echo "WARN legacy link still present: $root/$name"
   done
 done
