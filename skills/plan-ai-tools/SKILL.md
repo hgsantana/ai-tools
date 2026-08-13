@@ -15,11 +15,24 @@ Produce a step-by-step implementation plan for a change to the current repositor
 
 This skill never writes, edits, or deletes source code; never runs builds or tests as a delivery step; and never hands work to an implementer. Its only output is plan files on disk.
 
+## Entry gate — required category: planner
+
+Before anything else in this skill:
+
+1. Identify whether you satisfy **planner** (global `AGENTS.md` → Agent categories).
+2. **You satisfy it** — run this skill here, spawning the subagents it names.
+3. **You do not** — spawn the harness's planner (a model, or a bundled skill invoked with this skill's
+   requirements added to its own rules), hand it this skill and the user's request in full, and become a
+   relay layer: pass messages verbatim in both directions, summarizing nothing, approving nothing.
+4. **You are the agent spawned to run this skill** — the gate is already satisfied. Go straight to the
+   workflow and never delegate this skill onward.
+5. **Roster not enumerable and no spawning available** — run here and say so in chat.
+
 **Category roles** (see global `AGENTS.md`)
 
 | Role here | Category |
 |-----------|----------|
-| You, orchestrating this skill | **planner** |
+| You, running this skill | **planner** — held because the entry gate placed you here, not because you received the command |
 | Codebase exploration subagents | **mechanical** (read-only) or the harness explore type |
 | Implementation | not used |
 
@@ -34,9 +47,18 @@ In flow mode the caller implements immediately after acceptance, so the acceptan
 
 Either way, this skill itself never implements.
 
+## Working through a relay
+
+When the entry gate spawned you, the agent that spawned you is your only channel to the user, and it passes messages through unchanged. That constrains the two interactive steps below — clarifying questions (step 1) and acceptance (step 5):
+
+- Address the user directly, in the user's language, phrased to be passed on as written. Never write a note to the relay about what it should ask.
+- Send, then wait. The answer comes back verbatim; treat it as the user's own words.
+- Nothing here changes what acceptance means. The plan is saved only after the user accepts it.
+- Keep your working context in `<plans-root>/dev/<slug>-planning.md` — what you explored, what you found, what is settled, the current draft — using a slug derived from the task. If the relay has to re-spawn you instead of resuming you, that file is what stops the work from starting over.
+
 ## Workflow
 
-1. **Determine the task.** Use the user's argument if given, otherwise ask what to plan. Ask targeted clarifying questions while the request is vague, including scope boundaries — this is the phase where questions belong.
+1. **Determine the task.** Use the user's argument if given, otherwise ask what to plan. Ask targeted clarifying questions while the request is vague, including scope boundaries — this is the phase where questions belong. Under a relay, see **Working through a relay** above.
 
 2. **Read the source of truth.** `README.md` and `AGENTS.md` at the repository root and in relevant subdirectories; their conventions override generic assumptions. Also read `$HOME/AGENTS.md` if it exists (Windows: `%USERPROFILE%\AGENTS.md`); it overrides this repository's global `AGENTS.md` defaults, but not the current project's `AGENTS.md` or `README.md`. The global `AGENTS.md` categories and change flow still apply unless the user file overrides them.
 
@@ -50,7 +72,7 @@ Either way, this skill itself never implements.
    - Conventional Commits boundaries described, never executed
    - Per stage: **sequential** or **parallel-safe** relative to the others, feeding the execution graph and `/dev-ai-tools` fan-out
 
-5. **Get acceptance.** Present the plan and revise until the user accepts it. Nothing reaches `plans/` before acceptance. This is the one place where chat detail is wanted: give enough for the user to judge each stage — goal, stages with their files, tests, risks, and what is explicitly **out of scope** — without dumping whole file contents. State scope boundaries plainly so the user can catch a mismatch before accepting. Present it in the user's language. Saved plan files follow the global Disk rule in `AGENTS.md`: concise English unless an exception applies.
+5. **Get acceptance.** Present the plan and revise until the user accepts it — under a relay, see **Working through a relay** above. No plan file reaches `plans/` before acceptance; the one exception is the `<plans-root>/dev/<slug>-planning.md` working context, which is working state and not a plan. This is the one place where chat detail is wanted: give enough for the user to judge each stage — goal, stages with their files, tests, risks, and what is explicitly **out of scope** — without dumping whole file contents. State scope boundaries plainly so the user can catch a mismatch before accepting. Present it in the user's language. Saved plan files follow the global Disk rule in `AGENTS.md`: concise English unless an exception applies.
 
 6. **Save** (after acceptance):
    - Ensure `plans/` exists and is listed in the repository `.gitignore`; append it if missing
@@ -169,4 +191,5 @@ Suggested message: `feat: …` (or fix/chore/…)
 
 - Write only under `plans/`, plus `.gitignore` when adding the `plans/` entry.
 - Never spawn an **implementer** for production code, and never invoke `/dev-ai-tools` from inside this skill. In flow mode the caller starts it after this skill has ended — that is the caller's step, not yours.
+- If you are the agent the entry gate spawned to run this skill, never delegate it onward. You are the planner it asked for.
 - Activate only on explicit `/plan-ai-tools`, a skill that names this step, or the global `AGENTS.md` change flow.
