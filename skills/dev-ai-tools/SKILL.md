@@ -5,7 +5,7 @@ description: >
   "/dev-ai-tools". With no argument, or an argument starting with "plans", process base plans at
   plans/*.md (not stage files, not finished/). Any other argument is an ad-hoc implementation
   request. Planner validates; implementer codes; mechanical gathers evidence. Runs unattended.
-argument-hint: [plans [path…] | implementation request]
+argument-hint: "[plans [path…] | implementation request]"
 ---
 
 # Dev
