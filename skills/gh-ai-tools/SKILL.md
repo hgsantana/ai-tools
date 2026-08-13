@@ -21,6 +21,7 @@ Use the `gh` CLI for issues, pull requests, checks, releases, and repos.
   pushing is.
 - Before side effects visible to others (PR open/close, comments, push, release), state what will
   happen and who will see it.
+- Keep chat replies concise: a short table or summary, not a raw dump. For long or raw output, summarize in chat and save the full result to a file only if the user wants it kept.
 
 ## Useful commands
 

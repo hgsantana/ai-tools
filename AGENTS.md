@@ -10,7 +10,7 @@ Two destinations, two rules.
 - **Disk — concise English by default.** Everything written into a repository: code, comments, commit messages, documentation, plan and stage files, briefs, implementation logs, and the prompts handed to subagents. Any one of these exceptions drops the English requirement:
   1. The user explicitly names another language.
   2. The task itself is translation — write in the translation's target language.
-  3. The **working repository** is already in another language. Heuristic, in order: that repository's `AGENTS.md` / `README.md` prose; then the dominant language of comments and docs in the files being edited. If mixed or unclear, stay English. The working repository is the project being changed — never treat `$HOME/.ai-tools` being English as a reason to write English elsewhere.
+  3. The **working repository** is already in another language. Heuristic, in order: that repository's `AGENTS.md` / `README.md` prose; then the dominant language of comments and docs in the files being edited. If mixed or unclear, stay English. "Working repository" means the project being changed, not this config repo — `$HOME/.ai-tools` being English never forces English elsewhere.
 
 When no exception applies, chat is translated to English on disk. When an exception applies, disk matches that language, not English. These exceptions override every later restatement (skills, README, future agents).
 
@@ -27,7 +27,7 @@ Skills and workflows name **categories**, never model product names. The running
 1. Never hard-code a vendor model name (Opus, Sonnet, Grok, GPT, …) as an agent identity.
 2. The current session acts as **planner** while running `/plan-ai-tools` or `/dev-ai-tools`.
 3. Where the harness has no separate subagents, one model still **behaves** in the assigned category for that turn.
-4. Use the cheapest capable category for the work itself: **mechanical** for execution and evidence, **implementer** for code, **planner** for planning and validation.
+4. Match each piece of work to the lowest-responsibility category capable of it: **mechanical** for execution and evidence, **implementer** for code, **planner** for planning and validation. This is category selection, not model cost — see rule 5 for cost within a category.
 5. Model selection within a category is a separate axis from category choice, and matters whenever the harness exposes more than one model for a role (a picker, several tiers, multiple models labeled for the same job) — never accept whatever the harness defaults to without checking it fits the rule below:
    - **planner** — pick the strongest model available for planning and analysis, regardless of its cost. Decomposition and acceptance-judgment mistakes made here propagate into every downstream stage, so this is not the place to economize, and a harness offering several "planning" models does not mean they are equally capable.
    - **implementer** — pick the model with the best code-quality-to-cost ratio, not automatically the most expensive or most capable option offered. Treat a flagship-tier model priced well above the next tier down as a prompt to check whether it buys a real jump in code quality for the task at hand, not as the default pick.
@@ -92,6 +92,7 @@ Continuity between plan and implementation exists **only here**. A direct `/plan
 ## Plans location
 
 - Plans live in the repository's `plans/` directory: local working state, kept out of git unless the project says otherwise.
+- `plans/dev/` holds `/dev-ai-tools` ad-hoc briefs and correction feedback (Mode B); never treated as plan-queue input.
 - Finished base and stage files move to `plans/finished/`.
 - Never commit `plans/` unless the project explicitly tracks it.
 - When the current working directory is not inside a git repository, save plans to a user-level directory outside any project instead — `$HOME/.ai-tools-plans` on Linux/Mac, or the equivalent user-level location on Windows (e.g. `%USERPROFILE%\.ai-tools-plans`) — creating it if it does not exist.

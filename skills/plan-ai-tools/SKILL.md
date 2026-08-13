@@ -36,7 +36,7 @@ Either way, this skill itself never implements.
 
 ## Workflow
 
-1. **Determine the task.** Use the user's argument if given, otherwise ask what to plan. Ask targeted clarifying questions while the request is vague — this is the phase where questions belong.
+1. **Determine the task.** Use the user's argument if given, otherwise ask what to plan. Ask targeted clarifying questions while the request is vague, including scope boundaries — this is the phase where questions belong.
 
 2. **Read the source of truth.** `README.md` and `AGENTS.md` at the repository root and in relevant subdirectories; their conventions override generic assumptions. Also read `$HOME/AGENTS.md` if it exists (Windows: `%USERPROFILE%\AGENTS.md`); it overrides this repository's global `AGENTS.md` defaults, but not the current project's `AGENTS.md` or `README.md`. The global `AGENTS.md` categories and change flow still apply unless the user file overrides them.
 
@@ -50,7 +50,7 @@ Either way, this skill itself never implements.
    - Conventional Commits boundaries described, never executed
    - Per stage: **sequential** or **parallel-safe** relative to the others, feeding the execution graph and `/dev-ai-tools` fan-out
 
-5. **Get acceptance.** Present the plan and revise until the user accepts it. Nothing reaches `plans/` before acceptance. This is the one place where chat detail is wanted: give enough for the user to judge each stage — goal, stages with their files, tests, risks — without dumping whole file contents. Present it in the user's language. Saved plan files follow the global Disk rule in `AGENTS.md`: concise English unless an exception applies.
+5. **Get acceptance.** Present the plan and revise until the user accepts it. Nothing reaches `plans/` before acceptance. This is the one place where chat detail is wanted: give enough for the user to judge each stage — goal, stages with their files, tests, risks, and what is explicitly **out of scope** — without dumping whole file contents. State scope boundaries plainly so the user can catch a mismatch before accepting. Present it in the user's language. Saved plan files follow the global Disk rule in `AGENTS.md`: concise English unless an exception applies.
 
 6. **Save** (after acceptance):
    - Ensure `plans/` exists and is listed in the repository `.gitignore`; append it if missing

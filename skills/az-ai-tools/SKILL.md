@@ -18,6 +18,7 @@ Use the `az` CLI for Azure inventory, cost, and operations work.
   for that specific action. Prior approval does not carry over, and this gate holds even inside an
   unattended `/dev-ai-tools` run.
 - Before any suggested mutating change, make **cost impact** clear (SKU, ongoing cost, billable or not).
+- Keep chat replies concise: a short table or summary, not a raw dump. For long or raw output, summarize in chat and save the full result to a file only if the user wants it kept.
 
 ## Useful commands
 
