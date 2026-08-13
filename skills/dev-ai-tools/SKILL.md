@@ -41,7 +41,7 @@ This skill runs **unattended**. The user already approved the work before it sta
 
 | Work | Category |
 |------|----------|
-| Orchestrate stages, write briefs, judge acceptance, audit tests for cheating, commit after validation, set `TV` / `E` / `F` | **planner** — this session |
+| Orchestrate stages, write briefs, judge acceptance by reviewing the actual diff against the plan, audit tests for cheating, commit after validation, set `TV` / `E` / `F` | **planner** — this session |
 | Implement a stage or brief, editing production and test code | **implementer** only |
 | Run build/test and return raw output, list diffs, extract logs, draft mechanical feedback text, explore for brief prep | **mechanical** |
 
@@ -82,7 +82,7 @@ The base plan carries the status table created by `/plan-ai-tools`, which holds 
 
 ### Planner obligations
 
-- After `V`, validate (see Validation).
+- After `V`, validate by reading the actual diff and judging it against the plan (see Validation). Do not accept on build/test success alone.
 - On pass: set `F`, move `plans/<slug>-<n>.md` to `plans/finished/`, and commit if the stage describes a commit boundary.
 - On failure within the retry budget: append concrete correction tasks to the **same stage file**, keeping full history, then spawn an **implementer** again, which sets `R` and Session.
 - After 3 failed corrections: set `E`, append a failure report with the recommended recovery to the stage file, and continue with stages that do not depend on it.
@@ -99,7 +99,7 @@ The base plan carries the status table created by `/plan-ai-tools`, which holds 
    1. Read **only that base plan** for its execution graph and status table.
    2. Build stage waves from the graph. Skip stages already `F`; leave `E` stages for the end.
    3. Run each wave: **sequential** stages one after another; **parallel-safe** stages as one batch of **implementer** spawns, never two implementers on the same files. Each gets base + one stage file.
-   4. When an implementer returns `V`, validate.
+   4. When an implementer returns `V`, validate by reading the actual diff and judging it against the plan (see Validation). Do not accept on build/test success alone.
    5. If a stage needs a dedicated test pass, that agent sets `T` and Session; the planner then sets `TV` while judging, then `F` or a correction round.
    6. On `F`, commit that stage if the plan describes a commit boundary — Conventional Commits, and check staged files for secrets and binaries first.
 7. When a base plan is fully resolved, move it to `plans/finished/`.
@@ -119,21 +119,27 @@ The base plan carries the status table created by `/plan-ai-tools`, which holds 
 4. Explore with **mechanical** or the harness explore type until the paths are real.
 5. Write `plans/dev/<slug>-brief.md` — a handoff, not a base plan. Minimum: the original request verbatim, goal, context, source of truth, tasks with paths, tests by type, docs, acceptance criteria, commits, and the report the implementer owes the planner.
 6. Spawn an **implementer** on the brief. If the work is too large for one brief, split it into several briefs yourself and sequence them — do not call `/plan-ai-tools`.
-7. Validate; run correction rounds with `plans/dev/<slug>-feedback-<n>.md`, same 1 + 3 limit.
+7. Validate by reading the actual diff and judging it against the brief (see Validation). Do not accept on build/test success alone. Run correction rounds with `plans/dev/<slug>-feedback-<n>.md`, same 1 + 3 limit.
 8. Commit only after validation, and only if the brief authorized it.
 
 Mode B needs no status table unless you build a full plan structure.
 
 ## Validation (planner)
 
-An implementer report and a `V` status are claims, not proof.
+An implementer report and a `V` status are claims, not proof. A green build and passing tests are **not** acceptance.
 
-1. Read the stage file log and the paths it was allowed to touch.
-2. Run `git status`, `git diff`, and recent log to see what actually changed.
-3. Read the changed files against the acceptance criteria.
-4. **Test audit:** do the tests exercise observable behavior? Would they fail if the feature were broken? Were existing tests weakened? Are types split into separate files where the project requires it?
-5. Run build and tests via **mechanical**, and enforce project thresholds (for example 80% coverage when the repository mandates it).
-6. Pass → `F`, move the stage file, commit if applicable. Fail → append concrete correction tasks to the stage file; the implementer resumes at `R`.
+1. Read the stage objective, allowed files, acceptance criteria, and implementation log.
+2. Inspect the **actual** diff — run `git status`, `git diff`, and recent log. Do not rely on a summary of the changes.
+3. Judge the diff as a senior reviewer:
+   - Does every change serve the stage objective and stay inside the allowed files?
+   - Is anything the plan required missing, stubbed, or only mentioned in the log?
+   - Is anything extra, speculative, or a drive-by the plan did not ask for?
+   - Do comments, names, and structure match the repository's conventions?
+   - Would a later stage or the user still have to fix this for the plan to be true?
+4. Each acceptance criterion is pass or fail with a reason. "Tests passed" is not a reason.
+5. **Test audit:** do the tests exercise observable behavior? Would they fail if the feature were broken? Were existing tests weakened? Are types split into separate files where the project requires it?
+6. Run build and tests via **mechanical**, and enforce project thresholds (for example 80% coverage when the repository mandates it). Treat that output as **evidence**, not the verdict.
+7. Pass only when the diff satisfies the plan **and** the review criteria. Then set `F`, move the stage file, commit if applicable. Fail → append concrete correction tasks to the stage file; the implementer resumes at `R`.
 
 ## Spawning conventions
 
