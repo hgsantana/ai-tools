@@ -35,7 +35,7 @@ This skill runs **unattended**. The user already approved the work before it sta
 
 - Detail goes to the plan files: stage steps, implementation logs, validation notes, diffs, command output, failure reports. Never paste them into chat.
 - No progress narration. No per-stage chat updates.
-- Chat gets one short summary at the end, in the user's language — per plan, one line of stage counts by status, plus paths to read for detail, plus any `E` stage with its one-line cause and the recommended recovery. Plan files, logs, and implementer prompts stay English.
+- Chat gets one short summary at the end, in the user's language — per plan, one line of stage counts by status, plus paths to read for detail, plus any `E` stage with its one-line cause and the recommended recovery. Plan files, logs, and implementer prompts follow the global Disk rule in `AGENTS.md` (concise English unless an exception applies).
 
 ## Division of labor
 

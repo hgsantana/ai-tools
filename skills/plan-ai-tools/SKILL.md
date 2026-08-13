@@ -50,7 +50,7 @@ Either way, this skill itself never implements.
    - Conventional Commits boundaries described, never executed
    - Per stage: **sequential** or **parallel-safe** relative to the others, feeding the execution graph and `/dev-ai-tools` fan-out
 
-5. **Get acceptance.** Present the plan and revise until the user accepts it. Nothing reaches `plans/` before acceptance. This is the one place where chat detail is wanted: give enough for the user to judge each stage — goal, stages with their files, tests, risks — without dumping whole file contents. Present it in the user's language; the saved files are English either way.
+5. **Get acceptance.** Present the plan and revise until the user accepts it. Nothing reaches `plans/` before acceptance. This is the one place where chat detail is wanted: give enough for the user to judge each stage — goal, stages with their files, tests, risks — without dumping whole file contents. Present it in the user's language. Saved plan files follow the global Disk rule in `AGENTS.md`: concise English unless an exception applies.
 
 6. **Save** (after acceptance):
    - Ensure `plans/` exists and is listed in the repository `.gitignore`; append it if missing
