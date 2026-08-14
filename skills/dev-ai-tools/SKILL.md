@@ -103,7 +103,7 @@ The base plan carries the status table created by `/plan-ai-tools`, which holds 
 
 1. **First action:** ensure your Agent/Session ID is recorded in the base plan for this stage.
 2. Implement only the assigned stage.
-3. Append an **Implementation log** section to the stage file: what changed, files touched, commands run, results, anything left incomplete.
+3. Append an **Implementation log** section to the stage file: what changed, files touched, commands run, results, anything left incomplete. **Fundamental rule:** this report must state exactly *what you did* (facts), not your opinion on whether you fulfilled the requirement.
 4. **Last action:** set Status to `V` (or `TV` for a test pass) on the base plan. The spawned agent marks work ready for validation when returning it to the planner.
 5. Never set `W`, `R1`, `R2`, `R3`, `T`, `E`, or `F`.
 
@@ -154,7 +154,7 @@ Mode B needs no status table unless you build a full plan structure.
 
 ## Validation (planner)
 
-An implementer report and a `V` status are claims, not proof. A green build and passing tests are **not** acceptance.
+An implementer report and a `V` status are claims, not proof. A green build and passing tests are **not** acceptance. **Never accept what the spawned agent tells you as truth. Base your validation solely on verifiable facts, never on the agent's opinions or claims of success.**
 
 1. Read the stage objective, allowed files, acceptance criteria, and implementation log.
 2. Inspect the **actual** diff — run `git status`, `git diff`, and recent log. Do not rely on a summary of the changes.
