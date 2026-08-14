@@ -124,13 +124,13 @@ Optional: commit strategy, risks, out of scope.
 | Code | Meaning | Who sets it |
 |------|---------|-------------|
 | *(empty)* | Not started | — |
-| `W` | Working — implementation in progress | **implementer**, also writes Session |
-| `V` | Validating — handed to the planner for judgment | **implementer** |
-| `R` | Retry — reworking after planner feedback | **implementer**, updates Session |
-| `T` | Testing — dedicated test-writing/running pass | the agent doing it, also writes Session |
-| `TV` | Testing validation — planner judging tests | **planner** |
-| `E` | Error — correction limit exhausted | **planner** |
-| `F` | Finished — stage accepted | **planner** |
+| `W` | Working — implementation in progress | **planner**, before dispatching |
+| `V` | Validating — handed to the planner for judgment | **implementer**, when returning to planner |
+| `R1`, `R2`, `R3` | Retry 1, 2, 3 — reworking after planner feedback | **planner**, before dispatching |
+| `T` | Testing — dedicated test-writing/running pass | **planner**, before dispatching |
+| `TV` | Testing validation — planner judging tests | **agent doing it**, when returning to planner |
+| `E` | Error — correction limit exhausted | **planner**, when finishing |
+| `F` | Finished — stage accepted | **planner**, when finishing |
 
 **Session** column: harness session or agent id (or equivalent resume handle) for the worker active on that stage. Critical for resuming after a network or budget failure.
 

@@ -91,27 +91,28 @@ The base plan carries the status table created by `/plan-ai-tools`, which holds 
 
 | Code | Meaning | Who sets it |
 |------|---------|-------------|
-| `W` | Working — implementation in progress | **implementer**, also writes Session |
-| `V` | Validating — handed to the planner for judgment | **implementer** |
-| `R` | Retry — reworking after planner feedback | **implementer**, updates Session |
-| `T` | Testing — dedicated test-writing/running pass | the agent doing it, also writes Session |
-| `TV` | Testing validation — planner judging tests | **planner** |
-| `E` | Error — correction limit exhausted | **planner** |
-| `F` | Finished — stage accepted | **planner** |
+| `W` | Working — implementation in progress | **planner**, before dispatching |
+| `V` | Validating — handed to the planner for judgment | **implementer**, when returning to planner |
+| `R1`, `R2`, `R3` | Retry 1, 2, 3 — reworking after planner feedback | **planner**, before dispatching |
+| `T` | Testing — dedicated test-writing/running pass | **planner**, before dispatching |
+| `TV` | Testing validation — planner judging tests | **agent doing it**, when returning to planner |
+| `E` | Error — correction limit exhausted | **planner**, when finishing |
+| `F` | Finished — stage accepted | **planner**, when finishing |
 
 ### Implementer obligations (put these in every implementer prompt)
 
-1. **First action:** open the base plan, set this stage's Status to `W` (or `R` on a correction) and Session to the current harness session or agent id.
+1. **First action:** ensure your Session ID is recorded in the base plan for this stage.
 2. Implement only the assigned stage.
 3. Append an **Implementation log** section to the stage file: what changed, files touched, commands run, results, anything left incomplete.
-4. **Last action:** set Status to `V` on the base plan. The implementer marks work ready for validation; the planner never sets `V`.
-5. Never set `T`, `TV`, `E`, or `F`.
+4. **Last action:** set Status to `V` (or `TV` for a test pass) on the base plan. The spawned agent marks work ready for validation when returning it to the planner.
+5. Never set `W`, `R1`, `R2`, `R3`, `T`, `E`, or `F`.
 
 ### Planner obligations
 
-- After `V`, validate by reading the actual diff and judging it against the plan (see Validation). Do not accept on build/test success alone.
+- **Before dispatching:** set the stage's Status to `W` (initial), `R1`, `R2`, `R3` (corrections), or `T` (testing) and record the Session id.
+- After `V` or `TV`, validate by reading the actual diff and judging it against the plan (see Validation). Do not accept on build/test success alone.
 - On pass: set `F`, move `plans/<slug>-<n>.md` to `plans/finished/`, and commit if the stage describes a commit boundary.
-- On failure within the retry budget: append concrete correction tasks to the **same stage file**, keeping full history, then spawn an **implementer** again, which sets `R` and Session.
+- On failure within the retry budget: append concrete correction tasks to the **same stage file**, keeping full history, set Status to `R1`, `R2`, or `R3`, then spawn an **implementer** again.
 - After 3 failed corrections: set `E`, append a failure report with the recommended recovery to the stage file, and continue with stages that do not depend on it.
 - When every stage is `F` (or `E` stages are all reported), move the base `plans/<slug>.md` to `plans/finished/`.
 
@@ -127,7 +128,7 @@ The base plan carries the status table created by `/plan-ai-tools`, which holds 
    2. Build stage waves from the graph. Skip stages already `F`; leave `E` stages for the end.
    3. Run each wave: **sequential** stages one after another; **parallel-safe** stages as one batch of **implementer** spawns, never two implementers on the same files. Each gets base + one stage file.
    4. When an implementer returns `V`, validate by reading the actual diff and judging it against the plan (see Validation). Do not accept on build/test success alone.
-   5. If a stage needs a dedicated test pass, that agent sets `T` and Session; the planner then sets `TV` while judging, then `F` or a correction round.
+   5. If a stage needs a dedicated test pass, the planner sets `T` and Session before dispatching; the testing agent sets `TV` when returning; the planner judges it, then sets `F` or a correction round.
    6. On `F`, commit that stage if the plan describes a commit boundary — Conventional Commits, and check staged files for secrets and binaries first.
 7. When a base plan is fully resolved, move it to `plans/finished/`.
 8. Close with the final summary described in Output discipline.
@@ -166,7 +167,7 @@ An implementer report and a `V` status are claims, not proof. A green build and 
 4. Each acceptance criterion is pass or fail with a reason. "Tests passed" is not a reason.
 5. **Test audit:** do the tests exercise observable behavior? Would they fail if the feature were broken? Were existing tests weakened? Are types split into separate files where the project requires it?
 6. Run build and tests via **mechanical**, and enforce project thresholds (for example 80% coverage when the repository mandates it). Treat that output as **evidence**, not the verdict.
-7. Pass only when the diff satisfies the plan **and** the review criteria. Then set `F`, move the stage file, commit if applicable. Fail → append concrete correction tasks to the stage file; the implementer resumes at `R`.
+7. Pass only when the diff satisfies the plan **and** the review criteria. Then set `F`, move the stage file, commit if applicable. Fail → append concrete correction tasks to the stage file; the implementer resumes at `R1`, `R2`, or `R3`.
 
 ## Spawning conventions
 
@@ -179,7 +180,7 @@ An implementer report and a `V` status are claims, not proof. A green build and 
 ## Boundaries
 
 - Only **implementer** writes repository code, plus the status and log updates specified above.
-- **planner** does not implement; it sets `TV` / `E` / `F` and commits after validation.
+- **planner** does not implement; it sets `W`, `R1-3`, `T`, `E`, `F` and commits after validation.
 - Never chain into `/plan-ai-tools`. If an `E` stage needs a redesign, say so in the final summary and let the user start a new plan.
 - Never delegate this skill to another agent; the entry gate decides whether it runs here or does not run. That is about who runs **this** skill; the rule above is about which skill runs next.
 - Do not use this skill for pure question answering.
