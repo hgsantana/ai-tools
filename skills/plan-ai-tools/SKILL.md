@@ -70,7 +70,7 @@ Either way, this skill itself never implements.
    - Ensure `plans/` exists and is listed in the repository `.gitignore`; append it if missing
    - Base file `plans/<slug>.md`, stage files `plans/<slug>-<n>.md` for n = 1, 2, …
    - Pick a distinct slug rather than overwriting an unrelated existing base plan
-   - Leave every Status and Session cell empty
+   - Leave every Status and Agent/Session ID cell empty
 
 7. **Stop.** Report only the saved paths and the stage count, in a few lines. An accepted plan is always on disk before this skill ends.
 
@@ -95,8 +95,8 @@ plans/
 
 ## Status
 
-| Stage | Status | Session |
-|------:|:------:|---------|
+| Stage | Status | Agent/Session ID |
+|------:|:------:|------------------|
 | 1 | | |
 | 2 | | |
 
@@ -132,7 +132,7 @@ Optional: commit strategy, risks, out of scope.
 | `E` | Error — correction limit exhausted | **planner**, when finishing |
 | `F` | Finished — stage accepted | **planner**, when finishing |
 
-**Session** column: harness session or agent id (or equivalent resume handle) for the worker active on that stage. Critical for resuming after a network or budget failure.
+**Agent/Session ID** column: ID of the agent or session that was spawned to fulfill the tasks. Critical for resuming when an ongoing job is interrupted by an API error (expired tokens, gateway failure, etc.) and the agent/subsession dies.
 
 ### Stage file (`plans/<slug>-<n>.md`)
 

@@ -101,7 +101,7 @@ The base plan carries the status table created by `/plan-ai-tools`, which holds 
 
 ### Implementer obligations (put these in every implementer prompt)
 
-1. **First action:** ensure your Session ID is recorded in the base plan for this stage.
+1. **First action:** ensure your Agent/Session ID is recorded in the base plan for this stage.
 2. Implement only the assigned stage.
 3. Append an **Implementation log** section to the stage file: what changed, files touched, commands run, results, anything left incomplete.
 4. **Last action:** set Status to `V` (or `TV` for a test pass) on the base plan. The spawned agent marks work ready for validation when returning it to the planner.
@@ -109,7 +109,7 @@ The base plan carries the status table created by `/plan-ai-tools`, which holds 
 
 ### Planner obligations
 
-- **Before dispatching:** set the stage's Status to `W` (initial), `R1`, `R2`, `R3` (corrections), or `T` (testing) and record the Session id.
+- **Before dispatching:** set the stage's Status to `W` (initial), `R1`, `R2`, `R3` (corrections), or `T` (testing) and record the Agent/Session ID.
 - After `V` or `TV`, validate by reading the actual diff and judging it against the plan (see Validation). Do not accept on build/test success alone.
 - On pass: set `F`, move `plans/<slug>-<n>.md` to `plans/finished/`, and commit if the stage describes a commit boundary.
 - On failure within the retry budget: append concrete correction tasks to the **same stage file**, keeping full history, set Status to `R1`, `R2`, or `R3`, then spawn an **implementer** again.
@@ -128,7 +128,7 @@ The base plan carries the status table created by `/plan-ai-tools`, which holds 
    2. Build stage waves from the graph. Skip stages already `F`; leave `E` stages for the end.
    3. Run each wave: **sequential** stages one after another; **parallel-safe** stages as one batch of **implementer** spawns, never two implementers on the same files. Each gets base + one stage file.
    4. When an implementer returns `V`, validate by reading the actual diff and judging it against the plan (see Validation). Do not accept on build/test success alone.
-   5. If a stage needs a dedicated test pass, the planner sets `T` and Session before dispatching; the testing agent sets `TV` when returning; the planner judges it, then sets `F` or a correction round.
+   5. If a stage needs a dedicated test pass, the planner sets `T` and Agent/Session ID before dispatching; the testing agent sets `TV` when returning; the planner judges it, then sets `F` or a correction round.
    6. On `F`, commit that stage if the plan describes a commit boundary — Conventional Commits, and check staged files for secrets and binaries first.
 7. When a base plan is fully resolved, move it to `plans/finished/`.
 8. Close with the final summary described in Output discipline.
@@ -173,7 +173,7 @@ An implementer report and a `V` status are claims, not proof. A green build and 
 
 - Sequential item: one **implementer**, wait for the result.
 - Parallel-safe batch: several **implementer** spawns with no shared file ownership.
-- Correction: resume via the Session id in the status table when the harness supports it; otherwise spawn a new **implementer** with base + stage file, which now carries the prior logs and feedback.
+- Correction: resume via the Agent/Session ID in the status table when the harness supports it; otherwise spawn a new **implementer** with base + stage file, which now carries the prior logs and feedback.
 - **mechanical** never edits production or test code under this skill.
 - Every spawn — **implementer** or **mechanical**, in Mode A, Mode B, or validation — gets announced per the global `AGENTS.md` category rules: name the category and the concrete model the harness assigned it, in the user's language, at the point of spawning, not folded into a later summary.
 
