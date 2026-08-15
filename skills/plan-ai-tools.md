@@ -1,15 +1,6 @@
----
-name: plan-ai-tools
-description: >
-  Restricted-invocation skill — invoke only when (a) the user runs "/plan-ai-tools",
-  (b) another skill's documented workflow calls it by name, or (c) the global AGENTS.md
-  change flow calls it for a non-trivial change. Explores the repository and writes a
-  multi-file implementation plan under plans/, then stops. Never implements code.
-argument-hint: "[description of the change, feature, or fix to plan]"
-disable-model-invocation: false
----
-
 # Plan
+
+> Base instruction. Harness wrappers under skills/<harness>/<name>/SKILL.md point here; edit this file, never a wrapper.
 
 ## Entry gate — required category: planner
 

@@ -1,12 +1,6 @@
----
-name: gh-ai-tools
-description: >
-  Query and manage GitHub resources via the GitHub CLI (gh). Use whenever the user asks about
-  GitHub issues, pull requests, repos, releases, or checks, or wants something created,
-  modified, or removed on GitHub. Also use for /gh-ai-tools.
----
-
 # GitHub CLI (gh)
+
+> Base instruction. Harness wrappers under skills/<harness>/<name>/SKILL.md point here; edit this file, never a wrapper.
 
 ## Entry gate — required category: planner
 

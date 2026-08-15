@@ -1,12 +1,6 @@
----
-name: az-ai-tools
-description: >
-  Query and manage Azure resources via the Azure CLI (az). Use whenever the user asks about
-  Azure resources, subscriptions, costs, or infrastructure, or wants something created,
-  modified, or removed in Azure. Also use for /az-ai-tools.
----
-
 # Azure CLI (az)
+
+> Base instruction. Harness wrappers under skills/<harness>/<name>/SKILL.md point here; edit this file, never a wrapper.
 
 ## Entry gate — required category: planner
 
