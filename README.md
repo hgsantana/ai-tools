@@ -13,9 +13,9 @@ Goals:
 - Install by **symlinks**, never by forked copies that drift
 - **Extreme conciseness**: all instructions, skills, rules, and configuration across this repository aim for extreme conciseness, avoiding ambiguities and redundancies to the maximum extent possible while never omitting instructions, rules, or intentions in exchange for brevity.
 
-**Naming rule:** everything installed from this repo — skill directory, frontmatter `name:`, slash command, and any future agent — ends in `-ai-tools`, so nothing collides with harness-bundled names. Never install a bare name like `plan` or `dev`.
+**Naming rule:** everything installed from this repo — skill directory, frontmatter `name:`, slash command, and agent name — ends in `-ai-tools`, so nothing collides with harness-bundled names. Never install a bare name like `plan`, `dev`, or `planner`.
 
-**No shipped agents:** this repo has no agent definition files, only the empty `agents/` directory. Harnesses map the three categories with their own subagent mechanisms. Do not create stubs unless the user asks.
+**Shipped agents:** `agents/<harness>/` holds two **optional, user-invoked** entry points per supported harness — `planner-ai-tools` (runs `/plan-ai-tools`) and `orchestrator-ai-tools` (runs `/dev-ai-tools`). Each is deliberately minimal: pin the **planner** category to a concrete model, invoke one skill, return a path plus a short summary. Starting work from one gives that skill a **clean context** and settles its entry gate without a question — see [Agent categories](#agent-categories). Calling `/plan-ai-tools` directly stays equally valid; skills never delegate themselves to these agents. One folder per harness, because agent file format and model IDs are harness-specific; `agents/<harness>/` is the **only** layer in this repo allowed to name vendor models.
 
 ### Cross-platform paths
 
@@ -29,6 +29,8 @@ Every command in this document is written in POSIX/bash, which already covers Li
 | `test -e`/`-f`/`-d`/`-L <path>` | `Test-Path <path>` (add `-PathType Leaf`/`Container`; symlink check: `(Get-Item <path>).LinkType -eq 'SymbolicLink'`) |
 | `find <dir> -maxdepth 1 -type l` | `Get-ChildItem <dir> -Depth 0 \| Where-Object { $_.LinkType -eq 'SymbolicLink' }` |
 | `mkdir -p <dir>` | `New-Item -ItemType Directory -Force -Path <dir>` |
+| `cp <src> <dest>` (symlink fallback) | `Copy-Item <src> <dest>` |
+| `cmp -s <a> <b>` | `(Get-FileHash <a>).Hash -eq (Get-FileHash <b>).Hash` |
 
 The safety semantics — idempotent, never overwrite a non-ai-tools destination, skip and report instead of failing — apply identically no matter which shell executes them.
 
@@ -42,7 +44,7 @@ The safety semantics — idempotent, never overwrite a non-ai-tools destination,
 | [`skills/az-ai-tools/`](skills/az-ai-tools/) | `/az-ai-tools` — Azure CLI: read freely, mutate only with explicit per-action approval, surface cost |
 | [`skills/gh-ai-tools/`](skills/gh-ai-tools/) | `/gh-ai-tools` — GitHub CLI: read freely, mutate only with explicit per-action approval |
 | [`skills/gc-ai-tools/`](skills/gc-ai-tools/) | `/gc-ai-tools` — Google Cloud CLI: read freely, mutate only with explicit per-action approval, surface cost |
-| `agents/` | Reserved and empty — see the naming and no-shipped-agents rules above |
+| [`agents/<harness>/`](agents/) | `planner-ai-tools` and `orchestrator-ai-tools` per supported harness — optional, user-invoked entry points that run `/plan-ai-tools` and `/dev-ai-tools` in a clean context, with the **planner** category pinned to a concrete model. One folder per harness; see [Agent categories](#agent-categories) and [§6 Install agents](#6-install-agents) |
 
 ### Agent categories
 
@@ -53,6 +55,27 @@ The safety semantics — idempotent, never overwrite a non-ai-tools destination,
 | **mechanical** | Fully specified low-ambiguity work and evidence gathering |
 
 A category is what an agent **is**, not what it was asked to do. Receiving a request grants no category; the entry gate below checks the session against the category a skill requires, and asks the user before running under-qualified.
+
+#### Why the shipped agents exist
+
+Running `/plan-ai-tools` and then `/dev-ai-tools` in one session is correct but expensive: planning's exploration rounds stay resident while `/dev-ai-tools` runs, and every later turn re-sends them. Invoking the work through `planner-ai-tools` / `orchestrator-ai-tools` instead puts that exploration in a **context that is discarded when the agent returns**. The plan files are already the deliverable ([Output discipline](AGENTS.md)), so the return payload is a path plus a few lines.
+
+They also settle the category up front: the agent's model is pinned to **planner**, so the skill's entry gate passes without a question. This is a choice the **user** makes when starting the work — a skill never delegates itself to one of these agents, and a session that runs a skill directly still follows the gate and asks when it is under-qualified.
+
+#### Category → model per harness
+
+The lowest capable category wins ([`AGENTS.md`](AGENTS.md) rule 4): **planner** takes the strongest model regardless of cost, **implementer** the best code-quality-to-cost ratio, **mechanical** the cheapest that reliably finishes. Verified against vendor documentation in August 2026 — re-check at each model release, since only this table and `agents/<harness>/` carry vendor names.
+
+| Harness | planner | implementer | mechanical |
+|---|---|---|---|
+| Claude Code | `opus` (Claude Opus 5) | `sonnet` (Claude Sonnet 5) | `haiku` (Claude Haiku 4.5) |
+| Codex | `gpt-5.6-sol` | `gpt-5.6-terra` | `gpt-5.6-luna` |
+| Gemini CLI | `gemini-3.1-pro` | `gemini-3.7-flash` | `gemini-3.5-flash-lite` |
+| Grok Build | `grok-4.6` | `grok-build-0.1` | `grok-4.20-0309-non-reasoning` |
+| GitHub Copilot | `Claude Opus 5` | `Claude Sonnet 5` | `Claude Haiku 4.5` |
+| Cursor | `claude-opus-5[effort=high]` | `composer-2.5` | `composer-2.5[fast=true]` |
+
+Notes: Gemini's Pro line is frozen at 3.1 while Flash has moved to 3.7, so planner and implementer come from different generations. Grok Build accepts no `model:` in agent frontmatter — pin it in `~/.grok/config.toml` (see [§6](#6-install-agents)). Copilot CLI takes `model:` as a **string**, not the array VS Code Copilot Chat accepts. Cursor appends model parameters in square brackets.
 
 ### Skill authoring standard
 
@@ -65,18 +88,20 @@ Before anything else in this skill:
 
 1. Identify whether you satisfy **planner** (global `AGENTS.md` → Agent categories).
 2. **You satisfy it** — run this skill here, spawning the subagents it names.
-3. **You do not, or cannot tell** — never delegate this skill and never start its workflow yet. Send one
+3. **You do not, or cannot tell** — never delegate this skill, and never start its workflow yet. Send one
    chat message, in the user's language: the required category is not met; the model running this session,
    named (or that the harness does not expose it); the question — run it anyway?; and how to switch model
    in this harness plus which model or bundled skill fits **planner** best here. Then wait.
-4. Run here only if the user authorizes it. That authorization holds for the rest of the session and is
-   asked again only if the model changes. Declined or unanswered — stop: no exploration, no writes, no
-   spawns.
+4. **Authorized** — run this skill here, in this session, acting as its **planner** yourself. That
+   authorization holds for the rest of the session and is asked again only if the model changes. Declined or
+   unanswered — stop: no exploration, no writes, no spawns.
 ```
 
 It is duplicated into every skill rather than referenced, because skills can be installed without this repo's `AGENTS.md` being linked into the harness — each one has to carry its own gate. Identical wording is the point: any drift shows up in a diff.
 
-A skill runs in the session that received it, or it does not run. Delegating a whole skill to a spawned agent — the earlier design — was dropped for cost: relaying an interactive workflow sends every question and answer across the boundary twice, buying nothing the user's own model choice does not.
+A skill runs in the session that received it, or it does not run. Delegating a whole skill to a spawned agent was tried and dropped: relaying an interactive workflow sends every question and answer across the boundary twice, and the gap the gate detects is one only the user can close. So an under-qualified session **asks** — and if the user says yes, that same session runs the skill as its planner. Only the implementer and mechanical subagents the skill names are spawned.
+
+The `agents/<harness>/` entry points are a **separate, user-initiated** path: invoking `planner-ai-tools` starts the skill in a clean context on a model already pinned to the category. Nothing in a skill reaches for them.
 
 **Choosing the declared category:** the lowest category that can carry the skill's *own* decisions. A skill that can run destructive or externally visible commands requires **planner**, because approving those is planner judgment — which is why all five skills here declare it. Exploration subagents a planner spawns stay read-only and return facts, never verdicts.
 
@@ -84,7 +109,9 @@ A skill runs in the session that received it, or it does not run. Delegating a w
 
 `/plan-ai-tools` iterates a plan with the user and saves it. Accepting the plan is the **only** approval point: from there `/dev-ai-tools` runs to completion unattended, recording detail in the plan files and reporting a short summary at the end. A direct `/plan-ai-tools` invocation always stops at the saved plan and never implements.
 
-Each skill's entry gate checks the session against the category it declares. Satisfied, the session runs the skill. Not satisfied — or undecidable — it names its own model, asks whether to run anyway, and says how to switch model and to what. Authorized, it runs in full and the answer holds for the session; declined, nothing happens.
+Each skill's entry gate checks the session against the category it declares. Satisfied, the session runs the skill. Not satisfied — or undecidable — it names its own model, asks whether to run anyway, and says how to switch model and to what. Authorized, it runs the skill in full **in that same session**, as its planner, and the answer holds for the rest of the session; declined, nothing happens.
+
+To skip that question and keep the exploration out of the session, start the work from `planner-ai-tools` / `orchestrator-ai-tools` instead — the user's choice, not the skill's.
 
 ### Language
 
@@ -95,7 +122,7 @@ Two destinations, two rules (full detail in [`AGENTS.md`](AGENTS.md)):
 
 Any one of these exceptions drops the English requirement: (1) the user explicitly names another language; (2) the task is translation — write in the target language; (3) the **working repository** is already in another language (check that repo's `AGENTS.md` / `README.md` prose first, then the dominant language of comments and docs in the files being edited; if mixed or unclear, stay English). The working repository is the project being changed — this clone being English does not force English elsewhere.
 
-When an exception applies, disk matches that language, not English. Skills, future agents, and these instructions yield to that rule; they must not restate a hard "always English on disk". `agents/` stays empty; no stubs.
+When an exception applies, disk matches that language, not English. Skills, agents, and these instructions yield to that rule; they must not restate a hard "always English on disk". The shipped agent files are written in English because this repository is English — that never forces English on a target repository.
 
 ### Plan file layout
 
@@ -114,6 +141,7 @@ These apply to [Installation](#installation), [Removal](#removal), and [Reinstal
 
 - **Never replace** an existing regular file or a symlink pointing outside `$AI_TOOLS`. If a destination exists and is not already an ai-tools link, **skip it, report it, and continue**. Silent overwrite is a bug.
 - A destination that is already the correct link is left alone — every step is idempotent.
+- **Copies are a fallback, never a preference.** Fall back to copying only where the OS or filesystem refuses symlinks. Report every copy as such, and remove a copy only when its contents still match the `$AI_TOOLS` source — a locally modified copy is user work and is skipped, not deleted.
 - **Never** `rm -rf` a harness skills root; remove individual links only.
 - Remove a destination only when it is a symlink resolving under `$AI_TOOLS`.
 - Never touch vendor bundles such as `~/.grok/bundled/`, unrelated user skills, or a repository's own `AGENTS.md` describing that application's architecture.
@@ -146,6 +174,31 @@ safe_link() {
   fi
   ln -s "$target" "$dest"
   echo "linked: $dest -> $target"
+}
+
+link_or_copy() {
+  # usage: link_or_copy <target-in-ai-tools> <destination-path>
+  # Symlink when the OS/filesystem allows it; copy otherwise. Never overwrites.
+  local target="$1" dest="$2"
+  safe_link "$target" "$dest" && return 0
+  [ -e "$dest" ] || [ -L "$dest" ] && return 1   # destination occupied: safe_link already reported it
+  mkdir -p "$(dirname "$dest")"
+  cp -- "$target" "$dest" || { echo "FAILED (neither link nor copy): $dest"; return 1; }
+  echo "copied (will not track updates): $dest <- $target"
+}
+
+safe_uninstall_copy() {
+  # usage: safe_uninstall_copy <destination-path> <source-in-ai-tools>
+  # Removes a regular file ONLY when its contents still match the ai-tools source.
+  local dest="$1" src="$2"
+  [ -f "$dest" ] && [ ! -L "$dest" ] || return 1
+  if cmp -s -- "$dest" "$src"; then
+    rm -- "$dest"
+    echo "removed copy: $dest"
+  else
+    echo "SKIP (copy was modified locally): $dest"
+    return 1
+  fi
 }
 
 safe_unlink() {
@@ -346,7 +399,50 @@ done
 
 If Grok is configured with `[skills] paths`, adding `$AI_TOOLS/skills` as a scan path is an option, but only when it cannot clobber existing names. Prefer explicit per-skill links.
 
-### 6. Verify
+### 6. Install agents
+
+Link the two agent files for each selected harness from `$AI_TOOLS/agents/<harness>/` into that harness's user agents root. Agents are linked **per file**, not per directory — the harness roots hold agents from other sources, so a directory link would shadow them.
+
+| Harness | Source folder | User agents root | File form |
+|---------|---------------|------------------|-----------|
+| Claude Code | `agents/claude-code/` | `$HOME/.claude/agents/` | `*.md`, frontmatter `model:` (`opus`/`sonnet`/`haiku`/`fable`/full ID/`inherit`) |
+| Codex | `agents/codex/` | `$HOME/.codex/agents/` | `*.toml`, keys `name`, `description`, `developer_instructions`, `model`, `model_reasoning_effort` |
+| GitHub Copilot | `agents/copilot/` | `$HOME/.copilot/agents/` | `*.agent.md`; `model:` must be a **string** — the CLI rejects the array form VS Code Copilot Chat accepts |
+| Cursor | `agents/cursor/` | `$HOME/.cursor/agents/` | `*.md`, `model:` accepts bracketed parameters (`claude-opus-5[effort=high]`) |
+| Gemini | `agents/gemini/` | `$HOME/.gemini/agents/` | `*.md`, frontmatter `kind`, `model`, `temperature`, `max_turns`, `timeout_mins` |
+| Grok Build | `agents/grok/` | `$HOME/.grok/agents/` | `*.md`; **no `model:` in frontmatter** — pin models in `config.toml`, below |
+
+```bash
+# usage: install_agents <harness-folder> <destination-root>
+install_agents() {
+  local src="$AI_TOOLS/agents/$1" dest="$2"
+  [ -d "$src" ] || { echo "SKIP (no such harness folder): $src"; return 1; }
+  find "$src" -maxdepth 1 -type f -name '*-ai-tools*' -print | while read -r file; do
+    link_or_copy "$file" "$dest/$(basename "$file")"
+  done
+}
+
+install_agents claude-code "$HOME/.claude/agents"    # if Claude Code selected
+install_agents codex       "$HOME/.codex/agents"     # if Codex selected
+install_agents copilot     "$HOME/.copilot/agents"   # if GitHub Copilot selected
+install_agents cursor      "$HOME/.cursor/agents"    # if Cursor selected
+install_agents gemini      "$HOME/.gemini/agents"    # if Gemini selected
+install_agents grok        "$HOME/.grok/agents"      # if Grok selected
+```
+
+`link_or_copy` (defined with the other helpers under [Safety rules](#safety-rules)) prefers a symlink and falls back to a copy only where the OS or filesystem refuses one — Windows without Developer Mode, or a mount that does not support symlinks. **A copied agent drifts**: it does not track `git pull`, so re-run [Reinstallation / Update](#reinstallation--update) after every upstream change on those machines. Copies are reported as `copied (will not track updates)` so the drift is visible in the install log.
+
+**Grok Build — pin the models separately.** Grok resolves subagent models from `~/.grok/config.toml`, not from agent frontmatter. Add (never replace the file):
+
+```toml
+[subagents.models]
+planner-ai-tools = "grok-4.6"
+orchestrator-ai-tools = "grok-4.6"
+```
+
+Without this block the agents still load and still run their skill — they simply inherit the session's model, which means the **planner** category is not guaranteed. Same fallback applies to any harness whose `model:` field is ignored or unsupported: the agent works, the category guarantee does not.
+
+### 7. Verify
 
 ```bash
 readlink -f "$HOME/.claude/CLAUDE.md" 2>/dev/null
@@ -361,9 +457,33 @@ ls -la "$HOME/.claude/skills" "$HOME/.grok/skills" "$HOME/.codex/skills" "$HOME/
 for path in "$AI_TOOLS/skills"/*-ai-tools; do
   test -f "$path/SKILL.md" && echo "skill ok: $(basename "$path")"
 done
+
+# Agents: source present, and installed as a link or an unmodified copy
+for dir in "$AI_TOOLS/agents"/*/; do
+  [ -d "$dir" ] || continue
+  harness=$(basename "$dir")
+  case "$harness" in
+    claude-code) root="$HOME/.claude/agents" ;;
+    codex)       root="$HOME/.codex/agents" ;;
+    copilot)     root="$HOME/.copilot/agents" ;;
+    cursor)      root="$HOME/.cursor/agents" ;;
+    gemini)      root="$HOME/.gemini/agents" ;;
+    grok)        root="$HOME/.grok/agents" ;;
+    *)           echo "WARN unmapped harness folder: $harness"; continue ;;
+  esac
+  for file in "$dir"*-ai-tools*; do
+    [ -f "$file" ] || continue
+    base=$(basename "$file")
+    if [ -L "$root/$base" ]; then echo "agent link ok: $root/$base"
+    elif cmp -s -- "$root/$base" "$file" 2>/dev/null; then echo "agent copy ok: $root/$base"
+    elif [ -e "$root/$base" ]; then echo "WARN agent differs from source: $root/$base"
+    else echo "absent: $root/$base"
+    fi
+  done
+done
 ```
 
-Restart or reload any harness that caches skills at startup, then confirm the five slash commands appear in the menu.
+Restart or reload any harness that caches skills or agents at startup, then confirm the five slash commands appear in the menu and that `planner-ai-tools` and `orchestrator-ai-tools` appear in the harness's agent list.
 
 ## Removal
 
@@ -376,12 +496,17 @@ Report findings; remove nothing until the user confirms the targets.
 ```bash
 for root in "$HOME/.claude/skills" "$HOME/.grok/skills" "$HOME/.cursor/skills" \
             "$HOME/.codex/skills" "$HOME/.copilot/skills" "$HOME/.gemini/config/skills" \
-            "$HOME/.claude/agents" "$HOME/.grok/agents"; do
+            "$HOME/.claude/agents" "$HOME/.grok/agents" "$HOME/.codex/agents" \
+            "$HOME/.copilot/agents" "$HOME/.cursor/agents" "$HOME/.gemini/agents"; do
   [ -d "$root" ] || continue
   echo "=== $root ==="
   find "$root" -maxdepth 1 -type l -print 2>/dev/null | while read -r p; do
     t=$(readlink "$p")
     case "$t" in *ai-tools*|"$AI_TOOLS"/*) echo "linked: $p -> $t" ;; esac
+  done
+  # Copies from a symlink-less install: name match only — contents are checked at removal
+  find "$root" -maxdepth 1 -type f -name '*-ai-tools*' -print 2>/dev/null | while read -r p; do
+    echo "possible copy: $p"
   done
 done
 
@@ -422,20 +547,34 @@ done
 
 If `$AI_TOOLS/skills` was added to a harness scan path (Grok `[skills] paths`), remove **only that entry** when asked — never wipe the config file.
 
-### 3. Remove agents, if any were linked
+### 3. Remove agents
+
+Mirror of [§6 Install agents](#6-install-agents): per-file, per-harness. Links are unlinked; copies are removed only when unmodified.
 
 ```bash
-if [ -d "$AI_TOOLS/agents" ]; then
-  find "$AI_TOOLS/agents" -maxdepth 1 -mindepth 1 ! -name '.gitkeep' -print 2>/dev/null | while read -r src; do
-    base=$(basename "$src")
-    safe_unlink "$HOME/.claude/agents/$base"
-    safe_unlink "$HOME/.grok/agents/$base"
+# usage: uninstall_agents <harness-folder> <destination-root>
+uninstall_agents() {
+  local src="$AI_TOOLS/agents/$1" dest="$2"
+  [ -d "$src" ] || return 0
+  find "$src" -maxdepth 1 -type f -name '*-ai-tools*' -print | while read -r file; do
+    base=$(basename "$file")
+    safe_unlink "$dest/$base" >/dev/null 2>&1 || safe_uninstall_copy "$dest/$base" "$file"
   done
-  # Whole-directory link (rare)
-  safe_unlink "$HOME/.claude/agents"
-  safe_unlink "$HOME/.grok/agents"
-fi
+}
+
+uninstall_agents claude-code "$HOME/.claude/agents"    # if Claude Code selected
+uninstall_agents codex       "$HOME/.codex/agents"     # if Codex selected
+uninstall_agents copilot     "$HOME/.copilot/agents"   # if GitHub Copilot selected
+uninstall_agents cursor      "$HOME/.cursor/agents"    # if Cursor selected
+uninstall_agents gemini      "$HOME/.gemini/agents"    # if Gemini selected
+uninstall_agents grok        "$HOME/.grok/agents"      # if Grok selected
+
+# Whole-directory link from an older install (rare)
+safe_unlink "$HOME/.claude/agents"
+safe_unlink "$HOME/.grok/agents"
 ```
+
+If Grok's `~/.grok/config.toml` carries the `[subagents.models]` entries from §6, remove **only those two keys** when asked — never the file, and never other entries in the table.
 
 ### 4. Remove the global instructions link, optional
 
@@ -457,7 +596,9 @@ If the instructions file is an include pointer rather than a symlink, edit out t
 
 ```bash
 for root in "$HOME/.claude/skills" "$HOME/.grok/skills" "$HOME/.cursor/skills" \
-            "$HOME/.codex/skills" "$HOME/.copilot/skills" "$HOME/.gemini/config/skills"; do
+            "$HOME/.codex/skills" "$HOME/.copilot/skills" "$HOME/.gemini/config/skills" \
+            "$HOME/.claude/agents" "$HOME/.grok/agents" "$HOME/.codex/agents" \
+            "$HOME/.copilot/agents" "$HOME/.cursor/agents" "$HOME/.gemini/agents"; do
   [ -d "$root" ] || continue
   echo "=== remaining ai-tools links in $root ==="
   find "$root" -maxdepth 1 -type l -print 2>/dev/null | while read -r p; do
@@ -496,7 +637,7 @@ If `$AI_TOOLS` is missing, stop and offer a fresh [Installation](#installation),
 ### 1. Ask scope
 
 1. Which harnesses to reinstall
-2. Whether to refresh **instructions** as well as skills
+2. Whether to refresh **instructions** and **agents** as well as skills
 3. Whether to clean **legacy** bare names from older installs
 4. That the update **resets `$AI_TOOLS` to `origin/master`**, discarding local commits and uncommitted changes in this repo unless they opt out
 5. Installed IDE extensions can change between reinstalls — an extension-only harness like Gemini
@@ -556,7 +697,9 @@ Run [Removal](#removal) steps 2–4 for the harnesses in scope, including legacy
 
 ### 4. Install again
 
-Run the [Installation](#installation) link steps for the same harnesses — discovery is optional when scope was already confirmed. Prefer listing `$AI_TOOLS/skills/*-ai-tools` after the reset over a hard-coded list, since the set may have changed. `safe_link` stays non-destructive: an existing destination that is not already the correct link is skipped and reported.
+Run the [Installation](#installation) link steps for the same harnesses — discovery is optional when scope was already confirmed. Prefer listing `$AI_TOOLS/skills/*-ai-tools` and `$AI_TOOLS/agents/*/` after the reset over hard-coded lists, since both sets may have changed. `safe_link` stays non-destructive: an existing destination that is not already the correct link is skipped and reported.
+
+Re-run [§6 Install agents](#6-install-agents) too. This step matters most on machines where agents were **copied** rather than linked: a copy does not follow `git pull`, so the reset in §2 is only half the update until the copies are refreshed. §3's removal drops unmodified copies, and §6 writes the new ones.
 
 Also re-run Installation §4 (ensure user-level `$HOME/AGENTS.md`): create it empty only if missing; if present, leave it untouched. Do not ask the user to fill it or add instructions.
 
@@ -586,6 +729,9 @@ for path in "$AI_TOOLS/skills"/*-ai-tools; do
     [ -L "$root/$name" ] && echo "link ok: $root/$name -> $(readlink "$root/$name")"
   done
 done
+
+# Agents: re-run the agent verification block from Installation §7
+# (link / unmodified-copy / drifted-copy per harness)
 
 # No legacy bare names should remain
 for name in plan dev az gh gc; do

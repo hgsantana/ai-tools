@@ -24,7 +24,7 @@ Workflows name categories, never vendor model names. The harness maps categories
 | **implementer** | Write and edit code with local design judgment for a specified stage or brief. May delegate boilerplate to mechanical. | executor, action model, coding agent |
 | **mechanical** | Fully specified, low-ambiguity work: apply known patches, rename, execute builds/tests, collect evidence. Makes no design decisions. | worker, utility agent, tool agent |
 
-1. Never hard-code vendor model names (Opus, Sonnet, Grok, GPT, etc.) as agent identities.
+1. Never hard-code vendor model names (Opus, Sonnet, Grok, GPT, etc.) as agent identities. Agent **identity** is the category; a vendor model may appear only as configuration, in `$HOME/.ai-tools/agents/<harness>/` — the single harness-specific mapping layer.
 2. Receiving a request assigns no category; category matches the runner's model capability. The agent running a skill satisfies its category requirement.
 3. In single-model harnesses, that model behaves in the assigned category per turn.
 4. Route work to the lowest capable category: **mechanical** (execution/evidence), **implementer** (code), **planner** (planning/validation).
@@ -33,7 +33,7 @@ Workflows name categories, never vendor model names. The harness maps categories
    - **implementer**: Best code-quality-to-cost ratio (use flagship tiers only when quality gains justify cost).
    - **mechanical**: Cheapest/fastest model reliably completing low-ambiguity work. Upgrade only upon failure.
 6. When distinct models are unavailable, satisfy categories via category-specific skills or execution modes.
-7. Announce every spawn in chat in user's language with category and concrete model/skill (e.g., "Planning with `<model>`", "Dispatching mechanical via `<skill>`"). Never hard-code model names in files or prompts.
+7. Announce every spawn in chat in user's language with category and concrete model/skill (e.g., "Planning with `<model>`", "Dispatching mechanical via `<skill>`"). Never hard-code model names in files or prompts, except in `agents/<harness>/` per rule 1.
 
 ### Category resolution
 
@@ -45,6 +45,8 @@ Check the category declared by the skill before execution:
 
 1. **Satisfied**: Run the skill directly; never spawn a copy of yourself.
 2. **Unsatisfied / Unclear**: Ask the user via Under-qualified disclosure before starting. Never delegate the root skill to a spawned agent.
+
+Authorization is what closes the gap, not delegation: once the user authorizes, this session runs the skill as its **planner**. The implementer and mechanical subagents the skill names are spawned as usual.
 
 ### Under-qualified disclosure
 
