@@ -87,15 +87,15 @@ Implementers must not open other stage files, base plans, or `plans/finished/**`
 
 ### Implementer obligations
 
-1. Record Agent/Session ID in the base plan status table on start.
+1. Record own session ID in the current Dispatch log row of the assigned stage/fix file on start.
 2. Implement only the assigned stage/fix file.
 3. Append factual **Implementation log** to the stage/fix file (actions and evidence, not subjective claims).
 4. Set status to `V` (or `TV` for tests) upon completion. Never set `W`, `R*`, `T`, `E`, or `F`.
 
 ### Planner obligations
 
-- Set `W` (initial), `R1–R3` (corrections), or `T` (tests) with Agent/Session ID before dispatching.
-- Append a Dispatch log row (attempt, category, runner, session ID) before every spawn; fill its outcome after validating (see Dispatch ledger).
+- Set `W` (initial), `R1–R3` (corrections), or `T` (tests) in the base plan status table before dispatching, updating the `Agent` column to the category and concrete model/skill being dispatched.
+- Append a Dispatch log row (attempt, status, category, runner) before every spawn; fill its outcome after validating (see Dispatch ledger).
 - Validate on `V`/`TV` via actual diff inspection (see Validation).
 - **On pass (`F`)**: Move `plans/<slug>-<n>.md` and associated `plans/<slug>-F*.md` fix files to `plans/finished/`; commit if stage defines a commit boundary.
 - **On first failure (`R1`)**: Append concrete correction tasks to the stage file `plans/<slug>-<n>.md`, set `R1`, and re-dispatch/resume implementer with the annotated stage file.
@@ -158,26 +158,27 @@ Implementer claims and passing builds are evidence, not acceptance. Base verdict
 
 - Sequential: One **implementer**, await completion.
 - Parallel batch: Multiple concurrent **implementers** on disjoint file sets.
-- Correction (R1): Resume session ID if supported, or spawn implementer with base + annotated stage file.
+- Correction (R1): Resume the previous attempt's session ID from the Dispatch log if the harness supports it, or spawn implementer with base + annotated stage file.
 - Correction breakdown (R2+ / post-R1): Spawn implementer with base plan + individual `plans/<slug>-F<m>.md` fix file. Map files in parent stage file.
 - **mechanical** never edits production or test code.
 - Announce every spawn in chat in user's language (category + concrete model/skill).
 
 ## Dispatch ledger (planner)
 
-Every dispatch (initial, correction, or test pass) appends one row to a **Dispatch log** table in the target stage, fix, or brief file, before the subagent starts:
+Every dispatch (initial, correction, or test pass) appends one row to a **Dispatch log** table in the target stage, fix, or brief file, before the subagent starts. It is the per-attempt history behind the base plan's single-line `Agent` column:
 
 ```markdown
 ## Dispatch log
 
-| Attempt | Status | Category | Runner | Agent/Session ID | Outcome |
-|---------|--------|----------|--------|------------------|---------|
+| Attempt | Status | Category | Runner | Session ID | Outcome |
+|---------|--------|----------|--------|------------|---------|
 | 1 | W | implementer | <concrete model or skill> | <id> | V → failed validation |
 | 2 | R1 | implementer | <concrete model or skill> | <id> | V → accepted |
 ```
 
 - **Attempt** counts from 1; correction rounds continue the same counter (`R1` = attempt 2).
-- **Runner** is the concrete model or bundled skill actually spawned — the same value announced in chat. Record it in the file only here; never hard-code runner names elsewhere in plans or prompts.
+- **Runner** is the concrete model or bundled skill actually spawned — the same value announced in chat and mirrored into the base plan `Agent` column. Record it in the file only here and there; never hard-code runner names in prompts.
+- **Session ID** is written by the dispatched subagent itself on start, and is what a correction round resumes.
 - **Outcome** is filled by the planner after validation (`accepted`, `failed validation`, `E — limit exhausted`).
 - Decomposed fix files (`plans/<slug>-F<m>.md`) keep their own Dispatch log; the parent stage file's task-to-fix mapping links them.
 - Mode B records the ledger in `plans/dev/<slug>-brief.md`.

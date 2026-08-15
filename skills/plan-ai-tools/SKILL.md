@@ -73,8 +73,8 @@ plans/
 
 ## Status
 
-| Stage | Status | Agent/Session ID |
-|------:|:------:|------------------|
+| Stage | Status | Agent |
+|------:|:------:|-------|
 | 1 | | |
 | 2 | | |
 
@@ -110,7 +110,7 @@ Optional: commit strategy, risks, out of scope.
 | `E` | Error — correction limit exhausted | **planner** |
 | `F` | Finished — stage accepted | **planner** |
 
-**Agent/Session ID**: Recorded per stage to allow resuming interrupted sessions.
+**Agent**: Who is working the stage — category plus the concrete model or skill dispatched (e.g., `implementer / <model>`). Per-attempt history and session IDs live in the stage file's Dispatch log, maintained by `/dev-ai-tools`.
 
 ### Stage file (`plans/<slug>-<n>.md`)
 
