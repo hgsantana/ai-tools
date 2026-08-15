@@ -46,7 +46,7 @@ Runs **unattended** (work was approved prior to invocation).
 
 - Plan files store all detail (steps, logs, diffs, outputs).
 - No per-stage chat progress narration.
-- Chat receives one terminal summary in user's language (status counts, file paths, `E` causes/remediations). Disk files follow English rules.
+- Chat receives one terminal summary in user's language (see Final summary). Disk files follow English rules.
 
 ## Division of labor
 
@@ -95,6 +95,7 @@ Implementers must not open other stage files, base plans, or `plans/finished/**`
 ### Planner obligations
 
 - Set `W` (initial), `R1–R3` (corrections), or `T` (tests) with Agent/Session ID before dispatching.
+- Append a Dispatch log row (attempt, category, runner, session ID) before every spawn; fill its outcome after validating (see Dispatch ledger).
 - Validate on `V`/`TV` via actual diff inspection (see Validation).
 - **On pass (`F`)**: Move `plans/<slug>-<n>.md` and associated `plans/<slug>-F*.md` fix files to `plans/finished/`; commit if stage defines a commit boundary.
 - **On first failure (`R1`)**: Append concrete correction tasks to the stage file `plans/<slug>-<n>.md`, set `R1`, and re-dispatch/resume implementer with the annotated stage file.
@@ -161,6 +162,39 @@ Implementer claims and passing builds are evidence, not acceptance. Base verdict
 - Correction breakdown (R2+ / post-R1): Spawn implementer with base plan + individual `plans/<slug>-F<m>.md` fix file. Map files in parent stage file.
 - **mechanical** never edits production or test code.
 - Announce every spawn in chat in user's language (category + concrete model/skill).
+
+## Dispatch ledger (planner)
+
+Every dispatch (initial, correction, or test pass) appends one row to a **Dispatch log** table in the target stage, fix, or brief file, before the subagent starts:
+
+```markdown
+## Dispatch log
+
+| Attempt | Status | Category | Runner | Agent/Session ID | Outcome |
+|---------|--------|----------|--------|------------------|---------|
+| 1 | W | implementer | <concrete model or skill> | <id> | V → failed validation |
+| 2 | R1 | implementer | <concrete model or skill> | <id> | V → accepted |
+```
+
+- **Attempt** counts from 1; correction rounds continue the same counter (`R1` = attempt 2).
+- **Runner** is the concrete model or bundled skill actually spawned — the same value announced in chat. Record it in the file only here; never hard-code runner names elsewhere in plans or prompts.
+- **Outcome** is filled by the planner after validation (`accepted`, `failed validation`, `E — limit exhausted`).
+- Decomposed fix files (`plans/<slug>-F<m>.md`) keep their own Dispatch log; the parent stage file's task-to-fix mapping links them.
+- Mode B records the ledger in `plans/dev/<slug>-brief.md`.
+
+This table is the only source for the attempt counts and runners reported in the Final summary.
+
+## Final summary (planner)
+
+One chat message in the user's language, emitted after the queue (Mode A) or the brief (Mode B) completes. Per stage or brief, in execution order:
+
+1. **What was delivered** — one or two lines, factual, drawn from the accepted diff.
+2. **Attempts** — total attempts and their breakdown (e.g., `2 attempts (initial + 1 correction round)`), plus fix-file count when corrections were decomposed.
+3. **Runner** — category and concrete model or skill per attempt; note explicitly when attempts used different runners.
+
+Close with: final status counts (`F`/`E`), paths of the moved plan files and commits created, and for each `E` its cause and the remediation the user must decide on.
+
+Report only what the ledger and the plan files record; never estimate attempt counts or infer a runner that was not announced.
 
 ## Boundaries
 
