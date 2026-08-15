@@ -25,67 +25,45 @@ Before anything else in this skill:
    asked again only if the model changes. Declined or unanswered — stop: no exploration, no writes, no
    spawns.
 
-**Category roles** (see global `AGENTS.md`)
+**Category roles** (see global `AGENTS.md`):
 
 | Role here | Category |
 |-----------|----------|
-| You, running this skill | **planner** — settled by the entry gate, never assumed from receiving the command |
-| Codebase exploration subagents | **mechanical** (read-only) or the harness explore type |
-| Implementation | not used |
+| You, running this skill | **planner** (settled by entry gate) |
+| Exploration subagents | **mechanical** (read-only) or harness explore type |
+| Implementation | Not used |
 
 ## Purpose
 
-Produce a step-by-step implementation plan for a change to the current repository, save it under `plans/`, and stop. This skill never writes, edits, or deletes source code; never runs builds or tests as a delivery step; and never hands work to an implementer. Its only output is plan files on disk.
+Author a multi-file implementation plan under `plans/` and stop. Never edit source code, run tests, or spawn implementers.
 
 ## Invocation modes
 
-| Invoked by | After the plan is saved |
-|------------|-------------------------|
-| The user typing `/plan-ai-tools` — direct mode | Stop. Never implement, never offer to implement, never name `/dev-ai-tools` as a next step you would take. |
-| The global `AGENTS.md` change flow, or another skill that names this step — flow mode | Stop and return control to the caller, which decides what happens next. |
-
-In flow mode the caller implements immediately after acceptance, so the acceptance request (step 5) must state that accepting starts implementation now, and list the base plans already under `plans/` that the run will also cover (`plans/*.md`, excluding `-<n>.md` stage files and `plans/finished/**`). In direct mode, say nothing about implementing.
-
-Either way, this skill itself never implements.
+| Mode | Trigger | Behavior after saving plan |
+|------|---------|----------------------------|
+| **Direct** | User types `/plan-ai-tools` | Stop. Never implement or propose implementing. |
+| **Flow** | Global change flow or calling skill | Stop and return control to caller. Acceptance request must state execution starts immediately and list covered plans (`plans/*.md`, excluding stage/finished files). |
 
 ## Workflow
 
-1. **Determine the task.** Use the user's argument if given, otherwise ask what to plan. Ask targeted clarifying questions while the request is vague, including scope boundaries — this is the phase where questions belong.
-
-2. **Read the source of truth.** `README.md` and `AGENTS.md` at the repository root and in relevant subdirectories; their conventions override generic assumptions. Also read `$HOME/AGENTS.md` if it exists (Windows: `%USERPROFILE%\AGENTS.md`); it overrides this repository's global `AGENTS.md` defaults, but not the current project's `AGENTS.md` or `README.md`. The global `AGENTS.md` categories and change flow still apply unless the user file overrides them.
-
-3. **Explore the codebase.** Dispatch read-only explore agents (**mechanical** or the harness explore type) to find entry points, patterns, related modules, test conventions, and build config. Launch independent explorations in parallel; use direct read/grep for pinpoint lookups. Announce each spawn per the global `AGENTS.md` category rules: name the category and the concrete model the harness assigned it, in the user's language, at the point of spawning.
-
-4. **Draft the plan** as a base file plus one file per stage (format below):
-   - Numbered stages, each implementable from its own stage file plus the base Goal and Execution graph alone
-   - Exact paths to create, modify, or remove, each with a reason
-   - Tests split by type where relevant: unit, integration, mutation, security, performance
-   - Documentation updates as the last stage when behavior or public surface changes
-   - Conventional Commits boundaries described, never executed
-   - Per stage: **sequential** or **parallel-safe** relative to the others, feeding the execution graph and `/dev-ai-tools` fan-out
-
-5. **Get acceptance.** Present the plan and revise until the user accepts it. No plan file reaches `plans/` before acceptance. This is the one place where chat detail is wanted: give enough for the user to judge each stage — goal, stages with their files, tests, risks, and what is explicitly **out of scope** — without dumping whole file contents. State scope boundaries plainly so the user can catch a mismatch before accepting. Present it in the user's language. Saved plan files follow the global Disk rule in `AGENTS.md`: concise English unless an exception applies.
-
-6. **Save** (after acceptance):
-   - Ensure `plans/` exists and is listed in the repository `.gitignore`; append it if missing
-   - Base file `plans/<slug>.md`, stage files `plans/<slug>-<n>.md` for n = 1, 2, …
-   - Pick a distinct slug rather than overwriting an unrelated existing base plan
-   - Leave every Status and Agent/Session ID cell empty
-
-7. **Stop.** Report only the saved paths and the stage count, in a few lines. An accepted plan is always on disk before this skill ends.
+1. **Clarify task & scope**: Resolve ambiguities and explicit out-of-scope boundaries up front.
+2. **Read sources of truth**: Repository root and sub-directory `README.md`/`AGENTS.md`, plus `$HOME/AGENTS.md` if present.
+3. **Explore codebase**: Spawn read-only **mechanical** agents in parallel for broad discovery; use direct read/grep for pinpoint lookups. Announce each spawn in chat.
+4. **Draft plan**: Base file + stage files (isolated, explicit paths with reasons, tests split by type, docs stage if behavior changes, Conventional Commit boundaries, sequential/parallel tags).
+5. **Get acceptance**: Present in user's language (goal, stages, files, tests, risks, out-of-scope boundaries). Iterate until accepted. Saved files follow English disk rules.
+6. **Save**: Ensure `plans/` is in `.gitignore`. Write base `plans/<slug>.md` and stage `plans/<slug>-<n>.md` files with empty Status/Agent cells.
+7. **Stop**: Report saved paths and stage count in chat.
 
 ## Plan file format
 
-This section is the canonical definition of the plan layout and status codes; `/dev-ai-tools` reproduces the codes to stay self-contained.
-
-Example slug `i18n-ui-and-content-language`:
+Canonical format for multi-file plans (`/dev-ai-tools` reads and updates these):
 
 ```text
 plans/
-  i18n-ui-and-content-language.md      # base
-  i18n-ui-and-content-language-1.md    # stage 1
-  i18n-ui-and-content-language-2.md    # stage 2
-  finished/                            # /dev-ai-tools moves completed files here
+  <slug>.md           # base plan
+  <slug>-1.md         # stage 1
+  <slug>-2.md         # stage 2
+  finished/           # completed files moved here by /dev-ai-tools
 ```
 
 ### Base file (`plans/<slug>.md`)
@@ -106,8 +84,8 @@ plans/
 
 ## Execution graph
 
-Terse dependency list; every stage appears exactly once.
-Example: stage 1 before 2 and 3 (parallel-safe with each other); stage 4 after 2 and 3.
+Dependency list; every stage appears exactly once.
+Example: 1 before 2 and 3 (parallel-safe); 4 after 2 and 3.
 
 ## Stages
 
@@ -119,24 +97,24 @@ Example: stage 1 before 2 and 3 (parallel-safe with each other); stage 4 after 2
 Optional: commit strategy, risks, out of scope.
 ```
 
-**Status codes** — maintained by `/dev-ai-tools`; leave empty when creating the plan.
+**Status codes** (maintained by `/dev-ai-tools`; left empty at creation):
 
-| Code | Meaning | Who sets it |
-|------|---------|-------------|
+| Code | Meaning | Set by |
+|------|---------|--------|
 | *(empty)* | Not started | — |
-| `W` | Working — implementation in progress | **planner**, before dispatching |
-| `V` | Validating — handed to the planner for judgment | **implementer**, when returning to planner |
-| `R1`, `R2`, `R3` | Retry 1, 2, 3 — reworking after planner feedback | **planner**, before dispatching |
-| `T` | Testing — dedicated test-writing/running pass | **planner**, before dispatching |
-| `TV` | Testing validation — planner judging tests | **agent doing it**, when returning to planner |
-| `E` | Error — correction limit exhausted | **planner**, when finishing |
-| `F` | Finished — stage accepted | **planner**, when finishing |
+| `W` | Working — implementation in progress | **planner** |
+| `V` | Validating — ready for planner review | **implementer** |
+| `R1`, `R2`, `R3` | Retry 1, 2, 3 — rework after feedback | **planner** |
+| `T` | Testing — dedicated test pass | **planner** |
+| `TV` | Testing validation — test review | **testing agent** |
+| `E` | Error — correction limit exhausted | **planner** |
+| `F` | Finished — stage accepted | **planner** |
 
-**Agent/Session ID** column: ID of the agent or session that was spawned to fulfill the tasks. Critical for resuming when an ongoing job is interrupted by an API error (expired tokens, gateway failure, etc.) and the agent/subsession dies.
+**Agent/Session ID**: Recorded per stage to allow resuming interrupted sessions.
 
 ### Stage file (`plans/<slug>-<n>.md`)
 
-Self-contained: an **implementer** given the base Goal and Execution graph plus this file alone can finish the stage without reading other stage files.
+Self-contained: implementable from base Goal/Execution graph and this file alone.
 
 ```markdown
 # Stage <n>: <Title>
@@ -163,7 +141,7 @@ What this stage delivers.
 ## Acceptance criteria
 
 - [ ] Observable criterion
-- [ ] Build and tests required for this stage pass
+- [ ] Build and required tests pass
 
 ## Commit
 
@@ -176,12 +154,12 @@ Suggested message: `feat: …` (or fix/chore/…)
 
 ## Implementation log
 
-(Append-only. Implementers and planner add sections here during `/dev-ai-tools`.)
+(Append-only log added by implementers and planner during execution.)
 ```
 
 ## Boundaries
 
-- Write only under `plans/`, plus `.gitignore` when adding the `plans/` entry.
-- Never spawn an **implementer** for production code, and never invoke `/dev-ai-tools` from inside this skill. In flow mode the caller starts it after this skill has ended — that is the caller's step, not yours.
-- Never delegate this skill to another agent. The entry gate decides whether it runs here or does not run.
-- Activate only on explicit `/plan-ai-tools`, a skill that names this step, or the global `AGENTS.md` change flow.
+- Write only under `plans/` and `.gitignore`.
+- Never edit code, run verification builds, or invoke `/dev-ai-tools`.
+- Never delegate this skill to a subagent.
+- Activate only via `/plan-ai-tools`, calling skills, or global change flow.

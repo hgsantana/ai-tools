@@ -24,31 +24,28 @@ Before anything else in this skill:
 
 ## Rules
 
-Use the `az` CLI for Azure inventory, cost, and operations work.
+Use `az` CLI for Azure inventory, cost, and operations.
 
-- Freely use `az` for **read-only / query** operations (list, show, query costs, describe resources).
-- You may **suggest** creating, modifying, or removing Azure resources; only the user decides.
-- **NEVER** create, modify, or remove any Azure resource without **explicit** user authorization
-  for that specific action. Prior approval does not carry over, and this gate holds even inside an
-  unattended `/dev-ai-tools` run.
-- Before any suggested mutating change, make **cost impact** clear (SKU, ongoing cost, billable or not).
-- Keep chat replies concise: a short table or summary, not a raw dump. For long or raw output, summarize in chat and save the full result to a file only if the user wants it kept.
+- Freely run **read-only / query** commands (list, show, costs, describe).
+- You may **suggest** mutations; only the user decides.
+- **NEVER** create, modify, or remove any Azure resource without **explicit** user authorization for that specific action. Approval never carries over, even inside unattended `/dev-ai-tools`.
+- Before suggesting mutations, state clear **cost impact** (SKU, ongoing cost, billable status).
+- Keep chat replies concise: tables or summaries. Save full output to a file only if requested.
 
 ## Delegated exploration
 
-The planner running this skill may spawn **mechanical** or **implementer** subagents to explore `az`: discover which commands exist, read current state, collect output.
-
-- Strictly read-only. Query commands only — never create, modify, or remove anything.
-- They return facts, never verdicts. They do not judge what should change.
-- Only the planner decides on a mutating command and runs it, after presenting cost, risk, and reason, and getting explicit authorization for that specific action.
-- An entry-gate authorization to run this skill is not authorization to mutate anything. Every mutating action still needs its own explicit approval.
+Planner may spawn **mechanical** or **implementer** subagents to explore `az` (discover commands, read state, collect output):
+- Strictly read-only query commands.
+- Return facts, never verdicts or change proposals.
+- Planner alone decides and executes mutating commands after presenting cost/risk/reason and receiving explicit per-action approval.
+- Entry-gate authorization does not authorize mutations.
 
 ## Useful commands
 
 - `az account show` / `az account list` — subscription context
 - `az resource list` / `az group list` — inventory
-- `az <service> list` / `az <service> show` — inspect a resource
+- `az <service> list` / `az <service> show` — resource inspection
 - `az consumption usage list` / `az costmanagement query` — cost and usage
 - `az monitor` — logs, metrics, alerts
 
-Prefer `--output table` or `--query` (JMESPath) for concise reports.
+Prefer `--output table` or `--query` (JMESPath) for concise output.

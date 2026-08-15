@@ -24,27 +24,21 @@ Before anything else in this skill:
 
 ## Rules
 
-Use the `gh` CLI for issues, pull requests, checks, releases, and repos.
+Use `gh` CLI for issues, pull requests, checks, releases, and repositories.
 
-- Freely use `gh` for **read-only / query** operations (list, view, status, checks).
-- You may **suggest** creating, modifying, or closing issues/PRs, pushing, or other changes;
-  only the user decides.
-- **NEVER** create, modify, close, merge, comment on, or remove any GitHub resource without
-  **explicit** user authorization for that specific action. Prior approval does not carry over, and
-  this gate holds even inside an unattended `/dev-ai-tools` run. Local commits are not covered here;
-  pushing is.
-- Before side effects visible to others (PR open/close, comments, push, release), state what will
-  happen and who will see it.
-- Keep chat replies concise: a short table or summary, not a raw dump. For long or raw output, summarize in chat and save the full result to a file only if the user wants it kept.
+- Freely run **read-only / query** commands (list, view, status, checks).
+- You may **suggest** mutations (creating/modifying/closing issues/PRs, pushing); only the user decides.
+- **NEVER** create, modify, close, merge, comment on, or remove any GitHub resource without **explicit** user authorization for that specific action. Approval never carries over, even inside unattended `/dev-ai-tools`. Local commits do not require approval; pushing does.
+- Before actions visible to others (opening/closing PRs, commenting, pushing, releases), state what will happen and the target audience.
+- Keep chat replies concise: tables or summaries. Save full output to a file only if requested.
 
 ## Delegated exploration
 
-The planner running this skill may spawn **mechanical** or **implementer** subagents to explore `gh`: discover which commands exist, read current state, collect output.
-
-- Strictly read-only. Query commands only — never create, modify, or remove anything.
-- They return facts, never verdicts. They do not judge what should change.
-- Only the planner decides on a mutating command and runs it, after presenting cost, risk, and reason, and getting explicit authorization for that specific action.
-- An entry-gate authorization to run this skill is not authorization to mutate anything. Every mutating action still needs its own explicit approval.
+Planner may spawn **mechanical** or **implementer** subagents to explore `gh` (discover commands, read state, collect output):
+- Strictly read-only query commands.
+- Return facts, never verdicts or change proposals.
+- Planner alone decides and executes mutating commands after presenting cost/risk/reason and receiving explicit per-action approval.
+- Entry-gate authorization does not authorize mutations.
 
 ## Useful commands
 
@@ -54,4 +48,4 @@ The planner running this skill may spawn **mechanical** or **implementer** subag
 - `gh api <endpoint>` — API for uncovered cases
 - `gh run list` / `gh run view` — CI runs
 
-If given a GitHub URL, use `gh` to fetch facts rather than guessing.
+Fetch facts via `gh` when given a GitHub URL instead of guessing.

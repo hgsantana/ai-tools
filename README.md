@@ -11,6 +11,7 @@ Goals:
 - One global `AGENTS.md` built on **agent categories** (`planner`, `implementer`, `mechanical`), so any model can map roles without hard-coded vendor model names — each session resolves the three against its own harness once, to a model or a bundled skill
 - Skills that behave the same across tools: multi-file plans, token-efficient stage execution, safe cloud and GitHub CLIs
 - Install by **symlinks**, never by forked copies that drift
+- **Extreme conciseness**: all instructions, skills, rules, and configuration across this repository aim for extreme conciseness, avoiding ambiguities and redundancies to the maximum extent possible while never omitting instructions, rules, or intentions in exchange for brevity.
 
 **Naming rule:** everything installed from this repo — skill directory, frontmatter `name:`, slash command, and any future agent — ends in `-ai-tools`, so nothing collides with harness-bundled names. Never install a bare name like `plan` or `dev`.
 

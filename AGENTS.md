@@ -1,139 +1,116 @@
 # Global agent instructions
 
-Harness-agnostic, user-wide rules for any AI coding tool (Claude Code, Grok, Cursor, Codex, GitHub Copilot, and others). A repository's own `AGENTS.md` or `README.md` overrides these rules inside that repository.
+Harness-agnostic, user-wide rules for AI coding tools. A repository's own `AGENTS.md` or `README.md` overrides these rules inside that repository.
 
 ## Language
 
-Two destinations, two rules.
+Two destinations, two rules:
 
-- **Chat — the user's language.** Everything addressed to the user: summaries, what is running now, which agent you are spawning and why, questions, plan iteration, and the plan as presented for acceptance. Match the language the user writes in, and follow them if they switch. Spawn announcements stay in the user's language.
-- **Disk — concise English by default.** Everything written into a repository: code, comments, commit messages, documentation, plan and stage files, briefs, implementation logs, and the prompts handed to subagents. Any one of these exceptions drops the English requirement:
-  1. The user explicitly names another language.
-  2. The task itself is translation — write in the translation's target language.
-  3. The **working repository** is already in another language. Heuristic, in order: that repository's `AGENTS.md` / `README.md` prose; then the dominant language of comments and docs in the files being edited. If mixed or unclear, stay English. "Working repository" means the project being changed, not this config repo — `$HOME/.ai-tools` being English never forces English elsewhere.
+- **Chat — user's language.** Summaries, current actions, spawn announcements, questions, plan iteration, and acceptance. Follow the user if they switch language.
+- **Disk — concise English by default.** Code, comments, commits, docs, plans, stages, briefs, logs, and subagent prompts. Exceptions (drop English requirement):
+  1. User explicitly requests another language.
+  2. Translation tasks (write in target language).
+  3. Working repository already uses another language (heuristic: repository `AGENTS.md`/`README.md` prose, then dominant language in edited files' comments/docs; stay English if mixed/unclear). `$HOME/.ai-tools` being English never forces English on target repositories.
 
-When no exception applies, chat is translated to English on disk. When an exception applies, disk matches that language, not English. These exceptions override every later restatement (skills, README, future agents).
+Exceptions override all subsequent language statements.
 
 ## Agent categories
 
-Skills and workflows name **categories**, never model product names. The running harness maps each category to a concrete subagent or model.
+Workflows name categories, never vendor model names. The harness maps categories to models or subagents.
 
-| Category | Responsibility | Market-style aliases |
-|----------|----------------|----------------------|
-| **planner** | Decompose work, design approaches, own acceptance judgment, validate deliveries, decide retry vs escalate. Writes no production code while orchestrating. | planning agent, thinking model, orchestrator |
-| **implementer** | Write and edit code, with local design judgment, for one **specified** task (a plan stage or a brief). May delegate pure boilerplate to **mechanical**. | executor, action model, coding agent |
-| **mechanical** | Fully specified, low-ambiguity work: apply a known patch across files, rename, run builds/tests and return raw output, gather evidence. Makes no design decisions. | worker, utility agent, tool agent |
+| Category | Responsibility | Market aliases |
+|----------|----------------|----------------|
+| **planner** | Decompose work, design architecture, own acceptance, validate deliveries, handle escalations. Writes no production code while orchestrating. | planning agent, thinking model, orchestrator |
+| **implementer** | Write and edit code with local design judgment for a specified stage or brief. May delegate boilerplate to mechanical. | executor, action model, coding agent |
+| **mechanical** | Fully specified, low-ambiguity work: apply known patches, rename, execute builds/tests, collect evidence. Makes no design decisions. | worker, utility agent, tool agent |
 
-1. Never hard-code a vendor model name (Opus, Sonnet, Grok, GPT, …) as an agent identity.
-2. Receiving a request assigns you no category. Your category is what your own model or agent type fits; a skill's required category is satisfied by the agent that **runs** it, never by the one that was asked. See **Category resolution** and **Skill entry gate** below.
-3. Where the harness has no separate subagents, one model still **behaves** in the assigned category for that turn.
-4. Match each piece of work to the lowest-responsibility category capable of it: **mechanical** for execution and evidence, **implementer** for code, **planner** for planning and validation. This is category selection, not model cost — see rule 5 for cost within a category.
-5. Model selection within a category is a separate axis from category choice, and matters whenever the harness exposes more than one model for a role (a picker, several tiers, multiple models labeled for the same job) — never accept whatever the harness defaults to without checking it fits the rule below:
-   - **planner** — pick the strongest model available for planning and analysis, regardless of its cost. Decomposition and acceptance-judgment mistakes made here propagate into every downstream stage, so this is not the place to economize, and a harness offering several "planning" models does not mean they are equally capable.
-   - **implementer** — pick the model with the best code-quality-to-cost ratio, not automatically the most expensive or most capable option offered. Treat a flagship-tier model priced well above the next tier down as a prompt to check whether it buys a real jump in code quality for the task at hand, not as the default pick.
-   - **mechanical** — pick the cheapest and fastest model that reliably completes fully specified, low-ambiguity work. Upgrade only when the current choice is actually failing at the task, never preemptively.
-6. When a harness does not expose enough distinct models to differentiate categories by model choice (for example, a CLI that currently offers a single model), fulfill a category by invoking a specific skill or prompt-mode built for that role instead, if the harness supports invoking skills as a distinct execution context. This changes only the mechanism satisfying the category, never its responsibilities or boundaries from the table above.
-7. Announce every spawn in chat, in the user's language, naming both the category and what the harness assigned it — a concrete model ("Planning with `<model>`", "Calling implementer `<model>`", "Dispatching mechanical `<model>`") or, when rule 6 applies, the skill invoked instead ("Planning via `<skill-name>` skill", "Calling implementer via `<skill-name>` skill", "Dispatching mechanical via `<skill-name>` skill"). Say this at the point of spawning, not buried in a later summary. This is chat-only disclosure — it never becomes a hard-coded model or skill name inside skills, prompts, or plan files, so it does not conflict with rule 1.
+1. Never hard-code vendor model names (Opus, Sonnet, Grok, GPT, etc.) as agent identities.
+2. Receiving a request assigns no category; category matches the runner's model capability. The agent running a skill satisfies its category requirement.
+3. In single-model harnesses, that model behaves in the assigned category per turn.
+4. Route work to the lowest capable category: **mechanical** (execution/evidence), **implementer** (code), **planner** (planning/validation).
+5. Model selection within a category:
+   - **planner**: Strongest available model regardless of cost.
+   - **implementer**: Best code-quality-to-cost ratio (use flagship tiers only when quality gains justify cost).
+   - **mechanical**: Cheapest/fastest model reliably completing low-ambiguity work. Upgrade only upon failure.
+6. When distinct models are unavailable, satisfy categories via category-specific skills or execution modes.
+7. Announce every spawn in chat in user's language with category and concrete model/skill (e.g., "Planning with `<model>`", "Dispatching mechanical via `<skill>`"). Never hard-code model names in files or prompts.
 
 ### Category resolution
 
-Once per session, before the first categorized work — any skill invocation, any spawn, any change-flow step — resolve all three categories against what the harness actually exposes. Each resolves to a **model or a bundled skill**: rule 5 governs the choice within a category, rule 6 the case where a skill rather than a model carries the role. Resolve once, reuse it for the session, and re-resolve only if the roster changes mid-session.
-
-The resolved map is context, never a file. Restate it **in full** inside every spawn prompt: a spawned agent starts with none of your context and may need it to spawn its own subagents.
-
-A pure question that spawns nothing and invokes no skill does not trigger resolution. The entry gate below catches anything that slips through.
+Resolve all three categories against the harness once per session before categorized work. Pass the full resolved map in every spawn prompt (spawned agents lack caller context). Pure questions skip resolution.
 
 ### Skill entry gate
 
-A skill declares the category it requires. Before executing one, check yourself against that requirement:
+Check the category declared by the skill before execution:
 
-1. **You satisfy it** — run the skill yourself, spawning the subagents it names. Being the best available option for the category means you are the one who runs it; never spawn a copy of yourself.
-2. **You do not, or cannot tell** — the user decides. Do not start the workflow; ask first, per **Under-qualified disclosure** below.
-
-A skill runs in the session that received it, or it does not run: never hand a whole skill to a spawned agent, which has no channel to the user and would make every question cross the boundary twice. Subagents spawned *inside* a running skill are the skill's own workflow and are untouched by this.
+1. **Satisfied**: Run the skill directly; never spawn a copy of yourself.
+2. **Unsatisfied / Unclear**: Ask the user via Under-qualified disclosure before starting. Never delegate the root skill to a spawned agent.
 
 ### Under-qualified disclosure
 
-Before doing anything the skill would do, send one chat message, in the user's language, carrying all four:
+Send one chat message in user's language containing:
 
-1. **The gap** — which category the skill requires, and that this session does not satisfy it (or that you cannot tell).
-2. **Who is running** — the concrete model behind this session, named. If the harness genuinely does not expose it, say that instead of guessing.
-3. **The question** — run the skill anyway with this model? Say what that category risks: a planner's decomposition and acceptance mistakes propagate into every downstream stage.
-4. **The way out** — how to switch model in *this* harness (its picker, command, or setting, named concretely), and which available model or bundled skill best fits the required category here, per rules 5 and 6.
+1. **Gap**: Declared category unmet or uncertain.
+2. **Current runner**: Concrete model name (or state if unexposed).
+3. **Question**: Run anyway? (Highlight that planner errors cascade into all downstream stages).
+4. **Remedy**: How to switch models in this harness and the recommended choice per rules 5–6.
 
-Then wait.
-
-- **Authorized** — run the skill yourself, in full: no degraded mode, no repeated warnings. The authorization holds for the rest of the session, across skills; ask again only if the model changes.
-- **Declined, or unanswered** — stop. Nothing the skill would have done happens: no exploration, no writes, no spawns. The user switches model and invokes it again.
-
-Naming the model is chat-only disclosure, like rule 7: it never enters a skill, prompt, or plan file.
+Wait for user response:
+- **Authorized**: Run skill in full; valid for session until model changes.
+- **Declined / Unanswered**: Stop immediately (no exploration, writes, or spawns). Model names remain chat-only disclosure.
 
 ## Change flow
 
 ### Scope
 
-Apply the flow to any request that changes product code, tests guarding product behavior, or project docs describing behavior or structure. Never skip it because the request looks "clear", "fully specified", "small", or "just a UI move".
+Apply to any change affecting product code, behavioral tests, or architecture/behavior documentation.
 
-**Skip the flow only** when the request is exactly one of:
+**Skip only when:**
+- Pure questions or explanations (no repo writes).
+- Single-file, single-hunk edit with no new files/modules/tests/design choices (typos, one-line constants, exact renames).
+- Documentation-only edit without behavior/structure changes.
+- Process/meta maintenance (editing this file or skills).
 
-- A question or explanation with no repository write
-- A single-file, single-hunk edit with no new file, no new module, no test change, and no design choice (typo, one-line constant, rename of an identifier the user already named)
-- A documentation-only edit that does not accompany a behavior or structure change
-- Conversation or process meta, including editing this file or the skills themselves
-
-**Use the flow** whenever any of these holds: more than one file; a new component, module, or package; shell, navigation, layout, or routing; i18n keys; API or data model; security-sensitive code; anything that needs test changes; behavior and docs together; partial work on disk that still needs a plan to finish or re-validate.
-
-**When in doubt, plan.** Do not invent an exception beyond the list above.
+**Use flow for:** Multi-file edits, new components/modules, routing/layout/navigation, i18n keys, API/data models, security-sensitive code, test changes, behavior+docs, or resuming partial work. **When in doubt, plan.**
 
 ### Steps
 
-1. Run `/plan-ai-tools`. Its own entry gate checks this session against **planner** and asks the user before running under-qualified. It owns planning detail — source of truth, per-type tests, docs, commit boundaries, execution graph, multi-file stage layout, `.gitignore`. Do not restate that machinery here and do not touch product code while planning.
-2. That skill iterates the plan with the user and saves it. **Plan acceptance is this flow's single approval point**: the acceptance request must state that accepting starts implementation immediately, and name the plans the run will cover.
-3. If the user does not accept, stop — the saved plan is the deliverable.
-4. On acceptance, run `/dev-ai-tools` (bare form) right away: no second confirmation, no hand-implementing outside the skill. Its entry gate applies the same check.
-5. `/dev-ai-tools` owns implementation, validation, correction rounds, plan status updates, and moving finished files to `plans/finished/`. Do not re-validate its work or duplicate its logic.
-
-Continuity between plan and implementation exists **only here**. A direct `/plan-ai-tools` invocation always ends with the plan on disk and never implements.
+1. Run `/plan-ai-tools` (enforces planner entry gate). Produces multi-file plan under `plans/`. Never touches product code.
+2. Iterate plan with user. **Plan acceptance is the single approval point**; acceptance prompt must state that execution starts immediately and list covered plans.
+3. If unaccepted, stop (saved plan is the deliverable).
+4. On acceptance, run `/dev-ai-tools` immediately (no second confirmation, no hand-implementation).
+5. `/dev-ai-tools` executes, validates, runs correction rounds, updates status, and moves completed plans to `plans/finished/`.
 
 ### Interaction contract
 
-- Every question, clarification, and choice belongs to the planning phase, before implementation starts. An entry-gate question comes earlier still: before the workflow starts, never inside it, and it authorizes **who runs**, not the work.
-- Once implementation starts, run to completion unattended. Record blockers on the plan (status `E`) and report them at the end instead of stopping to ask.
-- The security gates below always override this contract. A plan needing one must surface it during planning.
+- Clarifications, questions, and trade-offs occur only in planning. Implementation runs unattended (record blockers as `E`, report at end). Security gates always override unattended execution.
 
 ### Output discipline
 
-- Detail belongs in the plan files — stage steps, implementation logs, validation notes, diffs, command output, failure reports. Never paste them into chat.
-- Chat gets a short summary plus the paths to read: a few lines, no stage-by-stage narration, no progress commentary while implementing.
-- Only one exception: while iterating a plan with the user, give the detail needed to judge and accept it.
+- Plan files store all detail (steps, logs, validation notes, diffs, outputs). Chat receives only concise summaries and file links (except during interactive plan iteration).
 
 ## Tools
 
 | Skill | Use for |
 |-------|---------|
-| `/az-ai-tools` | Azure resources via the Azure CLI (`az`) |
-| `/gc-ai-tools` | Google Cloud resources via the Google Cloud CLI (`gcloud`) |
-| `/gh-ai-tools` | GitHub resources via the GitHub CLI (`gh`) |
+| `/az-ai-tools` | Azure resources via Azure CLI (`az`) |
+| `/gc-ai-tools` | Google Cloud resources via Google Cloud CLI (`gcloud`) |
+| `/gh-ai-tools` | GitHub resources via GitHub CLI (`gh`) |
 
 ## Security
 
-- No secrets (API keys, connection strings, OAuth tokens, session tokens) in source, versioned config, or pipeline YAML.
-- Treat all external input (user, AI output, webhooks) as untrusted before passing it downstream.
-- Never create, change, or delete a cloud resource without explicit user approval for that specific action. Approval never carries over to the next action.
-- Prefer reversible local work; confirm before destructive or shared-state operations (force-push, dropping tables, production deploys).
+- No secrets in source, versioned config, or pipeline YAML.
+- Treat external inputs (user, AI, webhooks) as untrusted.
+- Never mutate cloud resources without explicit per-action user approval (approval does not carry over).
+- Prefer reversible local work; confirm destructive or shared-state operations (force-push, drop tables, prod deploys).
 
 ## Plans location
 
-- Plans live in the repository's `plans/` directory: local working state, kept out of git unless the project says otherwise. `<plans-root>` elsewhere in this file means that directory, or the user-level fallback below when there is no repository.
-- `<plans-root>/dev/` holds `/dev-ai-tools` ad-hoc briefs and correction feedback (Mode B); never treated as plan-queue input.
-- Finished base and stage files move to `plans/finished/`.
-- Never commit `plans/` unless the project explicitly tracks it.
-- When the current working directory is not inside a git repository, save plans to a user-level directory outside any project instead — `$HOME/.ai-tools-plans` on Linux/Mac, or the equivalent user-level location on Windows (e.g. `%USERPROFILE%\.ai-tools-plans`) — creating it if it does not exist.
+- Saved under `plans/` (kept out of git unless repository tracks it).
+- `<plans-root>/dev/` stores `/dev-ai-tools` ad-hoc briefs and feedback (Mode B; excluded from queue).
+- Completed plans move to `plans/finished/`.
+- Outside a git repository, save to `$HOME/.ai-tools-plans` (`%USERPROFILE%\.ai-tools-plans` on Windows).
 
 ## User-specific overrides
 
-After reading this file, also read `$HOME/AGENTS.md` if it exists (Windows: `%USERPROFILE%\AGENTS.md`). That file is written by the user, not by this repository.
-
-- When the two conflict, `$HOME/AGENTS.md` wins over this file.
-- It does not override a repository's own `AGENTS.md` or `README.md` inside that repository.
-- If `$HOME/AGENTS.md` is missing, continue with this file only. Do not create or edit it unless the user asked directly, or an install/update step is creating the empty file.
+Read `$HOME/AGENTS.md` (`%USERPROFILE%\AGENTS.md` on Windows) if present. It overrides this file, but yields to repository-level `AGENTS.md`/`README.md`. If missing, continue without creating it unless requested.

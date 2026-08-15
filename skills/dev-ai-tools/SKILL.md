@@ -24,163 +24,148 @@ Before anything else in this skill:
    asked again only if the model changes. Declined or unanswered — stop: no exploration, no writes, no
    spawns.
 
-**The agent running this skill holds the planner role**, settled by that gate: it orchestrates and judges, and never writes production or test code in the target repository while this skill is active. Code goes to **implementer**; evidence gathering and mechanical text go to **mechanical**.
-
-Harness-agnostic implementation skill: see the global `AGENTS.md` for category definitions, and map categories to whatever subagents or models the harness provides; never require a vendor-specific agent name.
+**Role assignment**: The agent running this skill is the **planner** (orchestrates and validates; never writes repository code). Code editing is assigned to **implementer**; builds, tests, and evidence gathering to **mechanical**.
 
 ## Routing
 
-| Argument | Mode |
-|----------|------|
-| empty | **A** — every base plan under `plans/` |
-| `plans` (plus optional extra instructions) | **A** — every base plan under `plans/` |
-| `plans/<file>.md …` — one or more base plan paths | **A** — only the named plans |
-| anything else | **B** — ad-hoc implementation |
+| Argument | Mode | Scope |
+|----------|------|-------|
+| Empty or `plans` (plus instructions) | **A** | All base plans under `plans/` |
+| `plans/<file>.md …` | **A** | Named base plans only |
+| Anything else | **B** | Ad-hoc implementation |
 
 ## Execution contract
 
-This skill runs **unattended**. The user already approved the work before it started.
+Runs **unattended** (work was approved prior to invocation).
 
-- Do not ask for confirmation, do not pause for checkpoints, do not request permission to continue.
-- Record blockers on the plan as status `E` with a failure report in the stage file, keep running every stage that does not depend on them, and surface the blockers in the final summary.
-- Exception: the security gates in the global `AGENTS.md` still hold. Cloud mutations and destructive or shared-state operations need explicit per-action approval, even mid-run.
+- Never pause for confirmations or checkpoints.
+- Blockers become status `E` in the stage file; continue independent stages and report blockers in final summary.
+- Security gates in `AGENTS.md` override unattended execution (cloud mutations/destructive actions require explicit approval).
 
 ### Output discipline
 
-- Detail goes to the plan files: stage steps, implementation logs, validation notes, diffs, command output, failure reports. Never paste them into chat.
-- No progress narration. No per-stage chat updates.
-- Chat gets one short summary at the end, in the user's language — per plan, one line of stage counts by status, plus paths to read for detail, plus any `E` stage with its one-line cause and the recommended recovery. Plan files, logs, and implementer prompts follow the global Disk rule in `AGENTS.md` (concise English unless an exception applies).
+- Plan files store all detail (steps, logs, diffs, outputs).
+- No per-stage chat progress narration.
+- Chat receives one terminal summary in user's language (status counts, file paths, `E` causes/remediations). Disk files follow English rules.
 
 ## Division of labor
 
 | Work | Category |
 |------|----------|
-| Orchestrate stages, write briefs, judge acceptance by reviewing the actual diff against the plan, audit tests for cheating, commit after validation, set `TV` / `E` / `F` | **planner** — this session |
-| Implement a stage or brief, editing production and test code | **implementer** only |
-| Run build/test and return raw output, list diffs, extract logs, draft mechanical feedback text, explore for brief prep | **mechanical** |
+| Orchestrate stages, author briefs, review diffs, audit tests, commit, manage status (`W`/`R`/`T`/`E`/`F`) | **planner** (this session) |
+| Implement assigned stage or brief (edit code/tests) | **implementer** |
+| Run builds/tests, return raw logs/diffs, draft mechanical text | **mechanical** |
 
-Gathering agents return **facts**, not verdicts. Re-evaluate any "it looks correct" claim yourself.
-
-**Hard limit:** 1 initial attempt + up to 3 correction rounds per stage or task, then set `E` and move on.
+**Limit**: 1 initial attempt + up to 3 correction rounds per stage, then set `E`.
 
 ## Plan intake (planner, once per plan)
 
-Before dispatching the first stage of a base plan, the planner loads that plan **in full**: the base file plus every stage file belonging to it — including stages already `F`, whose files live in `plans/finished/<slug>-<n>.md`. Read those files, do not skim them.
-
-- Scope is the base plan about to run: `plans/<slug>-*.md` plus `plans/finished/<slug>-*.md`. Never another plan's stages, never the rest of `plans/finished/**`, never `plans/dev/**`.
-- Skip whatever is already in context — if this session just produced the plan, its stages are loaded; read only the files that are missing.
-- Do it **once**, at the start of that plan's execution. Do not re-read stage files per wave, per spawn, or per correction round; work from context and re-open only the single file a validation or correction round actually needs.
-- When the run covers several base plans, do the intake per plan, at the moment that plan starts — never all plans up front.
-
-Why: the planner authors every spawn prompt, and a prompt is only as good as its author's picture of the whole plan — what finished stages already delivered, what later stages will assume, which files are already spoken for. This context stays with the planner; it never widens what a spawn receives.
+Before dispatching a plan, load its base file and all stage files (`plans/<slug>-*.md` and `plans/finished/<slug>-*.md`) in full.
+- Do this **once** at the start of that plan's execution; do not reload across waves or spawns.
+- Scope is strictly the active plan; never load unrelated plans or `plans/dev/**`.
+- Intake informs the planner's orchestration context; it is not forwarded in full to implementers.
 
 ## Context isolation (token discipline)
 
-When spawning an **implementer** for a stage, give it **only**:
+When spawning an **implementer**, provide **only**:
+1. Base plan extract: Goal, Execution graph, and stage status row.
+2. The single assigned stage file `plans/<slug>-<n>.md` (or, for decomposed corrections after `R1`, only the specific fix file `plans/<slug>-F<m>.md`).
 
-1. The base plan file, or an extract of it: Goal, Execution graph, and this stage's status row
-2. The single stage file `plans/<slug>-<n>.md`
-
-Instruct it not to open other stage files, other base plans, or `plans/finished/**` unless the assigned stage file explicitly lists a path as a dependency artifact (rare). Never paste other stages into the prompt. This is mandatory: other stages stay out of context.
-
-Plan intake does not widen this budget. Carry forward only what the stage genuinely needs, distilled into a couple of lines of the prompt — an interface a finished stage produced, a convention set earlier, a file another stage owns. Never attach or quote other stage files to do it.
+Implementers must not open other stage files, base plans, or `plans/finished/**`. Keep parent stage files and unassigned fix files out of decomposed fix prompts to prevent context pollution.
 
 ## Status protocol
 
-The base plan carries the status table created by `/plan-ai-tools`, which holds the canonical definition; the codes are reproduced here so this skill is self-contained.
+| Code | Meaning | Set by |
+|------|---------|--------|
+| `W` | Working — implementation in progress | **planner** |
+| `V` | Validating — ready for planner review | **implementer** |
+| `R1`, `R2`, `R3` | Retry 1, 2, 3 — rework after feedback | **planner** |
+| `T` | Testing — dedicated test pass | **planner** |
+| `TV` | Testing validation — test review | **testing agent** |
+| `E` | Error — retry limit exhausted | **planner** |
+| `F` | Finished — stage accepted | **planner** |
 
-| Code | Meaning | Who sets it |
-|------|---------|-------------|
-| `W` | Working — implementation in progress | **planner**, before dispatching |
-| `V` | Validating — handed to the planner for judgment | **implementer**, when returning to planner |
-| `R1`, `R2`, `R3` | Retry 1, 2, 3 — reworking after planner feedback | **planner**, before dispatching |
-| `T` | Testing — dedicated test-writing/running pass | **planner**, before dispatching |
-| `TV` | Testing validation — planner judging tests | **agent doing it**, when returning to planner |
-| `E` | Error — correction limit exhausted | **planner**, when finishing |
-| `F` | Finished — stage accepted | **planner**, when finishing |
+### Implementer obligations
 
-### Implementer obligations (put these in every implementer prompt)
-
-1. **First action:** ensure your Agent/Session ID is recorded in the base plan for this stage.
-2. Implement only the assigned stage.
-3. Append an **Implementation log** section to the stage file: what changed, files touched, commands run, results, anything left incomplete. **Fundamental rule:** this report must state exactly *what you did* (facts), not your opinion on whether you fulfilled the requirement.
-4. **Last action:** set Status to `V` (or `TV` for a test pass) on the base plan. The spawned agent marks work ready for validation when returning it to the planner.
-5. Never set `W`, `R1`, `R2`, `R3`, `T`, `E`, or `F`.
+1. Record Agent/Session ID in the base plan status table on start.
+2. Implement only the assigned stage/fix file.
+3. Append factual **Implementation log** to the stage/fix file (actions and evidence, not subjective claims).
+4. Set status to `V` (or `TV` for tests) upon completion. Never set `W`, `R*`, `T`, `E`, or `F`.
 
 ### Planner obligations
 
-- **Before dispatching:** set the stage's Status to `W` (initial), `R1`, `R2`, `R3` (corrections), or `T` (testing) and record the Agent/Session ID.
-- After `V` or `TV`, validate by reading the actual diff and judging it against the plan (see Validation). Do not accept on build/test success alone.
-- On pass: set `F`, move `plans/<slug>-<n>.md` to `plans/finished/`, and commit if the stage describes a commit boundary.
-- On failure within the retry budget: append concrete correction tasks to the **same stage file**, keeping full history, set Status to `R1`, `R2`, or `R3`, then spawn an **implementer** again.
-- After 3 failed corrections: set `E`, append a failure report with the recommended recovery to the stage file, and continue with stages that do not depend on it.
-- When every stage is `F` (or `E` stages are all reported), move the base `plans/<slug>.md` to `plans/finished/`.
+- Set `W` (initial), `R1–R3` (corrections), or `T` (tests) with Agent/Session ID before dispatching.
+- Validate on `V`/`TV` via actual diff inspection (see Validation).
+- **On pass (`F`)**: Move `plans/<slug>-<n>.md` and associated `plans/<slug>-F*.md` fix files to `plans/finished/`; commit if stage defines a commit boundary.
+- **On first failure (`R1`)**: Append concrete correction tasks to the stage file `plans/<slug>-<n>.md`, set `R1`, and re-dispatch/resume implementer with the annotated stage file.
+- **On second failure (`R2` / post-R1)**: Decompose remaining corrections into isolated fix files:
+  1. Create fix files as `plans/<slug>-F<m>.md` (e.g., `feature-proxy-F1.md`).
+  2. Record task-to-fix-file mapping in the parent stage file `plans/<slug>-<n>.md`.
+  3. Dispatch implementers with only base plan extract and the specific `plans/<slug>-F<m>.md` file.
+  4. Set status to `R2` (or `R3` if sub-fixes require retry).
+- **On 3 failed corrections (`E`)**: Set `E`, append failure report to stage file, move fix files to `plans/finished/`, and proceed with independent stages.
+- When all stages reach `F`/`E`, move base plan `plans/<slug>.md` to `plans/finished/`.
 
 ## Mode A — plan queue
 
-1. Find the repository root (`git rev-parse --show-toplevel`); stop if this is not a git repository.
-2. Discover **base plans only**: `plans/*.md` at the root of `plans/`, excluding `*-<digits>.md` stage files and `plans/finished/**`. A base plan has a `## Status` table and links to `./<slug>-N.md` stages. If the argument named specific paths, use exactly those.
-3. Stop if none exist; say so in one line.
-4. Ensure `plans/` is in `.gitignore`.
-5. Check `git status --short`. If the worktree is dirty, note it in the final summary and stage commits **path by path** for the files each stage touched — never `git add -A`, so pre-existing work stays out of the commits.
-6. Order plans oldest first unless extra instructions say otherwise. For each base plan:
-   1. Do the Plan intake for that base plan — base file plus all of its stage files, finished ones included. Take the execution graph and status table from the base file.
-   2. Build stage waves from the graph. Skip stages already `F`; leave `E` stages for the end.
-   3. Run each wave: **sequential** stages one after another; **parallel-safe** stages as one batch of **implementer** spawns, never two implementers on the same files. Each gets base + one stage file.
-   4. When an implementer returns `V`, validate by reading the actual diff and judging it against the plan (see Validation). Do not accept on build/test success alone.
-   5. If a stage needs a dedicated test pass, the planner sets `T` and Agent/Session ID before dispatching; the testing agent sets `TV` when returning; the planner judges it, then sets `F` or a correction round.
-   6. On `F`, commit that stage if the plan describes a commit boundary — Conventional Commits, and check staged files for secrets and binaries first.
-7. When a base plan is fully resolved, move it to `plans/finished/`.
-8. Close with the final summary described in Output discipline.
+1. Verify git repository root (`git rev-parse --show-toplevel`).
+2. Discover base plans: `plans/*.md` (excluding `*-<digits>.md` stage files, `*-F<digits>.md` fix files, and `plans/finished/**`).
+3. Stop if no plans exist. Ensure `plans/` is in `.gitignore`.
+4. Check `git status --short`. If dirty, note in summary and stage commits path-by-path (avoid `git add -A`).
+5. Process base plans oldest first:
+   1. Perform Plan intake.
+   2. Build stage waves from execution graph (skip `F` stages; defer `E`).
+   3. Run waves: sequential stages one-by-one; parallel-safe stages in concurrent non-overlapping implementer batches.
+   4. Validate on `V`. Run dedicated test pass (`T`/`TV`) if required.
+   5. On `F`, commit if stage defines a boundary (Conventional Commits; check for secrets/binaries).
+6. Move fully resolved base plan to `plans/finished/`. Output final summary.
 
-### Base vs stage files
+### Base, stage, and fix files
 
-- Stage file: `plans/<slug>-<n>.md`, `<n>` a positive integer. Base file: `plans/<slug>.md` with no `-<n>` suffix.
-- Never treat `plans/finished/**` or `plans/dev/**` as queue input.
-- Never execute a stage file without its base.
+- Base file: `plans/<slug>.md` (no `-<n>` or `-F<m>` suffix).
+- Stage file: `plans/<slug>-<n>.md` (`<n>` positive integer).
+- Fix file: `plans/<slug>-F<m>.md` (post-`R1` decomposed correction).
+- Exclude stage files, fix files, `plans/finished/**`, and `plans/dev/**` from queue input. Never execute stages/fixes without their base.
 
 ## Mode B — ad-hoc request
 
-1. Derive a kebab-case `<slug>` from the request.
-2. If a base plan under `plans/` already covers it, run Mode A for that plan instead.
-3. Ask clarifying questions only here, before any implementer starts; after that the run is unattended. This is the skill's one interactive point.
-4. Explore with **mechanical** or the harness explore type until the paths are real.
-5. Write `plans/dev/<slug>-brief.md` — a handoff, not a base plan. Minimum: the original request verbatim, goal, context, source of truth, tasks with paths, tests by type, docs, acceptance criteria, commits, and the report the implementer owes the planner.
-6. Spawn an **implementer** on the brief. If the work is too large for one brief, split it into several briefs yourself and sequence them — do not call `/plan-ai-tools`.
-7. Validate by reading the actual diff and judging it against the brief (see Validation). Do not accept on build/test success alone. Run correction rounds with `plans/dev/<slug>-feedback-<n>.md`, same 1 + 3 limit.
-8. Commit only after validation, and only if the brief authorized it.
-
-Mode B needs no status table unless you build a full plan structure.
+1. Derive kebab-case `<slug>` from request. If covered by existing base plan, run Mode A instead.
+2. Ask clarifying questions up front (sole interactive point).
+3. Explore paths with **mechanical**.
+4. Write `plans/dev/<slug>-brief.md` (verbatim request, goal, context, paths, typed tests, docs, criteria, commit rules, report format).
+5. Spawn **implementer** on brief (split into sequential briefs if oversized).
+6. Validate diff on completion. Run correction rounds via `plans/dev/<slug>-feedback-<n>.md` (1 + 3 limit).
+7. Commit only after validation if authorized in brief.
 
 ## Validation (planner)
 
-An implementer report and a `V` status are claims, not proof. A green build and passing tests are **not** acceptance. **Never accept what the spawned agent tells you as truth. Base your validation solely on verifiable facts, never on the agent's opinions or claims of success.**
+Implementer claims and passing builds are evidence, not acceptance. Base verdicts strictly on verified facts:
 
-1. Read the stage objective, allowed files, acceptance criteria, and implementation log.
-2. Inspect the **actual** diff — run `git status`, `git diff`, and recent log. Do not rely on a summary of the changes.
-3. Judge the diff as a senior reviewer:
-   - Does every change serve the stage objective and stay inside the allowed files?
-   - Is anything the plan required missing, stubbed, or only mentioned in the log?
-   - Is anything extra, speculative, or a drive-by the plan did not ask for?
-   - Do comments, names, and structure match the repository's conventions?
-   - Would a later stage or the user still have to fix this for the plan to be true?
-4. Each acceptance criterion is pass or fail with a reason. "Tests passed" is not a reason.
-5. **Test audit:** do the tests exercise observable behavior? Would they fail if the feature were broken? Were existing tests weakened? Are types split into separate files where the project requires it?
-6. Run build and tests via **mechanical**, and enforce project thresholds (for example 80% coverage when the repository mandates it). Treat that output as **evidence**, not the verdict.
-7. Pass only when the diff satisfies the plan **and** the review criteria. Then set `F`, move the stage file, commit if applicable. Fail → append concrete correction tasks to the stage file; the implementer resumes at `R1`, `R2`, or `R3`.
+1. Review stage objective, allowed files, criteria, and implementation log.
+2. Inspect actual diff (`git status`, `git diff`, log).
+3. Senior review criteria:
+   - All changes align with objective and stay within allowed files.
+   - Required items are fully implemented (no stubs or log-only mentions).
+   - No extraneous or unrequested changes.
+   - Conforms to codebase style and conventions.
+   - Downstream stages/users require no cleanups.
+4. Pass/fail each acceptance criterion individually with reasons.
+5. **Test audit**: Verify tests assert observable behavior, would fail on regressions, and maintain coverage thresholds without weakening existing suites.
+6. Pass → set `F`, move files to `plans/finished/`, commit. Fail → append tasks to stage file (`R1`) or decompose into `plans/<slug>-F<m>.md` files (`R2`/`R3`).
 
 ## Spawning conventions
 
-- Sequential item: one **implementer**, wait for the result.
-- Parallel-safe batch: several **implementer** spawns with no shared file ownership.
-- Correction: resume via the Agent/Session ID in the status table when the harness supports it; otherwise spawn a new **implementer** with base + stage file, which now carries the prior logs and feedback.
-- **mechanical** never edits production or test code under this skill.
-- Every spawn — **implementer** or **mechanical**, in Mode A, Mode B, or validation — gets announced per the global `AGENTS.md` category rules: name the category and the concrete model the harness assigned it, in the user's language, at the point of spawning, not folded into a later summary.
+- Sequential: One **implementer**, await completion.
+- Parallel batch: Multiple concurrent **implementers** on disjoint file sets.
+- Correction (R1): Resume session ID if supported, or spawn implementer with base + annotated stage file.
+- Correction breakdown (R2+ / post-R1): Spawn implementer with base plan + individual `plans/<slug>-F<m>.md` fix file. Map files in parent stage file.
+- **mechanical** never edits production or test code.
+- Announce every spawn in chat in user's language (category + concrete model/skill).
 
 ## Boundaries
 
-- Only **implementer** writes repository code, plus the status and log updates specified above.
-- **planner** does not implement; it sets `W`, `R1-3`, `T`, `E`, `F` and commits after validation.
-- Never chain into `/plan-ai-tools`. If an `E` stage needs a redesign, say so in the final summary and let the user start a new plan.
-- Never delegate this skill to another agent; the entry gate decides whether it runs here or does not run. That is about who runs **this** skill; the rule above is about which skill runs next.
-- Do not use this skill for pure question answering.
+- Only **implementer** writes repository code.
+- **planner** orchestrates, manages status (`W`, `R*`, `T`, `E`, `F`), validates, and commits.
+- Never chain into `/plan-ai-tools` from execution failures (report redesigns in summary for user).
+- Never delegate root skill to subagents.
+- Do not use for pure Q&A.
