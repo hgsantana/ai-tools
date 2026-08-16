@@ -50,6 +50,7 @@ Before dispatching a plan, load its base file and all stage files (`plans/<slug>
 - Do this **once** at the start of that plan's execution; do not reload across waves or spawns.
 - Scope is strictly the active plan; never load unrelated plans or `plans/dev/**`.
 - Intake informs your orchestration context; it is not forwarded in full to implementers.
+- Any stage already in `W`/`R*`/`T` at intake is an orphaned run from a previous orchestrator — handle it per *Lost runs*.
 
 ## Context isolation (token discipline)
 
@@ -59,6 +60,26 @@ When spawning an **implementer**, provide **only**:
 2. The single assigned stage file `plans/<slug>-<n>.md` (or, for decomposed corrections after `R1`, only the specific fix file `plans/<slug>-F<m>.md`).
 
 Implementers must not open other stage files, base plans, or `plans/finished/**`. Keep parent stage files and unassigned fix files out of decomposed fix prompts.
+
+## Subagent report channel
+
+Applies *Truth on disk* (user-wide instructions). The assigned stage/fix/brief file is the only authoritative report channel. A subagent reports by (1) appending Implementation log entries and its final status line to that file, and (2) finishing its run — every harness returns a finished subagent's output to its spawner. Neither requires knowing an address, so this works in any harness.
+
+Never depend on a subagent reaching you any other way. If the harness exposes messaging or agent-addressing tools, subagents must not use them to report: they hold no reliable address for you, and a guessed name can route the report to the user's session or nowhere. Symmetrically, treat the plan file as the source of truth over any message, and detect completion by checking the file, not by waiting to be contacted.
+
+Every dispatch prompt and every correction round — whether a fresh spawn or a resume, since by then the original brief is deep in the subagent's context — must include, verbatim:
+
+> Report by appending to your assigned plan file, then finish your run — your final output reaches the orchestrator automatically. Do not use any messaging or agent-addressing tool to report; you have no reliable address for the orchestrator or the user, and a guessed name misroutes the report.
+
+## Lost runs
+
+A subagent can die without reporting — API error, budget exhaustion, context overflow, harness crash. Detection and recovery use only the filesystem and git, so they work in any harness:
+
+- **Never wait unbounded.** Every wait on a status has a deadline. While waiting, poll for liveness: changes to the stage file or to the stage's declared files (git status, file mtimes). Progress resets the deadline; a deadline with no progress marks the run **lost**.
+- **Diagnose via the ledger.** The Dispatch log row was appended before the spawn. No session ID in it → the run never started (retry is safe). Session ID present but no final status → it died mid-run.
+- **Audit before re-dispatch.** A mid-run death can leave partial edits. Inspect the working tree restricted to the stage's declared files, then either revert those files to the last commit or record in the stage file what is already done so the next attempt continues instead of colliding. Never re-dispatch on top of unaudited partial work.
+- **Account for it.** Fill the row's Outcome with `lost — <evidence>`. One re-dispatch of a lost run does not consume a correction round (the work was never reviewed). A second consecutive loss on the same stage is structural — likely an oversized brief or context overflow that will recur — so do not retry identically: decompose into smaller fix files, or set `E` with the evidence.
+- **Orphans at intake.** You can die too; plan files must survive you. At plan intake, any stage already in `W`/`R*`/`T` is an orphaned run from a previous orchestrator: treat it as lost (audit, clean or annotate, re-dispatch), never as in-progress.
 
 ## Status protocol
 
@@ -78,6 +99,7 @@ Implementers must not open other stage files, base plans, or `plans/finished/**`
 2. Implement only the assigned stage/fix file.
 3. Append factual **Implementation log** entries to the stage/fix file (actions and evidence, not subjective claims).
 4. Set status to `V` (or `TV` for tests) upon completion. Never set `W`, `R*`, `T`, `E`, or `F`.
+5. Report only via the assigned file and by finishing the run; never via messaging or agent-addressing tools (*Subagent report channel*).
 
 ### Planner obligations
 
@@ -142,7 +164,7 @@ Every dispatch (initial, correction, or test pass) appends one row to a **Dispat
 - **Attempt** counts from 1; correction rounds continue the counter (`R1` = attempt 2).
 - **Runner** is the concrete model actually spawned (your wrapper's category → model table), mirrored into the base plan `Agent` column. Never hard-code runner names in prompts.
 - **Session ID** is written by the dispatched subagent on start; corrections resume it where the harness allows.
-- **Outcome** is filled after validation (`accepted`, `failed validation`, `E — limit exhausted`).
+- **Outcome** is filled after validation (`accepted`, `failed validation`, `E — limit exhausted`, `lost — <evidence>` per *Lost runs*).
 - Mode B records the ledger in `plans/dev/<slug>-brief.md`.
 
 This table is the only source for attempt counts and runners in the final summary.

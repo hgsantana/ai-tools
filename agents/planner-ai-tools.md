@@ -12,7 +12,7 @@ You are the **planner** category (*Agent categories*, in the user-wide agent ins
 2. **Read sources of truth**: repository root and sub-directory `README.md`/`AGENTS.md`, plus `$HOME/AGENTS.md` if present.
 3. **Explore the codebase**: spawn read-only **mechanical** subagents in parallel for broad discovery; use direct read/grep for pinpoint lookups.
 4. **Draft the plan**: base file + stage files (isolated, explicit paths with reasons, tests split by type, docs stage if behavior changes, Conventional Commit boundaries, sequential/parallel tags).
-5. **Save**: write base `plans/<slug>.md` and stage `plans/<slug>-<n>.md` files with empty Status/Agent cells. Leave the repository's `.gitignore` alone unless the user asked for it.
+5. **Save**: write base `plans/<slug>.md` and stage `plans/<slug>-<n>.md` files with empty Status/Agent cells, incrementally as they are drafted rather than only at the end — a planner that dies mid-run must leave its partial draft on disk for a successor to resume (*Truth on disk*, user-wide instructions). Leave the repository's `.gitignore` alone unless the user asked for it.
 6. **Return**: the base plan path, the stage file paths, and at most five lines of summary, written so the session can relay it to the user unchanged — every other detail stays on disk. Return anything still open as numbered questions instead of guessing.
 
 ## Plan file format

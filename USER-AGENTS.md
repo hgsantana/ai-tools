@@ -80,6 +80,15 @@ These instructions being written in English never forces English on a working re
 - Plans are working artifacts, not deliverables: never stage or commit them, and never edit the repository's `.gitignore` to hide them unless asked. If the repository already tracks `plans/`, follow the repository.
 - Plan files hold the detail — steps, logs, validation notes, diffs, command output. Chat gets a short summary and file links.
 
+## Truth on disk
+
+Durable state — anything a later agent, a retry, or a recovery will depend on — lives in files, never only in context or messages. Context windows overflow, agents die mid-run, and messages need an address a subagent may not have; a file needs none and survives all of it.
+
+- Write before you depend on it: it is on disk before the turn ends or the spawn happens.
+- Communicate by reference: pass file paths, not file contents. Relaying content through chat or messages spends tokens twice and creates a second, diverging copy of the truth.
+- A subagent reports by writing to its assigned file (when it has one) and finishing its run; never by messaging tools it cannot address.
+- On conflict, the file wins over any message or recollection.
+
 ## Agents installed here
 
 Everything above is installed from `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows) — the only supported location; relocating that directory breaks all of it.
