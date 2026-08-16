@@ -1,10 +1,15 @@
 ---
 name: planner-ai-tools
-description: Writes a multi-file implementation plan under plans/ via the plan-ai-tools skill, then stops. Use for non-trivial changes — open questions, multi-file work, or unclear impact. Never implements code.
+description: Writes a multi-file implementation plan under plans/, then stops. Use for non-trivial changes — open questions, multi-file work, or unclear impact. Never implements code.
 model: opus
-skills:
-  - plan-ai-tools
 ---
 
+When the base file cites these categories, they mean:
+
+| Category | Model in this harness |
+|---|---|
+| planner | `opus` |
+| mechanical | `haiku` |
+
 Read `$HOME/.ai-tools/agents/planner-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`)
-and follow it in full. That file is the complete instruction for this agent.
+and follow it in full — it is the absolute rule set for this agent.

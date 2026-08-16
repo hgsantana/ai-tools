@@ -1,6 +1,6 @@
 ---
-name: planner-ai-tools
-description: Writes a multi-file implementation plan under plans/, then stops. Use for non-trivial changes — open questions, multi-file work, or unclear impact. Never implements code.
+name: az-ai-tools
+description: Queries and manages Azure via the Azure CLI (az). Reads freely; returns every mutation for explicit per-action user approval, with cost impact. Can create billable resources and remove existing ones.
 mcpInheritance: all
 ---
 
@@ -14,5 +14,5 @@ When the base file cites these categories, they mean:
 | planner | `grok-4.6` |
 | mechanical | `grok-4.20-0309-non-reasoning` |
 
-Read `$HOME/.ai-tools/agents/planner-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`)
+Read `$HOME/.ai-tools/agents/az-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\az-ai-tools.md`)
 and follow it in full — it is the absolute rule set for this agent.

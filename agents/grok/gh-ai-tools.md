@@ -1,6 +1,6 @@
 ---
-name: planner-ai-tools
-description: Writes a multi-file implementation plan under plans/, then stops. Use for non-trivial changes — open questions, multi-file work, or unclear impact. Never implements code.
+name: gh-ai-tools
+description: Queries and manages GitHub via the GitHub CLI (gh). Reads freely; returns every mutation for explicit per-action user approval. Actions like merge, close, and push are visible to others immediately.
 mcpInheritance: all
 ---
 
@@ -14,5 +14,5 @@ When the base file cites these categories, they mean:
 | planner | `grok-4.6` |
 | mechanical | `grok-4.20-0309-non-reasoning` |
 
-Read `$HOME/.ai-tools/agents/planner-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`)
+Read `$HOME/.ai-tools/agents/gh-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\gh-ai-tools.md`)
 and follow it in full — it is the absolute rule set for this agent.

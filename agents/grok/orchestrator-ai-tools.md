@@ -1,11 +1,19 @@
 ---
 name: orchestrator-ai-tools
-description: Executes accepted plans (or an ad-hoc brief) via the dev-ai-tools skill, unattended. Use after a plan is accepted. Orchestrates and validates; delegates code to implementer and evidence to mechanical.
+description: Executes accepted plans (or an ad-hoc brief) unattended. Use after a plan is accepted. Orchestrates and validates; delegates code to implementer and evidence to mechanical.
 mcpInheritance: all
 ---
 
-<!-- Grok Build pins subagent models in ~/.grok/config.toml under [subagents.models],
-     not in this frontmatter. See README → Install agents. -->
+<!-- Grok Build pins this agent's own model in ~/.grok/config.toml under
+     [subagents.models], not in this frontmatter. See README → Install agents. -->
+
+When the base file cites these categories, they mean:
+
+| Category | Model in this harness |
+|---|---|
+| planner | `grok-4.6` |
+| implementer | `grok-build-0.1` |
+| mechanical | `grok-4.20-0309-non-reasoning` |
 
 Read `$HOME/.ai-tools/agents/orchestrator-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\orchestrator-ai-tools.md`)
-and follow it in full. That file is the complete instruction for this agent.
+and follow it in full — it is the absolute rule set for this agent.

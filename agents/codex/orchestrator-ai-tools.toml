@@ -1,8 +1,16 @@
 name = "orchestrator-ai-tools"
-description = "Executes accepted plans (or an ad-hoc brief) via the dev-ai-tools skill, unattended. Use after a plan is accepted. Orchestrates and validates; delegates code to implementer and evidence to mechanical."
+description = "Executes accepted plans (or an ad-hoc brief) unattended. Use after a plan is accepted. Orchestrates and validates; delegates code to implementer and evidence to mechanical."
 model = "gpt-5.6-sol"
 model_reasoning_effort = "high"
 developer_instructions = """
-Read $HOME/.ai-tools/agents/orchestrator-ai-tools.md (Windows: %USERPROFILE%\\.ai-tools\\agents\\orchestrator-ai-tools.md)
-and follow it in full. That file is the complete instruction for this agent.
+When the base file cites these categories, they mean:
+
+| Category | Model in this harness |
+|---|---|
+| planner | `gpt-5.6-sol` |
+| implementer | `gpt-5.6-terra` |
+| mechanical | `gpt-5.6-luna` |
+
+Read `$HOME/.ai-tools/agents/orchestrator-ai-tools.md` (Windows: `%USERPROFILE%\\.ai-tools\\agents\\orchestrator-ai-tools.md`)
+and follow it in full — it is the absolute rule set for this agent.
 """
