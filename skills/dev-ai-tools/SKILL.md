@@ -24,6 +24,8 @@ This skill must run on a **planner** model. Before anything else:
 4. **Yes** — run the skill here, as its planner, for the rest of the session; ask again only if the model
    changes. **No, or no answer** — stop here: no exploration, no writes, no spawns.
 
+Name the stake in that message, so the answer is an informed one: this skill edits code, runs commands, and commits — unattended, once started.
+
 **Role assignment**: The agent running this skill is the **planner** (orchestrates and validates; never writes repository code). Code editing is assigned to **implementer**; builds, tests, and evidence gathering to **mechanical**.
 
 ## Routing
@@ -111,7 +113,7 @@ Implementers must not open other stage files, base plans, or `plans/finished/**`
 
 1. Verify git repository root (`git rev-parse --show-toplevel`).
 2. Discover base plans: `plans/*.md` (excluding `*-<digits>.md` stage files, `*-F<digits>.md` fix files, and `plans/finished/**`).
-3. Stop if no plans exist. Ensure `plans/` is in `.gitignore`.
+3. Stop if no plans exist. Leave the repository's `.gitignore` alone unless the user asks for it.
 4. Check `git status --short`. If dirty, note in summary and stage commits path-by-path (avoid `git add -A`).
 5. Process base plans oldest first:
    1. Perform Plan intake.

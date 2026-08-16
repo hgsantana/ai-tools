@@ -144,6 +144,8 @@ This skill must run on a **planner** model. Before anything else:
 
 It is duplicated into every skill file rather than referenced, because skills can be installed without this repo's `GLOBAL-AGENTS.md` being linked into the harness — each one has to carry its own gate. Identical wording is the point: any drift shows up in a diff.
 
+Directly below the block, and outside it, every skill adds **one line naming its own stake** — what the user is actually consenting to when they answer "run it anyway". The gate is generic; the consequence is not. A plan shapes every stage built on it; `/dev-ai-tools` edits, runs, and commits unattended; the three CLI skills can spend money, delete resources, or push to a repository other people watch. A weaker model's first failure mode is not writing a worse plan, it is failing to recognise that an action is billable or irreversible — which is why all five declare **planner** even though a read-only query needs none of it. The gate costs one question per session, and only ever fires on a session that is under-qualified.
+
 The gate lives in the skill and nowhere else. `GLOBAL-AGENTS.md` does not restate it and does not enforce it: a skill invoked directly by the user answers for its own qualification, whether or not the global instructions are loaded. So an under-qualified session **asks** — and if the user says yes, that same session runs the skill as its planner. Only the implementer and mechanical subagents the skill names are spawned.
 
 The `agents/<harness>/` entry points are the other path in: invoking `planner-ai-tools` starts the skill in a clean context on a model already pinned to the category, which is why its gate passes without a question. Nothing in a skill reaches for them.

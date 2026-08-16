@@ -21,6 +21,8 @@ This skill must run on a **planner** model. Before anything else:
 4. **Yes** — run the skill here, as its planner, for the rest of the session; ask again only if the model
    changes. **No, or no answer** — stop here: no exploration, no writes, no spawns.
 
+Name the stake in that message, so the answer is an informed one: this skill can merge, close, and push to GitHub repositories, which other people see immediately.
+
 ## Rules
 
 Use `gh` CLI for issues, pull requests, checks, releases, and repositories.
