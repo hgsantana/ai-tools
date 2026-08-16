@@ -1,20 +1,28 @@
-# Dev
+---
+name: dev-ai-tools
+description: >
+  Implement plans or ad-hoc work using harness-agnostic agent categories. Use when the user runs
+  "/dev-ai-tools", or when the orchestrator-ai-tools agent runs it. With no argument, or an argument
+  starting with "plans", process base plans at plans/*.md (not stage files, not finished/). Any other
+  argument is an ad-hoc implementation request. Planner validates; implementer codes; mechanical
+  gathers evidence. Runs unattended.
+argument-hint: "[plans [path…] | implementation request]"
+---
 
-> Base instruction. Harness wrappers under skills/<harness>/<name>/SKILL.md point here; edit this file, never a wrapper.
+# Dev
 
 ## Entry gate — required category: planner
 
-Before anything else in this skill:
+This skill must run on a **planner** model. Before anything else:
 
-1. Identify whether you satisfy **planner** (global `AGENTS.md` → Agent categories).
-2. **You satisfy it** — run this skill here, spawning the subagents it names.
-3. **You do not, or cannot tell** — never delegate this skill, and never start its workflow yet. Send one
-   chat message, in the user's language: the required category is not met; the model running this session,
-   named (or that the harness does not expose it); the question — run it anyway?; and how to switch model
-   in this harness plus which model or bundled skill fits **planner** best here. Then wait.
-4. **Authorized** — run this skill here, in this session, acting as its **planner** yourself. That
-   authorization holds for the rest of the session and is asked again only if the model changes. Declined or
-   unanswered — stop: no exploration, no writes, no spawns.
+1. Decide whether you are one (*Agent categories*, in the global agent instructions).
+2. **You are** — run the skill here, spawning the subagents it names.
+3. **You are not, or cannot tell** — do not start it and do not delegate it. Send one short chat message in
+   the user's language: name the model running this session (or say the harness does not expose it); say how
+   to get a planner here — switch this session to the harness's strongest model, or start the work over from
+   the `planner-ai-tools` agent, which is pinned to one; then ask whether to run anyway. Wait for the answer.
+4. **Yes** — run the skill here, as its planner, for the rest of the session; ask again only if the model
+   changes. **No, or no answer** — stop here: no exploration, no writes, no spawns.
 
 **Role assignment**: The agent running this skill is the **planner** (orchestrates and validates; never writes repository code). Code editing is assigned to **implementer**; builds, tests, and evidence gathering to **mechanical**.
 
@@ -32,7 +40,7 @@ Runs **unattended** (work was approved prior to invocation).
 
 - Never pause for confirmations or checkpoints.
 - Blockers become status `E` in the stage file; continue independent stages and report blockers in final summary.
-- Security gates in `AGENTS.md` override unattended execution (cloud mutations/destructive actions require explicit approval).
+- Security gates in the global agent instructions override unattended execution: cloud mutations and destructive actions still require explicit user approval for that specific action. Running in session, ask for it. Running as the `orchestrator-ai-tools` agent you have no channel to the user, so stop that line of work and return the request instead — never act on your own judgement.
 
 ### Output discipline
 

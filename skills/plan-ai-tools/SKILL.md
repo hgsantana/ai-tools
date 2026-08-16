@@ -1,22 +1,29 @@
-# Plan
+---
+name: plan-ai-tools
+description: >
+  Restricted-invocation skill — invoke only when (a) the user runs "/plan-ai-tools",
+  (b) another skill's documented workflow calls it by name, or (c) the planner-ai-tools
+  agent runs it. Explores the repository and writes a multi-file implementation plan
+  under plans/, then stops. Never implements code.
+argument-hint: "[description of the change, feature, or fix to plan]"
+---
 
-> Base instruction. Harness wrappers under skills/<harness>/<name>/SKILL.md point here; edit this file, never a wrapper.
+# Plan
 
 ## Entry gate — required category: planner
 
-Before anything else in this skill:
+This skill must run on a **planner** model. Before anything else:
 
-1. Identify whether you satisfy **planner** (global `AGENTS.md` → Agent categories).
-2. **You satisfy it** — run this skill here, spawning the subagents it names.
-3. **You do not, or cannot tell** — never delegate this skill, and never start its workflow yet. Send one
-   chat message, in the user's language: the required category is not met; the model running this session,
-   named (or that the harness does not expose it); the question — run it anyway?; and how to switch model
-   in this harness plus which model or bundled skill fits **planner** best here. Then wait.
-4. **Authorized** — run this skill here, in this session, acting as its **planner** yourself. That
-   authorization holds for the rest of the session and is asked again only if the model changes. Declined or
-   unanswered — stop: no exploration, no writes, no spawns.
+1. Decide whether you are one (*Agent categories*, in the global agent instructions).
+2. **You are** — run the skill here, spawning the subagents it names.
+3. **You are not, or cannot tell** — do not start it and do not delegate it. Send one short chat message in
+   the user's language: name the model running this session (or say the harness does not expose it); say how
+   to get a planner here — switch this session to the harness's strongest model, or start the work over from
+   the `planner-ai-tools` agent, which is pinned to one; then ask whether to run anyway. Wait for the answer.
+4. **Yes** — run the skill here, as its planner, for the rest of the session; ask again only if the model
+   changes. **No, or no answer** — stop here: no exploration, no writes, no spawns.
 
-**Category roles** (see global `AGENTS.md`):
+**Category roles** (see the global agent instructions):
 
 | Role here | Category |
 |-----------|----------|
@@ -30,20 +37,24 @@ Author a multi-file implementation plan under `plans/` and stop. Never edit sour
 
 ## Invocation modes
 
-| Mode | Trigger | Behavior after saving plan |
-|------|---------|----------------------------|
-| **Direct** | User types `/plan-ai-tools` | Stop. Never implement or propose implementing. |
-| **Flow** | Global change flow or calling skill | Stop and return control to caller. Acceptance request must state execution starts immediately and list covered plans (`plans/*.md`, excluding stage/finished files). |
+| Mode | Trigger | Reaching the user | After saving |
+|------|---------|-------------------|--------------|
+| **In session** | User types `/plan-ai-tools`, or a calling skill | Directly — ask, iterate, confirm | Stop. Never implement, never invoke `/dev-ai-tools`. |
+| **As agent** | The `planner-ai-tools` agent runs it | **Not at all.** Return open questions and let the session relay them | Return the plan paths plus a five-line summary. The session asks the user whether to implement. |
+
+In agent mode you have no channel to the user: never block waiting for an answer. Stop and return the
+questions — numbered, each with the options you see and your recommendation — and continue when the session
+resumes you with the answers.
 
 ## Workflow
 
-1. **Clarify task & scope**: Resolve ambiguities and explicit out-of-scope boundaries up front.
+1. **Clarify task & scope**: Resolve ambiguities and explicit out-of-scope boundaries up front — asking the user in session mode, returning the questions in agent mode.
 2. **Read sources of truth**: Repository root and sub-directory `README.md`/`AGENTS.md`, plus `$HOME/AGENTS.md` if present.
 3. **Explore codebase**: Spawn read-only **mechanical** agents in parallel for broad discovery; use direct read/grep for pinpoint lookups. Announce each spawn in chat.
 4. **Draft plan**: Base file + stage files (isolated, explicit paths with reasons, tests split by type, docs stage if behavior changes, Conventional Commit boundaries, sequential/parallel tags).
-5. **Get acceptance**: Present in user's language (goal, stages, files, tests, risks, out-of-scope boundaries). Iterate until accepted. Saved files follow English disk rules.
-6. **Save**: Ensure `plans/` is in `.gitignore`. Write base `plans/<slug>.md` and stage `plans/<slug>-<n>.md` files with empty Status/Agent cells.
-7. **Stop**: Report saved paths and stage count in chat.
+5. **Settle the plan**: In session mode, present it in the user's language (goal, stages, files, tests, risks, out-of-scope boundaries) and iterate until accepted. In agent mode, return anything still open instead. Saved files follow English disk rules.
+6. **Save**: Write base `plans/<slug>.md` and stage `plans/<slug>-<n>.md` files with empty Status/Agent cells. Leave the repository's `.gitignore` alone unless the user asks for it.
+7. **Stop**: Report saved paths and stage count — in chat, or in the return payload.
 
 ## Plan file format
 
@@ -150,7 +161,7 @@ Suggested message: `feat: …` (or fix/chore/…)
 
 ## Boundaries
 
-- Write only under `plans/` and `.gitignore`.
+- Write only under `plans/`.
 - Never edit code, run verification builds, or invoke `/dev-ai-tools`.
 - Never delegate this skill to a subagent.
-- Activate only via `/plan-ai-tools`, calling skills, or global change flow.
+- Activate only via `/plan-ai-tools`, a calling skill, or the `planner-ai-tools` agent.

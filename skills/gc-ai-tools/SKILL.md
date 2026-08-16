@@ -1,20 +1,25 @@
-# Google Cloud CLI (gcloud)
+---
+name: gc-ai-tools
+description: >
+  Query and manage Google Cloud resources via the Google Cloud CLI (gcloud). Use whenever the
+  user asks about Google Cloud resources, projects, costs, or infrastructure, or wants something
+  created, modified, or removed in Google Cloud. Also use for /gc-ai-tools.
+---
 
-> Base instruction. Harness wrappers under skills/<harness>/<name>/SKILL.md point here; edit this file, never a wrapper.
+# Google Cloud CLI (gcloud)
 
 ## Entry gate — required category: planner
 
-Before anything else in this skill:
+This skill must run on a **planner** model. Before anything else:
 
-1. Identify whether you satisfy **planner** (global `AGENTS.md` → Agent categories).
-2. **You satisfy it** — run this skill here, spawning the subagents it names.
-3. **You do not, or cannot tell** — never delegate this skill, and never start its workflow yet. Send one
-   chat message, in the user's language: the required category is not met; the model running this session,
-   named (or that the harness does not expose it); the question — run it anyway?; and how to switch model
-   in this harness plus which model or bundled skill fits **planner** best here. Then wait.
-4. **Authorized** — run this skill here, in this session, acting as its **planner** yourself. That
-   authorization holds for the rest of the session and is asked again only if the model changes. Declined or
-   unanswered — stop: no exploration, no writes, no spawns.
+1. Decide whether you are one (*Agent categories*, in the global agent instructions).
+2. **You are** — run the skill here, spawning the subagents it names.
+3. **You are not, or cannot tell** — do not start it and do not delegate it. Send one short chat message in
+   the user's language: name the model running this session (or say the harness does not expose it); say how
+   to get a planner here — switch this session to the harness's strongest model, or start the work over from
+   the `planner-ai-tools` agent, which is pinned to one; then ask whether to run anyway. Wait for the answer.
+4. **Yes** — run the skill here, as its planner, for the rest of the session; ask again only if the model
+   changes. **No, or no answer** — stop here: no exploration, no writes, no spawns.
 
 ## Rules
 

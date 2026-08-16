@@ -2,20 +2,20 @@
 
 ## Introduction
 
-A **harness-agnostic** home for shared AI coding configuration: one global `AGENTS.md` plus the skills `/plan-ai-tools`, `/dev-ai-tools`, `/az-ai-tools`, `/gh-ai-tools`, and `/gc-ai-tools`. It lives at a user-level directory — `$HOME/.ai-tools/` on Linux/Mac, or the equivalent user-level location on Windows — and is linked into whichever AI CLIs or IDEs you use (Claude Code, Grok, Cursor, Gemini, OpenAI Codex, GitHub Copilot, and similar).
+A **harness-agnostic** home for shared AI coding configuration: one global `GLOBAL-AGENTS.md` plus the skills `/plan-ai-tools`, `/dev-ai-tools`, `/az-ai-tools`, `/gh-ai-tools`, and `/gc-ai-tools`. It lives at a user-level directory — `$HOME/.ai-tools/` on Linux/Mac, or the equivalent user-level location on Windows — and is linked into whichever AI CLIs or IDEs you use (Claude Code, Grok, Cursor, Gemini, OpenAI Codex, GitHub Copilot, and similar).
 
-This repo's `AGENTS.md` is the linked global source of truth; `$HOME/AGENTS.md` (`%USERPROFILE%\AGENTS.md` on Windows) is a separate user overlay that agents are instructed to read after it — never a symlink of this file.
+This repo's `GLOBAL-AGENTS.md` is the linked global source of truth; `$HOME/AGENTS.md` (`%USERPROFILE%\AGENTS.md` on Windows) is a separate user overlay that agents are instructed to read after it — never a symlink of this file.
 
 Goals:
 
-- One global `AGENTS.md` built on **agent categories** (`planner`, `implementer`, `mechanical`), so any model can map roles without hard-coded vendor model names — each session resolves the three against its own harness once, to a model or a bundled skill
+- One global `GLOBAL-AGENTS.md` that teaches any harness the same orchestration cycle — classify the request, offer the planner, get the plan approved, dispatch the executor — on **agent categories** (`planner`, `implementer`, `mechanical`) rather than hard-coded vendor model names
 - Skills that behave the same across tools: multi-file plans, token-efficient stage execution, safe cloud and GitHub CLIs
 - Install by **symlinks**, never by forked copies that drift
 - **Extreme conciseness**: all instructions, skills, rules, and configuration across this repository aim for extreme conciseness, avoiding ambiguities and redundancies to the maximum extent possible while never omitting instructions, rules, or intentions in exchange for brevity.
 
 **Naming rule:** everything installed from this repo — skill directory, frontmatter `name:`, slash command, and agent name — ends in `-ai-tools`, so nothing collides with harness-bundled names. Never install a bare name like `plan`, `dev`, or `planner`.
 
-**Shipped agents:** two base files, `agents/planner-ai-tools.md` (runs `/plan-ai-tools`) and `agents/orchestrator-ai-tools.md` (runs `/dev-ai-tools`), each wrapped once per supported harness under `agents/<harness>/` — together, two **optional, user-invoked** entry points per harness. Each is deliberately minimal: pin the **planner** category to a concrete model, invoke one skill, return a path plus a short summary. Starting work from one gives that skill a **clean context** and settles its entry gate without a question — see [Agent categories](#agent-categories). Calling `/plan-ai-tools` directly stays equally valid; skills never delegate themselves to these agents. One wrapper folder per harness, because agent file format and model IDs are harness-specific; `agents/<harness>/` is the **only** layer in this repo allowed to name vendor models. What each agent *does* lives once in its base file — see [Base implementation, harness wrappers](#base-implementation-harness-wrappers).
+**Shipped agents:** two base files, `agents/planner-ai-tools.md` (runs `/plan-ai-tools`) and `agents/orchestrator-ai-tools.md` (runs `/dev-ai-tools`), each wrapped once per supported harness under `agents/<harness>/`. They are the two halves of the [orchestration cycle](#orchestration): the session offers the planner, the user approves its plan, the session dispatches the orchestrator. Each is deliberately minimal — pin the **planner** category to a concrete model, invoke one skill, return paths plus a short summary — and neither ever talks to the user directly ([Subagents cannot reach the user](#subagents-cannot-reach-the-user)). Calling `/plan-ai-tools` directly stays equally valid; skills never delegate themselves to these agents. One wrapper folder per harness, because agent file format and model IDs are harness-specific; `agents/<harness>/` is the **only** layer in this repo allowed to name vendor models. What each agent *does* lives once in its base file — see [One file per skill; wrappers only for agents](#one-file-per-skill-wrappers-only-for-agents).
 
 ### Cross-platform paths
 
@@ -38,35 +38,42 @@ The safety semantics — idempotent, never overwrite a non-ai-tools destination,
 
 | Path | Description |
 |------|-------------|
-| [`AGENTS.md`](AGENTS.md) | Global instructions: agent categories, language (chat vs disk; English default; three exceptions), the change flow, interaction and output discipline, CLI skill pointers, security defaults |
-| [`skills/plan-ai-tools.md`](skills/plan-ai-tools.md) | Base instruction for `/plan-ai-tools` — explore, then write a **base plan** plus **one file per stage** under `plans/`; stops without implementing |
-| [`skills/dev-ai-tools.md`](skills/dev-ai-tools.md) | Base instruction for `/dev-ai-tools` — run the plan queue or ad-hoc work unattended; **implementer** codes, **planner** validates; status table (`W`/`V`/`R`/`T`/`TV`/`E`/`F`); stage context isolation |
-| [`skills/az-ai-tools.md`](skills/az-ai-tools.md) | Base instruction for `/az-ai-tools` — Azure CLI: read freely, mutate only with explicit per-action approval, surface cost |
-| [`skills/gh-ai-tools.md`](skills/gh-ai-tools.md) | Base instruction for `/gh-ai-tools` — GitHub CLI: read freely, mutate only with explicit per-action approval |
-| [`skills/gc-ai-tools.md`](skills/gc-ai-tools.md) | Base instruction for `/gc-ai-tools` — Google Cloud CLI: read freely, mutate only with explicit per-action approval, surface cost |
-| [`skills/<harness>/`](skills/) | Per-harness skill wrappers — `skills/<harness>/<name>/SKILL.md`, a thin pointer to the base file. One folder per supported harness |
+| [`GLOBAL-AGENTS.md`](GLOBAL-AGENTS.md) | Global instructions, installed into each harness: what is shipped and when to offer it, the agent-category glossary, the orchestration cycle (plan → approve → execute), language, security, plans, and where the installed files live. Carries no skill entry gate — skills own that |
+| [`skills/plan-ai-tools/`](skills/plan-ai-tools/) | `/plan-ai-tools` — explore, then write a **base plan** plus **one file per stage** under `plans/`; stops without implementing |
+| [`skills/dev-ai-tools/`](skills/dev-ai-tools/) | `/dev-ai-tools` — run the plan queue or ad-hoc work unattended; **implementer** codes, **planner** validates; status table (`W`/`V`/`R`/`T`/`TV`/`E`/`F`); stage context isolation |
+| [`skills/az-ai-tools/`](skills/az-ai-tools/) | `/az-ai-tools` — Azure CLI: read freely, mutate only with explicit per-action approval, surface cost |
+| [`skills/gh-ai-tools/`](skills/gh-ai-tools/) | `/gh-ai-tools` — GitHub CLI: read freely, mutate only with explicit per-action approval |
+| [`skills/gc-ai-tools/`](skills/gc-ai-tools/) | `/gc-ai-tools` — Google Cloud CLI: read freely, mutate only with explicit per-action approval, surface cost |
 | [`agents/<name>.md`](agents/) | Base instructions for the two shipped agents — `planner-ai-tools`, `orchestrator-ai-tools` |
 | [`agents/<harness>/`](agents/) | `planner-ai-tools` and `orchestrator-ai-tools` wrappers per supported harness — optional, user-invoked entry points that run `/plan-ai-tools` and `/dev-ai-tools` in a clean context, with the **planner** category pinned to a concrete model. One folder per harness; see [Agent categories](#agent-categories) and [§6 Install agents](#6-install-agents) |
 
-### Base implementation, harness wrappers
+### One file per skill; wrappers only for agents
 
-Every skill and every agent is written **once** as a base file and wrapped **once per supported harness**. The base is the implementation; the wrapper is only the syntax that harness demands.
+**Skills need no wrapper.** Every harness supported here registers a skill the same way: a directory named
+after the skill, holding `SKILL.md`, with `name` and `description` in YAML frontmatter. So a skill is
+written **once**, as `skills/<skill-name>/SKILL.md`, and that same directory is linked into every harness's
+skills root. Nothing about it is harness-specific.
+
+**Agents still need one.** Their file format itself varies — `*.md`, `*.agent.md`, `*.toml` — and each
+harness pins the model with its own key. So an agent is written once as a base file and wrapped once per
+harness, the wrapper carrying only that harness's syntax plus a pointer to the base.
 
 | Layer | Path | Holds |
 |---|---|---|
-| Base | `skills/<skill-name>.md`, `agents/<agent-name>.md` | The whole instruction — purpose, entry gate, workflow, rules: everything common to all harnesses |
-| Wrapper | `skills/<harness>/<skill-name>/SKILL.md`, `agents/<harness>/<agent-name>.<ext>` | Only harness-specific syntax — frontmatter or TOML keys, `model:`, file naming — plus a pointer handing execution to the base file |
+| Skill | `skills/<skill-name>/SKILL.md` | Frontmatter plus the whole instruction. Installed as-is, into every harness |
+| Agent base | `agents/<agent-name>.md` | The whole instruction — purpose, workflow, rules: everything common to all harnesses |
+| Agent wrapper | `agents/<harness>/<agent-name>.<ext>` | Only harness-specific syntax — frontmatter or TOML keys, `model:`, file naming — plus a pointer handing execution to the base file |
 
 Rules:
 
 1. A wrapper carries **no** behaviour of its own. Anything it states that the base does not is drift: move it to the base.
 2. The pointer is the literal absolute path `$HOME/.ai-tools/...` — e.g. *"Read `$HOME/.ai-tools/agents/planner-ai-tools.md` and follow it in full."* There is no configurable root: `$HOME/.ai-tools` is the only supported clone location, so the pointer is hardcoded, not templated from an environment variable. The clone stays on disk after installation, so the pointer resolves for symlinked and copied installs alike.
-3. Vendor model names appear in wrappers only ([Category → model per harness](#category--model-per-harness) and `agents/<harness>/`), never in a base file.
-4. Every harness requires a directory holding `SKILL.md` for skills, so skill wrappers are always `skills/<harness>/<skill-name>/SKILL.md`. Agent wrappers take whatever shape that harness requires — single `*.md`, `*.agent.md`, or `*.toml`. Format is harness-specific; content is not.
-5. A new harness means a new wrapper folder, never a fork of a base. A new skill or agent means one base file plus one wrapper per supported harness.
-6. [Installation](#installation) links or copies **wrappers** into harness roots. Base files are never installed directly — they are read through the pointer.
+3. Vendor model names appear in agent wrappers only ([Category → model per harness](#category--model-per-harness) and `agents/<harness>/`), never in a skill and never in an agent base.
+4. A skill's frontmatter keeps `name` and `description` — read by every harness — plus optional keys that are ignored where unsupported, such as `argument-hint`. A key that any supported harness would **reject** does not belong in a shared file; that is what would force a skill wrapper layer back into existence.
+5. A new harness means one new agent wrapper folder and nothing at all for skills. A new skill is one new directory; a new agent is one base file plus one wrapper per supported harness.
+6. [Installation](#installation) links `skills/<skill-name>/` directly, and links or copies **agent wrappers**. Agent base files are never installed — they are read through the pointer.
 
-Harness syntax changes upstream: re-check each vendor's current skill and agent file format before adding a harness or editing a wrapper, and keep the base untouched by that churn.
+Harness syntax changes upstream: re-check each vendor's current skill and agent file format before adding a harness or editing a wrapper. If one ever diverges on the skill format, add the wrapper layer back for that harness alone — do not fork the skill.
 
 ### Agent categories
 
@@ -76,17 +83,34 @@ Harness syntax changes upstream: re-check each vendor's current skill and agent 
 | **implementer** | Write and edit code for one specified stage or brief |
 | **mechanical** | Fully specified low-ambiguity work and evidence gathering |
 
-A category is what an agent **is**, not what it was asked to do. Receiving a request grants no category; the entry gate below checks the session against the category a skill requires, and asks the user before running under-qualified.
+A category is what an agent **is**, not what it was asked to do. Receiving a request grants no category; each skill's entry gate checks the session against the category it requires, and asks the user before running under-qualified. `GLOBAL-AGENTS.md` carries the same table so that a harness reading only that file understands what a skill means by planner, implementer, or mechanical.
 
 #### Why the shipped agents exist
 
-Running `/plan-ai-tools` and then `/dev-ai-tools` in one session is correct but expensive: planning's exploration rounds stay resident while `/dev-ai-tools` runs, and every later turn re-sends them. Invoking the work through `planner-ai-tools` / `orchestrator-ai-tools` instead puts that exploration in a **context that is discarded when the agent returns**. The plan files are already the deliverable ([Output discipline](AGENTS.md)), so the return payload is a path plus a few lines.
+They are the two halves of the cycle the session orchestrates: `planner-ai-tools` designs, `orchestrator-ai-tools` executes, and the user approves between them ([Orchestration](#orchestration)).
 
-They also settle the category up front: the agent's model is pinned to **planner**, so the skill's entry gate passes without a question. This is a choice the **user** makes when starting the work — a skill never delegates itself to one of these agents, and a session that runs a skill directly still follows the gate and asks when it is under-qualified.
+Running `/plan-ai-tools` and then `/dev-ai-tools` in one session is equally valid but expensive: planning's exploration rounds stay resident while `/dev-ai-tools` runs, and every later turn re-sends them. Going through the agents instead puts that exploration in a **context that is discarded when the agent returns**. The plan files are already the deliverable, so the return payload is a path plus a few lines.
+
+They also settle the category up front: the agent's model is pinned to **planner**, so the skill's entry gate passes without a question. A skill never delegates itself to one of these agents; a session that runs a skill directly still follows the gate and asks when it is under-qualified.
+
+#### Subagents cannot reach the user
+
+Verified against vendor documentation in August 2026, and the reason the cycle is shaped the way it is:
+
+| Harness | A subagent can ask the user |
+|---|---|
+| Claude Code | **No** — `AskUserQuestion` is stripped from every subagent, whatever its config. Only permission prompts surface in the parent session |
+| Cursor | Yes — the ask-question tool is available to custom subagents |
+| GitHub Copilot | Yes — the ask-question tool covers agent mode, custom agents, and subagents |
+| Grok Build | Yes — `ask_user_question` works in subagents |
+| Codex | Yes, indirectly — approval requests surface from inactive threads, and `/agent` opens the thread to answer |
+| Gemini CLI | Undocumented — `ask_user` exists as a tool, but the subagent documentation neither grants nor forbids it |
+
+One behaviour has to hold everywhere, so it is the strictest one: **the agents never ask, they return.** The planner returns numbered open questions; the session relays them and resumes the planner with the answers. The orchestrator returns anything needing approval instead of acting on it. Nothing in this repo depends on a subagent's ability to talk to the user.
 
 #### Category → model per harness
 
-The lowest capable category wins ([`AGENTS.md`](AGENTS.md) rule 4): **planner** takes the strongest model regardless of cost, **implementer** the best code-quality-to-cost ratio, **mechanical** the cheapest that reliably finishes. Verified against vendor documentation in August 2026 — re-check at each model release, since only this table and `agents/<harness>/` carry vendor names.
+The lowest capable category wins ([`GLOBAL-AGENTS.md`](GLOBAL-AGENTS.md) rule 4): **planner** takes the strongest model regardless of cost, **implementer** the best code-quality-to-cost ratio, **mechanical** the cheapest that reliably finishes. Verified against vendor documentation in August 2026 — re-check at each model release, since only this table and `agents/<harness>/` carry vendor names.
 
 | Harness | planner | implementer | mechanical |
 |---|---|---|---|
@@ -101,43 +125,51 @@ Notes: Gemini's Pro line is frozen at 3.1 while Flash has moved to 3.7, so plann
 
 ### Skill authoring standard
 
-The entry gate belongs to the **base** file (`skills/<skill-name>.md`), once per skill — wrappers (`skills/<harness>/<skill-name>/SKILL.md`) never restate it, they only point to the base. Every base skill file in this repository — the five that exist and any added later — **must** open its body with the entry-gate block below, verbatim, changing only the category it declares. The gate is absolute: nothing precedes it but the H1 title and the standard base-file note (base files carry no frontmatter) — no purpose blurb, no usage note. Whatever the skill used to say up front moves below the block.
+Every skill file in this repository — the five that exist and any added later — **must** open its body with the entry-gate block below, verbatim, changing only the category it declares. The gate is absolute: nothing precedes it but the frontmatter and the H1 title — no purpose blurb, no usage note. Whatever the skill used to say up front moves below the block.
 
 ```markdown
 ## Entry gate — required category: planner
 
-Before anything else in this skill:
+This skill must run on a **planner** model. Before anything else:
 
-1. Identify whether you satisfy **planner** (global `AGENTS.md` → Agent categories).
-2. **You satisfy it** — run this skill here, spawning the subagents it names.
-3. **You do not, or cannot tell** — never delegate this skill, and never start its workflow yet. Send one
-   chat message, in the user's language: the required category is not met; the model running this session,
-   named (or that the harness does not expose it); the question — run it anyway?; and how to switch model
-   in this harness plus which model or bundled skill fits **planner** best here. Then wait.
-4. **Authorized** — run this skill here, in this session, acting as its **planner** yourself. That
-   authorization holds for the rest of the session and is asked again only if the model changes. Declined or
-   unanswered — stop: no exploration, no writes, no spawns.
+1. Decide whether you are one (*Agent categories*, in the global agent instructions).
+2. **You are** — run the skill here, spawning the subagents it names.
+3. **You are not, or cannot tell** — do not start it and do not delegate it. Send one short chat message in
+   the user's language: name the model running this session (or say the harness does not expose it); say how
+   to get a planner here — switch this session to the harness's strongest model, or start the work over from
+   the `planner-ai-tools` agent, which is pinned to one; then ask whether to run anyway. Wait for the answer.
+4. **Yes** — run the skill here, as its planner, for the rest of the session; ask again only if the model
+   changes. **No, or no answer** — stop here: no exploration, no writes, no spawns.
 ```
 
-It is duplicated into every skill's base file rather than referenced, because skills can be installed without this repo's `AGENTS.md` being linked into the harness — each one has to carry its own gate. Identical wording is the point: any drift shows up in a diff.
+It is duplicated into every skill file rather than referenced, because skills can be installed without this repo's `GLOBAL-AGENTS.md` being linked into the harness — each one has to carry its own gate. Identical wording is the point: any drift shows up in a diff.
 
-A skill runs in the session that received it, or it does not run. Delegating a whole skill to a spawned agent was tried and dropped: relaying an interactive workflow sends every question and answer across the boundary twice, and the gap the gate detects is one only the user can close. So an under-qualified session **asks** — and if the user says yes, that same session runs the skill as its planner. Only the implementer and mechanical subagents the skill names are spawned.
+The gate lives in the skill and nowhere else. `GLOBAL-AGENTS.md` does not restate it and does not enforce it: a skill invoked directly by the user answers for its own qualification, whether or not the global instructions are loaded. So an under-qualified session **asks** — and if the user says yes, that same session runs the skill as its planner. Only the implementer and mechanical subagents the skill names are spawned.
 
-The `agents/<harness>/` entry points are a **separate, user-initiated** path: invoking `planner-ai-tools` starts the skill in a clean context on a model already pinned to the category. Nothing in a skill reaches for them.
+The `agents/<harness>/` entry points are the other path in: invoking `planner-ai-tools` starts the skill in a clean context on a model already pinned to the category, which is why its gate passes without a question. Nothing in a skill reaches for them.
 
 **Choosing the declared category:** the lowest category that can carry the skill's *own* decisions. A skill that can run destructive or externally visible commands requires **planner**, because approving those is planner judgment — which is why all five skills here declare it. Exploration subagents a planner spawns stay read-only and return facts, never verdicts.
 
-### Change flow
+### Orchestration
 
-`/plan-ai-tools` iterates a plan with the user and saves it. Accepting the plan is the **only** approval point: from there `/dev-ai-tools` runs to completion unattended, recording detail in the plan files and reporting a short summary at the end. A direct `/plan-ai-tools` invocation always stops at the saved plan and never implements.
+The session — whatever model it runs — is the only thing that talks to the user. It sorts each request into one of two buckets and never implements anything non-trivial on its own:
 
-Each skill's entry gate checks the session against the category it declares. Satisfied, the session runs the skill. Not satisfied — or undecidable — it names its own model, asks whether to run anyway, and says how to switch model and to what. Authorized, it runs the skill in full **in that same session**, as its planner, and the answer holds for the rest of the session; declined, nothing happens.
+1. **Simple, well specified, or documentation only** → do it now.
+2. **Anything else** → ask whether to dispatch `planner-ai-tools`. On yes, spawn it.
 
-To skip that question and keep the exploration out of the session, start the work from `planner-ai-tools` / `orchestrator-ai-tools` instead — the user's choice, not the skill's.
+From there:
+
+- Planner returns **open questions** → the session relays them, collects answers, resumes the planner.
+- Planner returns a **finished plan** → the session reports what it will do, in a few lines, and asks whether to implement. On yes, it spawns `orchestrator-ai-tools` against those plans; on no, the saved plan is the deliverable.
+- Orchestrator returns **anything needing approval** → the session asks, then resumes it.
+
+Two approval points, both in the session: dispatching the planner, and accepting the plan. The full protocol lives in [`GLOBAL-AGENTS.md`](GLOBAL-AGENTS.md) — that file is what makes a harness behave this way.
+
+Invoking `/plan-ai-tools` or `/dev-ai-tools` directly stays valid and bypasses the orchestration entirely: the skill runs in the session that received it, subject only to its own entry gate. A direct `/plan-ai-tools` always stops at the saved plan and never implements.
 
 ### Language
 
-Two destinations, two rules (full detail in [`AGENTS.md`](AGENTS.md)):
+Two destinations, two rules (full detail in [`GLOBAL-AGENTS.md`](GLOBAL-AGENTS.md)):
 
 - **Chat** — the user's language.
 - **Disk** — concise English by default for everything written into a repository (code, comments, commits, docs, plans, briefs, logs, subagent prompts).
@@ -167,13 +199,18 @@ These apply to [Installation](#installation), [Removal](#removal), and [Reinstal
 - **Never** `rm -rf` a harness skills root; remove individual links only.
 - Remove a destination only when it is a symlink resolving under `$AI_TOOLS`.
 - Never touch vendor bundles such as `~/.grok/bundled/`, unrelated user skills, or a repository's own `AGENTS.md` describing that application's architecture.
-- **Never overwrite, unlink, edit, or delete `$HOME/AGENTS.md`** (`%USERPROFILE%\AGENTS.md` / `$env:USERPROFILE\AGENTS.md` on Windows). It is user-authored (or an empty placeholder created only when missing) and lives outside `$AI_TOOLS`. Do not symlink it to `$AI_TOOLS/AGENTS.md`.
+- **Never overwrite, unlink, edit, or delete `$HOME/AGENTS.md`** (`%USERPROFILE%\AGENTS.md` / `$env:USERPROFILE\AGENTS.md` on Windows). It is user-authored (or an empty placeholder created only when missing) and lives outside `$AI_TOOLS`. Do not symlink it to `$AI_TOOLS/GLOBAL-AGENTS.md`.
 - Ask which harnesses are in scope before changing anything, and report findings first.
 
 Helpers used by every section below:
 
 ```bash
 export AI_TOOLS="$HOME/.ai-tools"
+
+# Skill roots, one per harness — the same skill directory is linked into each.
+# Keep only the harnesses the user selected; every section below iterates this list.
+SKILL_ROOTS="$HOME/.claude/skills $HOME/.grok/skills $HOME/.codex/skills
+             $HOME/.copilot/skills $HOME/.cursor/skills $HOME/.gemini/skills"
 
 safe_link() {
   # usage: safe_link <target-in-ai-tools> <destination-path>
@@ -257,11 +294,11 @@ safe_unlink() {
 
 ### 0. Preconditions
 
-`$HOME/.ai-tools` is the **only** supported clone path — always user-level, never inside a project, never another location. The wrapper files hardcode `$HOME/.ai-tools/...` (see [Base implementation, harness wrappers](#base-implementation-harness-wrappers)), so a clone anywhere else breaks every pointer by design. Resolve `$HOME` to the current user's real home. See [Cross-platform paths](#cross-platform-paths) above for the Windows-shell equivalent and every other command translation in this document.
+`$HOME/.ai-tools` is the **only** supported clone path — always user-level, never inside a project, never another location. The wrapper files hardcode `$HOME/.ai-tools/...` (see [One file per skill; wrappers only for agents](#one-file-per-skill-wrappers-only-for-agents)), so a clone anywhere else breaks every pointer by design. Resolve `$HOME` to the current user's real home. See [Cross-platform paths](#cross-platform-paths) above for the Windows-shell equivalent and every other command translation in this document.
 
 ```bash
 export AI_TOOLS="$HOME/.ai-tools"
-test -f "$AI_TOOLS/AGENTS.md" && test -d "$AI_TOOLS/skills"
+test -f "$AI_TOOLS/GLOBAL-AGENTS.md" && test -d "$AI_TOOLS/skills"
 ```
 
 ### 1. Discover installed AI harnesses
@@ -344,7 +381,7 @@ default when the user only uses one.
 
 ### 3. Install global instructions
 
-Link `AGENTS.md` to each selected harness's user-wide instruction file.
+Link `GLOBAL-AGENTS.md` to each selected harness's user-wide instruction file.
 
 | Harness | Typical destination | Notes |
 |---------|---------------------|-------|
@@ -354,25 +391,25 @@ Link `AGENTS.md` to each selected harness's user-wide instruction file.
 | GitHub Copilot | `$HOME/.copilot/instructions/ai-tools.instructions.md` | Copilot's Agent Host reads every file under `~/.copilot/instructions/` recursively; plain Markdown works with no frontmatter for an always-applied global file |
 | Gemini | `$HOME/.gemini/GEMINI.md` | Detected via the google.geminicodeassist VS Code extension even without a gemini CLI on PATH; Gemini CLI's documented convention loads this as user-level context — confirm against the installed extension/CLI version before linking |
 | Cursor | Not linked | No confirmed, documented file path for Cursor's global "User Rules" as of this writing — Cursor's own docs describe it only as a Settings UI concept, not a file. Cursor already reads project-root `AGENTS.md` natively, so project-level coverage exists without this step; revisit once Cursor documents a stable path |
-| Generic | Point the tool at `$AI_TOOLS/AGENTS.md` | This file is the source of truth |
+| Generic | Point the tool at `$AI_TOOLS/GLOBAL-AGENTS.md` | This file is the source of truth |
 
 ```bash
-safe_link "$AI_TOOLS/AGENTS.md" "$HOME/.claude/CLAUDE.md"
-safe_link "$AI_TOOLS/AGENTS.md" "$HOME/.grok/AGENTS.md"      # if Grok selected
+safe_link "$AI_TOOLS/GLOBAL-AGENTS.md" "$HOME/.claude/CLAUDE.md"
+safe_link "$AI_TOOLS/GLOBAL-AGENTS.md" "$HOME/.grok/AGENTS.md"      # if Grok selected
 
 # Codex: link anyway as the fallback layer even though override.md wins while present (see table above)
 test -f "$HOME/.codex/AGENTS.override.md" && echo "NOTE: ~/.codex/AGENTS.override.md exists and takes precedence over AGENTS.md while present"
-safe_link "$AI_TOOLS/AGENTS.md" "$HOME/.codex/AGENTS.md"     # if Codex selected
+safe_link "$AI_TOOLS/GLOBAL-AGENTS.md" "$HOME/.codex/AGENTS.md"     # if Codex selected
 
-safe_link "$AI_TOOLS/AGENTS.md" "$HOME/.copilot/instructions/ai-tools.instructions.md"   # if GitHub Copilot selected
-safe_link "$AI_TOOLS/AGENTS.md" "$HOME/.gemini/GEMINI.md"    # if Gemini selected
+safe_link "$AI_TOOLS/GLOBAL-AGENTS.md" "$HOME/.copilot/instructions/ai-tools.instructions.md"   # if GitHub Copilot selected
+safe_link "$AI_TOOLS/GLOBAL-AGENTS.md" "$HOME/.gemini/GEMINI.md"    # if Gemini selected
 ```
 
 When a harness cannot use a symlink for instructions, offer a one-line include pointer instead of copying the file, so this repo stays the single source of truth.
 
 ### 4. Ensure user-level `$HOME/AGENTS.md`
 
-Create an empty user overlay file if it is missing. This is **not** a harness link and must **not** use `safe_link`. Agents are instructed (in this repo's `AGENTS.md`) to read this file after the global defaults; it overrides them when the two conflict, and a project's own `AGENTS.md` / `README.md` still wins over both.
+Create an empty user overlay file if it is missing. This is **not** a harness link and must **not** use `safe_link`. Agents are instructed (in this repo's `GLOBAL-AGENTS.md`) to read this file after the global defaults; it overrides them when the two conflict, and a project's own `AGENTS.md` / `README.md` still wins over both.
 
 | POSIX | Windows |
 |---|---|
@@ -389,13 +426,13 @@ fi
 
 Rules for this step:
 
-- If the path exists (file or otherwise), leave it untouched — never overwrite, replace, truncate, or symlink it to `$AI_TOOLS/AGENTS.md`.
+- If the path exists (file or otherwise), leave it untouched — never overwrite, replace, truncate, or symlink it to `$AI_TOOLS/GLOBAL-AGENTS.md`.
 - Do **not** ask whether the user wants to add instructions.
 - Write or edit contents only if the user later asks for that **directly** (not during install).
 
 ### 5. Install skills
 
-Link each **wrapper** directory — `skills/<harness>/<name>/`, holding `SKILL.md` — into that harness's user skills root. Never install the base files (`skills/<name>.md`) directly.
+Link each skill directory — `skills/<name>/`, holding `SKILL.md` — into every selected harness's user skills root. The same directory serves all of them; there is no per-harness skill file ([One file per skill; wrappers only for agents](#one-file-per-skill-wrappers-only-for-agents)).
 
 | Harness | User skills root |
 |---------|------------------|
@@ -409,32 +446,16 @@ Link each **wrapper** directory — `skills/<harness>/<name>/`, holding `SKILL.m
 **Never link into `$HOME/.agents/skills/`.** It is a live discovery root read by Codex, Copilot, Cursor and Gemini — linking this repo's skills there as well as into each harness's own root would double-register every skill.
 
 ```bash
-for path in "$AI_TOOLS/skills/claude-code"/*-ai-tools; do
-  safe_link "$path" "$HOME/.claude/skills/$(basename "$path")"
-done   # if Claude Code selected
-
-for path in "$AI_TOOLS/skills/grok"/*-ai-tools; do
-  safe_link "$path" "$HOME/.grok/skills/$(basename "$path")"
-done   # if Grok selected
-
-for path in "$AI_TOOLS/skills/codex"/*-ai-tools; do
-  safe_link "$path" "$HOME/.codex/skills/$(basename "$path")"
-done   # if Codex selected
-
-for path in "$AI_TOOLS/skills/copilot"/*-ai-tools; do
-  safe_link "$path" "$HOME/.copilot/skills/$(basename "$path")"
-done   # if GitHub Copilot selected
-
-for path in "$AI_TOOLS/skills/cursor"/*-ai-tools; do
-  safe_link "$path" "$HOME/.cursor/skills/$(basename "$path")"
-done   # if Cursor selected
-
-for path in "$AI_TOOLS/skills/gemini"/*-ai-tools; do
-  safe_link "$path" "$HOME/.gemini/skills/$(basename "$path")"
-done   # if Gemini selected
+# $SKILL_ROOTS is defined with the helpers under Safety rules — trim it to the selected harnesses
+for root in $SKILL_ROOTS; do
+  for path in "$AI_TOOLS/skills"/*-ai-tools; do
+    [ -d "$path" ] || continue
+    safe_link "$path" "$root/$(basename "$path")"
+  done
+done
 ```
 
-If Grok is configured with `[skills] paths`, adding `$AI_TOOLS/skills/grok` as a scan path is an option, but only when it cannot clobber existing names. Prefer explicit per-skill links.
+If Grok is configured with `[skills] paths`, adding `$AI_TOOLS/skills` as a scan path is an option, but only when it cannot clobber existing names. Prefer explicit per-skill links.
 
 ### 6. Install agents
 
@@ -490,9 +511,9 @@ readlink -f "$HOME/.gemini/GEMINI.md" 2>/dev/null
 # User overlay (not a harness link): expect a regular file at $HOME/AGENTS.md
 test -e "$HOME/AGENTS.md" && echo "user overlay present: $HOME/AGENTS.md" || echo "WARN: missing $HOME/AGENTS.md"
 
-# The five skill bases and two agent bases exist at the pinned location
-for base in plan-ai-tools dev-ai-tools az-ai-tools gh-ai-tools gc-ai-tools; do
-  test -f "$AI_TOOLS/skills/$base.md" && echo "base ok: skills/$base.md" || echo "WARN missing base: skills/$base.md"
+# The five skills and two agent bases exist at the pinned location
+for name in plan-ai-tools dev-ai-tools az-ai-tools gh-ai-tools gc-ai-tools; do
+  test -f "$AI_TOOLS/skills/$name/SKILL.md" && echo "skill ok: skills/$name/SKILL.md" || echo "WARN missing skill: skills/$name/SKILL.md"
 done
 for base in planner-ai-tools orchestrator-ai-tools; do
   test -f "$AI_TOOLS/agents/$base.md" && echo "base ok: agents/$base.md" || echo "WARN missing base: agents/$base.md"
@@ -500,14 +521,13 @@ done
 
 ls -la "$HOME/.claude/skills" "$HOME/.grok/skills" "$HOME/.codex/skills" "$HOME/.copilot/skills" "$HOME/.cursor/skills" "$HOME/.gemini/skills" 2>/dev/null
 
-# Installed skill wrappers: SKILL.md present, and its pointer target (the base file) resolves
-for harness_dir in "$AI_TOOLS/skills"/*/; do
-  harness=$(basename "$harness_dir")
-  for path in "$harness_dir"*-ai-tools; do
+# Every installed skill link resolves to a real SKILL.md
+for root in $SKILL_ROOTS; do
+  [ -d "$root" ] || continue
+  for path in "$AI_TOOLS/skills"/*-ai-tools; do
     [ -d "$path" ] || continue
     name=$(basename "$path")
-    test -f "$path/SKILL.md" && echo "skill wrapper ok: $harness/$name" || echo "WARN missing SKILL.md: $harness/$name"
-    test -f "$AI_TOOLS/skills/$name.md" && echo "pointer resolves: $harness/$name -> skills/$name.md" || echo "WARN broken pointer: $harness/$name"
+    test -f "$root/$name/SKILL.md" && echo "skill ok: $root/$name" || echo "WARN not installed or broken: $root/$name"
   done
 done
 
@@ -563,12 +583,9 @@ for root in "$HOME/.claude/skills" "$HOME/.grok/skills" "$HOME/.cursor/skills" \
   done
 done
 
-# Wrapper names as currently shipped, for reference — enumerated from
-# $AI_TOOLS/skills/<harness>/*, not a flat $AI_TOOLS/skills/* (that layout no longer exists)
-for harness_dir in "$AI_TOOLS/skills"/*/; do
-  for path in "$harness_dir"*-ai-tools; do
-    [ -d "$path" ] && echo "shipped: $(basename "$harness_dir")/$(basename "$path")"
-  done
+# Skill names as currently shipped, for reference
+for path in "$AI_TOOLS/skills"/*-ai-tools; do
+  [ -d "$path" ] && echo "shipped: $(basename "$path")"
 done
 
 if [ -L "$HOME/.claude/CLAUDE.md" ]; then
@@ -589,50 +606,30 @@ fi
 ```
 
 Note any legacy bare names (`plan`, `dev`, `az`, `gh`, `gc`) still pointing at `$AI_TOOLS`, and any
-link still resolving to the **pre-migration** flat shape (`$AI_TOOLS/skills/<name>-ai-tools`, before
-wrappers moved under `skills/<harness>/`) — that path no longer exists on disk, so such a link is now
-dangling and still needs cleaning up. Re-run Installation §1's extension scan to know which
+link resolving to a path that no longer exists — a dangling link still needs cleaning up.
+Re-run Installation §1's extension scan to know which
 extension-only harnesses (like Gemini) are even in scope for removal — installed extensions can
 change between runs.
 
 ### 2. Remove skills
 
-Names come from the wrapper directories under `$AI_TOOLS/skills/<harness>/*`, not a hardcoded flat
-list (`$AI_TOOLS/skills/*` no longer holds wrappers — see [Base implementation, harness
-wrappers](#base-implementation-harness-wrappers)):
+Names come from the skill directories under `$AI_TOOLS/skills/*-ai-tools`, never a hardcoded list:
 
 ```bash
-for harness_dir in "$AI_TOOLS/skills"/*/; do
-  harness=$(basename "$harness_dir")
-  for path in "$harness_dir"*-ai-tools; do
+for root in $SKILL_ROOTS; do
+  [ -d "$root" ] || continue
+  for path in "$AI_TOOLS/skills"/*-ai-tools; do
     [ -d "$path" ] || continue
-    name=$(basename "$path")
-    case "$harness" in
-      claude-code) safe_unlink "$HOME/.claude/skills/$name" ;;
-      grok)        safe_unlink "$HOME/.grok/skills/$name" ;;
-      codex)       safe_unlink "$HOME/.codex/skills/$name" ;;
-      copilot)     safe_unlink "$HOME/.copilot/skills/$name" ;;
-      cursor)      safe_unlink "$HOME/.cursor/skills/$name" ;;
-      gemini)      safe_unlink "$HOME/.gemini/skills/$name" ;;
-    esac
+    safe_unlink "$root/$(basename "$path")"
   done
-done
-
-# Legacy bare names, and destinations still resolving to the pre-migration flat shape
-# ($AI_TOOLS/skills/<name>-ai-tools) — same destination path either way, safe_unlink
-# cleans up both since it only checks the link resolves under $AI_TOOLS
-for name in plan-ai-tools dev-ai-tools az-ai-tools gh-ai-tools gc-ai-tools \
-            plan dev az gh gc; do   # legacy bare names included
-  safe_unlink "$HOME/.claude/skills/$name"   # if Claude selected
-  safe_unlink "$HOME/.grok/skills/$name"     # if Grok selected
-  safe_unlink "$HOME/.codex/skills/$name"    # if Codex selected
-  safe_unlink "$HOME/.copilot/skills/$name"  # if GitHub Copilot selected
-  safe_unlink "$HOME/.cursor/skills/$name"   # if Cursor selected
-  safe_unlink "$HOME/.gemini/skills/$name"   # if Gemini selected
+  # Legacy bare names from older installs
+  for name in plan dev az gh gc; do
+    safe_unlink "$root/$name"
+  done
 done
 ```
 
-If `$AI_TOOLS/skills/grok` was added to a harness scan path (Grok `[skills] paths`), remove **only that entry** when asked — never wipe the config file.
+If `$AI_TOOLS/skills` was added to a harness scan path (Grok `[skills] paths`), remove **only that entry** when asked — never wipe the config file.
 
 ### 3. Remove agents
 
@@ -665,7 +662,7 @@ If Grok's `~/.grok/config.toml` carries the `[subagents.models]` entries from §
 
 ### 4. Remove the global instructions link, optional
 
-Only when the user wants the harness to stop loading this repo's `AGENTS.md`. Unlink only harness destinations that are links into `$AI_TOOLS/AGENTS.md`. **Do not** `safe_unlink` or otherwise touch `$HOME/AGENTS.md` — it is not a harness link and is never part of removal.
+Only when the user wants the harness to stop loading this repo's `GLOBAL-AGENTS.md`. Unlink only harness destinations that are links into `$AI_TOOLS/GLOBAL-AGENTS.md`. **Do not** `safe_unlink` or otherwise touch `$HOME/AGENTS.md` — it is not a harness link and is never part of removal.
 
 ```bash
 safe_unlink "$HOME/.claude/CLAUDE.md"
@@ -673,7 +670,7 @@ safe_unlink "$HOME/.grok/AGENTS.md"
 safe_unlink "$HOME/.codex/AGENTS.md"
 safe_unlink "$HOME/.copilot/instructions/ai-tools.instructions.md"
 safe_unlink "$HOME/.gemini/GEMINI.md"
-# Other harnesses: unlink only destinations created as links into $AI_TOOLS/AGENTS.md
+# Other harnesses: unlink only destinations created as links into $AI_TOOLS/GLOBAL-AGENTS.md
 # Never: safe_unlink "$HOME/AGENTS.md"
 ```
 
@@ -716,7 +713,7 @@ One process covers every case: **update the source** to `origin/master`, then **
 
 ```bash
 export AI_TOOLS="$HOME/.ai-tools"
-test -d "$AI_TOOLS/.git" && test -f "$AI_TOOLS/AGENTS.md" && test -d "$AI_TOOLS/skills"
+test -d "$AI_TOOLS/.git" && test -f "$AI_TOOLS/GLOBAL-AGENTS.md" && test -d "$AI_TOOLS/skills"
 ```
 
 If `$AI_TOOLS` is missing, stop and offer a fresh [Installation](#installation), cloning first. Never invent skills that are not in the tree.
@@ -771,7 +768,7 @@ Notes:
 - This is destructive **inside `$AI_TOOLS` only**: it discards local commits on `master` and uncommitted edits. It never touches harness config outside this directory, and never touches `$HOME/AGENTS.md`.
 - If the user has local work they care about, stop, show `git status` and `git log`, and get explicit approval before `reset --hard`, or help them branch or stash first.
 - If the default branch is ever renamed (for example `main`), use that name only once the user or remote confirms it.
-- Skip the reset **only** when the user explicitly asks for re-link with no git update; still verify `AGENTS.md` and `skills/` exist.
+- Skip the reset **only** when the user explicitly asks for re-link with no git update; still verify `GLOBAL-AGENTS.md` and `skills/` exist.
 
 ```bash
 echo "HEAD: $(git rev-parse --short HEAD) (was $(git rev-parse --short "$PREV" 2>/dev/null || echo unknown))"
@@ -784,13 +781,12 @@ Run [Removal](#removal) steps 2–4 for the harnesses in scope, including legacy
 
 ### 4. Install again
 
-**This migration breaks every link created before it.** A machine installed prior to the base/wrapper
-split has links pointing at `$AI_TOOLS/skills/<name>` (e.g. `$AI_TOOLS/skills/plan-ai-tools`), a path
-that no longer exists — wrappers now live under `$AI_TOOLS/skills/<harness>/<name>/`. Those old links
-are dangling and are not upgraded in place; the fix is a full Removal + Install pass, which is exactly
-what this section already does.
+A layout change upstream can leave every previously created link dangling — a link is never upgraded in
+place. The fix is always a full Removal + Install pass, which is exactly what this section does. Machines
+installed while skills were wrapped per harness (`$AI_TOOLS/skills/<harness>/<name>/`) are the current
+case: those links resolve nowhere, and re-installing repoints them at `$AI_TOOLS/skills/<name>/`.
 
-Run the [Installation](#installation) link steps for the same harnesses — discovery is optional when scope was already confirmed. Prefer listing `$AI_TOOLS/skills/<harness>/*-ai-tools` and `$AI_TOOLS/agents/*/` after the reset over hard-coded lists, since both sets may have changed. `safe_link` stays non-destructive: an existing destination that is not already the correct link is skipped and reported.
+Run the [Installation](#installation) link steps for the same harnesses — discovery is optional when scope was already confirmed. Prefer listing `$AI_TOOLS/skills/*-ai-tools` and `$AI_TOOLS/agents/*/` after the reset over hard-coded lists, since both sets may have changed. `safe_link` stays non-destructive: an existing destination that is not already the correct link is skipped and reported.
 
 Re-run [§6 Install agents](#6-install-agents) too. This step matters most on machines where agents were **copied** rather than linked: a copy does not follow `git pull`, so the reset in §2 is only half the update until the copies are refreshed. §3's removal drops unmodified copies, and §6 writes the new ones.
 
@@ -813,20 +809,13 @@ readlink -f "$HOME/.gemini/GEMINI.md" 2>/dev/null
 # User overlay (not a harness link)
 test -e "$HOME/AGENTS.md" && echo "user overlay present: $HOME/AGENTS.md" || echo "WARN: missing $HOME/AGENTS.md"
 
-# Skill wrappers present and linked, enumerated per harness (mirrors Installation §5/§7)
-declare -A SKILLS_ROOT=(
-  [claude-code]="$HOME/.claude/skills" [grok]="$HOME/.grok/skills"
-  [codex]="$HOME/.codex/skills"        [copilot]="$HOME/.copilot/skills"
-  [cursor]="$HOME/.cursor/skills"      [gemini]="$HOME/.gemini/skills"
-)
-for harness_dir in "$AI_TOOLS/skills"/*/; do
-  harness=$(basename "$harness_dir")
-  root="${SKILLS_ROOT[$harness]}"
-  [ -n "$root" ] || continue
-  for path in "$harness_dir"*-ai-tools; do
-    [ -d "$path" ] || continue
-    name=$(basename "$path")
-    test -f "$path/SKILL.md" && echo "source ok: $harness/$name"
+# Skills present at the source and linked into every selected root (mirrors Installation §5/§7)
+for path in "$AI_TOOLS/skills"/*-ai-tools; do
+  [ -d "$path" ] || continue
+  name=$(basename "$path")
+  test -f "$path/SKILL.md" && echo "source ok: skills/$name/SKILL.md" || echo "WARN missing SKILL.md: skills/$name"
+  for root in $SKILL_ROOTS; do
+    [ -d "$root" ] || continue
     [ -L "$root/$name" ] && echo "link ok: $root/$name -> $(readlink "$root/$name")"
   done
 done
@@ -835,14 +824,14 @@ done
 # (link / unmodified-copy / drifted-copy per harness)
 
 # No legacy bare names should remain
-for name in plan dev az gh gc; do
-  for root in "$HOME/.claude/skills" "$HOME/.grok/skills" "$HOME/.codex/skills" "$HOME/.copilot/skills" "$HOME/.cursor/skills" "$HOME/.gemini/skills"; do
+for root in $SKILL_ROOTS; do
+  for name in plan dev az gh gc; do
     [ -L "$root/$name" ] && echo "WARN legacy link still present: $root/$name"
   done
 done
 ```
 
-Restart or reload the harness, then confirm a slash command for every skill under `$AI_TOOLS/skills/<harness>/*-ai-tools`.
+Restart or reload the harness, then confirm a slash command for every skill under `$AI_TOOLS/skills/*-ai-tools`.
 
 ### 6. When update or reinstall is not enough
 
