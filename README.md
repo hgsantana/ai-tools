@@ -1,6 +1,6 @@
 # ai-tools
 
-> **Version 0.0.1-ALPHA** — under active development. Usable for testing; no guarantees, and no backward compatibility between alpha versions (rule 4).
+> **Version 0.0.2-ALPHA** — under active development. Usable for testing; no guarantees, and no backward compatibility between alpha versions (rule 4).
 
 ## What is this repository
 
@@ -19,7 +19,7 @@ It is cloned to `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows) and lin
 | [`agents/gh-ai-tools.md`](agents/gh-ai-tools.md) | Agent base: GitHub CLI (`gh`) — read freely, return mutations to the session for explicit per-action approval |
 | [`agents/gc-ai-tools.md`](agents/gc-ai-tools.md) | Agent base: Google Cloud CLI (`gcloud`) — read freely, return mutations to the session for explicit per-action approval, surface cost |
 | [`agents/<harness>/`](agents/) | Per-harness wrappers for the five agents — harness-specific syntax, the pinned model, the category → model mapping for subagents, and a pointer to the base file; nothing else |
-| `skills/<name>/SKILL.md` | Harness-agnostic skills — none shipped today. A skill must run on **any** model; anything model-dependent ships as an agent instead (rules 7–9) |
+| [`skills/`](skills/) | Five dispatch skills, one per agent and same-named: each surfaces the agent's stake, spawns it, and relays approvals, questions, and results between agent and user. A skill must run on **any** model; anything model-dependent ships as an agent instead (rules 7–9) |
 
 ### How to install, remove, update, or reinstall
 
@@ -386,9 +386,9 @@ gc-ai-tools = "grok-4.6"
 
 Without this block the agents still load — they inherit the session's model, so the strong-model guarantee is lost. The same fallback applies to any harness whose `model:` field is ignored or unsupported.
 
-### 6. Install skills, when shipped
+### 6. Install skills
 
-The tree currently ships no skills, so this step is a no-op today — it exists so future skills follow the same pattern (rules 7–9). When `$AI_TOOLS/skills/` holds skill directories, link each one into every selected harness's skills root ([Supported harnesses](#supported-harnesses)); the same directory serves all of them:
+Link each directory under `$AI_TOOLS/skills/` into every selected harness's skills root ([Supported harnesses](#supported-harnesses)); the same directory serves all of them (rules 7–9):
 
 ```bash
 for root in $SKILL_ROOTS; do

@@ -16,6 +16,8 @@ Five agents, each pinned by its wrapper to a strong model:
 | `gh-ai-tools` | GitHub resources via the GitHub CLI (`gh`): reads freely, returns mutations for approval |
 | `gc-ai-tools` | Google Cloud resources via the Google Cloud CLI (`gcloud`): reads freely, returns mutations for approval |
 
+Each agent ships with a same-named skill: invoking it (e.g. `/az-ai-tools`) tells the session to dispatch that agent and relay between it and the user, per the skill's own instructions.
+
 **Offer the matching agent first.** If a shipped agent covers what the user asked, offer it before doing the work yourself. If none does, do the work under the practices below.
 
 **Stake disclaimers.** Some agent base files open with a stake disclaimer — cost, destruction, or unattended edits. Before dispatching such an agent, surface that warning to the user in chat, in their language; dispatch only once they are aware. This duty binds whoever spawns the agent.
