@@ -16,6 +16,18 @@ You are the **planner** category (*Agent categories*, in the user-wide agent ins
 | `plans/<file>.md …` | **A** | Named base plans only |
 | Anything else | **B** | Ad-hoc implementation |
 
+## Branch per plan
+
+All implementation happens on a dedicated branch, never directly on the default branch:
+
+- Before a base plan's first dispatch, create its branch from the default branch (`git symbolic-ref --short refs/remotes/origin/HEAD`, falling back to `main`/`master`, or to the current branch when there is no remote): `plan/<slug>`. Every stage, fix, and commit of that plan lands on this branch.
+- One branch per base plan: with several open plans, each gets its own branch cut from the default branch — never from another plan's branch. Switch to a plan's branch before running any of its waves.
+- Mode B: same rule per brief — create `dev/<slug>` before spawning the implementer.
+- When a plan's stages all reach `F`/`E`, prepare its pull request to the default branch: draft the PR title and body from the accepted stages. Pushing the branch and opening the PR follow *Reaching the user* — return them in the final summary as one approval request per plan (branch, target, drafted title/body, command); execute only when re-dispatched with that explicit approval.
+- **Local review fallback.** At branch creation, determine whether a PR is viable — a remote exists and its host supports pull requests (for GitHub, `gh auth status` plus a GitHub remote) — and record the plan's review mode. When it is not viable, the completed plan returns a **local review request** instead of a PR request: branch name, base, the `git diff --stat` summary, and the path of a review patch.
+- Generate the patch with `git diff <default>...<branch> --output=plans/dev/<slug>-review.patch` — git writes the file directly; never produce it with a file-writing tool and never load its content into context. Verify it only via `--stat` or `wc -l`. Opening diffs in an editor is the relaying session's concern, not yours: you produce only universal artifacts (branch, patch, stat).
+- Rationale: plans stay isolated and parallelizable, an unwanted plan is discarded by deleting its branch, and each plan is reviewed as a single PR — or as a branch plus patch when no PR host is available.
+
 ## Division of labor
 
 | Work | Category |
@@ -85,21 +97,23 @@ Implementers must not open other stage files, base plans, or `plans/finished/**`
 3. Stop if no plans exist. Leave the repository's `.gitignore` alone unless the user asked for it.
 4. Check `git status --short`. If dirty, note it in the summary and stage commits path-by-path (avoid `git add -A`).
 5. Process base plans oldest first:
-   1. Perform Plan intake.
-   2. Build stage waves from the execution graph (skip `F` stages; defer `E`).
-   3. Run waves: sequential stages one-by-one; parallel-safe stages in concurrent non-overlapping implementer batches.
-   4. Validate on `V`. Run a dedicated test pass (`T`/`TV`) if required.
-   5. On `F`, commit if the stage defines a boundary (Conventional Commits; check for secrets/binaries).
-6. Move fully resolved base plans to `plans/finished/`. Return the final summary.
+   1. Create and switch to the plan's branch (*Branch per plan*).
+   2. Perform Plan intake.
+   3. Build stage waves from the execution graph (skip `F` stages; defer `E`).
+   4. Run waves: sequential stages one-by-one; parallel-safe stages in concurrent non-overlapping implementer batches.
+   5. Validate on `V`. Run a dedicated test pass (`T`/`TV`) if required.
+   6. On `F`, commit if the stage defines a boundary (Conventional Commits; check for secrets/binaries).
+   7. When the plan resolves, prepare its pull request — or, without a viable PR host, its review patch (*Branch per plan*).
+6. Move fully resolved base plans to `plans/finished/`. Return the final summary, including one PR approval request or local review request per completed plan branch.
 
 ## Mode B — ad-hoc request
 
 1. Derive a kebab-case `<slug>` from the request. If an existing base plan covers it, run Mode A instead.
 2. Explore paths with **mechanical**.
 3. Write `plans/dev/<slug>-brief.md` (verbatim request, goal, context, paths, typed tests, docs, criteria, commit rules, report format). Open questions that only the user can answer go to the return payload instead of blocking.
-4. Spawn **implementer** on the brief (split into sequential briefs if oversized).
+4. Create and switch to the brief's branch (*Branch per plan*), then spawn **implementer** on the brief (split into sequential briefs if oversized).
 5. Validate the diff on completion. Run correction rounds via `plans/dev/<slug>-feedback-<n>.md` (1 + 3 limit).
-6. Commit only after validation, and only if authorized in the brief.
+6. Commit only after validation, and only if authorized in the brief. On completion, prepare the branch's pull request to the default branch and return it as an approval request — or, without a viable PR host, return the local review request with its patch (*Branch per plan*).
 
 ## Validation
 
