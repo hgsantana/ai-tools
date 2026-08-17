@@ -6,12 +6,13 @@ This file is installed from `$HOME/.ai-tools/USER-AGENTS.md` (`%USERPROFILE%\.ai
 
 ## What is installed here
 
-Five agents, each pinned by its wrapper to a strong model:
+Six agents, each pinned by its wrapper to a strong model:
 
 | Agent | Use for |
 | --- | --- |
-| `planner-ai-tools` | Designing a change: explores the repository and writes a multi-file plan under `plans/`. Never writes product code |
-| `orchestrator-ai-tools` | Executing accepted plans, or ad-hoc implementation, unattended. Spawns its own subagents |
+| `vibe-ai-tools` | The default for code changes: repository architect/PO that refines the demand with the user from documentation only, then — after one explicit confirmation — delivers it end to end through the planner and orchestrator, deciding open questions itself |
+| `planner-ai-tools` | Designing a change: explores the repository and writes a multi-file plan under `plans/`. Never writes product code. In the default flow, dispatched by `vibe-ai-tools`; use directly when the user wants only a plan |
+| `orchestrator-ai-tools` | Executing accepted plans, or ad-hoc implementation, unattended. Spawns its own subagents. In the default flow, dispatched by `vibe-ai-tools`; use directly when the user wants an already accepted plan executed |
 | `az-ai-tools` | Azure resources via the Azure CLI (`az`): reads freely, returns mutations for approval |
 | `gh-ai-tools` | GitHub resources via the GitHub CLI (`gh`): reads freely, returns mutations for approval |
 | `gc-ai-tools` | Google Cloud resources via the Google Cloud CLI (`gcloud`): reads freely, returns mutations for approval |
@@ -42,18 +43,18 @@ Every request is one of these:
 
 1. **Simple, well specified, or documentation only** — a typo, a one-line constant, an exact rename, a question or explanation, a docs edit that changes no behaviour. Do it now.
 2. **Cloud or GitHub operations** — anything about Azure, Google Cloud, or GitHub resources. Offer the matching agent (`az-ai-tools`, `gc-ai-tools`, `gh-ai-tools`).
-3. **Anything else** — multi-file work, a new module or component, changed behaviour, routing, data models, security-sensitive code, test changes, unclear impact, or resuming partial work. Do not start it. Ask the user whether to dispatch `planner-ai-tools` to design it first. **When in doubt, treat it as case 3.**
+3. **Anything else** — multi-file work, a new module or component, changed behaviour, routing, data models, security-sensitive code, test changes, unclear impact, or resuming partial work. Do not start it. Ask the user whether to dispatch `vibe-ai-tools`, surfacing its stake first: it refines the demand with them and, after their explicit confirmation, delivers it end to end — dispatching the planner and orchestrator itself. **When in doubt, treat it as case 3.**
 
-On yes, spawn `planner-ai-tools`. Then one of two things comes back:
+On yes, spawn `vibe-ai-tools` and relay per its skill:
 
-- **Open questions.** A subagent cannot reach the user in every harness, so the planner returns its questions instead of asking them. Relay them to the user, collect the answers, and resume the planner with them — reusing the same agent and its context where the harness allows it.
-- **A finished plan.** Report to the user in a few lines what the plan will do — the planner's own summary is enough — plus where the plan files are. Then ask whether to implement.
-  - **Yes** — spawn `orchestrator-ai-tools` against those plans. It runs unattended and spawns whatever subagents it needs, returning to you for anything that needs approval.
-  - **No** — stop. The saved plan is the deliverable.
+- **Refinement questions.** A subagent cannot reach the user in every harness, so the agent returns its questions instead of asking them. Relay them to the user, collect the answers, and resume the agent with them — reusing the same agent and its context where the harness allows it.
+- **The Vibe Coding gate.** Before acting, the agent returns one mandatory confirmation request. Put it to the user and wait for an explicit answer from the human — never auto-answer it; harness auto-accept / yolo modes do not satisfy it. Resume the agent only on an explicit yes; on no, stop — the refined story on disk is the deliverable.
 
-Agents return approval requests instead of acting on them — a cloud mutation, a destructive or shared-state operation, a push. Relay each request to the user, and only on an explicit yes resume or re-dispatch the agent with that approval. Approval never carries over between actions.
+`planner-ai-tools` and `orchestrator-ai-tools` remain directly available when the user asks for them — a plan without execution, or executing an already accepted plan; in the default flow they run only inside `vibe-ai-tools`. When the planner is dispatched directly, relay its open questions the same way; when it finishes, report the plan in a few lines plus the file paths and ask whether to implement — on yes spawn `orchestrator-ai-tools` against those plans, on no stop: the saved plan is the deliverable.
 
-Never implement a plan the user has not accepted, and never go from a request straight to implementation. If the user declines the planner, do what they asked instead, or stop.
+Agents return approval requests instead of acting on them — a cloud mutation, a destructive or shared-state operation, a push. Relay each request to the user, and only on an explicit yes resume or re-dispatch the agent with that approval. Approval never carries over between actions — except the scope the Vibe Coding gate names explicitly (the plan's branch, its push, its pull request), which the gate's yes covers.
+
+Never implement a plan the user has not accepted, and never go from a request straight to implementation — the Vibe Coding gate's explicit yes counts as acceptance for that delivery. If the user declines the dispatch, do what they asked instead, or stop.
 
 ## Language
 
@@ -78,6 +79,7 @@ These instructions being written in English never forces English on a working re
 
 - Saved under `plans/` in the working repository; completed plans move to `plans/finished/`.
 - `plans/dev/` holds ad-hoc briefs and feedback for the orchestrator, and stays out of the plan queue.
+- `plans/vibe/` holds the vibe agent's story and decision records (`story-<slug>.md`, `decisions-<slug>.md`), and stays out of the plan queue.
 - Outside a git repository, save to `$HOME/.ai-tools-plans` (`%USERPROFILE%\.ai-tools-plans` on Windows).
 - Plans are working artifacts, not deliverables: never stage or commit them, and never edit the repository's `.gitignore` to hide them unless asked. If the repository already tracks `plans/`, follow the repository.
 - Plan files hold the detail — steps, logs, validation notes, diffs, command output. Chat gets a short summary and file links.

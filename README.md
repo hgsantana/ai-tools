@@ -12,14 +12,15 @@ It is cloned to `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows) and lin
 
 | Path | What it is |
 |---|---|
-| [`USER-AGENTS.md`](USER-AGENTS.md) | Install artifact: becomes the user-wide instructions file of each harness. Teaches the orchestration cycle (classify → plan → approve → execute), the agent categories, and the language, security, and plan rules |
+| [`USER-AGENTS.md`](USER-AGENTS.md) | Install artifact: becomes the user-wide instructions file of each harness. Teaches the orchestration cycle (classify → refine → confirm → deliver end to end), the agent categories, and the language, security, and plan rules |
+| [`agents/vibe-ai-tools.md`](agents/vibe-ai-tools.md) | Agent base: repository architect/PO — refines a demand with the user from documentation only, then, after one explicit confirmation (the Vibe Coding gate), delivers it end to end through the planner and orchestrator, deciding open questions itself and logging them under `plans/vibe/` |
 | [`agents/planner-ai-tools.md`](agents/planner-ai-tools.md) | Agent base: designs a change — explores the repository and writes a multi-file implementation plan under `plans/`, then stops; never implements |
 | [`agents/orchestrator-ai-tools.md`](agents/orchestrator-ai-tools.md) | Agent base: executes accepted plans or an ad-hoc brief unattended; delegates code to **implementer** and evidence to **mechanical** subagents |
 | [`agents/az-ai-tools.md`](agents/az-ai-tools.md) | Agent base: Azure CLI (`az`) — read freely, return mutations to the session for explicit per-action approval, surface cost |
 | [`agents/gh-ai-tools.md`](agents/gh-ai-tools.md) | Agent base: GitHub CLI (`gh`) — read freely, return mutations to the session for explicit per-action approval |
 | [`agents/gc-ai-tools.md`](agents/gc-ai-tools.md) | Agent base: Google Cloud CLI (`gcloud`) — read freely, return mutations to the session for explicit per-action approval, surface cost |
-| [`agents/<harness>/`](agents/) | Per-harness wrappers for the five agents — harness-specific syntax, the pinned model, the category → model mapping for subagents, and a pointer to the base file; nothing else |
-| [`skills/`](skills/) | Five dispatch skills, one per agent and same-named: each surfaces the agent's stake, spawns it, and relays approvals, questions, and results between agent and user. A skill must run on **any** model; anything model-dependent ships as an agent instead (rules 7–9) |
+| [`agents/<harness>/`](agents/) | Per-harness wrappers for the six agents — harness-specific syntax, the pinned model, the category → model mapping for subagents, and a pointer to the base file; nothing else |
+| [`skills/`](skills/) | Six dispatch skills, one per agent and same-named: each surfaces the agent's stake, spawns it, and relays approvals, questions, and results between agent and user. A skill must run on **any** model; anything model-dependent ships as an agent instead (rules 7–9) |
 
 ### How to install, remove, update, or reinstall
 
@@ -377,6 +378,7 @@ install_agents antigravity "$HOME/.gemini/config/agents" # if Antigravity select
 
 ```toml
 [subagents.models]
+vibe-ai-tools = "grok-4.6"
 planner-ai-tools = "grok-4.6"
 orchestrator-ai-tools = "grok-4.6"
 az-ai-tools = "grok-4.6"
@@ -457,7 +459,7 @@ for dir in "$AI_TOOLS/agents"/*/; do
 done
 ```
 
-Restart or reload any harness that caches agents or skills at startup, then confirm the five agents (`planner-ai-tools`, `orchestrator-ai-tools`, `az-ai-tools`, `gh-ai-tools`, `gc-ai-tools`) appear in the harness's agent list — plus a slash command for every skill shipped under `$AI_TOOLS/skills/*-ai-tools`, when any exist.
+Restart or reload any harness that caches agents or skills at startup, then confirm the six agents (`vibe-ai-tools`, `planner-ai-tools`, `orchestrator-ai-tools`, `az-ai-tools`, `gh-ai-tools`, `gc-ai-tools`) appear in the harness's agent list — plus a slash command for every skill shipped under `$AI_TOOLS/skills/*-ai-tools`, when any exist.
 
 ## Removal
 
@@ -732,7 +734,7 @@ Run [Installation §3–§6](#installation) for the same harnesses — discovery
 
 ### 5. Verify
 
-Run [Installation §7](#7-verify), and expect the [Removal §5](#5-verify-removal) loop to report no stale links. Restart or reload the harness, then confirm the five agents appear in its agent list, plus a slash command for every shipped skill, when any exist.
+Run [Installation §7](#7-verify), and expect the [Removal §5](#5-verify-removal) loop to report no stale links. Restart or reload the harness, then confirm the six agents appear in its agent list, plus a slash command for every shipped skill, when any exist.
 
 ## Troubleshooting
 
