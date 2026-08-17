@@ -82,7 +82,7 @@ These instructions being written in English never forces English on a working re
 - `plans/dev/` holds ad-hoc briefs and feedback for the orchestrator, and stays out of the plan queue.
 - `plans/vibe/` holds the vibe agent's story and decision records (`story-<slug>.md`, `decisions-<slug>.md`), and stays out of the plan queue.
 - Outside a git repository, save to `$HOME/.ai-tools-plans` (`%USERPROFILE%\.ai-tools-plans` on Windows).
-- Plans are working artifacts, not deliverables: never stage or commit them, and never edit the repository's `.gitignore` to hide them unless asked. If the repository already tracks `plans/`, follow the repository.
+- In a git repository, root plan files (`plans/*.md`) are versioned: keep them out of ignore rules and include them in path-scoped commits. Every generated subdirectory under `plans/` is transient and must be ignored (`plans/*/`), including `finished/`, `dev/`, and `vibe/`.
 - Plan files hold the detail — steps, logs, validation notes, diffs, command output. Chat gets a short summary and file links.
 
 ## Truth on disk

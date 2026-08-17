@@ -116,7 +116,7 @@ A subagent can die without reporting — API error, budget exhaustion, context o
 
 1. Verify git repository root (`git rev-parse --show-toplevel`).
 2. Discover base plans: `plans/*.md` (excluding `*-<digits>.md` stage files, `*-F<digits>.md` fix files, `plans/finished/**`, and `plans/dev/**`). Never execute stages/fixes without their base.
-3. Stop if no plans exist. Leave the repository's `.gitignore` alone unless the user asked for it.
+3. Stop if no plans exist. Preserve the user-wide plan ignore policy: root `plans/*.md` stays trackable; generated `plans/*/` stays ignored.
 4. Check `git status --short`. If dirty, note it in the summary and stage commits path-by-path (avoid `git add -A`).
 5. Process base plans oldest first:
    1. Create and switch to the plan's branch (*Branch per plan*).
