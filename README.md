@@ -259,3 +259,13 @@ Then restart or reload the harness and confirm the seven agents appear in its ag
 - **A destination is occupied by a non-ai-tools file the user wants replaced:** the scripts always skip and report it; replacing it requires the user removing that file themselves, per path.
 - **An agent runs on the wrong (weak) model:** the wrapper's model pinning is not applied — for Grok, check the managed `[subagents.models]` block in `~/.grok/config.toml` (re-run [Installation](#installation) to restore it); for other harnesses, compare the installed wrapper against `$AI_TOOLS/agents/<harness>/` and the [authoring reference](#category--model-authoring-reference).
 - **Scripts report `copied (will not track updates)`:** the OS or filesystem refused symlinks (on Windows, enable Developer Mode or use an elevated shell, then [Reinstallation](#reinstallation) converts copies back to links); until then, run [Update](#update) after every upstream change on that machine.
+
+## License
+
+MIT — see [`LICENSE`](LICENSE). Use, modify, fork, redistribute, and sell freely, including in closed-source work; the only condition is carrying the copyright and permission notice with copies or substantial portions. The `AS IS` disclaimer covers what these tools do by design: scripts that unlink and delete harness configuration, agents that create billable cloud resources, and unattended code execution.
+
+Two maintenance consequences:
+
+- The copyright block names the project and its URL. It is reproduced verbatim in third-party notices, so keep both lines — they are what makes a downstream copy traceable back here.
+- No per-file license headers in shipped artifacts. `USER-AGENTS.md` is capped at 12,000 characters (rule 3) and every artifact is bound by rule 14; a root `LICENSE` covers redistribution, and installing on one's own machine is not redistribution.
+
