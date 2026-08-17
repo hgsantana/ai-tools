@@ -14,5 +14,5 @@ When the base file cites these categories, they mean:
 | planner | `grok-4.6` |
 | mechanical | `grok-4.20-0309-non-reasoning` |
 
-Read `$HOME/.ai-tools/agents/az-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\az-ai-tools.md`)
-and follow it in full — it is the absolute rule set for this agent.
+The base file for this agent is `$HOME/.ai-tools/agents/az-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\az-ai-tools.md`).
+Read it and follow it in full — it is the absolute rule set for this agent.

@@ -13,5 +13,5 @@ When the base file cites these categories, they mean:
 | planner | `claude-opus-5[effort=high]` |
 | mechanical | `composer-2.5[fast=true]` |
 
-Read `$HOME/.ai-tools/agents/gh-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\gh-ai-tools.md`)
-and follow it in full — it is the absolute rule set for this agent.
+The base file for this agent is `$HOME/.ai-tools/agents/gh-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\gh-ai-tools.md`).
+Read it and follow it in full — it is the absolute rule set for this agent.

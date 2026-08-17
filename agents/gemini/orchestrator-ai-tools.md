@@ -16,5 +16,5 @@ When the base file cites these categories, they mean:
 | implementer | `gemini-3.7-flash` |
 | mechanical | `gemini-3.5-flash-lite` |
 
-Read `$HOME/.ai-tools/agents/orchestrator-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\orchestrator-ai-tools.md`)
-and follow it in full — it is the absolute rule set for this agent.
+The base file for this agent is `$HOME/.ai-tools/agents/orchestrator-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\orchestrator-ai-tools.md`).
+Read it and follow it in full — it is the absolute rule set for this agent.

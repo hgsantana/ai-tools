@@ -6,7 +6,7 @@ This file is installed from `$HOME/.ai-tools/USER-AGENTS.md` (`%USERPROFILE%\.ai
 
 ## What is installed here
 
-Six agents, each pinned by its wrapper to a strong model:
+Seven agents, each pinned by its wrapper to a strong model:
 
 | Agent | Use for |
 | --- | --- |
@@ -16,8 +16,9 @@ Six agents, each pinned by its wrapper to a strong model:
 | `az-ai-tools` | Azure resources via the Azure CLI (`az`): reads freely, returns mutations for approval |
 | `gh-ai-tools` | GitHub resources via the GitHub CLI (`gh`): reads freely, returns mutations for approval |
 | `gc-ai-tools` | Google Cloud resources via the Google Cloud CLI (`gcloud`): reads freely, returns mutations for approval |
+| `maintainer-ai-tools` | Maintaining the ai-tools installation itself: update, reinstall, or removal on request, per its README's procedures. Never the first install |
 
-Each agent ships with a same-named skill: invoking it (e.g. `/az-ai-tools`) tells the session to dispatch that agent and relay between it and the user, per the skill's own instructions.
+Each agent ships with a same-named skill — except `maintainer-ai-tools`, which ships one per task: `/update-ai-tools`, `/remove-ai-tools`, `/reinstall-ai-tools`. Invoking a skill (e.g. `/az-ai-tools`) tells the session to dispatch that agent and relay between it and the user, per the skill's own instructions.
 
 **Offer the matching agent first.** If a shipped agent covers what the user asked, offer it before doing the work yourself. If none does, do the work under the practices below.
 

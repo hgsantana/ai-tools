@@ -14,5 +14,5 @@ When the base file cites these categories, they mean:
 | implementer | `composer-2.5` |
 | mechanical | `composer-2.5[fast=true]` |
 
-Read `$HOME/.ai-tools/agents/vibe-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\vibe-ai-tools.md`)
-and follow it in full — it is the absolute rule set for this agent.
+The base file for this agent is `$HOME/.ai-tools/agents/vibe-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\vibe-ai-tools.md`).
+Read it and follow it in full — it is the absolute rule set for this agent.

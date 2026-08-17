@@ -15,5 +15,5 @@ When the base file cites these categories, they mean:
 | planner | `gemini-3.1-pro` |
 | mechanical | `gemini-3.5-flash-lite` |
 
-Read `$HOME/.ai-tools/agents/gc-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\gc-ai-tools.md`)
-and follow it in full — it is the absolute rule set for this agent.
+The base file for this agent is `$HOME/.ai-tools/agents/gc-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\gc-ai-tools.md`).
+Read it and follow it in full — it is the absolute rule set for this agent.

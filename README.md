@@ -19,8 +19,9 @@ It is cloned to `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows) and lin
 | [`agents/az-ai-tools.md`](agents/az-ai-tools.md) | Agent base: Azure CLI (`az`) — read freely, return mutations to the session for explicit per-action approval, surface cost |
 | [`agents/gh-ai-tools.md`](agents/gh-ai-tools.md) | Agent base: GitHub CLI (`gh`) — read freely, return mutations to the session for explicit per-action approval |
 | [`agents/gc-ai-tools.md`](agents/gc-ai-tools.md) | Agent base: Google Cloud CLI (`gcloud`) — read freely, return mutations to the session for explicit per-action approval, surface cost |
-| [`agents/<harness>/`](agents/) | Per-harness wrappers for the six agents — harness-specific syntax, the pinned model, the category → model mapping for subagents, and a pointer to the base file; nothing else |
-| [`skills/`](skills/) | Six dispatch skills, one per agent and same-named: each surfaces the agent's stake, spawns it, and relays approvals, questions, and results between agent and user. A skill must run on **any** model; anything model-dependent ships as an agent instead (rules 7–9) |
+| [`agents/maintainer-ai-tools.md`](agents/maintainer-ai-tools.md) | Agent base: maintains the installation — runs this README's [Update](#update), [Removal](#removal), or [Reinstallation](#reinstallation) procedure on request, returning destructive steps for per-action approval. Never the first install — that is this README's own bootstrap, before the agent exists |
+| [`agents/<harness>/`](agents/) | Per-harness wrappers for the seven agents — harness-specific syntax, the pinned model, the category → model mapping for subagents, and a pointer to the base file; nothing else |
+| [`skills/`](skills/) | Nine dispatch skills: one same-named per agent, except `maintainer-ai-tools`, which ships three task skills (`update-ai-tools`, `remove-ai-tools`, `reinstall-ai-tools`). Each surfaces the agent's stake, spawns it, and relays approvals, questions, and results between agent and user. A skill must run on **any** model; anything model-dependent ships as an agent instead (rules 7–9) |
 
 ### How to install, remove, update, or reinstall
 
@@ -83,7 +84,7 @@ The maintenance-time source for every model name in this repository (rules 11–
 
 Notes: Gemini's Pro line is frozen at 3.1 while Flash has moved to 3.7, so planner and implementer come from different generations. Antigravity's `model:` accepts only tiers (`inherit`, `flash`, `pro`), not model IDs — `pro` is its strongest tier and there is no cheaper-than-`flash` tier, so mechanical also runs `flash`. Grok Build ignores `model:` in agent frontmatter — models are pinned in `~/.grok/config.toml` (see [Installation §5](#5-install-agents)).
 
-Every shipped agent runs as **planner**, so each wrapper pins that column's model for its harness. The wrapper body carries exactly two things (rule 6), in this order — the canonical form, below the harness's own frontmatter/TOML header:
+Every shipped agent runs as **planner** — except `maintainer-ai-tools`, which runs as **implementer** (it follows this README's documented procedures) — so each wrapper pins its own category's column for its harness. The wrapper body carries exactly two things (rule 6), in this order — the canonical form, below the harness's own frontmatter/TOML header:
 
 ```markdown
 When the base file cites these categories, they mean:
@@ -94,8 +95,8 @@ When the base file cites these categories, they mean:
 | implementer | `<implementer model>` |
 | mechanical | `<mechanical model>` |
 
-Read `$HOME/.ai-tools/agents/<name>.md` (Windows: `%USERPROFILE%\.ai-tools\agents\<name>.md`)
-and follow it in full — it is the absolute rule set for this agent.
+The base file for this agent is `$HOME/.ai-tools/agents/<name>.md` (Windows: `%USERPROFILE%\.ai-tools\agents\<name>.md`).
+Read it and follow it in full — it is the absolute rule set for this agent.
 ```
 
 The conversion table keeps only the rows for categories the base file actually cites, and is omitted entirely when it cites none — the pointer is then the whole body. Model values come from this section's reference table, translated to the harness's own syntax.
@@ -384,6 +385,7 @@ orchestrator-ai-tools = "grok-4.6"
 az-ai-tools = "grok-4.6"
 gh-ai-tools = "grok-4.6"
 gc-ai-tools = "grok-4.6"
+maintainer-ai-tools = "grok-build-0.1"
 ```
 
 Without this block the agents still load — they inherit the session's model, so the strong-model guarantee is lost. The same fallback applies to any harness whose `model:` field is ignored or unsupported.
@@ -459,7 +461,7 @@ for dir in "$AI_TOOLS/agents"/*/; do
 done
 ```
 
-Restart or reload any harness that caches agents or skills at startup, then confirm the six agents (`vibe-ai-tools`, `planner-ai-tools`, `orchestrator-ai-tools`, `az-ai-tools`, `gh-ai-tools`, `gc-ai-tools`) appear in the harness's agent list — plus a slash command for every skill shipped under `$AI_TOOLS/skills/*-ai-tools`, when any exist.
+Restart or reload any harness that caches agents or skills at startup, then confirm the seven agents (`vibe-ai-tools`, `planner-ai-tools`, `orchestrator-ai-tools`, `az-ai-tools`, `gh-ai-tools`, `gc-ai-tools`, `maintainer-ai-tools`) appear in the harness's agent list — plus a slash command for every skill shipped under `$AI_TOOLS/skills/*-ai-tools`, when any exist.
 
 ## Removal
 
@@ -734,7 +736,7 @@ Run [Installation §3–§6](#installation) for the same harnesses — discovery
 
 ### 5. Verify
 
-Run [Installation §7](#7-verify), and expect the [Removal §5](#5-verify-removal) loop to report no stale links. Restart or reload the harness, then confirm the six agents appear in its agent list, plus a slash command for every shipped skill, when any exist.
+Run [Installation §7](#7-verify), and expect the [Removal §5](#5-verify-removal) loop to report no stale links. Restart or reload the harness, then confirm the seven agents appear in its agent list, plus a slash command for every shipped skill, when any exist.
 
 ## Troubleshooting
 
