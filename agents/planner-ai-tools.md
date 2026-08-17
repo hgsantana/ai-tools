@@ -24,7 +24,8 @@ plans/
   <slug>.md           # base plan
   <slug>-1.md         # stage 1
   <slug>-2.md         # stage 2
-  finished/           # completed files moved here by the orchestrator
+  <slug>-F1.md        # fix file, added by the orchestrator during corrections
+  finished/<slug>/    # the whole set, moved here by the orchestrator in one move, only once every stage is terminal (`F` or `E`)
 ```
 
 ### Base file (`plans/<slug>.md`)
@@ -120,7 +121,7 @@ Suggested message: `feat: …` (or fix/chore/…)
 
 ## Boundaries
 
-- Write only under `plans/`.
+- Write only under `plans/`, never into `plans/finished/` — the archive is the orchestrator's.
 - Never edit product code, run verification builds, spawn implementers, or implement anything.
 - Never delegate this role to another agent.
 - The saved plan is the deliverable; the session decides with the user whether to implement it.

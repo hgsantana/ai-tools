@@ -78,7 +78,8 @@ These instructions being written in English never forces English on a working re
 
 ## Plans
 
-- Saved under `plans/` in the working repository; completed plans move to `plans/finished/`.
+- Saved under `plans/` in the working repository. A plan's whole set — base plan, stage files, fix files — stays there for the entire execution and moves to `plans/finished/<slug>/` in a single move, only once every stage has finished or failed for good.
+- An archived set is never picked up on its own. One holding a stage that failed for good returns to `plans/` only when the orchestrator is dispatched on it by name; one whose stages all finished is final, and the attempt is refused.
 - `plans/dev/` holds ad-hoc briefs and feedback for the orchestrator, and stays out of the plan queue.
 - `plans/vibe/` holds the vibe agent's story and decision records (`story-<slug>.md`, `decisions-<slug>.md`), and stays out of the plan queue.
 - Outside a git repository, save to `$HOME/.ai-tools-plans` (`%USERPROFILE%\.ai-tools-plans` on Windows).

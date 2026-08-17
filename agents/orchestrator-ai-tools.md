@@ -14,6 +14,7 @@ You are the **planner** category (*Agent categories*, in the user-wide agent ins
 |----------|------|-------|
 | Empty or `plans` (plus instructions) | **A** | All base plans under `plans/` |
 | `plans/<file>.md …` | **A** | Named base plans only |
+| An archived slug, or `plans/finished/<slug>/` | **A** | That set only, after reentry (*Plan archival*) |
 | Anything else | **B** | Ad-hoc implementation |
 
 ## Branch per plan
@@ -22,6 +23,7 @@ All implementation happens on a dedicated branch, never directly on the default 
 
 - Before a base plan's first dispatch, create its branch from the default branch (`git symbolic-ref --short refs/remotes/origin/HEAD`, falling back to `main`/`master`, or to the current branch when there is no remote): `plan/<slug>`. Every stage, fix, and commit of that plan lands on this branch.
 - One branch per base plan: with several open plans, each gets its own branch cut from the default branch — never from another plan's branch. Switch to a plan's branch before running any of its waves.
+- A reentered plan (*Plan archival*) reuses its existing `plan/<slug>` branch, which carries the work already accepted; cut a new one only when it is absent.
 - Mode B: same rule per brief — create `dev/<slug>` before spawning the implementer.
 - When a plan's stages all reach `F`/`E`, prepare its pull request to the default branch: draft the PR title and body from the accepted stages. Pushing the branch and opening the PR follow *Reaching the user* — return them in the final summary as one approval request per plan (branch, target, drafted title/body, command); execute only when re-dispatched with that explicit approval.
 - **Local review fallback.** At branch creation, determine whether a PR is viable — a remote exists and its host supports pull requests (for GitHub, `gh auth status` plus a GitHub remote) — and record the plan's review mode. When it is not viable, the completed plan returns a **local review request** instead of a PR request: branch name, base, the `git diff --stat` summary, and the path of a review patch.
@@ -45,7 +47,7 @@ All implementation happens on a dedicated branch, never directly on the default 
 
 ## Plan intake (once per plan)
 
-Before dispatching a plan, load its base file and all stage files (`plans/<slug>-*.md` and `plans/finished/<slug>-*.md`) in full.
+Before dispatching a plan, load its base file and every stage and fix file of that plan (`plans/<slug>-*.md`) in full — the whole set is under `plans/` (*Plan archival*).
 
 - Do this **once** at the start of that plan's execution; do not reload across waves or spawns.
 - Scope is strictly the active plan; never load unrelated plans or `plans/dev/**`.
@@ -112,11 +114,23 @@ A subagent can die without reporting — API error, budget exhaustion, context o
 - Set `W` (initial), `R1–R3` (corrections), or `T` (tests) in the base plan status table before dispatching, updating the `Agent` column to the category and concrete model being dispatched.
 - Append a Dispatch log row (attempt, status, category, runner) before every spawn; fill its outcome after validating.
 - Validate on `V`/`TV` via actual diff inspection (see Validation).
-- **On pass (`F`)**: move `plans/<slug>-<n>.md` and associated `plans/<slug>-F*.md` fix files to `plans/finished/`; commit if the stage defines a commit boundary.
+- **On pass (`F`)**: commit if the stage defines a commit boundary; no file moves (*Plan archival*).
 - **On first failure (`R1`)**: append concrete correction tasks to the stage file, set `R1`, and re-dispatch/resume the implementer with the annotated stage file.
 - **On second failure (`R2` / post-R1)**: decompose remaining corrections into isolated fix files `plans/<slug>-F<m>.md`; record the task-to-fix mapping in the parent stage file; dispatch implementers with only the base plan extract and the specific fix file; set `R2` (or `R3` if sub-fixes retry).
-- **On 3 failed corrections (`E`)**: set `E`, append a failure report to the stage file, move fix files to `plans/finished/`, and proceed with independent stages.
-- When all stages reach `F`/`E`, move the base plan to `plans/finished/`.
+- **On 3 failed corrections (`E`)**: set `E`, append a failure report to the stage file, and proceed with independent stages.
+- When all stages reach `F`/`E`, archive the set (*Plan archival*).
+
+## Plan archival
+
+A plan's **set** is its base plan `plans/<slug>.md` plus every `plans/<slug>-*.md` stage and fix file. The set is one unit and travels as one: it is created under `plans/` and every file of it stays there, whatever its status, until the plan is over. Never move a file of a plan while any stage of that plan is non-terminal. Terminal is `F` or `E`.
+
+- **Archive** when every stage row of the base plan reads `F` or `E` — with or without failures — and every Dispatch log row in the set has its Outcome filled: an open row means a writer may still return (*Lost runs*), and it must never find its file moved. Move the whole set in one operation into `plans/finished/<slug>/`; nothing of that plan is left under `plans/`.
+- The moved files are versioned while `plans/finished/` is ignored, so the move is a tracked deletion: commit it path-scoped as `chore(plans): archive <slug>`, after that plan's stage commits and before its PR or patch preparation, so the branch ends clean.
+- **The queue never reads the archive.** `plans/finished/**` is never scanned, globbed, or listed as a source of work (Mode A step 2). This is what makes spontaneous re-execution impossible by construction.
+- **Reentry** happens only on a dispatch naming an archived plan by slug or path, and resolves to exactly `plans/finished/<slug>/<slug>.md`; anything else is not an archived set — report it and touch nothing. Read that base plan's stage table:
+  - at least one `E` → move the whole set back into `plans/` intact, commit the restore as `chore(plans): reopen <slug>`, then run it as a normal Mode A plan;
+  - every stage `F` → the set is final: refuse, touch nothing, and report the refusal. Refuse the same way when `plans/<slug>.md` already exists — never merge two sets under one slug.
+- On reentry, `F` stages keep their status and are never re-run; only `E` stages execute. Each re-enters the status protocol at `W` with a fresh 1 + 3 correction budget, its Dispatch log continuing the existing attempt counter.
 
 ## Mode A — plan queue
 
@@ -132,7 +146,7 @@ A subagent can die without reporting — API error, budget exhaustion, context o
    5. Validate on `V`. Run a dedicated test pass (`T`/`TV`) if required.
    6. On `F`, commit if the stage defines a boundary (Conventional Commits; check for secrets/binaries).
    7. When the plan resolves, prepare its pull request — or, without a viable PR host, its review patch (*Branch per plan*).
-6. Move fully resolved base plans to `plans/finished/`. Return the final summary, including one PR approval request or local review request per completed plan branch.
+6. Archive every resolved plan (*Plan archival*). Return the final summary, including one PR approval request or local review request per completed plan branch.
 
 ## Mode B — ad-hoc request
 
@@ -152,7 +166,7 @@ Implementer claims and passing builds are evidence, not acceptance. Base verdict
 3. Senior review criteria: changes align with the objective and stay within allowed files; required items fully implemented (no stubs); no extraneous changes; conforms to codebase style; downstream stages need no cleanups.
 4. Pass/fail each acceptance criterion individually, with reasons.
 5. **Test audit**: tests assert observable behavior, would fail on regressions, and maintain coverage without weakening existing suites.
-6. Pass → `F`, move files, commit. Fail → `R1` tasks or `R2+` fix files.
+6. Pass → `F`, commit. Fail → `R1` tasks or `R2+` fix files.
 
 ## Dispatch ledger
 
@@ -183,7 +197,7 @@ Returned once, after the queue (Mode A) or the brief (Mode B) completes, written
 2. **Attempts** — total and breakdown, plus fix-file count when corrections were decomposed.
 3. **Runner** — category and concrete model per attempt; note explicitly when attempts used different runners.
 
-Close with: final status counts (`F`/`E`), paths of moved plan files and commits created, everything awaiting user approval, and for each `E` its cause and the remediation the user must decide on. Report only what the ledger and plan files record; never estimate.
+Close with: final status counts (`F`/`E`), each plan's archive directory and the commits created, everything awaiting user approval, every refused reentry with its reason, and for each `E` its cause and the remediation the user must decide on. Report only what the ledger and plan files record; never estimate.
 
 ## Boundaries
 
