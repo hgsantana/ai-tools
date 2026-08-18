@@ -8,9 +8,9 @@ Status: `idea` (not refined) · `next` (agreed, ready to refine) · `doing` (a p
 
 | # | Story | Status |
 |---|---|---|
-| 1 | [Rule linter](#1-rule-linter) | idea |
+| 1 | [Rule linter](#1-rule-linter) | doing |
 | 2 | [Sandboxed script test suite](#2-sandboxed-script-test-suite) | idea |
-| 3 | [Shared skill contract](#3-shared-skill-contract) | idea |
+| 3 | [Skill wrapper, skill base, shared contract](#3-skill-wrapper-skill-base-shared-contract) | idea |
 | 4 | [Health-check entry point](#4-health-check-entry-point) | idea |
 | 5 | [The missing testing role](#5-the-missing-testing-role) | idea |
 | 6 | [Changelog for alpha testers](#6-changelog-for-alpha-testers) | idea |
@@ -26,7 +26,7 @@ Status: `idea` (not refined) · `next` (agreed, ready to refine) · `doing` (a p
 
 ### 1. Rule linter
 
-Almost every invariant in this repository is prose that only a careful reader enforces: the 12,000-character cap on `USER-AGENTS.md` (rule 3), the canonical wrapper body and its three ordered pointers (rule 6), `MODELS.md` and wrapper headers always matching (rule 12), the `-ai-tools` suffix on every installed name (rule 13), LF/CRLF pinning, PowerShell UTF-8 **with** BOM and pure-ASCII CMD shims (rule 26), and the version bump accompanying any change to shipped content (rule 4). Ship `scripts/shell/lint.sh` with its PowerShell mirror that checks all of these against the tree and exits `0`/`2`, plus a GitHub Actions workflow running it on every push and pull request, so a drifting wrapper or an oversized instructions file fails before it is installed on anyone's machine. Route: `/vibe-ai-tools`.
+Almost every invariant in this repository is prose that only a careful reader enforces: the size cap on `USER-AGENTS.md` (rule 3), the canonical wrapper body and its ordered pointers (rule 6), `MODELS.md` and wrapper headers always matching (rule 12), the `-ai-tools` suffix on every installed name (rule 13), LF/CRLF pinning, PowerShell UTF-8 **with** BOM and pure-ASCII CMD shims (rule 26), and the version bump accompanying any change to shipped content (rule 4). Ship `tools/lint.sh` — shell only, sourcing `scripts/shell/lib.sh` rather than duplicating it — checking all of these and exiting `0`/`2`, plus a GitHub Actions workflow running it and `shellcheck` on every push and pull request, so a drifting wrapper or an oversized instructions file fails before it is installed on anyone's machine. The same story tightens two caps and shortens the canonical wrapper body to make one of them reachable. Planned: `plans/rule-linter.md`. Route: `/orchestrator-ai-tools`.
 
 ### 2. Sandboxed script test suite
 
@@ -34,9 +34,9 @@ Almost every invariant in this repository is prose that only a careful reader en
 
 ## Consistency
 
-### 3. Shared skill contract
+### 3. Skill wrapper, skill base, shared contract
 
-The six agent-backed skills repeat the same four sections — stake, model check, the three-route offer, and the two route bodies — with only the agent name and the stake text differing, so a change to the routing policy means six near-identical edits and six chances to drift. Extract what they share into a contract file read by path (mirroring what `agents/SUBAGENT-CONTRACT.md` already does for wrappers), leaving each `SKILL.md` with only its own stake, its agent's category, and whatever is genuinely specific to it. Confirm first that every supported harness still registers the skill directory unchanged (rules 7–9), since the contract must not become a per-harness file. Route: `/planner-ai-tools` first — it touches every shipped skill.
+A `SKILL.md` today is one file of 4.2k to 8.9k characters that mixes three things: the description a harness reads to decide whether to route to it, the four sections every agent-backed skill repeats verbatim (stake, model check, the three-route offer, the route bodies), and whatever is genuinely specific to that skill. Split it the way agents already are — a small wrapper carrying description and pointers, a base carrying behaviour, and a shared contract file read by path for what the six agent-backed skills have in common — so a change to the routing policy is one edit instead of six. **Verify the premise first**: the split was proposed for token economy, and that only holds where a harness preloads skill bodies into the session. In Claude Code it does not — only name and description reach the session context, and the body is read on invocation — so check the official documentation of all seven harnesses (rule 10) before committing to a shape, and let the finding decide whether the wrapper gets a size cap of its own. Even where the token argument fails, deduplication and symmetry with the agent layout stand on their own. Route: `/planner-ai-tools`.
 
 ### 4. Health-check entry point
 
