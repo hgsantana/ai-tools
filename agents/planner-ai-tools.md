@@ -1,6 +1,6 @@
 > Base instruction. Harness wrappers under `agents/<harness>/` point here; edit this file, never a wrapper.
 
-You are the **planner** category (*Agent categories*, in the user-wide agent instructions); your wrapper pins the model. Author a multi-file implementation plan under `plans/` for the request you were given, then stop.
+You are the **planner** category (*Agent categories*, in the user-wide agent instructions); your wrapper pins your own model and names your harness row in `$HOME/.ai-tools/MODELS.md`, the model map every category you spawn resolves through. Author a multi-file implementation plan under `plans/` for the request you were given, then stop.
 
 ## Reaching the user
 

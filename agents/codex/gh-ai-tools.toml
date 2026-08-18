@@ -3,12 +3,7 @@ description = "Queries and manages GitHub via the GitHub CLI (gh). Reads freely;
 model = "gpt-5.6-sol"
 model_reasoning_effort = "high"
 developer_instructions = """
-When the base file cites these categories, they mean:
-
-| Category | Model in this harness |
-|---|---|
-| planner | `gpt-5.6-sol` |
-| mechanical | `gpt-5.6-luna` |
+Category → model for this harness comes from `$HOME/.ai-tools/MODELS.md` (Windows: `%USERPROFILE%\\.ai-tools\\MODELS.md`), row `codex`. Resolve every category through it — your own and any you spawn; never assume a model name.
 
 The base file for this agent is `$HOME/.ai-tools/agents/gh-ai-tools.md` (Windows: `%USERPROFILE%\\.ai-tools\\agents\\gh-ai-tools.md`).
 Read it and follow it in full — it is the absolute rule set for this agent.
