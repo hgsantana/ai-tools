@@ -46,3 +46,47 @@ Suggested message: `chore(tools): add a rule linter with naming and coverage che
 - Parallel-safe with: none (stages 2–4 extend this same file)
 
 ## Implementation log
+
+- Created `tools/lint.sh` (267 lines, executable, LF-only — verified `grep -c $'\r'` = 0). Sources `scripts/shell/lib.sh` after exporting `AI_TOOLS` to the repo root resolved from `$(dirname "$0")/..`. Reports via `ok`/`warn`/`skip`/`info`/`finish` from `lib.sh` only — no duplicate reporting or model-lookup logic.
+- Discovery is tree-derived, never hard-coded: `harnesses()` lists `agents/*/` directory basenames; `agent_names()` lists `agents/*.md` basenames excluding `SUBAGENT-CONTRACT.md`. Wrapper extension per harness (`.toml` codex, `.agent.md` copilot, `.md` everyone else) is the one hard-coded mapping, taken from the README's "Supported harnesses" table (syntax, not a discovered list).
+- Implemented checks: wrapper coverage (rule 5, missing + orphan wrapper), naming (rule 13: agent base files, wrapper files, skill directories, and every `name:`/`name =` in frontmatter), skill frontmatter keys subset of `name`/`description`/`argument-hint` (rule 9), and skill name matching its directory.
+- `--help` (`bash tools/lint.sh --help`): prints usage plus all four checks, exit 0.
+- Unknown flag (`bash tools/lint.sh --bogus`): `ERROR: unknown flag: --bogus (see --help)`, exit 1 (via `lib.sh`'s `fatal`).
+- Full run against the working tree (`bash tools/lint.sh`): `done: 186 ok, 0 skipped, 0 warnings`, exit 0 — confirms the baseline is clean.
+- Found and fixed a bug during testing: `agent_names()` output (newline-separated) fed directly into the space-padded `in_list` pattern caused every orphan check to false-positive (42 spurious warnings) because `case " $2 " in *" $1 "*)` needs space-separated haystacks, not newline-separated. Fixed by `agents=$(agent_names | tr '\n' ' ')` in `check_wrapper_coverage`. Re-run after fix: `done: 186 ok, 0 skipped, 0 warnings`, exit 0.
+- Negative evidence, each run against a throwaway copy at `/tmp/.../scratchpad/lint-neg/tree` (never the working tree), restored/discarded after each case:
+  - Deleted `agents/claude-code/az-ai-tools.md`: `WARN: missing wrapper: .../agents/claude-code/az-ai-tools.md`, exit 2.
+  - Added `agents/claude-code/stray-ai-tools.md` (copy of an existing wrapper, name matching no agent): `WARN: orphan wrapper (matches no agent): .../agents/claude-code/stray-ai-tools.md`, exit 2.
+  - Renamed `skills/az-ai-tools` to `skills/az`: `WARN: skill directory does not end in -ai-tools: .../skills/az/` and `WARN: skill name does not match its directory: .../skills/az/SKILL.md (name: 'az-ai-tools', directory: 'az')`, exit 2.
+  - Inserted `model: opus` into `skills/az-ai-tools/SKILL.md` frontmatter: `WARN: skill frontmatter key not allowed by every harness: .../skills/az-ai-tools/SKILL.md (key: model)`, exit 2.
+- `shellcheck` is not installed in this environment (`command -v shellcheck` → not found); CI (a later stage) runs it. `bash -n tools/lint.sh` passes.
+- Working tree confirmed clean after all negative testing: `git status --short` shows only the pre-existing `plans/rule-linter-1.md`/`plans/rule-linter.md` modifications and the new untracked `tools/`.
+
+## Correction round R1 — fix applied
+
+- Replaced the top-level `for arg in "$@"; do ... done` flag loop with `while [ $# -gt 0 ]; do case "$1" in ... esac; shift; done`, matching `install.sh`/`update.sh`/`remove.sh`/`reinstall.sh`/`verify.sh`. Behaviour unchanged: `--help`/`-h` → `usage; exit 0`; anything else → `fatal "unknown flag: $1 (see --help)"` (exit `1`). No other line in `tools/lint.sh` touched; no other file touched.
+- `bash -n tools/lint.sh`: syntax OK.
+- No-argument run (`bash tools/lint.sh`): exit `0`, `done: 186 ok, 0 skipped, 0 warnings` — confirms the previous unbound-`$@` abort under `set -u` is gone.
+- `bash tools/lint.sh --help`: exit `0`.
+- `bash tools/lint.sh --bogus`: `ERROR: unknown flag: --bogus (see --help)`, exit `1`.
+- `bash --version` in this environment is 5.3.9 (no 3.2 interpreter available to test directly); the fix reuses the exact `while [ $# -gt 0 ]`/`shift` construction already relied on as bash-3.2-safe by the repository's five existing shell scripts.
+- `git status --short` after the fix: only `plans/rule-linter-1.md`/`plans/rule-linter.md` (pre-existing) and untracked `tools/` — no other file changed.
+
+## Dispatch log
+
+| Attempt | Status | Category | Runner | Session ID | Outcome |
+|---------|--------|----------|--------|------------|---------|
+| 1 | V | implementer | sonnet | a0998eecc1cf57bb1 | V -> failed validation |
+| 2 | R1 | implementer | sonnet | a0998eecc1cf57bb1 | V -> accepted |
+
+## Correction round R1
+
+Validated against the tree: the run exits `0` with `186 ok, 0 warnings`; `--help` exits `0`; an unknown flag exits `1`. Every check family required by this stage is present and derives harness keys and agent names from the tree. One defect blocks acceptance.
+
+1. **Flag parsing breaks the stage's own portability contract.** `for arg in "$@"` at the top level runs under `set -u` (inherited from `lib.sh`). In bash before 4.4 — which includes bash 3.2, the macOS default this file's header and `lib.sh` both claim compatibility with — `"$@"` with zero positional parameters is treated as an unbound variable, so the default no-argument invocation `tools/lint.sh` aborts before any check runs. It also diverges from this repository's established style: `install.sh`, `update.sh`, `remove.sh`, `reinstall.sh`, and `verify.sh` all parse flags with `while [ $# -gt 0 ]`.
+
+   Replace the loop with the same `while [ $# -gt 0 ]` / `shift` form those five scripts use, keeping the behaviour identical: `--help`/`-h` prints usage and exits `0`, anything else goes to `fatal` (exit `1`). Later stages add `--base <ref>`, which takes a value — the `while`/`shift` form accommodates that, the `for` form does not.
+
+2. Re-verify after the change and append the evidence: no-argument run exits `0`, `--help` exits `0`, unknown flag exits `1`.
+
+Nothing else in the file needs to change. Do not extend the checks, do not touch other files, and set the status back to `V` when done.
