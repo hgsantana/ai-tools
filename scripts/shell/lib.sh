@@ -594,6 +594,9 @@ verify_install() {
   if [ -f "$MODELS_MAP" ]; then ok "model map: $MODELS_MAP"
   else warn "missing model map: $MODELS_MAP — agents and skills cannot resolve category models"; fi
 
+  if [ -f "$AI_TOOLS/agents/SUBAGENT-CONTRACT.md" ]; then ok "subagent contract: $AI_TOOLS/agents/SUBAGENT-CONTRACT.md"
+  else warn "missing subagent contract: $AI_TOOLS/agents/SUBAGENT-CONTRACT.md — wrappers point at it before their base"; fi
+
   for base in "$AI_TOOLS/agents"/*-ai-tools.md; do
     if [ -f "$base" ]; then ok "agent base: $base"; else warn "missing agent base: $base"; fi
   done

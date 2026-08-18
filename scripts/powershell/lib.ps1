@@ -576,6 +576,10 @@ function Verify-Install([bool]$checkInstructions = $true) {
   if (Test-Path -LiteralPath $script:MODELS_MAP) { Ok "model map: $($script:MODELS_MAP)" }
   else { Warn "missing model map: $($script:MODELS_MAP) — agents and skills cannot resolve category models" }
 
+  $contract = Join-Path $script:AI_TOOLS 'agents\SUBAGENT-CONTRACT.md'
+  if (Test-Path -LiteralPath $contract) { Ok "subagent contract: $contract" }
+  else { Warn "missing subagent contract: $contract - wrappers point at it before their base" }
+
   foreach ($base in Get-ChildItem -LiteralPath (Join-Path $script:AI_TOOLS 'agents') -File -Filter '*-ai-tools.md') {
     Ok "agent base: $($base.FullName)"
   }

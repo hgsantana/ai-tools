@@ -1,30 +1,50 @@
 ---
 name: remove-ai-tools
 description: >
-  Dispatch the maintainer-ai-tools agent to remove the ai-tools installation: unlink
-  agents, skills, and (optionally) instructions from the harnesses, per the README's
-  Removal procedure. Use for /remove-ai-tools or whenever the user asks to remove or
+  Run the ai-tools removal — unlink agents, skills, and (optionally) instructions from the harnesses,
+  per the README's Removal procedure — either by dispatching the maintainer-ai-tools agent or by running
+  its base file in this session. Use for /remove-ai-tools or whenever the user asks to remove or
   uninstall ai-tools.
 argument-hint: "[optional: harnesses in scope, or extra instructions]"
 ---
 
-# Removal dispatch
+# Removal
 
-This skill removes nothing itself. It dispatches the `maintainer-ai-tools` agent — whose harness wrapper pins its model — with the task `remove`, and relays between agent and user.
+Removing the ai-tools installation, task `remove` of the maintainer. That work is defined by `$HOME/.ai-tools/agents/maintainer-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\maintainer-ai-tools.md`). This skill only decides **who runs it**: the shipped `maintainer-ai-tools` agent, on the model its wrapper pins, or this session, on the model it already has. Never run the procedure outside one of those two routes.
 
-## Stake — surface before dispatch
+## 1. Stake
 
-Tell the user in their language, before spawning: this removes ai-tools agents, skills, and optionally the instructions link from the harnesses' config directories — those tools stop being available there. Removal unlinks; it does not delete `$HOME/.ai-tools` itself unless the user explicitly asks, as a separate approval. Destructive steps run only after explicit per-action approval relayed through this session. Dispatch only once they are aware.
+Tell the user, in their language, before anything runs: this unlinks ai-tools agents, skills, and optionally the instructions link from the harnesses' config directories — those tools stop being available there. Removal unlinks; it does not delete `$HOME/.ai-tools` itself unless the user explicitly asks, as a separate approval. Destructive steps run only after their explicit approval for that specific action — whichever route they pick.
 
-## Dispatch
+## 2. Model check
+
+1. Read `$HOME/.ai-tools/MODELS.md` (Windows: `%USERPROFILE%\.ai-tools\MODELS.md`) and take the row of the harness you are running in. This agent's model is that row's **implementer** column; compare model tokens only — a `· effort` note in the cell is advisory.
+2. Compare it with the model this session is actually running, as the harness reports it, never a guess.
+3. A difference — or a harness, row, or running model you cannot determine — counts as a mismatch. It blocks nothing; it only changes what you say next.
+
+## 3. Offer, then ask
+
+Send **one** chat message, in the user's language, carrying the stake above and what each route costs and gives:
+
+- **Dispatch the agent** — runs on the model its wrapper pins, in its own context. This session stays clean and relays every question and approval; the agent cannot talk to the user directly.
+- **Run it here** — this session reads the agent's base file and follows it on the current model, in this context. No relay: questions and approvals go straight to the user, and this session's context is spent on the work.
+- **Stop** — nothing is read, run, or changed.
+
+On a mismatch, that same message also states which model is running, which one this agent expects, that the current model is not the best fit for this task, and how to switch it — the row's *Change the session model* column. If this session cannot spawn agents, say so there: only the other two routes remain.
+
+Then ask one short question referring back to it ("per the notes above, how do you want to proceed?") with three short answers: **dispatch the agent** · **run it here** · **stop**. Wait for an explicit answer; never pick a route yourself.
+
+## Route A — dispatch
 
 - Announce the spawn in chat, in the user's language, then spawn the `maintainer-ai-tools` agent with the task `remove` plus the user's instructions, passing context as file paths, not contents.
-- If this session cannot spawn agents, say so and point the user to the harness's direct agent invocation. Do not run the procedure inline under this skill.
+- The agent cannot reach the user: it returns discovery results and the removal targets to confirm and approval requests instead of asking. Relay each in the user's language; only on an explicit yes for that specific action resume the agent with the approval. Approval never carries over between actions.
 
-## Relay
+## Route B — run it here
 
-- The agent cannot reach the user: it returns discovery results and asks the user to confirm the removal targets before touching anything, and returns every destructive step (deleting the clone, anything beyond unlinking) as its own request. Relay each in the user's language; only on an explicit yes for that specific action resume the agent with the approval. Approval never carries over between actions.
+- Announce it in chat, then read `$HOME/.ai-tools/agents/maintainer-ai-tools.md` in full and follow it as your own rule set for this request, with the task `remove`. It is the absolute rule set; this skill adds only what follows.
+- You are **not** a subagent: never load `agents/SUBAGENT-CONTRACT.md`. Where the base puts a question to the user, ask it here and wait for the answer. Where it requires approval, take it from the user for that specific action; approval never carries over.
+- Categories the base spawns still resolve through `MODELS.md`, your harness row. Announce every spawn in chat with its category and concrete model.
 
 ## Report
 
-- Relay the agent's final summary in the user's language: what was unlinked or removed per harness, skips with reasons, verification results, and the reminder to restart harnesses that cache agents or skills.
+Relay the agent's final summary in the user's language: what changed per harness, skips with reasons, verification results, and the reminder to restart harnesses that cache agents or skills.
