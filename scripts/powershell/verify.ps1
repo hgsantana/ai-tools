@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 # ai-tools verification — the README's install checks, standalone and read-only.
 # Mirrors scripts/shell/verify.sh (canonical). Windows PowerShell 5.1+ / pwsh.
 #

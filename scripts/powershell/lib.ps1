@@ -1,4 +1,4 @@
-# ai-tools shared helpers — dot-sourced by every script in scripts/powershell/.
+﻿# ai-tools shared helpers — dot-sourced by every script in scripts/powershell/.
 # Mirrors scripts/shell/lib.sh (the canonical implementation) for Windows.
 # Windows PowerShell 5.1+ and pwsh. Symlinks need Developer Mode or an elevated
 # shell; every link falls back to a copy, reported as such.
@@ -344,24 +344,46 @@ function Install-Skills {
 # Grok ignores model: in agent frontmatter; models live in ~\.grok\config.toml.
 # Only the marker-delimited block below is ever written or removed.
 
+$script:MODELS_MAP = Join-Path $script:AI_TOOLS 'MODELS.md'
 $script:GROK_TOML = Join-Path $HOME '.grok\config.toml'
 $script:GROK_BEGIN = '# >>> ai-tools managed subagent models — do not edit inside this block'
 $script:GROK_END = '# <<< ai-tools managed subagent models'
 
+function Get-ModelFor([string]$Key, [string]$Category) {
+  # Reads MODELS.md, the single source of model names (README rules 11-12).
+  $col = switch ($Category) { 'planner' { 2 } 'implementer' { 3 } 'mechanical' { 4 } default { -1 } }
+  if ($col -lt 0 -or -not (Test-Path -LiteralPath $script:MODELS_MAP)) { return $null }
+  foreach ($line in Get-Content -LiteralPath $script:MODELS_MAP) {
+    if ($line -notmatch '^\s*\|') { continue }
+    $cells = $line.Trim().Trim('|').Split('|')
+    if ($cells.Count -le $col) { continue }
+    if ($cells[0].Trim().Trim('`') -ne $Key) { continue }
+    $value = $cells[$col].Trim().Trim('`').Trim()
+    if ($value) { return $value }
+    return $null
+  }
+  return $null
+}
+
 function Get-GrokModelsToml {
-  # Names from the tree; models from the README authoring reference:
+  # Names from the tree; models from MODELS.md, row `grok`:
   # every shipped agent runs as planner, except maintainer-ai-tools (implementer).
+  $planner = Get-ModelFor 'grok' 'planner'
+  $implementer = Get-ModelFor 'grok' 'implementer'
+  if (-not $planner -or -not $implementer) { return $null }
   $lines = @('[subagents.models]')
   foreach ($f in Get-ChildItem -LiteralPath (Join-Path $script:AI_TOOLS 'agents') -File -Filter '*-ai-tools.md') {
     $name = $f.BaseName
-    $model = if ($name -eq 'maintainer-ai-tools') { 'grok-build-0.1' } else { 'grok-4.6' }
+    $model = if ($name -eq 'maintainer-ai-tools') { $implementer } else { $planner }
     $lines += "$name = `"$model`""
   }
   return $lines
 }
 
 function Get-GrokBlockLines {
-  $lines = @($script:GROK_BEGIN) + (Get-GrokModelsToml) + @($script:GROK_END)
+  $models = Get-GrokModelsToml
+  if (-not $models) { return $null }
+  $lines = @($script:GROK_BEGIN) + $models + @($script:GROK_END)
   return $lines
 }
 
@@ -378,6 +400,10 @@ function Remove-GrokBlockFromLines([string[]]$lines) {
 function Install-GrokModels {
   if (-not (In-Scope 'grok')) { return }
   $desired = Get-GrokBlockLines
+  if (-not $desired) {
+    Skip "grok model pinning: no usable ``grok`` row in $($script:MODELS_MAP) — block left untouched"
+    return
+  }
   $exists = Test-Path -LiteralPath $script:GROK_TOML
   $lines = @(); if ($exists) { $lines = @(Get-Content -LiteralPath $script:GROK_TOML) }
   if ($exists -and ($lines -contains $script:GROK_BEGIN)) {
@@ -545,6 +571,9 @@ function Verify-Install([bool]$checkInstructions = $true) {
   $size = (Get-Item (Join-Path $script:AI_TOOLS 'USER-AGENTS.md')).Length
   if ($size -le 12000) { Ok "instructions size: $size chars" }
   else { Warn "USER-AGENTS.md exceeds 12000 chars (Antigravity limit): $size" }
+
+  if (Test-Path -LiteralPath $script:MODELS_MAP) { Ok "model map: $($script:MODELS_MAP)" }
+  else { Warn "missing model map: $($script:MODELS_MAP) — agents and skills cannot resolve category models" }
 
   foreach ($base in Get-ChildItem -LiteralPath (Join-Path $script:AI_TOOLS 'agents') -File -Filter '*-ai-tools.md') {
     Ok "agent base: $($base.FullName)"

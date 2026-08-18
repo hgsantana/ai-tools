@@ -344,21 +344,48 @@ install_skills() {
 # Grok ignores model: in agent frontmatter; models live in ~/.grok/config.toml.
 # Only the marker-delimited block below is ever written or removed.
 
+MODELS_MAP="$AI_TOOLS/MODELS.md"
 GROK_TOML="$HOME/.grok/config.toml"
 GROK_BEGIN="# >>> ai-tools managed subagent models — do not edit inside this block"
 GROK_END="# <<< ai-tools managed subagent models"
 
+model_for() {
+  # usage: model_for <harness key> <planner|implementer|mechanical>
+  # Reads MODELS.md, the single source of model names (README rules 11-12).
+  local key="$1" col
+  case "$2" in
+    planner)     col=4 ;;
+    implementer) col=5 ;;
+    mechanical)  col=6 ;;
+    *)           return 1 ;;
+  esac
+  [ -f "$MODELS_MAP" ] || return 1
+  awk -F'|' -v key="$key" -v col="$col" '
+    /^[[:space:]]*\|/ {
+      k = $2; gsub(/[`[:space:]]/, "", k)
+      if (k == key) {
+        v = $col; gsub(/`/, "", v); gsub(/^[[:space:]]+|[[:space:]]+$/, "", v)
+        if (v != "") { print v; found = 1 }
+        exit
+      }
+    }
+    END { exit !found }
+  ' "$MODELS_MAP"
+}
+
 grok_models_toml() {
-  # Names from the tree; models from the README authoring reference:
+  # Names from the tree; models from MODELS.md, row `grok`:
   # every shipped agent runs as planner, except maintainer-ai-tools (implementer).
-  local f name model
+  local f name model planner implementer
+  planner=$(model_for grok planner) || return 1
+  implementer=$(model_for grok implementer) || return 1
   echo "[subagents.models]"
   for f in "$AI_TOOLS/agents"/*-ai-tools.md; do
     [ -f "$f" ] || continue
     name=$(basename "$f" .md)
     case "$name" in
-      maintainer-ai-tools) model="grok-build-0.1" ;;
-      *)                   model="grok-4.6" ;;
+      maintainer-ai-tools) model="$implementer" ;;
+      *)                   model="$planner" ;;
     esac
     printf '%s = "%s"\n' "$name" "$model"
   done
@@ -366,8 +393,12 @@ grok_models_toml() {
 
 install_grok_models() {
   in_scope grok || return 0
-  local desired current tmp
-  desired=$(printf '%s\n%s\n%s\n' "$GROK_BEGIN" "$(grok_models_toml)" "$GROK_END")
+  local desired current tmp models
+  models=$(grok_models_toml) || {
+    skip "grok model pinning: no usable \`grok\` row in $MODELS_MAP — block left untouched"
+    return 0
+  }
+  desired=$(printf '%s\n%s\n%s\n' "$GROK_BEGIN" "$models" "$GROK_END")
   if [ -f "$GROK_TOML" ] && grep -qF "$GROK_BEGIN" "$GROK_TOML"; then
     current=$(sed -n "/^$GROK_BEGIN\$/,/^$GROK_END\$/p" "$GROK_TOML")
     if [ "$current" = "$desired" ]; then
@@ -557,6 +588,9 @@ verify_install() {
   size=$(wc -c < "$AI_TOOLS/USER-AGENTS.md")
   if [ "$size" -le 12000 ]; then ok "instructions size: $size chars"
   else warn "USER-AGENTS.md exceeds 12000 chars (Antigravity limit): $size"; fi
+
+  if [ -f "$MODELS_MAP" ]; then ok "model map: $MODELS_MAP"
+  else warn "missing model map: $MODELS_MAP — agents and skills cannot resolve category models"; fi
 
   for base in "$AI_TOOLS/agents"/*-ai-tools.md; do
     if [ -f "$base" ]; then ok "agent base: $base"; else warn "missing agent base: $base"; fi

@@ -6,19 +6,18 @@ This file is installed from `$HOME/.ai-tools/USER-AGENTS.md` (`%USERPROFILE%\.ai
 
 ## What is installed here
 
-Seven agents, each pinned by its wrapper to a strong model:
+Six agents, each pinned by its wrapper to a strong model, plus the `/vibe-ai-tools` skill — the default entry point for code changes, which runs in your own session on whatever model it has:
 
 | Agent | Use for |
 | --- | --- |
-| `vibe-ai-tools` | The default for code changes: repository architect/PO that refines the demand with the user from documentation only, then — after one explicit confirmation — delivers it end to end through the planner and orchestrator, deciding open questions itself |
-| `planner-ai-tools` | Designing a change: explores the repository and writes a multi-file plan under `plans/`. Never writes product code. In the default flow, dispatched by `vibe-ai-tools`; use directly when the user wants only a plan |
-| `orchestrator-ai-tools` | Executing accepted plans, or ad-hoc implementation, unattended. Spawns its own subagents. In the default flow, dispatched by `vibe-ai-tools`; use directly when the user wants an already accepted plan executed |
+| `planner-ai-tools` | Designing a change: explores the repository and writes a multi-file plan under `plans/`. Never writes product code. In the default flow, dispatched by `/vibe-ai-tools`; use directly when the user wants only a plan |
+| `orchestrator-ai-tools` | Executing accepted plans, or ad-hoc implementation, unattended. Spawns its own subagents. In the default flow, dispatched by `/vibe-ai-tools`; use directly when the user wants an already accepted plan executed |
 | `az-ai-tools` | Azure resources via the Azure CLI (`az`): reads freely, returns mutations for approval |
 | `gh-ai-tools` | GitHub resources via the GitHub CLI (`gh`): reads freely, returns mutations for approval |
 | `gc-ai-tools` | Google Cloud resources via the Google Cloud CLI (`gcloud`): reads freely, returns mutations for approval |
 | `maintainer-ai-tools` | Maintaining the ai-tools installation itself: update, reinstall, or removal on request, per its README's procedures. Never the first install |
 
-Each agent ships with a same-named skill — except `maintainer-ai-tools`, which ships one per task: `/update-ai-tools`, `/remove-ai-tools`, `/reinstall-ai-tools`. Invoking a skill (e.g. `/az-ai-tools`) tells the session to dispatch that agent and relay between it and the user, per the skill's own instructions.
+Each agent ships with a same-named skill — except `maintainer-ai-tools`, which ships one per task: `/update-ai-tools`, `/remove-ai-tools`, `/reinstall-ai-tools`. Invoking a skill (e.g. `/az-ai-tools`) tells the session to dispatch that agent and relay between it and the user, per the skill's own instructions. `/vibe-ai-tools` is the exception: it has no agent — the session follows the skill itself.
 
 **Offer the matching agent first.** If a shipped agent covers what the user asked, offer it before doing the work yourself. If none does, do the work under the practices below.
 
@@ -34,7 +33,7 @@ Agents in this family name **categories**, never vendor models. When one of them
 | **implementer** | Writes and edits code for one specified stage or brief, with local design judgment. May hand boilerplate to mechanical | The best code-quality-to-cost ratio; flagship tiers only when the quality gain justifies the cost |
 | **mechanical** | Fully specified, low-ambiguity work: apply a known patch, rename, run builds and tests, collect evidence. Makes no design decisions | The cheapest, fastest model that finishes reliably; upgrade only on failure |
 
-A category is what an agent **is**, not what it was asked to do — receiving a request grants no category. Route each piece of work to the lowest category that can carry it. Each shipped agent's wrapper pins its own model and carries the category → model conversion table for the subagents its base file names. Announce every spawn in chat, in the user's language, with its category and the concrete model or subagent behind it.
+A category is what an agent **is**, not what it was asked to do — receiving a request grants no category. Route each piece of work to the lowest category that can carry it. Each shipped agent's wrapper pins its own model and names its harness row in `$HOME/.ai-tools/MODELS.md`, the map every category resolves through — read it there, never from memory. Announce every spawn in chat, in the user's language, with its category and the concrete model or subagent behind it.
 
 Never use a vendor model name as an agent's identity. A model name is configuration — it belongs where the harness requires it, and nowhere else.
 
@@ -44,14 +43,14 @@ Every request is one of these:
 
 1. **Simple, well specified, or documentation only** — a typo, a one-line constant, an exact rename, a question or explanation, a docs edit that changes no behaviour. Do it now.
 2. **Cloud or GitHub operations** — anything about Azure, Google Cloud, or GitHub resources. Offer the matching agent (`az-ai-tools`, `gc-ai-tools`, `gh-ai-tools`).
-3. **Anything else** — multi-file work, a new module or component, changed behaviour, routing, data models, security-sensitive code, test changes, unclear impact, or resuming partial work. Do not start it. Ask the user whether to dispatch `vibe-ai-tools`, surfacing its stake first: it refines the demand with them and, after their explicit confirmation, delivers it end to end — dispatching the planner and orchestrator itself. **When in doubt, treat it as case 3.**
+3. **Anything else** — multi-file work, a new module or component, changed behaviour, routing, data models, security-sensitive code, test changes, unclear impact, or resuming partial work. Do not start it. Ask the user whether to run `/vibe-ai-tools`, surfacing its stake first: it refines the demand with them and, after their explicit confirmation, delivers it end to end — dispatching the planner and orchestrator itself. **When in doubt, treat it as case 3.**
 
-On yes, spawn `vibe-ai-tools` and relay per its skill:
+On yes, follow that skill in full, in this session. Two of its rules bind whatever runs it:
 
-- **Refinement questions.** A subagent cannot reach the user in every harness, so the agent returns its questions instead of asking them. Relay them to the user, collect the answers, and resume the agent with them — reusing the same agent and its context where the harness allows it.
-- **The Vibe Coding gate.** Before acting, the agent returns one mandatory confirmation request. Put it to the user and wait for an explicit answer from the human — never auto-answer it; harness auto-accept / yolo modes do not satisfy it. Resume the agent only on an explicit yes; on no, stop — the refined story on disk is the deliverable.
+- **Entry gate.** Before anything else, check the session's model against the planner model of your harness row in `MODELS.md`, and when it differs — or cannot be verified — tell the user which model would serve them, how to switch it in this harness, and let them choose. Advice, never a refusal.
+- **The Vibe Coding gate.** Refine first, then put one mandatory confirmation to the user and wait for an explicit answer from the human — never auto-answer it; harness auto-accept / yolo modes do not satisfy it. Proceed only on an explicit yes; on no, stop — the refined story on disk is the deliverable.
 
-`planner-ai-tools` and `orchestrator-ai-tools` remain directly available when the user asks for them — a plan without execution, or executing an already accepted plan; in the default flow they run only inside `vibe-ai-tools`. When the planner is dispatched directly, relay its open questions the same way; when it finishes, report the plan in a few lines plus the file paths and ask whether to implement — on yes spawn `orchestrator-ai-tools` against those plans, on no stop: the saved plan is the deliverable.
+`planner-ai-tools` and `orchestrator-ai-tools` remain directly available when the user asks for them — a plan without execution, or executing an already accepted plan; in the default flow they run inside `/vibe-ai-tools`. When the planner is dispatched directly, relay its open questions the same way; when it finishes, report the plan in a few lines plus the file paths and ask whether to implement — on yes spawn `orchestrator-ai-tools` against those plans, on no stop: the saved plan is the deliverable.
 
 Agents return approval requests instead of acting on them — a cloud mutation, a destructive or shared-state operation, a push. Relay each request to the user, and only on an explicit yes resume or re-dispatch the agent with that approval. Approval never carries over between actions — except the scope the Vibe Coding gate names explicitly (the plan's branch, its push, its pull request), which the gate's yes covers.
 
@@ -81,7 +80,7 @@ These instructions being written in English never forces English on a working re
 - Saved under `plans/` in the working repository. A plan's whole set — base plan, stage files, fix files — stays there for the entire execution and moves to `plans/finished/<slug>/` in a single move, only once every stage has finished or failed for good.
 - An archived set is never picked up on its own. One holding a stage that failed for good returns to `plans/` only when the orchestrator is dispatched on it by name; one whose stages all finished is final, and the attempt is refused.
 - `plans/dev/` holds ad-hoc briefs and feedback for the orchestrator, and stays out of the plan queue.
-- `plans/vibe/` holds the vibe agent's story and decision records (`story-<slug>.md`, `decisions-<slug>.md`), and stays out of the plan queue.
+- `plans/vibe/` holds the vibe workflow's story and decision records (`story-<slug>.md`, `decisions-<slug>.md`), and stays out of the plan queue.
 - Outside a git repository, save to `$HOME/.ai-tools-plans` (`%USERPROFILE%\.ai-tools-plans` on Windows).
 - In a git repository, root plan files (`plans/*.md`) are versioned: keep them out of ignore rules and include them in path-scoped commits. Every generated subdirectory under `plans/` is transient and must be ignored (`plans/*/`), including `finished/`, `dev/`, and `vibe/`.
 - Plan files hold the detail — steps, logs, validation notes, diffs, command output. Chat gets a short summary and file links.

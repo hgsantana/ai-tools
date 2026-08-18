@@ -1,27 +1,27 @@
 # ai-tools
 
-> **Version 0.0.6-ALPHA** — under active development. Usable for testing; no guarantees, and no backward compatibility between alpha versions (rule 4).
+> **Version 0.0.8-ALPHA** — under active development. Usable for testing; no guarantees, and no backward compatibility between alpha versions (rule 4).
 
 ## What is this repository
 
 ai-tools is a toolkit for AI coding harnesses: **agents**, **skills**, and **instructions**, written once and compatible with the main harnesses on the market — Grok Build, Claude Code, OpenAI Codex, GitHub Copilot, Google Antigravity, Cursor, and Gemini CLI.
 
-It is cloned to `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows) and linked into each harness's user-level configuration, so every tool loads the same instructions, agents, and skills. Every agent runs on a strong model **by construction**: each harness wrapper pins the model, so there is no "which model am I running on?" question at execution time.
+It is cloned to `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows) and linked into each harness's user-level configuration, so every tool loads the same instructions, agents, and skills. Every agent runs on a strong model **by construction**: each harness wrapper pins the model from the shared map in [`MODELS.md`](MODELS.md), so there is no "which model am I running on?" question at execution time.
 
 ### What is inside
 
 | Path | What it is |
 |---|---|
 | [`USER-AGENTS.md`](USER-AGENTS.md) | Install artifact: becomes the user-wide instructions file of each harness. Teaches the orchestration cycle (classify → refine → confirm → deliver end to end), the agent categories, and the language, security, and plan rules |
-| [`agents/vibe-ai-tools.md`](agents/vibe-ai-tools.md) | Agent base: repository architect/PO — refines a demand with the user from documentation only, then, after one explicit confirmation (the Vibe Coding gate), delivers it end to end through the planner and orchestrator, deciding open questions itself and logging them under `plans/vibe/` |
+| [`MODELS.md`](MODELS.md) | Model map: which concrete model each category (**planner**/**implementer**/**mechanical**) resolves to per harness, and how to change a session's model. The only place vendor model names live, besides the wrapper headers that must repeat their own (rules 11–12); user-editable, reset by an [update](#update) |
 | [`agents/planner-ai-tools.md`](agents/planner-ai-tools.md) | Agent base: designs a change — explores the repository and writes a multi-file implementation plan under `plans/`, then stops; never implements |
 | [`agents/orchestrator-ai-tools.md`](agents/orchestrator-ai-tools.md) | Agent base: executes accepted plans or an ad-hoc brief unattended; delegates code to **implementer** and evidence to **mechanical** subagents |
 | [`agents/az-ai-tools.md`](agents/az-ai-tools.md) | Agent base: Azure CLI (`az`) — read freely, return mutations to the session for explicit per-action approval, surface cost |
 | [`agents/gh-ai-tools.md`](agents/gh-ai-tools.md) | Agent base: GitHub CLI (`gh`) — read freely, return mutations to the session for explicit per-action approval |
 | [`agents/gc-ai-tools.md`](agents/gc-ai-tools.md) | Agent base: Google Cloud CLI (`gcloud`) — read freely, return mutations to the session for explicit per-action approval, surface cost |
 | [`agents/maintainer-ai-tools.md`](agents/maintainer-ai-tools.md) | Agent base: maintains the installation — drives the [scripts](#scripts) for this README's [Update](#update), [Removal](#removal), or [Reinstallation](#reinstallation) process on request, returning destructive flags for per-action approval. Never the first install — that is this README's own bootstrap, before the agent exists |
-| [`agents/<harness>/`](agents/) | Per-harness wrappers for the seven agents — harness-specific syntax, the pinned model, the category → model mapping for subagents, and a pointer to the base file; nothing else |
-| [`skills/`](skills/) | Nine dispatch skills: one same-named per agent, except `maintainer-ai-tools`, which ships three task skills (`update-ai-tools`, `remove-ai-tools`, `reinstall-ai-tools`). Each surfaces the agent's stake, spawns it, and relays approvals, questions, and results between agent and user. A skill must run on **any** model; anything model-dependent ships as an agent instead (rules 7–9) |
+| [`agents/<harness>/`](agents/) | Per-harness wrappers for the six agents — harness-specific syntax, the pinned model, this harness's row key in `MODELS.md`, and a pointer to the base file; nothing else |
+| [`skills/`](skills/) | Nine skills: eight dispatch skills — one same-named per agent, except `maintainer-ai-tools`, which ships three task skills (`update-ai-tools`, `remove-ai-tools`, `reinstall-ai-tools`) — each surfacing the agent's stake, spawning it, and relaying approvals, questions, and results; plus `vibe-ai-tools`, which has no agent and carries the whole refine-confirm-deliver workflow inline. A skill must run on **any** model; anything model-dependent ships as an agent instead (rules 7–9) |
 | [`scripts/`](scripts/) | Executable maintenance procedures: `install`, `remove`, `update`, `reinstall`, `verify`, as shell and PowerShell scripts plus CMD shims — see [Scripts](#scripts) (rules 23–26) |
 
 ### How to install, remove, update, or reinstall
@@ -54,13 +54,13 @@ Normative for every human and every AI maintaining this repository.
 ### Structure and authoring
 
 5. Every agent has a harness-agnostic **base file** at `agents/<name>.md`, holding its whole behaviour — purpose, workflow, rules — and one **wrapper** per supported harness at `agents/<harness-short-name>/<agent-name>.<ext>`.
-6. A wrapper's header carries only harness-specific syntax (frontmatter or TOML keys, model pinning, file naming). Its body carries exactly two things: **(1)** the category → model conversion table for that harness, present only when the base file cites any of **planner**/**implementer**/**mechanical**; **(2)** the pointer to follow the base file, hardcoded as `$HOME/.ai-tools/agents/<name>.md`. Anything more is drift — move it to the base. The canonical body is in the [authoring reference](#category--model-authoring-reference).
+6. A wrapper's header carries only harness-specific syntax (frontmatter or TOML keys, model pinning, file naming). Its body carries exactly two things: **(1)** the pointer to `MODELS.md` naming this harness's row, present only when the base file cites any of **planner**/**implementer**/**mechanical**; **(2)** the pointer to follow the base file, hardcoded as `$HOME/.ai-tools/agents/<name>.md`. Anything more is drift — move it to the base. The canonical body is in the [wrapper authoring reference](#model-map-and-wrapper-authoring).
 7. Skills may be shipped too. A skill is harness-agnostic and exists as a single file, `skills/<name>/SKILL.md`, in one shared directory registered as-is by every harness — no per-harness copies, no wrappers.
-8. A skill must run correctly on **any** model the session happens to provide — no model requirements, no category checks, no gates. The moment it depends on a specific model or category, it must be an agent instead, whose wrapper pins the model.
+8. A skill must run correctly on **any** model the session happens to provide: it never requires a model or a category, and never refuses over one. It may read `MODELS.md` to tell the user which model would serve the task best and how to switch — advice the user is free to decline, never a hard gate. The moment it cannot function without a given model, it must be an agent instead, whose wrapper pins the model.
 9. Skill frontmatter carries only universally accepted keys: `name` and `description`, plus optional keys every supported harness tolerates (e.g. `argument-hint`). A key any supported harness rejects does not belong in a shared file.
 10. Agent wrappers follow each harness's official documentation. Re-check vendor docs before adding a harness or editing a wrapper — formats change upstream.
-11. Vendor model names appear only in agent wrappers, in the [category → model authoring reference](#category--model-authoring-reference), and in the scripts' Grok model pinning, which encodes that reference where Grok reads models from config instead of wrappers (see [Installation](#installation)). Agent base files speak only in categories: **planner**, **implementer**, **mechanical** (defined in `USER-AGENTS.md`); skills cite neither models nor categories (rule 8).
-12. Wrappers and the authoring reference must always match: creating an agent or updating a model changes the table, every affected wrapper, and the scripts' Grok pinning in the same commit.
+11. Vendor model names live in [`MODELS.md`](MODELS.md), and are repeated only in agent wrapper headers, because harnesses read a wrapper's own model from there. Every other consumer — agent base files, skills, the scripts' Grok model pinning — resolves them by reading `MODELS.md` at run time, and hard-codes none. The [Supported harnesses](#supported-harnesses) table may cite a harness's accepted value shapes as format examples — never as the choice, which stays in the map. Agent base files speak only in categories: **planner**, **implementer**, **mechanical** (defined in `USER-AGENTS.md`); skills cite categories only as advice (rule 8).
+12. `MODELS.md` and the wrapper headers must always match: creating an agent, adding a harness, or changing a model updates the map and every affected wrapper in the same commit. Nothing else needs updating — every other consumer reads the map.
 13. Everything installed from this repo — agent name, skill directory, slash command, frontmatter `name:`, file basename — ends in `-ai-tools`, so nothing collides with harness-bundled names. Never install a bare name like `planner` or `az`.
 14. Extreme conciseness: all instructions, agents, skills, rules, and configuration in this repository avoid ambiguity and redundancy to the maximum extent, while never omitting an instruction, rule, or intention in exchange for brevity.
 15. Everything written to disk in this repository is concise English. Chat with the user happens in the user's language.
@@ -80,40 +80,22 @@ Normative for every human and every AI maintaining this repository.
 23. Every process — install, remove, update, reinstall, verify — ships as an executable script: `scripts/shell/<process>.sh` (Linux, macOS, WSL, Git Bash; bash 3.2+, BSD/GNU tools) and `scripts/powershell/<process>.ps1` (Windows PowerShell 5.1+ and pwsh); `scripts/cmd/<process>.cmd` are shims that only delegate to the PowerShell scripts. Shared logic lives in `lib.sh`/`lib.ps1`, never duplicated across scripts.
 24. `scripts/shell` is canonical. A behaviour change lands there, in the PowerShell mirror, and in the process sections below in the same commit — none may drift.
 25. Scripts run to completion: per-item conflicts skip and report instead of aborting; destructive steps sit behind explicit flags (`--discard-local`, `--instructions`, `--purge`) and default to refusing; every mutating script supports `--dry-run`. Exit codes: `0` clean, `1` aborted on a precondition, `2` finished with warnings.
-26. Shell and PowerShell scripts are committed with the executable bit set; `.gitattributes` pins them to LF and the CMD shims to CRLF.
+26. Shell and PowerShell scripts are committed with the executable bit set; `.gitattributes` pins them to LF and the CMD shims to CRLF. PowerShell scripts are stored as **UTF-8 with BOM**: Windows PowerShell 5.1 decodes a BOM-less file as ANSI, and the mojibake of any non-ASCII character (an em dash is enough) closes a string mid-line and breaks parsing before the script runs. CMD shims stay pure ASCII — a BOM there would be read as a command.
 
-### Category → model authoring reference
+### Model map and wrapper authoring
 
-The maintenance-time source for every model name in this repository (rules 11–12). An AI creating a new agent, adding a harness, or updating models reads this table and writes the wrappers from it. Assignment principle: **planner** takes the strongest model regardless of cost, **implementer** the best code-quality-to-cost ratio, **mechanical** the cheapest that reliably finishes. Verified against vendor documentation in August 2026 — re-check at each model release.
+Every vendor model name lives in [`MODELS.md`](MODELS.md): one row per harness, one column per category, plus how to change a running session's model. Wrappers, agent base files, the `vibe-ai-tools` skill, and the installation scripts all resolve models through that file — this section only says how a wrapper is written from it (rules 5–6, 11–12).
 
-| Harness | planner | implementer | mechanical |
-|---|---|---|---|
-| Claude Code | `opus` (Claude Opus 5) | `sonnet` (Claude Sonnet 5) | `haiku` (Claude Haiku 4.5) |
-| Grok Build | `grok-4.6` | `grok-build-0.1` | `grok-4.20-0309-non-reasoning` |
-| OpenAI Codex | `gpt-5.6-sol` | `gpt-5.6-terra` | `gpt-5.6-luna` |
-| GitHub Copilot | `Claude Opus 5` | `Claude Sonnet 5` | `Claude Haiku 4.5` |
-| Google Antigravity | `pro` | `flash` | `flash` |
-| Cursor | `claude-opus-5[effort=high]` | `composer-2.5` | `composer-2.5[fast=true]` |
-| Gemini CLI | `gemini-3.1-pro` | `gemini-3.7-flash` | `gemini-3.5-flash-lite` |
-
-Notes: Gemini's Pro line is frozen at 3.1 while Flash has moved to 3.7, so planner and implementer come from different generations. Antigravity's `model:` accepts only tiers (`inherit`, `flash`, `pro`), not model IDs — `pro` is its strongest tier and there is no cheaper-than-`flash` tier, so mechanical also runs `flash`. Grok Build ignores `model:` in agent frontmatter — the install script pins its models in `~/.grok/config.toml` (see [Installation](#installation)).
-
-Every shipped agent runs as **planner** — except `maintainer-ai-tools`, which runs as **implementer** (it drives this README's scripts) — so each wrapper pins its own category's column for its harness. The wrapper body carries exactly two things (rule 6), in this order — the canonical form, below the harness's own frontmatter/TOML header:
+Every shipped agent runs as **planner** — except `maintainer-ai-tools`, which runs as **implementer** (it drives this README's scripts) — so each wrapper pins its own category's value for its harness in the header the harness requires, taking it verbatim from `MODELS.md`. Below that header, the body carries exactly two things (rule 6), in this order:
 
 ```markdown
-When the base file cites these categories, they mean:
-
-| Category | Model in this harness |
-|---|---|
-| planner | `<planner model>` |
-| implementer | `<implementer model>` |
-| mechanical | `<mechanical model>` |
+Category → model for this harness comes from `$HOME/.ai-tools/MODELS.md` (Windows: `%USERPROFILE%\.ai-tools\MODELS.md`), row `<harness key>`. Resolve every category through it — your own and any you spawn; never assume a model name.
 
 The base file for this agent is `$HOME/.ai-tools/agents/<name>.md` (Windows: `%USERPROFILE%\.ai-tools\agents\<name>.md`).
 Read it and follow it in full — it is the absolute rule set for this agent.
 ```
 
-The conversion table keeps only the rows for categories the base file actually cites, and is omitted entirely when it cites none — the pointer is then the whole body. Model values come from this section's reference table, translated to the harness's own syntax.
+`<harness key>` is the wrapper's own folder name under `agents/`, which is also its row key in `MODELS.md`. The first paragraph is present only when the base file cites any category; when it cites none, the pointer is the whole body. Codex wrappers carry the same text inside `developer_instructions`, with Windows backslashes doubled for TOML.
 
 ## Scripts
 
@@ -158,7 +140,7 @@ Reference for every process section. One row per harness: where its global instr
 | OpenAI Codex | `$HOME/.codex/AGENTS.md` | `$HOME/.codex/skills/` | `$HOME/.codex/agents/` | `agents/codex/` · `*.toml`, keys `name`, `description`, `developer_instructions`, `model`, `model_reasoning_effort` |
 | GitHub Copilot | `$HOME/.copilot/instructions/ai-tools.instructions.md` | `$HOME/.copilot/skills/` | `$HOME/.copilot/agents/` | `agents/copilot/` · `*.agent.md`; `model:` must be a **string** — the CLI rejects the array form VS Code Copilot Chat accepts |
 | Google Antigravity | `$HOME/.gemini/GEMINI.md` (shared with Gemini CLI) | `$HOME/.gemini/config/skills/` | `$HOME/.gemini/config/agents/` | `agents/antigravity/` · `*.md`, frontmatter `name`, `description`, `model` (`inherit`/`flash`/`pro`), `subagent`, `mainAgent`, `commandExecutionPolicy` |
-| Cursor | Not linked — no documented file path for global User Rules; Cursor reads project-root `AGENTS.md` natively | `$HOME/.cursor/skills/` | `$HOME/.cursor/agents/` | `agents/cursor/` · `*.md`, `model:` accepts bracketed parameters (`claude-opus-5[effort=high]`) |
+| Cursor | Not linked — no documented file path for global User Rules; Cursor reads project-root `AGENTS.md` natively | `$HOME/.cursor/skills/` | `$HOME/.cursor/agents/` | `agents/cursor/` · `*.md`, `model:` accepts bracketed parameters (`<model>[effort=high]`) |
 | Gemini CLI | `$HOME/.gemini/GEMINI.md` | `$HOME/.gemini/skills/` (**not** `$HOME/.gemini/config/skills/`) | `$HOME/.gemini/agents/` | `agents/gemini/` · `*.md`, frontmatter `kind`, `model`, `temperature`, `max_turns`, `timeout_mins` |
 
 Notes:
@@ -186,10 +168,10 @@ What it does, in order — every step idempotent, conflicts skipped and reported
 4. **User overlay** — creates `$HOME/AGENTS.md` empty only when missing (rule 22); its contents are written only if the user later asks for that directly.
 5. **Agents** — links each wrapper file from `agents/<harness>/` into that harness's agents root, per file, never per directory — the roots hold agents from other sources, and a directory link would shadow them.
 6. **Skills** — links each `skills/*-ai-tools` directory into each scoped skills root; the same shared directory serves every harness (rules 7–9). Prefer these explicit links over harness scan paths (Grok `[skills] paths`), which can clobber existing names.
-7. **Grok model pinning** — Grok resolves subagent models from `~/.grok/config.toml`, not from agent frontmatter, so the script maintains a marker-delimited `[subagents.models]` block there: names from the tree, models from the [authoring reference](#category--model-authoring-reference). A pre-existing unmanaged block is skipped and reported, never edited. Without pinning the agents still load but inherit the session's model — the strong-model guarantee is lost; the same fallback applies to any harness whose `model:` field is ignored.
+7. **Grok model pinning** — Grok resolves subagent models from `~/.grok/config.toml`, not from agent frontmatter, so the script maintains a marker-delimited `[subagents.models]` block there: names from the tree, models read from [`MODELS.md`](MODELS.md) (unreadable map → the block is skipped and reported, never guessed). A pre-existing unmanaged block is skipped and reported, never edited. Without pinning the agents still load but inherit the session's model — the strong-model guarantee is lost; the same fallback applies to any harness whose `model:` field is ignored.
 8. **Verify** — instructions resolve into the clone, `USER-AGENTS.md` fits the 12,000-character cap (rule 3), every agent base exists at the pinned location, and every installed agent and skill is a link or an unmodified copy. Skipped under `--dry-run`; re-run standalone any time with `verify`.
 
-Then restart or reload any harness that caches agents or skills at startup, and confirm the seven agents (`vibe-ai-tools`, `planner-ai-tools`, `orchestrator-ai-tools`, `az-ai-tools`, `gh-ai-tools`, `gc-ai-tools`, `maintainer-ai-tools`) appear in the harness's agent list, plus a slash command for every shipped skill.
+Then restart or reload any harness that caches agents or skills at startup, and confirm the six agents (`planner-ai-tools`, `orchestrator-ai-tools`, `az-ai-tools`, `gh-ai-tools`, `gc-ai-tools`, `maintainer-ai-tools`) appear in the harness's agent list, plus a slash command for every shipped skill — including `/vibe-ai-tools`, which is a skill only.
 
 ## Removal
 
@@ -257,7 +239,7 @@ Then restart or reload the harness and confirm the seven agents appear in its ag
 - **Dangling links after an upstream rename or layout change:** run [Reinstallation](#reinstallation); links are never upgraded in place.
 - **Copied agents out of date:** copies do not track `git pull` — run [Update](#update); if a copy predates the locally known previous revision, run [Reinstallation](#reinstallation).
 - **A destination is occupied by a non-ai-tools file the user wants replaced:** the scripts always skip and report it; replacing it requires the user removing that file themselves, per path.
-- **An agent runs on the wrong (weak) model:** the wrapper's model pinning is not applied — for Grok, check the managed `[subagents.models]` block in `~/.grok/config.toml` (re-run [Installation](#installation) to restore it); for other harnesses, compare the installed wrapper against `$AI_TOOLS/agents/<harness>/` and the [authoring reference](#category--model-authoring-reference).
+- **An agent runs on the wrong (weak) model:** the wrapper's model pinning is not applied — for Grok, check the managed `[subagents.models]` block in `~/.grok/config.toml` (re-run [Installation](#installation) to restore it); for other harnesses, compare the installed wrapper against `$AI_TOOLS/agents/<harness>/` and [`MODELS.md`](MODELS.md).
 - **Scripts report `copied (will not track updates)`:** the OS or filesystem refused symlinks (on Windows, enable Developer Mode or use an elevated shell, then [Reinstallation](#reinstallation) converts copies back to links); until then, run [Update](#update) after every upstream change on that machine.
 
 ## License

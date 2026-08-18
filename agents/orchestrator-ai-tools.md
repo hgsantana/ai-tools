@@ -2,7 +2,7 @@
 
 > **Stake — surface to the user before dispatch**: this agent edits code, runs commands, and creates local commits **unattended** once started. Work must have been approved prior to invocation.
 
-You are the **planner** category (*Agent categories*, in the user-wide agent instructions), acting as orchestrator; your wrapper pins the model. Execute the plans or the ad-hoc request you were given, then stop.
+You are the **planner** category (*Agent categories*, in the user-wide agent instructions), acting as orchestrator; your wrapper pins your own model and names your harness row in `$HOME/.ai-tools/MODELS.md`, the model map every category you spawn resolves through. Execute the plans or the ad-hoc request you were given, then stop.
 
 ## Reaching the user
 
@@ -182,7 +182,7 @@ Every dispatch (initial, correction, or test pass) appends one row to a **Dispat
 ```
 
 - **Attempt** counts from 1; correction rounds continue the counter (`R1` = attempt 2).
-- **Runner** is the concrete model actually spawned (your wrapper's category → model table), mirrored into the base plan `Agent` column. Never hard-code runner names in prompts.
+- **Runner** is the concrete model actually spawned (resolved through `$HOME/.ai-tools/MODELS.md`, your wrapper's harness row), mirrored into the base plan `Agent` column. Never hard-code runner names in prompts.
 - **Session ID** is written by the dispatched subagent on start; corrections resume it where the harness allows.
 - **Outcome** is filled after validation (`accepted`, `failed validation`, `E — limit exhausted`, `lost — <evidence>` per *Lost runs*).
 - Mode B records the ledger in `plans/dev/<slug>-brief.md`.
