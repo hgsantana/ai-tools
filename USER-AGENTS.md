@@ -83,6 +83,8 @@ These instructions being written in English never forces English on a working re
 - `plans/vibe/` holds the vibe workflow's story and decision records (`story-<slug>.md`, `decisions-<slug>.md`), and stays out of the plan queue.
 - Outside a git repository, save to `$HOME/.ai-tools-plans` (`%USERPROFILE%\.ai-tools-plans` on Windows).
 - In a git repository, root plan files (`plans/*.md`) are versioned: keep them out of ignore rules and include them in path-scoped commits. Every generated subdirectory under `plans/` is transient and must be ignored (`plans/*/`), including `finished/`, `dev/`, and `vibe/`.
+- **A plan is working state, not a historical record.** It is versioned so an execution survives a lost session, a new machine, or a fresh clone — anyone can pick it up mid-flight and see what is done, what failed, and what is left. It earns its place in the repository only while it still has to be resumed.
+- **Archiving is therefore a deletion, and that is the point.** Moving the set into the ignored `plans/finished/<slug>/` removes those files from version control; commit that removal as part of the archival, path-scoped to `plans/`. Once the work has shipped, its plan leaves the repository. What survives is what the work actually produced: the commits, the tests, and the documentation the change updated. A finished plan kept in tree is stale prose competing with those as a source of truth.
 - Plan files hold the detail — steps, logs, validation notes, diffs, command output. Chat gets a short summary and file links.
 
 ## Truth on disk
