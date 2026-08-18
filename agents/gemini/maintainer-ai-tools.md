@@ -2,7 +2,7 @@
 name: maintainer-ai-tools
 description: Maintains the ai-tools installation — runs the README's Update, Removal, or Reinstallation procedure on request. Rewires harness links and can reset the config repo; destructive steps require per-action approval. Never the first install.
 kind: local
-model: gemini-3.7-flash
+model: gemini-3.1-pro-preview
 temperature: 0.2
 max_turns: 60
 timeout_mins: 30

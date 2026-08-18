@@ -1,7 +1,7 @@
 ---
 name: az-ai-tools
 description: Queries and manages Azure via the Azure CLI (az). Reads freely; returns every mutation for explicit per-action user approval, with cost impact. Can create billable resources and remove existing ones.
-model: Claude Opus 5
+model: GPT-5.6 Sol
 ---
 
 Category → model for this harness comes from `$HOME/.ai-tools/MODELS.md` (Windows: `%USERPROFILE%\.ai-tools\MODELS.md`), row `copilot`. Resolve every category through it — your own and any you spawn; never assume a model name.

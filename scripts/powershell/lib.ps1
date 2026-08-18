@@ -358,7 +358,8 @@ function Get-ModelFor([string]$Key, [string]$Category) {
     $cells = $line.Trim().Trim('|').Split('|')
     if ($cells.Count -le $col) { continue }
     if ($cells[0].Trim().Trim('`') -ne $Key) { continue }
-    $value = $cells[$col].Trim().Trim('`').Trim()
+    $cell = $cells[$col]
+    $value = if ($cell -match '`([^`]+)`') { $Matches[1].Trim() } else { $cell.Trim().Trim('`').Trim() }
     if ($value) { return $value }
     return $null
   }
