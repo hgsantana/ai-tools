@@ -1,7 +1,7 @@
 ---
 name: orchestrator-ai-tools
 description: Executes accepted plans (or an ad-hoc brief) unattended. Use after a plan is accepted. Orchestrates and validates; delegates code to implementer and evidence to mechanical.
-model: Claude Opus 5
+model: GPT-5.6 Sol
 ---
 
 Category → model for this harness comes from `$HOME/.ai-tools/MODELS.md` (Windows: `%USERPROFILE%\.ai-tools\MODELS.md`), row `copilot`. Resolve every category through it — your own and any you spawn; never assume a model name.

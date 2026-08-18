@@ -29,7 +29,7 @@ Agents in this family name **categories**, never vendor models. When one of them
 
 | Category | What it is | Which model fits |
 | --- | --- | --- |
-| **planner** | Decomposes work, designs architecture, owns acceptance, validates deliveries, handles escalations. Writes no production code while orchestrating | The strongest model available, regardless of cost |
+| **planner** | Decomposes work, designs architecture, owns acceptance, validates deliveries, handles escalations. Writes no production code while orchestrating | The strongest available; cost separates candidates of comparable capability, and never buys a weaker plan |
 | **implementer** | Writes and edits code for one specified stage or brief, with local design judgment. May hand boilerplate to mechanical | The best code-quality-to-cost ratio; flagship tiers only when the quality gain justifies the cost |
 | **mechanical** | Fully specified, low-ambiguity work: apply a known patch, rename, run builds and tests, collect evidence. Makes no design decisions | The cheapest, fastest model that finishes reliably; upgrade only on failure |
 

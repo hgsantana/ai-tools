@@ -2,6 +2,7 @@
 name: gc-ai-tools
 description: Queries and manages Google Cloud via the gcloud CLI. Reads freely; returns every mutation for explicit per-action user approval, with cost impact. Can create billable resources and remove existing ones.
 model: opus
+effort: medium
 ---
 
 Category → model for this harness comes from `$HOME/.ai-tools/MODELS.md` (Windows: `%USERPROFILE%\.ai-tools\MODELS.md`), row `claude-code`. Resolve every category through it — your own and any you spawn; never assume a model name.

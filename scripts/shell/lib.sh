@@ -364,7 +364,9 @@ model_for() {
     /^[[:space:]]*\|/ {
       k = $2; gsub(/[`[:space:]]/, "", k)
       if (k == key) {
-        v = $col; gsub(/`/, "", v); gsub(/^[[:space:]]+|[[:space:]]+$/, "", v)
+        v = $col
+        if (match(v, /`[^`]+`/)) v = substr(v, RSTART + 1, RLENGTH - 2)
+        else { gsub(/`/, "", v); gsub(/^[[:space:]]+|[[:space:]]+$/, "", v) }
         if (v != "") { print v; found = 1 }
         exit
       }

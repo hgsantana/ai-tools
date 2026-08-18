@@ -2,7 +2,7 @@
 name: orchestrator-ai-tools
 description: Executes accepted plans (or an ad-hoc brief) unattended. Use after a plan is accepted. Orchestrates and validates; delegates code to implementer and evidence to mechanical.
 kind: local
-model: gemini-3.1-pro
+model: gemini-3.1-pro-preview
 temperature: 0.2
 max_turns: 120
 timeout_mins: 60

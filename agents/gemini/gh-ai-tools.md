@@ -2,7 +2,7 @@
 name: gh-ai-tools
 description: Queries and manages GitHub via the GitHub CLI (gh). Reads freely; returns every mutation for explicit per-action user approval. Actions like merge, close, and push are visible to others immediately.
 kind: local
-model: gemini-3.1-pro
+model: gemini-3.1-pro-preview
 temperature: 0.2
 max_turns: 60
 timeout_mins: 30

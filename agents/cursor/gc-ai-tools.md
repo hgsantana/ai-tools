@@ -1,7 +1,7 @@
 ---
 name: gc-ai-tools
 description: Queries and manages Google Cloud via the gcloud CLI. Reads freely; returns every mutation for explicit per-action user approval, with cost impact. Can create billable resources and remove existing ones.
-model: claude-opus-5[effort=high]
+model: gpt-5.6-sol[effort=xhigh]
 readonly: false
 is_background: false
 ---
