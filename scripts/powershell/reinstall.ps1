@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 # ai-tools reinstallation — README "Reinstallation" as an executable procedure:
 # a full removal + installation pass against a fresh origin/master.
 # Links are never upgraded in place — re-creating them is the fix.

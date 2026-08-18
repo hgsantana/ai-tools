@@ -1,6 +1,6 @@
 # ai-tools
 
-> **Version 0.0.7-ALPHA** — under active development. Usable for testing; no guarantees, and no backward compatibility between alpha versions (rule 4).
+> **Version 0.0.8-ALPHA** — under active development. Usable for testing; no guarantees, and no backward compatibility between alpha versions (rule 4).
 
 ## What is this repository
 
@@ -80,7 +80,7 @@ Normative for every human and every AI maintaining this repository.
 23. Every process — install, remove, update, reinstall, verify — ships as an executable script: `scripts/shell/<process>.sh` (Linux, macOS, WSL, Git Bash; bash 3.2+, BSD/GNU tools) and `scripts/powershell/<process>.ps1` (Windows PowerShell 5.1+ and pwsh); `scripts/cmd/<process>.cmd` are shims that only delegate to the PowerShell scripts. Shared logic lives in `lib.sh`/`lib.ps1`, never duplicated across scripts.
 24. `scripts/shell` is canonical. A behaviour change lands there, in the PowerShell mirror, and in the process sections below in the same commit — none may drift.
 25. Scripts run to completion: per-item conflicts skip and report instead of aborting; destructive steps sit behind explicit flags (`--discard-local`, `--instructions`, `--purge`) and default to refusing; every mutating script supports `--dry-run`. Exit codes: `0` clean, `1` aborted on a precondition, `2` finished with warnings.
-26. Shell and PowerShell scripts are committed with the executable bit set; `.gitattributes` pins them to LF and the CMD shims to CRLF.
+26. Shell and PowerShell scripts are committed with the executable bit set; `.gitattributes` pins them to LF and the CMD shims to CRLF. PowerShell scripts are stored as **UTF-8 with BOM**: Windows PowerShell 5.1 decodes a BOM-less file as ANSI, and the mojibake of any non-ASCII character (an em dash is enough) closes a string mid-line and breaks parsing before the script runs. CMD shims stay pure ASCII — a BOM there would be read as a command.
 
 ### Model map and wrapper authoring
 

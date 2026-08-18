@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 # ai-tools update — README "Update" as an executable procedure.
 # Mirrors scripts/shell/update.sh (canonical). Windows PowerShell 5.1+ / pwsh.
 #

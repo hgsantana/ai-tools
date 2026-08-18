@@ -1,4 +1,4 @@
-# ai-tools shared helpers — dot-sourced by every script in scripts/powershell/.
+﻿# ai-tools shared helpers — dot-sourced by every script in scripts/powershell/.
 # Mirrors scripts/shell/lib.sh (the canonical implementation) for Windows.
 # Windows PowerShell 5.1+ and pwsh. Symlinks need Developer Mode or an elevated
 # shell; every link falls back to a copy, reported as such.

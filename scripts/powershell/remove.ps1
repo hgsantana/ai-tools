@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 # ai-tools removal — README "Removal" as an executable procedure.
 # Removal means "unlink from harnesses", not "delete the config repo".
 # Mirrors scripts/shell/remove.sh (canonical). Windows PowerShell 5.1+ / pwsh.

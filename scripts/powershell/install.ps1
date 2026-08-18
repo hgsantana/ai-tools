@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 # ai-tools installation — README "Installation" as an executable procedure.
 # Mirrors scripts/shell/install.sh (canonical). Windows PowerShell 5.1+ / pwsh.
 #
