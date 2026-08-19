@@ -169,7 +169,7 @@ Check families:
 - **encodings and endings** — PowerShell BOM, pure-ASCII CMD, line endings (`git ls-files --eol`), executable bits, no binaries in shipped paths (rule 26)
 - **version bump** — only with `--base <ref>`: a change under `agents/`, `skills/`, `scripts/`, or `USER-AGENTS.md` requires the README version to change too (rule 4)
 
-Exit codes: `0` clean, `1` aborted on a precondition (unknown flag, `--base` without a value), `2` finished with findings. CI (`.github/workflows/lint.yml`) runs `tools/lint.sh --base <event base>` and then `shellcheck scripts/shell/*.sh tools/*.sh` on every push and pull request.
+Exit codes: `0` clean, `1` aborted on a precondition (unknown flag, `--base` without a value), `2` finished with findings. CI (`.github/workflows/lint.yml`) runs `shellcheck -x -P scripts/shell scripts/shell/*.sh tools/*.sh` on every push and pull request, and runs the version-bump check — `tools/lint.sh --base <PR base>` — only on pull requests; pushes run `tools/lint.sh` with every other check.
 
 `tools/lint.sh` ships **without** a PowerShell mirror, deliberately outside rules 23–25's contract: a mirror only a Windows maintainer exercises drifts in silence, which is exactly the failure this linter exists to catch. Windows contributors run it from Git Bash.
 
