@@ -78,3 +78,80 @@ Suggested message: `ci: run the script test suites on Linux and Windows`
 | 1 | W | implementer | sonnet | 3b6488c4-9b6b-48b5-9e1d-dddabc81c766 | V -> accepted (CI run URL filled in by the orchestrator after the push) |
 
 Status: V
+
+## Correction round 1 (planner)
+
+The branch was pushed and the workflow ran: <https://github.com/hgsantana/ai-tools/actions/runs/32220342141>.
+
+| Job | Runner | Result |
+|---|---|---|
+| `test-shell` | `ubuntu-latest` | **success** |
+| `test-powershell` | `windows-latest` (`pwsh` + `powershell.exe`) | **success** |
+| `lint` | `ubuntu-latest` | **failure** — `shellcheck` step, exit 1 |
+
+The wiring itself is correct; both suites pass on both platforms. The failure is this stage's acceptance criterion "`shellcheck` covers `tools/test/*.sh` and the repository stays shellcheck-clean", which the new files do not currently satisfy. `shellcheck` was unavailable when this stage was implemented; it is available now at `/tmp/shellcheck` (v0.10.0), so the findings can be reproduced and fixed locally.
+
+Reproduce with exactly the CI command:
+
+```
+/tmp/shellcheck -x -P scripts/shell -P tools/test scripts/shell/*.sh tools/*.sh tools/test/*.sh
+```
+
+Findings to clear, each in the file it occurs in:
+
+1. `tools/test.sh` lines 34–38 — **SC2317** ("command appears to be unreachable") across `t_source_case_files`'s body, and **SC1090** ("can't follow non-constant source") on `. "$f"` at lines 37 and 63. Both are inherent to glob-based case discovery: the case files are found at run time, so their paths cannot be constant, and shellcheck's reachability analysis cannot see that the function is called.
+2. `tools/test/install.sh` line 235 — **SC2016** on the single-quoted `sed` script `'/^| `grok`/d'`. The single quotes are deliberate: nothing in that expression should expand.
+3. `tools/test/lib.sh` line 59 — **SC2153** ("`AI_TOOLS` may not be assigned. Did you mean `ai_tools`?"). `AI_TOOLS` is exported by `tools/test.sh` before this file is sourced; the local variable `ai_tools` in the runner helpers is what confuses the check.
+
+Rules for the fix, from this stage's step 3:
+
+- Fix each finding **in the file where it occurs** — do not silence anything from the workflow, and do not add a blanket `disable` at file level where a targeted one at the site will do.
+- Every `# shellcheck disable=<code>` needs a **one-line reason comment** next to it, matching the existing style in `scripts/shell/lib.sh` — grep that file for its existing directives and follow it.
+- Prefer an actual code fix over a directive where one exists and does not complicate the code (for example, a `# shellcheck source=/dev/null` directive is the idiomatic answer to SC1090).
+- **Do not change any test's behaviour.** After the fix, `bash tools/test.sh` must still report `252 ok, 0 skipped, 0 warnings`, exit `0`.
+
+Evidence to append: the full `shellcheck` command above exiting `0` with no output, and the `tools/test.sh` and `tools/lint.sh` runs.
+
+| Attempt | Status | Category | Runner | Session ID | Outcome |
+|---------|--------|----------|--------|------------|---------|
+| 2 | R1 | implementer | sonnet | agent addaa3f2e86942ee4 | V -> accepted (shellcheck exit 0, suite 252 ok, lint exit 0) |
+
+### Correction round 1 — implementation
+
+Fixes applied, one per finding:
+
+1. `tools/test.sh` — the flagged `t_source_case_files` (lines 34–38) was a stale duplicate definition, entirely shadowed by the real one defined later in the file (formerly lines 56–75) before ever being called; its body was genuinely dead code. Removed it outright (real code fix), which also eliminates the SC1090 site at line 37 along with it. Added a targeted `# shellcheck source=/dev/null # case file path is discovered at run time, not constant` directive at the remaining SC1090 site (the `. "$f"` in the surviving `t_source_case_files`).
+2. `tools/test/install.sh` line 235 — added `# shellcheck disable=SC2016 # single quotes are deliberate, nothing here should expand` directly above the `sed` call.
+3. `tools/test/lib.sh` line 59 — added `# shellcheck disable=SC2153 # AI_TOOLS is exported by tools/test.sh, not a typo for the local ai_tools` directly above the `tar` pipeline.
+
+No test behaviour, assertion, or message was changed.
+
+Evidence — shellcheck (from repository root, exact CI command):
+
+```
+$ /tmp/shellcheck -x -P scripts/shell -P tools/test scripts/shell/*.sh tools/*.sh tools/test/*.sh
+$ echo $?
+0
+```
+(no output)
+
+Evidence — `bash tools/test.sh`:
+
+```
+...
+done: 252 ok, 0 skipped, 0 warnings
+$ echo $?
+0
+```
+
+Evidence — `bash tools/lint.sh`:
+
+```
+...
+SKIP: version bump check needs --base <ref> (the lint workflow supplies it)
+done: 531 ok, 1 skipped, 0 warnings
+$ echo $?
+0
+```
+
+Status: V

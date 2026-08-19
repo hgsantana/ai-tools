@@ -232,6 +232,7 @@ case_install_grok_no_model_row() {
   local root before
   t_fixture
   root="$T_ROOT"
+  # shellcheck disable=SC2016 # single quotes are deliberate, nothing here should expand
   sed -i.bak '/^| `grok`/d' "$root/home/.ai-tools/MODELS.md" \
     || fatal "$T_CASE: cannot strip grok row from fixture MODELS.md"
   rm -f "$root/home/.ai-tools/MODELS.md.bak"

@@ -56,6 +56,7 @@ t_build_origin() {
   git init -q --bare "$origin" || return 1
   git --git-dir="$origin" symbolic-ref HEAD refs/heads/master || return 1
 
+  # shellcheck disable=SC2153 # AI_TOOLS is exported by tools/test.sh, not a typo for the local ai_tools
   ( cd "$AI_TOOLS" && tar -cpf - --exclude=./.git --exclude=./plans . ) \
     | ( cd "$scratch" && tar -xpf - ) || { rm -rf "$scratch"; return 1; }
 

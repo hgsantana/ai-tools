@@ -30,14 +30,6 @@ t_discover_case_files() {
   done
 }
 
-t_source_case_files() {
-  local f
-  while IFS= read -r f; do
-    [ -n "$f" ] || continue
-    . "$f"
-  done < <(t_discover_case_files)
-}
-
 t_discover_case_functions() {
   declare -F | awk '{print $3}' | grep '^case_' | LC_ALL=C sort
 }
@@ -60,6 +52,7 @@ t_source_case_files() {
     [ -n "$f" ] || continue
     base=$(basename "$f" .sh)
     before=$(t_discover_case_functions)
+    # shellcheck source=/dev/null # case file path is discovered at run time, not constant
     . "$f"
     after=$(t_discover_case_functions)
     new=$(printf '%s\n' "$after" | grep -vFxf <(printf '%s\n' "$before") | LC_ALL=C sort | tr '\n' ' ')
