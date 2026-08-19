@@ -1,0 +1,52 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run rule linter
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            tools/lint.sh --base "$PR_BASE_SHA"
+          else
+            tools/lint.sh
+          fi
+
+      - name: Run shellcheck
+        run: shellcheck -x -P scripts/shell -P tools/test scripts/shell/*.sh tools/*.sh tools/test/*.sh
+
+  test-shell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run shell test suite
+        run: tools/test.sh
+
+  test-powershell:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run PowerShell test suite (pwsh)
+        run: pwsh -NoProfile -File tools/test.ps1
+
+      - name: Run PowerShell test suite (Windows PowerShell)
+        run: powershell -NoProfile -File tools/test.ps1

@@ -188,11 +188,37 @@ Check families:
 - **encodings and endings** — PowerShell BOM, pure-ASCII CMD, line endings (`git ls-files --eol`), executable bits, no binaries in shipped paths (rule 26)
 - **version bump** — only with `--base <ref>`: a change under `agents/`, `skills/`, `scripts/`, or `USER-AGENTS.md` requires the README version to change too (rule 4)
 
-Exit codes: `0` clean, `1` aborted on a precondition (unknown flag, `--base` without a value), `2` finished with findings. CI (`.github/workflows/lint.yml`) runs `shellcheck -x -P scripts/shell scripts/shell/*.sh tools/*.sh` on every push and pull request, and runs the version-bump check — `tools/lint.sh --base <PR base>` — only on pull requests; pushes run `tools/lint.sh` with every other check.
+Exit codes: `0` clean, `1` aborted on a precondition (unknown flag, `--base` without a value), `2` finished with findings. CI (`.github/workflows/ci.yml`) runs three independent jobs: `lint` (`ubuntu-latest`) runs the version-bump check on pull requests and `shellcheck -x -P scripts/shell -P tools/test scripts/shell/*.sh tools/*.sh tools/test/*.sh` on every push and pull request; `test-shell` (`ubuntu-latest`) runs `tools/test.sh`; `test-powershell` (`windows-latest`) runs `tools/test.ps1` under both `pwsh` and `powershell.exe`.
 
 `tools/lint.sh` ships **without** a PowerShell mirror, deliberately outside rules 23–25's contract: a mirror only a Windows maintainer exercises drifts in silence, which is exactly the failure this linter exists to catch. Windows contributors run it from Git Bash.
 
 When a rule in this README becomes mechanically verifiable, add its check to `tools/lint.sh` and its rule number to the list above in the same commit — the two caps above (rules 3, 6) are stated here as rules; the linter only enforces them, and this README is the number a reader trusts.
+
+`tools/test.sh` and `tools/test.ps1` are development checks too, and outside rules 23–25 the same way: they run `install`, `remove`, `update`, `reinstall`, and `verify` against a disposable fake `HOME`, never the real one, and assert the installation and script contract (rules 17–25). Run them from anywhere:
+
+```bash
+"$HOME/.ai-tools/tools/test.sh"                    # run every case
+"$HOME/.ai-tools/tools/test.sh" --case install --keep   # one case file, keep the sandbox
+```
+
+```powershell
+& "$env:USERPROFILE\.ai-tools\tools\test.ps1"                       # run every case
+& "$env:USERPROFILE\.ai-tools\tools\test.ps1" -Case install -Keep   # one case file, keep the sandbox
+```
+
+`-Runner <path>` picks the PowerShell executable the scripts under test run with (default: the current host's own).
+
+The fixture stages, before any script runs: a pre-populated harness layout for all seven harnesses, a local `origin` git remote so no run reaches the network, a foreign file on a destination path, a locally modified copy, an unmanaged Grok block, and a stale link from an older layout. Against it, the suites assert:
+
+- symlink first, copy fallback (rule 17)
+- never overwrite a user file (rule 18)
+- never remove what ai-tools did not create (rule 19)
+- idempotency and skip-and-report on conflict (rule 20)
+- `$HOME/AGENTS.md` untouched (rule 22)
+- destructive flags default to refuse, `--dry-run` changes nothing (rule 25)
+- exit codes `0`/`1`/`2` (rule 25)
+
+Two exclusions, both deliberate: `scripts/cmd` is not covered — the shims only delegate to PowerShell and carry no contract of their own; and `tools/test.ps1` runs on Windows only, because `scripts/powershell` builds Windows paths by construction.
 
 ## Safety rules
 

@@ -8,8 +8,7 @@ Status: `idea` (not refined) · `next` (agreed, ready to refine) · `doing` (a p
 
 | # | Story | Status |
 |---|---|---|
-| 2 | [Sandboxed script test suite](#2-sandboxed-script-test-suite) | idea |
-| 3 | [Skill wrapper, skill base, shared contract](#3-skill-wrapper-skill-base-shared-contract) | doing |
+| 14 | [PowerShell suite: 68 real failures](#14-powershell-suite-68-real-failures) | next |
 | 4 | [Health-check entry point](#4-health-check-entry-point) | idea |
 | 5 | [The missing testing role](#5-the-missing-testing-role) | idea |
 | 6 | [Changelog for alpha testers](#6-changelog-for-alpha-testers) | idea |
@@ -23,15 +22,11 @@ Status: `idea` (not refined) · `next` (agreed, ready to refine) · `doing` (a p
 
 ## Quality net
 
-### 2. Sandboxed script test suite
+### 14. PowerShell suite: 68 real failures
 
-`install`, `remove`, `update`, and `reinstall` mutate the user's real `$HOME` and harness configuration, and their contract — idempotency, skip-and-report on conflict, never overwriting user files, symlink-to-copy fallback, destructive flags defaulting to refuse, exit codes `0`/`1`/`2` (rules 17–25) — is proven today only by running them for real. Build a test suite that runs each script against a fake `HOME` fixture containing a pre-populated harness layout, a foreign file on a destination path, and a locally modified copy, asserting the contract on both the shell and PowerShell sides, wired into the same CI as story 1. Route: `/vibe-ai-tools`.
+The sandboxed test suite from story 2 shipped with a PowerShell runner that dot-sourced its case files inside a function, so every `Case-*` landed in a scope that died on return: all 56 cases failed with `CommandNotFoundException`, the failures never touched the counters, and the job reported `done: 0 ok, 0 warnings` and exited `0` — a green `windows-latest` that proved nothing, for as long as the suite existed. With the scope and the counting fixed, the cases run for the first time and the truth appears: **153 ok, 68 warnings**. Work through those 68 and decide, for each, whether it is a harness bug or a genuine `scripts/powershell` defect — the largest group, 22 `symlink target unexpected`, is the harness comparing a `$env:TEMP` short path (`C:\Users\RUNNER~1\...`) against the long form `Get-LinkTarget` returns, and one fix clears a third of them; then 21 `output missing` and 15 `expected exit N, got M` around output capture and exit-code propagation through `T-InvokeUnderSandbox`, 6 dry-run snapshot `changed`, and a read-only `HOME` assignment in `Case-InstallNoSymlinkFallback`. Nothing here can be reproduced without Windows, so each iteration costs a CI cycle; budget for that rather than guessing. Until this lands, the story-2 pull request stays red. Route: `/planner-ai-tools`.
 
 ## Consistency
-
-### 3. Skill wrapper, skill base, shared contract
-
-A `SKILL.md` today is one file of 4.2k to 8.9k characters that mixes three things: the description a harness reads to decide whether to route to it, the four sections every agent-backed skill repeats verbatim (stake, model check, the three-route offer, the route bodies), and whatever is genuinely specific to that skill. Split it the way agents already are — a small wrapper carrying description and pointers, a base carrying behaviour, and a shared contract file read by path for what the six agent-backed skills have in common — so a change to the routing policy is one edit instead of six. **Verify the premise first**: the split was proposed for token economy, and that only holds where a harness preloads skill bodies into the session. In Claude Code it does not — only name and description reach the session context, and the body is read on invocation — so check the official documentation of all seven harnesses (rule 10) before committing to a shape, and let the finding decide whether the wrapper gets a size cap of its own. Even where the token argument fails, deduplication and symmetry with the agent layout stand on their own. Route: `/planner-ai-tools`.
 
 ### 4. Health-check entry point
 

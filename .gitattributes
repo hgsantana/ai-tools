@@ -2,3 +2,4 @@
 scripts/shell/*      text eol=lf
 scripts/powershell/* text eol=lf
 scripts/cmd/*.cmd    text eol=crlf
+tools/**             text eol=lf
