@@ -7,8 +7,8 @@
 | 1 | F | implementer · sonnet |
 | 2 | F | implementer · sonnet |
 | 3 | F | implementer · sonnet |
-| 4 | W | implementer · sonnet |
-| 5 | | |
+| 4 | F | implementer · sonnet |
+| 5 | W | implementer · sonnet |
 | 6 | F | implementer · sonnet |
 | 7 | | |
 

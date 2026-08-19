@@ -39,6 +39,18 @@ Checks:
                     form can hold one, in the vendor's spelling
   description parity same agent's description is identical across wrappers
   MODELS.md coverage every agents/<key>/ has a MODELS.md row and vice versa
+  instructions cap  USER-AGENTS.md is at most 8000 characters (rule 3)
+  wrapper cap       every agents/<harness>/* file is at most 1000 characters,
+                    frontmatter included (rule 6)
+  PowerShell BOM    every scripts/powershell/*.ps1 starts with ef bb bf
+                    (rule 26)
+  CMD ASCII         every scripts/cmd/*.cmd is pure ASCII (rule 26)
+  line endings      git ls-files --eol matches the declared eol= attribute:
+                    lf for shell/PowerShell, crlf for .cmd (rule 26)
+  executable bits   scripts/shell/*.sh, scripts/powershell/*.ps1, and
+                    tools/lint.sh are mode 100755 (rule 26)
+  no binaries       every tracked file under agents/, skills/, scripts/, and
+                    tools/ is text
 
 Exit codes: 0 clean, 1 aborted on a precondition, 2 finished with warnings.
 EOF
@@ -481,6 +493,128 @@ check_models_row_coverage() {
   done
 }
 
+# --- Format helpers -----------------------------------------------------------
+
+utf8_locale() {
+  # Prints the first installed UTF-8 locale from a short preference list, so
+  # char_count below counts characters, not bytes, on both BSD and GNU
+  # userlands. Empty output means none was found; callers fall back to the
+  # ambient environment.
+  local l
+  for l in C.UTF-8 C.utf8 en_US.UTF-8 en_US.utf8; do
+    if locale -a 2>/dev/null | grep -qix "$l"; then echo "$l"; return 0; fi
+  done
+  return 1
+}
+UTF8_LOCALE=$(utf8_locale 2>/dev/null || true)
+
+char_count() {
+  # usage: char_count <file> -- character count under a UTF-8 locale when one
+  # is installed, so em dashes and accented text count as one character each.
+  if [ -n "$UTF8_LOCALE" ]; then
+    LC_ALL="$UTF8_LOCALE" wc -m <"$1" | tr -d ' '
+  else
+    wc -m <"$1" | tr -d ' '
+  fi
+}
+
+check_instructions_cap() {
+  local f count cap=8000
+  f="$AI_TOOLS/USER-AGENTS.md"
+  if [ ! -f "$f" ]; then warn "missing: $f"; return; fi
+  count=$(char_count "$f")
+  if [ "$count" -le "$cap" ]; then
+    ok "USER-AGENTS.md within cap: $count/$cap chars (headroom $((cap - count)))"
+  else
+    warn "USER-AGENTS.md exceeds $cap chars: $count (over by $((count - cap)))"
+  fi
+}
+
+check_wrapper_cap() {
+  local h f count cap=1000 max=0 maxf=""
+  for h in $(harnesses); do
+    for f in "$AI_TOOLS/agents/$h"/*; do
+      [ -f "$f" ] || continue
+      count=$(char_count "$f")
+      if [ "$count" -le "$cap" ]; then ok "wrapper within cap: $f ($count/$cap)"
+      else warn "wrapper exceeds $cap chars: $f ($count)"; fi
+      if [ "$count" -gt "$max" ]; then max=$count; maxf=$f; fi
+    done
+  done
+  [ -n "$maxf" ] && ok "largest wrapper: $maxf ($max/$cap, headroom $((cap - max)))"
+}
+
+check_powershell_bom() {
+  local f bom
+  for f in "$AI_TOOLS"/scripts/powershell/*.ps1; do
+    [ -f "$f" ] || continue
+    bom=$(od -An -tx1 -N3 "$f" 2>/dev/null | tr -d ' \n')
+    if [ "$bom" = "efbbbf" ]; then ok "PowerShell BOM present: $f"
+    else warn "PowerShell file missing BOM (ef bb bf): $f"; fi
+  done
+}
+
+check_cmd_ascii() {
+  local f n
+  for f in "$AI_TOOLS"/scripts/cmd/*.cmd; do
+    [ -f "$f" ] || continue
+    n=$(tr -d '\000-\177' <"$f" | wc -c | tr -d ' ')
+    if [ "$n" = 0 ]; then ok "CMD is pure ASCII: $f"
+    else warn "CMD file has non-ASCII byte(s): $f ($n)"; fi
+  done
+}
+
+check_line_endings() {
+  # Reads git's own .gitattributes resolution via `ls-files --eol` rather
+  # than reimplementing it (rule 26): index side must be lf, working-tree
+  # side and the declared attribute must match the expected style per path.
+  local line path fields idx work attr expected
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    path=${line##*$'\t'}
+    fields=${line%%$'\t'*}
+    idx=$(printf '%s\n' "$fields" | awk '{for(i=1;i<=NF;i++) if ($i ~ /^i\//) print $i}')
+    work=$(printf '%s\n' "$fields" | awk '{for(i=1;i<=NF;i++) if ($i ~ /^w\//) print $i}')
+    attr=$(printf '%s\n' "$fields" | grep -o 'eol=[a-z]*' || true)
+    case "$path" in
+      *.cmd) expected=crlf ;;
+      *)     expected=lf ;;
+    esac
+    if [ "$attr" != "eol=$expected" ]; then
+      warn "line-ending attribute unexpected: $path (attr: ${attr:-none}, expected: eol=$expected)"
+    elif [ "$idx" != "i/lf" ]; then
+      warn "index side not lf: $path ($idx)"
+    elif [ "$work" != "w/$expected" ]; then
+      warn "working-tree line endings mismatch: $path ($work, wants eol=$expected)"
+    else
+      ok "line endings correct: $path ($expected)"
+    fi
+  done < <(git -C "$AI_TOOLS" ls-files --eol -- scripts/shell scripts/powershell scripts/cmd)
+}
+
+check_executable_bits() {
+  local f mode
+  for f in "$AI_TOOLS"/scripts/shell/*.sh "$AI_TOOLS"/scripts/powershell/*.ps1 "$AI_TOOLS/tools/lint.sh"; do
+    [ -f "$f" ] || continue
+    mode=$(git -C "$AI_TOOLS" ls-files -s -- "$f" | awk '{print $1}')
+    if [ "$mode" = 100755 ]; then ok "executable bit set: $f"
+    else warn "executable bit missing (mode: ${mode:-untracked}): $f"; fi
+  done
+}
+
+check_no_binaries() {
+  local f p
+  for p in $(git -C "$AI_TOOLS" ls-files agents skills scripts tools); do
+    f="$AI_TOOLS/$p"
+    [ -f "$f" ] || continue
+    if [ ! -s "$f" ] || grep -Iq . "$f" 2>/dev/null; then
+      ok "text: $f"
+    else
+      warn "binary or non-text file in a shipped path: $f"
+    fi
+  done
+}
+
 # --- Run -----------------------------------------------------------------------
 
 check_wrapper_coverage
@@ -492,5 +626,12 @@ check_model_parity
 check_effort_pinning
 check_description_parity
 check_models_row_coverage
+check_instructions_cap
+check_wrapper_cap
+check_powershell_bom
+check_cmd_ascii
+check_line_endings
+check_executable_bits
+check_no_binaries
 
 finish
