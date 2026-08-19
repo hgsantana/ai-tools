@@ -49,13 +49,13 @@ Normative for every human and every AI maintaining this repository.
 
 1. This `README.md` is the single source of truth for this repository: explanation, rules, and processes (install, remove, update, reinstall). Their executable form is `scripts/` (rules 23–26).
 2. AIs working on this repository take instructions **about this repository** only from this README. User-wide or harness-global files — including an installed `USER-AGENTS.md` — yield to it here.
-3. `USER-AGENTS.md` is an install artifact: user-wide harness instructions, not a rule file for this repository. Every shipped artifact must fit every supported harness that consumes it. The tightest constraint governs (today: Antigravity's 12,000-character cap on rules files). Register constraints in [Supported harnesses](#supported-harnesses); a stricter one updates those notes and the affected artifacts in the same commit.
+3. `USER-AGENTS.md` is an install artifact: user-wide harness instructions, not a rule file for this repository. It is capped at a self-imposed **8,000 characters**, deliberately tighter than any harness constraint, to force concision. Every shipped artifact must fit every supported harness that consumes it: the tightest constraint governs (today: Antigravity's 12,000-character cap on rules files, looser than the self-imposed cap). Register constraints in [Supported harnesses](#supported-harnesses); a stricter one updates those notes and the affected artifacts in the same commit.
 4. Pre-release (`0.x`/ALPHA at the top): no backward compatibility. This README describes the current state only; breaking changes carry no migration notes. Fix an older layout with [Reinstallation](#reinstallation) and its stale-link sweep. Bump the version in the same commit as any change to shipped content or process. Backward-compatibility records begin at the first stable release.
 
 ### Structure and authoring
 
 5. Every agent has a harness-agnostic **base** at `agents/<name>.md` (full behaviour) and one **wrapper** per harness at `agents/<harness-short-name>/<agent-name>.<ext>`. A base states behaviour **mode-agnostically**: it says to ask the user or to require approval, never how that reaches them. How it reaches them belongs to whoever loads the base — `agents/SUBAGENT-CONTRACT.md` when a wrapper spawns it, the skill's *run it here* route when a session runs it.
-6. A wrapper header is only harness syntax (frontmatter or TOML, model pinning, file name). Its body is exactly, in this order: **(1)** the `MODELS.md` pointer naming this harness's row, only when the base cites **planner** / **implementer** / **mechanical**; **(2)** the pointer to `$HOME/.ai-tools/agents/SUBAGENT-CONTRACT.md`; **(3)** the pointer to `$HOME/.ai-tools/agents/<name>.md`, which prevails over the contract except on the channel to the user. Anything else is drift — move it to the base or to the contract. Canonical body: [wrapper authoring](#model-map-and-wrapper-authoring).
+6. A wrapper header is only harness syntax (frontmatter or TOML, model pinning, file name). Its body is exactly, in this order: **(1)** the `MODELS.md` pointer naming this harness's row, only when the base cites **planner** / **implementer** / **mechanical**; **(2)** the pointer to `$HOME/.ai-tools/agents/SUBAGENT-CONTRACT.md`; **(3)** the pointer to `$HOME/.ai-tools/agents/<name>.md`, which prevails over the contract except on the channel to the user. Anything else is drift — move it to the base or to the contract. A wrapper is at most **1,000 characters**, frontmatter included: it is what the harness reads to decide whether to route to the agent, so it carries the summary and nothing else — the behaviour lives in the base it points to. Canonical body: [wrapper authoring](#model-map-and-wrapper-authoring).
 7. Skills are optional. A skill is harness-agnostic: one file, `skills/<name>/SKILL.md`, in one directory every harness registers as-is — no per-harness copies, no wrappers.
 8. A skill must run on **any** model the session provides: it never requires a model or category and never refuses over one. It may read `MODELS.md` and advise which model would serve and how to switch — the user may decline; that is not a gate. If it cannot function without a given model, it must be an agent, whose wrapper pins the model. An agent-backed skill therefore owns the choice of runner and never makes it itself: it states the stake and that model check in one message, then asks for one of three routes — **dispatch the agent** (its wrapper pins the model), **run it here** (this session reads the base and follows it, loading no subagent contract — it is not a subagent), or **stop**.
 9. Skill frontmatter: only universally accepted keys (`name`, `description`) plus optional keys every supported harness tolerates (e.g. `argument-hint`). A key any supported harness rejects does not belong in a shared file.
@@ -115,12 +115,14 @@ A map row is reproducible research, never recollection. Re-run on every model re
 Every shipped agent runs as **planner** except `maintainer-ai-tools`, which runs as **implementer** (it drives this README's scripts). Each wrapper pins that category from `MODELS.md` in the header the harness requires. Body, in this order (rule 6):
 
 ```markdown
-Category → model for this harness comes from `$HOME/.ai-tools/MODELS.md` (Windows: `%USERPROFILE%\.ai-tools\MODELS.md`), row `<harness key>`. Resolve every category through it — your own and any you spawn; never assume a model name.
+On Windows, %USERPROFILE% replaces $HOME.
 
-You are a spawned subagent: the shared contract for that is `$HOME/.ai-tools/agents/SUBAGENT-CONTRACT.md` (Windows: `%USERPROFILE%\.ai-tools\agents\SUBAGENT-CONTRACT.md`).
+Category → model comes from `$HOME/.ai-tools/MODELS.md`, row `<harness key>`. Resolve every category through it — your own and any you spawn; never assume a model name.
+
+You are a spawned subagent: your shared contract is `$HOME/.ai-tools/agents/SUBAGENT-CONTRACT.md`.
 Read it and follow it — it governs your channel to the user and your report.
 
-The base file for this agent is `$HOME/.ai-tools/agents/<name>.md` (Windows: `%USERPROFILE%\.ai-tools\agents\<name>.md`).
+Your base file is `$HOME/.ai-tools/agents/<name>.md`.
 Read it and follow it in full — it is the absolute rule set for this agent; the contract above prevails only on your channel to the user.
 ```
 

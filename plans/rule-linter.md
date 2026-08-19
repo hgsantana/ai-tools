@@ -5,11 +5,11 @@
 | Stage | Status | Agent |
 |------:|:------:|-------|
 | 1 | F | implementer · sonnet |
-| 2 | W | implementer · sonnet |
-| 3 | | |
+| 2 | F | implementer · sonnet |
+| 3 | W | implementer · sonnet |
 | 4 | | |
 | 5 | | |
-| 6 | | |
+| 6 | W | implementer · sonnet |
 | 7 | | |
 
 ## Goal
