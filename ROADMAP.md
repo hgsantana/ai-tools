@@ -21,10 +21,6 @@ Status: `idea` (not refined) · `next` (agreed, ready to refine) · `doing` (a p
 
 ## Consistency
 
-### 3. Skill wrapper, skill base, shared contract
-
-A `SKILL.md` today is one file of 4.2k to 8.9k characters that mixes three things: the description a harness reads to decide whether to route to it, the four sections every agent-backed skill repeats verbatim (stake, model check, the three-route offer, the route bodies), and whatever is genuinely specific to that skill. Split it the way agents already are — a small wrapper carrying description and pointers, a base carrying behaviour, and a shared contract file read by path for what the six agent-backed skills have in common — so a change to the routing policy is one edit instead of six. **Verify the premise first**: the split was proposed for token economy, and that only holds where a harness preloads skill bodies into the session. In Claude Code it does not — only name and description reach the session context, and the body is read on invocation — so check the official documentation of all seven harnesses (rule 10) before committing to a shape, and let the finding decide whether the wrapper gets a size cap of its own. Even where the token argument fails, deduplication and symmetry with the agent layout stand on their own. Route: `/planner-ai-tools`.
-
 ### 4. Health-check entry point
 
 `verify` is a first-class read-only process with a script on all three platforms, but it is the only one without a slash command: the user can update, remove, and reinstall by name, yet has to remember a path to check whether their installation is intact. Add a `verify-ai-tools` skill fronting the same `maintainer-ai-tools` agent, which runs `verify`, and — this is the point — maps each finding onto the matching entry in the README's Troubleshooting section: dangling links to Reinstallation, stale copies to Update, an agent on the wrong model to the Grok pin or the wrapper comparison. Route: `/vibe-ai-tools`.
