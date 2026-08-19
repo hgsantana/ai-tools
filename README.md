@@ -1,6 +1,6 @@
 # ai-tools
 
-> **Version 0.0.22-ALPHA** — under active development. Usable for testing; no guarantees, and no backward compatibility between alpha versions (rule 4).
+> **Version 0.0.23-ALPHA** — under active development. Usable for testing; no guarantees, and no backward compatibility between alpha versions (rule 4).
 
 ## What is this repository
 
@@ -146,6 +146,34 @@ On top of rules 23–25:
 - **Dry run** — `--dry-run` reports every action and changes nothing: the findings/approval report for unattended runs.
 - **Destructive flags** — `--discard-local` (reset discarding local work in the clone), `--instructions` (unlink global instructions on removal), `--purge` (delete the clone). Without the flag the script refuses or skips; it never guesses.
 - **Symlink fallback** — where the OS refuses symlinks (Windows without Developer Mode or elevation, mounts without symlink support), agents and skills install as copies, reported `copied (will not track updates)`. Global instructions are never copied — offer an include pointer so this repo stays the single source of truth.
+
+## Development checks
+
+`tools/` holds development tooling — `scripts/` remains exactly the five installation processes (rules 23–25). [`tools/lint.sh`](tools/lint.sh) is a development check, not an installation process: it enforces this repository's mechanically verifiable rules against the tree it runs in, with no dependency beyond `git`, `grep`, `awk`, `sed`, `wc`, `od`, `tr`. Run it from anywhere:
+
+```bash
+"$HOME/.ai-tools/tools/lint.sh"              # check the working tree
+"$HOME/.ai-tools/tools/lint.sh" --base <ref> # also check the version bump against <ref>
+```
+
+Check families:
+
+- **wrapper coverage** — every agent has exactly one wrapper per harness, no orphans (rule 5)
+- **naming** — agent bases, wrappers, skill directories, and frontmatter `name:` all end in `-ai-tools` (rule 13)
+- **skill frontmatter** — every `skills/*/SKILL.md` exists, keys a subset of `name`/`description`/`argument-hint`, and `name:` matches its directory (rule 9)
+- **wrapper body** — the body is reconstructed from this README's canonical text and compared exactly (rule 6)
+- **model parity and effort pinning** — every pinned model and effort resolves through `MODELS.md` (rules 11–12); Grok wrappers declare no model
+- **description parity** — an agent's `description` is identical across all seven wrappers
+- **`MODELS.md` row coverage** — every harness directory has a row and vice versa (rule 12)
+- **size caps** — `USER-AGENTS.md` at most 8,000 characters (rule 3), every wrapper at most 1,000 (rule 6)
+- **encodings and endings** — PowerShell BOM, pure-ASCII CMD, line endings (`git ls-files --eol`), executable bits, no binaries in shipped paths (rule 26)
+- **version bump** — only with `--base <ref>`: a change under `agents/`, `skills/`, `scripts/`, or `USER-AGENTS.md` requires the README version to change too (rule 4)
+
+Exit codes: `0` clean, `1` aborted on a precondition (unknown flag, `--base` without a value), `2` finished with findings. CI (`.github/workflows/lint.yml`) runs `tools/lint.sh --base <event base>` and then `shellcheck scripts/shell/*.sh tools/*.sh` on every push and pull request.
+
+`tools/lint.sh` ships **without** a PowerShell mirror, deliberately outside rules 23–25's contract: a mirror only a Windows maintainer exercises drifts in silence, which is exactly the failure this linter exists to catch. Windows contributors run it from Git Bash.
+
+When a rule in this README becomes mechanically verifiable, add its check to `tools/lint.sh` and its rule number to the list above in the same commit — the two caps above (rules 3, 6) are stated here as rules; the linter only enforces them, and this README is the number a reader trusts.
 
 ## Safety rules
 

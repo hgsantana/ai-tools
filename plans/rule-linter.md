@@ -10,7 +10,7 @@
 | 4 | F | implementer · sonnet |
 | 5 | F | implementer · sonnet |
 | 6 | F | implementer · sonnet |
-| 7 | W | implementer · sonnet |
+| 7 | F | implementer · sonnet |
 
 ## Goal
 

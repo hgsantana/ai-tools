@@ -8,7 +8,6 @@ Status: `idea` (not refined) · `next` (agreed, ready to refine) · `doing` (a p
 
 | # | Story | Status |
 |---|---|---|
-| 1 | [Rule linter](#1-rule-linter) | doing |
 | 2 | [Sandboxed script test suite](#2-sandboxed-script-test-suite) | idea |
 | 3 | [Skill wrapper, skill base, shared contract](#3-skill-wrapper-skill-base-shared-contract) | idea |
 | 4 | [Health-check entry point](#4-health-check-entry-point) | idea |
@@ -23,10 +22,6 @@ Status: `idea` (not refined) · `next` (agreed, ready to refine) · `doing` (a p
 | 13 | [Cost visibility in the dispatch ledger](#13-cost-visibility-in-the-dispatch-ledger) | idea |
 
 ## Quality net
-
-### 1. Rule linter
-
-Almost every invariant in this repository is prose that only a careful reader enforces: the size cap on `USER-AGENTS.md` (rule 3), the canonical wrapper body and its ordered pointers (rule 6), `MODELS.md` and wrapper headers always matching (rule 12), the `-ai-tools` suffix on every installed name (rule 13), LF/CRLF pinning, PowerShell UTF-8 **with** BOM and pure-ASCII CMD shims (rule 26), and the version bump accompanying any change to shipped content (rule 4). Ship `tools/lint.sh` — shell only, sourcing `scripts/shell/lib.sh` rather than duplicating it — checking all of these and exiting `0`/`2`, plus a GitHub Actions workflow running it and `shellcheck` on every push and pull request, so a drifting wrapper or an oversized instructions file fails before it is installed on anyone's machine. The same story tightens two caps and shortens the canonical wrapper body to make one of them reachable. Planned: `plans/rule-linter.md`. Route: `/orchestrator-ai-tools`.
 
 ### 2. Sandboxed script test suite
 

@@ -41,3 +41,20 @@ Suggested message: `docs: document the rule linter and bump the version`
 - Parallel-safe with: none
 
 ## Implementation log
+
+- Added `## Development checks` subsection to `README.md`, placed between `## Scripts` and `## Safety rules`. Documents each check family with its rule number(s), the invocation, exit codes, CI wiring (`.github/workflows/lint.yml` runs `tools/lint.sh --base <event base>` then `shellcheck`), the shell-only decision (no PowerShell mirror, reason stated, Git Bash pointed to for Windows contributors), the `scripts/` vs `tools/` split, and the instruction to add a check + rule number in the same commit a rule becomes mechanically verifiable. Presents the 8,000/1,000 caps as README-stated rules (3, 6) with the linter as enforcement only, per step 4.
+- Bumped README version line (line 3) from `0.0.22-ALPHA` to `0.0.23-ALPHA`, wording otherwise unchanged.
+- `ROADMAP.md`: removed story 1's table row (`| 1 | [Rule linter]... | doing |`) and its `### 1. Rule linter` section body under `## Quality net`. No other row/anchor renumbered, per the plan's instruction not to renumber.
+- Relative link added to README: `[`tools/lint.sh`](tools/lint.sh)` — resolves; file exists at `/home/wsl/.ai-tools/tools/lint.sh` (mode 100755). `.github/workflows/lint.yml` is referenced in backticks (not a markdown link) and also exists at `/home/wsl/.ai-tools/.github/workflows/lint.yml`.
+
+### Test evidence
+
+- `./tools/lint.sh` (no flags), run after all edits: exit `0`. Tail: `done: 498 ok, 1 skipped, 0 warnings` (the one skip is the version-bump check, which needs `--base`).
+- `./tools/lint.sh --base master`, run after all edits: **exit `2`**, not `0`. The version-bump check (`check_version_bump` in `tools/lint.sh`) compares `git show <base>:README.md` against `git show HEAD:README.md` — committed content only, via `git diff --name-only base...HEAD` for the changed-paths list. Since this stage's instructions forbid committing, the working-tree version bump (now `0.0.23-ALPHA`) is invisible to that check: `HEAD:README.md` still reads `0.0.22-ALPHA`, so it reports "still 0.0.22-ALPHA, was 0.0.22-ALPHA" and warns, because `agents/**` wrapper files already differ between `master` and `HEAD` (from stages 1–6's committed work). This is expected to resolve to exit `0` once this stage's edit is committed — the check inherently needs a commit to observe a version bump, and committing is out of this stage's scope per the Dispatch instructions ("Do not commit").
+- Command run: `./tools/lint.sh --base master > /tmp/lintout.txt 2>&1; echo "EXIT=$?"` → `EXIT=2`.
+
+## Dispatch log
+
+| Attempt | Status | Category | Runner | Session ID | Outcome |
+|---------|--------|----------|--------|------------|---------|
+| 1 | V | implementer | sonnet | afcc8e97d5ca8afc5 | V -> accepted |
