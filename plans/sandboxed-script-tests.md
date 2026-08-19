@@ -8,7 +8,7 @@
 | 2 | F | implementer / sonnet |
 | 3 | F | implementer / sonnet |
 | 4 | F | implementer / sonnet |
-| 5 | | |
+| 5 | F | implementer / sonnet |
 | 6 | | |
 | 7 | | |
 | 8 | | |
