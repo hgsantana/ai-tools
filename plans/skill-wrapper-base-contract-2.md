@@ -95,3 +95,40 @@ Suggested message: `refactor(skills): split the five single-agent skills into wr
 ## Implementation log
 
 (Append-only log added by implementers and planner during execution.)
+
+- Read `skills/SKILL-CONTRACT.md`, README.md rule 7 (`### Structure and authoring`), the "Model map and wrapper authoring" section (canonical skill wrapper body, lines 132-146), and all five pre-split `skills/<name>/SKILL.md` files.
+- Created five bases at `skills/az-ai-tools.md`, `skills/gc-ai-tools.md`, `skills/gh-ai-tools.md`, `skills/planner-ai-tools.md`, `skills/orchestrator-ai-tools.md`, each carrying: the top-of-file wrapper/edit-here note, the verbatim scope paragraph, an `## Agent and category` section naming the agent, its base path, and category **planner**, the verbatim `## Stake` body, a `## Route A — dispatch` section holding only the skill-specific remainder per the Files/Steps mapping table (single kept sentence for `az`/`gc`/`planner`, all three original bullets for `gh`, two kept fragments for `orchestrator`), a `## Route B — run it here` section holding only the original first bullet verbatim, and the verbatim `## Report` body.
+- Rewrote the five wrappers (`skills/az-ai-tools/SKILL.md`, `skills/gc-ai-tools/SKILL.md`, `skills/gh-ai-tools/SKILL.md`, `skills/planner-ai-tools/SKILL.md`, `skills/orchestrator-ai-tools/SKILL.md`) to the README's canonical body: unchanged frontmatter, unchanged H1, one scope sentence (first sentence of the old scope paragraph, verbatim through the first full stop), then the two pointer paragraphs (`SKILL-CONTRACT.md`, then `skills/<name>.md`), verbatim per the README template.
+- `## 2. Model check`, `## 3. Offer, then ask`, and the last two `Route B` bullets were removed from all five files without rewording — confirmed byte-identical against `skills/SKILL-CONTRACT.md` sections 2, 3, and 5 (bullets 2-3) before deletion.
+- Ran `wc -c` on all ten new/modified files:
+  ```
+  919 skills/az-ai-tools/SKILL.md
+  938 skills/gc-ai-tools/SKILL.md
+  947 skills/gh-ai-tools/SKILL.md
+  1026 skills/planner-ai-tools/SKILL.md
+  895 skills/orchestrator-ai-tools/SKILL.md
+  1538 skills/az-ai-tools.md
+  1552 skills/gc-ai-tools.md
+  2016 skills/gh-ai-tools.md
+  1926 skills/planner-ai-tools.md
+  1859 skills/orchestrator-ai-tools.md
+  ```
+  All five wrappers are well under the 2,000-character cap (max 1,026, `planner-ai-tools/SKILL.md`); no description was touched.
+- Textual regression, per skill: diffed `git show HEAD:skills/<name>/SKILL.md` against the concatenation of the new wrapper + `skills/SKILL-CONTRACT.md` + new base (word-set diff plus targeted `grep`). Every surviving mismatch traced to either (a) tokenization punctuation artifacts (e.g. `impact;` vs `impact.`) or (b) the intended, plan-mandated rewording of the model-check "row's **planner** column" line into the contract's generic "row's column for the category the base names" plus the base's explicit `**planner**` category statement, and the Route A "reusing the same agent..." fragment folding into the contract's "Reuse the same agent and its context..." sentence. No instruction was lost; every one now lives in exactly one of the three files.
+- `ls -d skills/*-ai-tools` still lists exactly nine skill directories (`az-ai-tools gc-ai-tools gh-ai-tools orchestrator-ai-tools planner-ai-tools reinstall-ai-tools remove-ai-tools update-ai-tools vibe-ai-tools`); the new `skills/<name>.md` base files are plain files, not directories, so the installer's glob does not pick them up.
+- Ran `bash tools/lint.sh` from the worktree root: exit code `0`. Summary line: `done: 499 ok, 1 skipped, 0 warnings` (the one skip is `SKIP: version bump check needs --base <ref> (the lint workflow supplies it)`, unrelated to this stage). No *skill frontmatter*, *skill name match*, or *naming* finding failed; all five touched skills show `ok: skill frontmatter key: name/description/argument-hint` and `ok: skill name matches directory`.
+- Files outside this stage's scope (`skills/reinstall-ai-tools.md`, `skills/remove-ai-tools.md`, `skills/update-ai-tools.md`, `skills/vibe-ai-tools.md` and their wrappers) appeared modified/untracked in `git status` — these belong to sibling stages 3/4 running in parallel in the same worktree and were left untouched.
+
+## Dispatch log
+
+| Attempt | Status | Category | Runner | Session ID | Outcome |
+|---------|--------|----------|--------|------------|---------|
+| 1 | W | implementer | sonnet | ac20482fc5ee142ff | V → accepted |
+
+**Status: V**
+
+### Planner validation (attempt 1)
+
+Diff inspected. Five bases carry the pointer note, the verbatim scope paragraph, `## Agent and category` naming the agent, its base path, and **planner**, the verbatim stake, the mapped Route A/Route B specifics, and the Report. Five wrappers hold frontmatter (unchanged), H1, one scope line, two pointer paragraphs; sizes 895–1,026 characters, all ≤ 2,000. `ls -d skills/*-ai-tools` still lists nine directories. A line-level regression sweep of every pre-split file against wrapper + contract + base found no lost instruction: each reported line-level mismatch is text the contract now states generically (model check category, spawn announcement, question relay, agent-context reuse) or a bullet-marker difference. `tools/lint.sh` exit 0.
+
+**Status: F**
