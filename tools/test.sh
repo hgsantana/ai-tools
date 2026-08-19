@@ -137,10 +137,20 @@ if [ -n "$CASES" ]; then
 else
   RUN_CASES="$ALL_CASES"
 fi
+# Vacuity guard, per run: fail loudly rather than reaching finish with a
+# clean (zero-case) count. t_discover_case_functions above already covers
+# empty discovery; this covers a resolved-but-empty run set.
+[ -n "$(printf '%s' "$RUN_CASES" | tr -d '[:space:]')" ] || fatal "no cases resolved to run"
 
 for T_CASE in $RUN_CASES; do
   info "case: $T_CASE"
+  before_count=$((OK + WARN))
   "$T_CASE"
+  # Vacuity guard, per case: a case that ran without moving OK or WARN
+  # asserted nothing -- catches silent non-terminating failures and no-op
+  # cases alike.
+  after_count=$((OK + WARN))
+  [ "$after_count" -gt "$before_count" ] || warn "$T_CASE: asserted nothing"
 done
 
 finish

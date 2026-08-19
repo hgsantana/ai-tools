@@ -96,10 +96,15 @@ if (-not $script:T_HomeForm) {
 }
 Info "HOME override form for $($script:T_Runner): $($script:T_HomeForm)"
 
-# --- Case discovery by glob (mirrors tools/test.sh) -------------------------
+# --- Case discovery + sourcing (mirrors tools/test.sh) ----------------------
 # Every tools/test/*.ps1 other than lib.ps1 is a case file: it defines one
 # or more Case-* functions, which this runner dot-sources and calls. Nothing
 # registers a case in a central list — a new case file needs no edit here.
+#
+# Sourced here, at script top level (not inside a function): dot-sourcing a
+# file inside a function scopes the functions it defines to that function,
+# and they vanish on return, so "& $c" below could never resolve them. One
+# sourcing pass at this scope serves both -Help and the run.
 
 function T-DiscoverCaseFiles {
   Get-ChildItem -LiteralPath (Join-Path $script:AI_TOOLS 'tools\test') -Filter '*.ps1' -File |
@@ -107,20 +112,16 @@ function T-DiscoverCaseFiles {
 }
 
 # $script:T_CaseMap: file-basename -> sorted array of Case-* functions it
-# defines, built by T-SourceCaseFiles. Lets -Case <name> resolve a case-file
-# basename to every Case-* function it defines.
+# defines. Lets -Case <name> resolve a case-file basename to every Case-*
+# function it defines.
 $script:T_CaseMap = @{}
-
-function T-SourceCaseFiles {
-  $script:T_CaseMap = @{}
-  foreach ($f in T-DiscoverCaseFiles) {
-    $base = $f.BaseName
-    $before = @(Get-ChildItem function:\Case-* -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name)
-    . $f.FullName
-    $after = @(Get-ChildItem function:\Case-* -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name)
-    $new = @($after | Where-Object { $before -notcontains $_ } | Sort-Object)
-    $script:T_CaseMap[$base] = $new
-  }
+foreach ($f in T-DiscoverCaseFiles) {
+  $base = $f.BaseName
+  $before = @(Get-ChildItem function:\Case-* -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name)
+  . $f.FullName
+  $after = @(Get-ChildItem function:\Case-* -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name)
+  $new = @($after | Where-Object { $before -notcontains $_ } | Sort-Object)
+  $script:T_CaseMap[$base] = $new
 }
 
 function T-ResolveCase([string]$Name) {
@@ -133,7 +134,6 @@ function T-ResolveCase([string]$Name) {
 }
 
 if ($Help) {
-  T-SourceCaseFiles
   Write-Output 'usage: test.ps1 [-Case <name>[,<name>...]] [-Keep] [-Runner <path>] [-Help]'
   Write-Output ''
   Write-Output 'Development check: builds a disposable fake $HOME per case and runs the'
@@ -156,7 +156,6 @@ if ($Help) {
   exit 0
 }
 
-T-SourceCaseFiles
 $script:T_AllCases = @($script:T_CaseMap.Values | ForEach-Object { $_ } | Sort-Object -Unique)
 if ($script:T_AllCases.Count -eq 0) { Fatal 'no Case-* functions discovered under tools/test/*.ps1' }
 
@@ -172,9 +171,25 @@ if ($requestedCases.Count -gt 0) {
   $runCases = $script:T_AllCases
 }
 
+# Vacuity guard, per run: fail loudly rather than reaching Finish with a
+# clean (zero-case) count. The $script:T_AllCases check above already covers
+# empty discovery; this covers a resolved-but-empty run set.
+if ($runCases.Count -eq 0) { Fatal 'no cases resolved to run' }
+
 foreach ($c in $runCases) {
   Info "case: $c"
-  & $c
+  $before = $script:OK + $script:WARN
+  try {
+    & $c
+  } catch {
+    Warn "${c}: $($_.Exception.Message)"
+  }
+  # Vacuity guard, per case: a case that ran without moving OK or WARN
+  # asserted nothing -- catches silent non-terminating failures (the error
+  # records from a failing "& $c" would otherwise never touch the counters)
+  # as well as no-op cases.
+  $after = $script:OK + $script:WARN
+  if ($after -le $before) { Warn "${c}: asserted nothing" }
 }
 
 Finish
