@@ -1,0 +1,57 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/powershell
+{
+	"name": "PowerShell",
+	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+	"image": "mcr.microsoft.com/powershell:lts-debian-11",
+	"features": {
+		"ghcr.io/devcontainers/features/common-utils:2": {
+			"installZsh": "true",
+			"username": "vscode",
+			"upgradePackages": "false",
+			"nonFreePackages": "true"
+		},
+		"ghcr.io/sliekens/devcontainer-features/grok-build:1": {
+			"channel": "stable"
+		},
+		"ghcr.io/aqua/devcontainer-antigravity-cli/antigravity-cli:1": {},
+		"ghcr.io/devcontainers/features/github-cli:1": {}
+	},
+
+	// Bind read-only da configuracao de git/gh do host. A identidade vem daqui;
+	// as credenciais HTTPS vem do encaminhamento nativo da extensao Dev Containers.
+	"mounts": [
+		"source=${localEnv:HOME}/.gitconfig,target=/usr/local/share/host-git/gitconfig,type=bind,readonly",
+		"source=${localEnv:HOME}/.config/gh,target=/usr/local/share/host-gh,type=bind,readonly"
+	],
+
+
+	"postCreateCommand": "sudo chsh vscode -s \"$(which pwsh)\" && bash .devcontainer/setup-git.sh",
+	// A imagem base roda como root; sem isto, arquivos criados no workspace
+	// (inclusive objetos em .git) ficam root:root no host.
+	"remoteUser": "vscode",
+	"containerUser": "vscode",
+	"updateRemoteUserUID": true,
+
+	// Configure tool-specific properties.
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+			// Set *default* container specific settings.json values on container create.
+			"settings": { 
+				"terminal.integrated.defaultProfile.linux": "pwsh"
+			},
+			
+			// Add the IDs of extensions you want installed when the container is created.
+			"extensions": [
+				"ms-vscode.powershell"
+			]
+		}
+	}
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "root"
+}
