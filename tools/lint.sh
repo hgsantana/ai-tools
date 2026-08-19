@@ -42,13 +42,14 @@ Checks:
   instructions cap  USER-AGENTS.md is at most 8000 characters (rule 3)
   wrapper cap       every agents/<harness>/* file is at most 1000 characters,
                     frontmatter included (rule 6)
-  PowerShell BOM    every scripts/powershell/*.ps1 starts with ef bb bf
-                    (rule 26)
+  PowerShell BOM    every scripts/powershell/*.ps1, tools/test.ps1, and
+                    tools/test/*.ps1 starts with ef bb bf (rule 26)
   CMD ASCII         every scripts/cmd/*.cmd is pure ASCII (rule 26)
   line endings      git ls-files --eol matches the declared eol= attribute:
-                    lf for shell/PowerShell, crlf for .cmd (rule 26)
-  executable bits   scripts/shell/*.sh, scripts/powershell/*.ps1, and
-                    tools/lint.sh are mode 100755 (rule 26)
+                    lf for shell/PowerShell/tools, crlf for .cmd (rule 26)
+  executable bits   scripts/shell/*.sh, scripts/powershell/*.ps1,
+                    tools/lint.sh, and tools/test.sh are mode 100755
+                    (rule 26)
   no binaries       every tracked file under agents/, skills/, scripts/, and
                     tools/ is text
   version bump      CI-only, needs --base <ref> (skipped without it): when
@@ -564,7 +565,7 @@ check_wrapper_cap() {
 
 check_powershell_bom() {
   local f bom
-  for f in "$AI_TOOLS"/scripts/powershell/*.ps1; do
+  for f in "$AI_TOOLS"/scripts/powershell/*.ps1 "$AI_TOOLS"/tools/test.ps1 "$AI_TOOLS"/tools/test/*.ps1; do
     [ -f "$f" ] || continue
     bom=$(od -An -tx1 -N3 "$f" 2>/dev/null | tr -d ' \n')
     if [ "$bom" = "efbbbf" ]; then ok "PowerShell BOM present: $f"
@@ -607,12 +608,12 @@ check_line_endings() {
     else
       ok "line endings correct: $path ($expected)"
     fi
-  done < <(git -C "$AI_TOOLS" ls-files --eol -- scripts/shell scripts/powershell scripts/cmd)
+  done < <(git -C "$AI_TOOLS" ls-files --eol -- scripts/shell scripts/powershell scripts/cmd tools)
 }
 
 check_executable_bits() {
   local f mode
-  for f in "$AI_TOOLS"/scripts/shell/*.sh "$AI_TOOLS"/scripts/powershell/*.ps1 "$AI_TOOLS/tools/lint.sh"; do
+  for f in "$AI_TOOLS"/scripts/shell/*.sh "$AI_TOOLS"/scripts/powershell/*.ps1 "$AI_TOOLS/tools/lint.sh" "$AI_TOOLS/tools/test.sh"; do
     [ -f "$f" ] || continue
     mode=$(git -C "$AI_TOOLS" ls-files -s -- "$f" | awk '{print $1}')
     if [ "$mode" = 100755 ]; then ok "executable bit set: $f"

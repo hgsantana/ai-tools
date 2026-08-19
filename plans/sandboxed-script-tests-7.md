@@ -53,3 +53,28 @@ Suggested message: `ci: run the script test suites on Linux and Windows`
 ## Implementation log
 
 (Append-only.)
+
+- Renamed `.github/workflows/lint.yml` → `.github/workflows/ci.yml` with `git mv`; `name: ci`; kept the existing `lint` job's steps byte-identical apart from the `shellcheck` argument list, which is now `shellcheck -x -P scripts/shell -P tools/test scripts/shell/*.sh tools/*.sh tools/test/*.sh`. Added `test-shell` (`ubuntu-latest`, checkout `fetch-depth: 0` then `tools/test.sh`) and `test-powershell` (`windows-latest`, checkout `fetch-depth: 0` then `pwsh -NoProfile -File tools/test.ps1` and `powershell -NoProfile -File tools/test.ps1`). No `needs`, no `continue-on-error`.
+- `shellcheck` is not installed in this sandbox, so step 3's command could not be run here. Verified instead that every path the new argument list globs exists (`scripts/shell/*.sh`, `tools/*.sh`, `tools/test/*.sh`) and that `tools/test/lib.sh` carries a `# shellcheck shell=bash` header (matching `scripts/shell/lib.sh`'s). CI's `lint` job is the actual execution evidence.
+- Widened `tools/lint.sh`: `check_powershell_bom` now also globs `tools/test.ps1` and `tools/test/*.ps1`; `check_executable_bits` now also names `tools/test.sh`; `check_line_endings` now also reads `tools/` via `git ls-files --eol`. Updated the `--help` usage text for all three entries. Added `tools/** text eol=lf` to `.gitattributes`.
+- `bash tools/lint.sh` on the working tree: `done: 531 ok, 1 skipped, 0 warnings`, exit `0`. New `ok:` lines confirmed for the widened checks, e.g.:
+  - `ok: PowerShell BOM present: /home/wsl/.ai-tools/tools/test.ps1` (and `tools/test/{install,lib,remove,update}.ps1`)
+  - `ok: line endings correct: tools/test.sh (lf)` / `tools/test.ps1 (lf)` / `tools/test/lib.ps1 (lf)` (and the other `tools/test/*` files)
+  - `ok: executable bit set: /home/wsl/.ai-tools/tools/test.sh`
+  - The lone `SKIP:` is the pre-existing version-bump check (needs `--base`, which only CI supplies) — unrelated to this stage.
+- `bash tools/test.sh` locally: `done: 252 ok, 0 skipped, 0 warnings`, exit `0`.
+- `git check-attr eol -- tools/test.sh tools/test.ps1 tools/test/lib.ps1 tools/test/install.sh` → all four report `eol: lf`.
+- Negative evidence, performed only in a throwaway copy of the tree under `/tmp` (never the working tree), then deleted:
+  - Stripped the BOM from `tools/test.ps1` (`ef bb bf` removed) → `bash tools/lint.sh` reported `WARN: PowerShell file missing BOM (ef bb bf): .../tools/test.ps1`, `done: 530 ok, 1 skipped, 1 warnings`, exit `2`.
+  - Restored the BOM, then cleared the executable bit on `tools/test.sh` (`chmod -x` plus `git add` so the index mode actually changed to `100644`) → `bash tools/lint.sh` reported `WARN: executable bit missing (mode: 100644): .../tools/test.sh`, `done: 530 ok, 1 skipped, 1 warnings`, exit `2`.
+- Workflow YAML syntax: no `yamllint`/`actionlint` available locally; `python3 -c "import yaml; yaml.safe_load(open('.github/workflows/ci.yml'))"` parsed cleanly (`YAML OK`). The first push and CI run remain the real syntax/behaviour check.
+- **Not pushed** — pushing is reserved to the orchestrator, which holds the user's approval for it. The orchestrator must push this branch, capture the first green Actions run URL, and record per-job results (`lint`, `test-shell`, `test-powershell`) here before this stage's acceptance criterion "All three jobs green on the branch" can be checked off. A `windows-latest` failure in `test-powershell`, if it occurs, is a finding against stages 5–6 (the PowerShell suite itself), not a defect in this stage's CI wiring.
+- Files touched: exactly the three declared — `.github/workflows/lint.yml` → `.github/workflows/ci.yml` (renamed + edited), `tools/lint.sh`, `.gitattributes`. Nothing else in the working tree was modified by this stage.
+
+## Dispatch log
+
+| Attempt | Status | Category | Runner | Session ID | Outcome |
+|---------|--------|----------|--------|------------|---------|
+| 1 | W | implementer | sonnet | 3b6488c4-9b6b-48b5-9e1d-dddabc81c766 | V -> accepted (CI run URL filled in by the orchestrator after the push) |
+
+Status: V
