@@ -1,6 +1,6 @@
 # ai-tools
 
-> **Version 0.0.23-ALPHA** — under active development. Usable for testing; no guarantees, and no backward compatibility between alpha versions (rule 4).
+> **Version 0.0.25-ALPHA** — under active development. Usable for testing; no guarantees, and no backward compatibility between alpha versions (rule 4).
 
 ## What is this repository
 
@@ -179,10 +179,12 @@ Check families:
 - **naming** — agent bases, wrappers, skill directories, and frontmatter `name:` all end in `-ai-tools` (rule 13)
 - **skill frontmatter** — every `skills/*/SKILL.md` exists, keys a subset of `name`/`description`/`argument-hint`, and `name:` matches its directory (rule 9)
 - **wrapper body** — the body is reconstructed from this README's canonical text and compared exactly (rule 6)
+- **skill wrapper body** — every `skills/*/SKILL.md` matches this README's canonical skill wrapper body (rule 7)
+- **skill layout** — `skills/SKILL-CONTRACT.md` exists, and every skill has exactly one base at `skills/<name>.md`, with no orphans (rule 7)
 - **model parity and effort pinning** — every pinned model and effort resolves through `MODELS.md` (rules 11–12); Grok wrappers declare no model
 - **description parity** — an agent's `description` is identical across all seven wrappers
 - **`MODELS.md` row coverage** — every harness directory has a row and vice versa (rule 12)
-- **size caps** — `USER-AGENTS.md` at most 8,000 characters (rule 3), every wrapper at most 1,000 (rule 6)
+- **size caps** — `USER-AGENTS.md` at most 8,000 characters (rule 3), every wrapper at most 1,000 (rule 6), every skill wrapper at most 2,000 characters and every skill `description` at most 500 (rules 7, 9)
 - **encodings and endings** — PowerShell BOM, pure-ASCII CMD, line endings (`git ls-files --eol`), executable bits, no binaries in shipped paths (rule 26)
 - **version bump** — only with `--base <ref>`: a change under `agents/`, `skills/`, `scripts/`, or `USER-AGENTS.md` requires the README version to change too (rule 4)
 
