@@ -1,0 +1,38 @@
+name: lint
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run rule linter
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          base=""
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="$PR_BASE_SHA"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            if [ -n "$PUSH_BEFORE_SHA" ] && [ "$PUSH_BEFORE_SHA" != "0000000000000000000000000000000000000000" ]; then
+              base="$PUSH_BEFORE_SHA"
+            fi
+          fi
+          if [ -n "$base" ]; then
+            tools/lint.sh --base "$base"
+          else
+            tools/lint.sh
+          fi
+
+      - name: Run shellcheck
+        run: shellcheck scripts/shell/*.sh tools/*.sh
