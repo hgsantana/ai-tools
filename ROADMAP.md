@@ -8,7 +8,6 @@ Status: `idea` (not refined) · `next` (agreed, ready to refine) · `doing` (a p
 
 | # | Story | Status |
 |---|---|---|
-| 3 | [Skill wrapper, skill base, shared contract](#3-skill-wrapper-skill-base-shared-contract) | idea |
 | 4 | [Health-check entry point](#4-health-check-entry-point) | idea |
 | 5 | [The missing testing role](#5-the-missing-testing-role) | idea |
 | 6 | [Changelog for alpha testers](#6-changelog-for-alpha-testers) | idea |
