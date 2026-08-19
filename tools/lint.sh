@@ -312,6 +312,7 @@ skill_has_agent_base() {
   # `$HOME/.ai-tools/agents/<agent>.md`" line, and that base file exists.
   local f="$AI_TOOLS/skills/$1.md" agent
   [ -f "$f" ] || return 1
+  # shellcheck disable=SC2016 # $HOME and \1 must stay literal — expanding either is the bug this check catches
   agent=$(grep -oE '^Agent: `[A-Za-z0-9_-]+`, base `\$HOME/\.ai-tools/agents/[A-Za-z0-9_-]+\.md`' "$f" 2>/dev/null \
     | head -1 | sed -E 's/^Agent: `([A-Za-z0-9_-]+)`.*/\1/')
   [ -n "$agent" ] && [ -f "$AI_TOOLS/agents/$agent.md" ]
