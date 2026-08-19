@@ -342,3 +342,50 @@ function T-AssertUnchanged([string]$Dir, [string]$Before) {
   }
   Remove-Item -LiteralPath $after -Force -ErrorAction SilentlyContinue
 }
+
+# --- Origin mutation (stage 6: update contract) ---------------------------
+
+function T-OriginCommit([string]$Label) {
+  # usage: T-OriginCommit <label>
+  # Clones the fixture's bare origin ($script:T_Root\origin.git) into a
+  # scratch dir, makes one deterministic change -- appends a marker line to
+  # agents\claude-code\maintainer-ai-tools.md and adds a new
+  # skills\<label>-ai-tools\SKILL.md -- commits, and pushes to master, giving
+  # the fixture's clone something new to update to. Mirrors t_origin_commit
+  # (tools/test/lib.sh, stage 4). Returns nothing; the caller already knows
+  # the paths it named via <label>.
+  $origin = Join-Path $script:T_Root 'origin.git'
+  $scratch = Join-Path $env:TEMP ('ai-tools-test-origin-commit-' + [guid]::NewGuid().ToString('N').Substring(0, 12))
+
+  & git clone -q $origin $scratch 2>&1 | Out-Null
+  if ($LASTEXITCODE -ne 0) { Fatal "T-OriginCommit: cannot clone $origin" }
+  & git -C $scratch config user.name 'ai-tools test'
+  if ($LASTEXITCODE -ne 0) { Fatal 'T-OriginCommit: git config user.name failed' }
+  & git -C $scratch config user.email 'test@example.invalid'
+  if ($LASTEXITCODE -ne 0) { Fatal 'T-OriginCommit: git config user.email failed' }
+
+  Add-Content -LiteralPath (Join-Path $scratch 'agents\claude-code\maintainer-ai-tools.md') `
+    -Value "`n<!-- t_origin_commit marker: $Label -->"
+
+  $skillDir = Join-Path $scratch "skills\$Label-ai-tools"
+  New-Item -ItemType Directory -Path $skillDir -Force | Out-Null
+  @(
+    '---'
+    "name: $Label-ai-tools"
+    "description: test-only skill added by T-OriginCommit for marker $Label."
+    '---'
+    ''
+    "# $Label"
+    ''
+    'Test-only skill fixture, never shipped.'
+  ) | Set-Content -LiteralPath (Join-Path $skillDir 'SKILL.md')
+
+  & git -C $scratch add -A
+  if ($LASTEXITCODE -ne 0) { Fatal 'T-OriginCommit: git add failed' }
+  & git -C $scratch commit -q -m "t_origin_commit: $Label"
+  if ($LASTEXITCODE -ne 0) { Fatal 'T-OriginCommit: git commit failed' }
+  & git -C $scratch push -q origin master
+  if ($LASTEXITCODE -ne 0) { Fatal 'T-OriginCommit: git push failed' }
+
+  Remove-Item -LiteralPath $scratch -Recurse -Force
+}
