@@ -31,6 +31,14 @@ Checks:
   skill frontmatter every skills/*/SKILL.md exists with frontmatter keys a
                     subset of name, description, argument-hint (rule 9)
   skill name match  skills/<x>/SKILL.md declares name: <x>
+  wrapper body      every wrapper body is exactly the canonical text
+                    reconstructed from its harness key and agent name (rule 6)
+  model parity      every wrapper's pinned model matches MODELS.md via
+                    model_for; Grok wrappers declare no model: (rules 11-12)
+  effort pinning    the wrapper pins the MODELS.md cell's effort where its
+                    form can hold one, in the vendor's spelling
+  description parity same agent's description is identical across wrappers
+  MODELS.md coverage every agents/<key>/ has a MODELS.md row and vice versa
 
 Exit codes: 0 clean, 1 aborted on a precondition, 2 finished with warnings.
 EOF
@@ -258,11 +266,231 @@ check_skill_name_match() {
   done
 }
 
+# --- Check: wrapper body and model parity (rules 6, 11-12) --------------------
+# Never hard-code a vendor model name here — every expected model is resolved
+# through model_for, reading MODELS.md in place.
+
+category_for() {
+  # usage: category_for <agent-name> -- every shipped agent runs as planner
+  # except maintainer-ai-tools, which runs as implementer (README rule 6).
+  case "$1" in
+    maintainer-ai-tools) echo implementer ;;
+    *)                   echo planner ;;
+  esac
+}
+
+base_has_category() {
+  # usage: base_has_category <agent-name> -- true when its base file cites
+  # one of the three category names (never a hard-coded agent list).
+  grep -qE '\*\*(planner|implementer|mechanical)\*\*' "$AI_TOOLS/agents/$1.md" 2>/dev/null
+}
+
+canonical_body() {
+  # usage: canonical_body <harness-key> <agent-name> <has-category 0|1>
+  # Reconstructs the exact wrapper body text (README, "Model map and wrapper
+  # authoring"). A regex would accept the drift this check exists to reject.
+  local h="$1" a="$2" hascat="$3"
+  printf 'On Windows, %%USERPROFILE%% replaces $HOME.\n\n'
+  if [ "$hascat" = 1 ]; then
+    printf 'Category → model comes from `$HOME/.ai-tools/MODELS.md`, row `%s`. Resolve every category through it — your own and any you spawn; never assume a model name.\n\n' "$h"
+  fi
+  printf 'You are a spawned subagent: your shared contract is `$HOME/.ai-tools/agents/SUBAGENT-CONTRACT.md`.\n'
+  printf 'Read it and follow it — it governs your channel to the user and your report.\n\n'
+  printf 'Your base file is `$HOME/.ai-tools/agents/%s.md`.\n' "$a"
+  printf 'Read it and follow it in full — it is the absolute rule set for this agent; the contract above prevails only on your channel to the user.\n'
+}
+
+wrapper_body_md() {
+  # usage: wrapper_body_md <file> -- body after the frontmatter's closing
+  # "---", with the one blank separator line dropped.
+  awk '
+    NR == 1 && $0 == "---" { infm = 1; next }
+    infm && $0 == "---" { infm = 0; started = 1; skip = 1; next }
+    started && skip && $0 == "" { skip = 0; next }
+    started { skip = 0; print }
+  ' "$1"
+}
+
+wrapper_body_toml() {
+  # usage: wrapper_body_toml <file> -- the developer_instructions value,
+  # a """-delimited multi-line basic string.
+  awk '
+    /^developer_instructions = """$/ { infm = 1; next }
+    infm && $0 == "\"\"\"" { infm = 0; exit }
+    infm { print }
+  ' "$1"
+}
+
+check_wrapper_body() {
+  local a h f ext hascat actual expected
+  for a in $(agent_names); do
+    if base_has_category "$a"; then hascat=1; else hascat=0; fi
+    for h in $(harnesses); do
+      f=$(wrapper_path "$h" "$a")
+      [ -f "$f" ] || continue
+      ext=$(wrapper_ext "$h")
+      if [ "$ext" = toml ]; then
+        actual=$(wrapper_body_toml "$f")
+      else
+        actual=$(wrapper_body_md "$f")
+      fi
+      expected=$(canonical_body "$h" "$a" "$hascat")
+      if [ "$actual" = "$expected" ]; then
+        ok "wrapper body matches canonical text: $f"
+      else
+        warn "wrapper body does not match canonical text: $f"
+      fi
+    done
+  done
+}
+
+model_effort_for() {
+  # usage: model_effort_for <harness-key> <planner|implementer|mechanical>
+  # Prints the MODELS.md cell's " · effort" word, or nothing when absent.
+  local key="$1" col
+  case "$2" in
+    planner)     col=4 ;;
+    implementer) col=5 ;;
+    mechanical)  col=6 ;;
+    *)           return 1 ;;
+  esac
+  [ -f "$MODELS_MAP" ] || return 1
+  awk -F'|' -v key="$key" -v col="$col" '
+    $2 ~ /`[a-z0-9-]+`/ {
+      k = $2; gsub(/[`[:space:]]/, "", k)
+      if (k == key) {
+        v = $col
+        if (match(v, /·[[:space:]]*[A-Za-z0-9]+/)) {
+          e = substr(v, RSTART, RLENGTH)
+          sub(/^·[[:space:]]*/, "", e)
+          print e
+        }
+        exit
+      }
+    }
+  ' "$MODELS_MAP"
+}
+
+check_model_parity() {
+  local h a f val expected cat
+  for h in $(harnesses); do
+    for a in $(agent_names); do
+      f=$(wrapper_path "$h" "$a")
+      [ -f "$f" ] || continue
+      cat=$(category_for "$a")
+      expected=$(model_for "$h" "$cat") || { warn "no usable MODELS.md row for $h/$cat: $f"; continue; }
+      case "$h" in
+        grok)
+          if in_list model "$(yaml_frontmatter_keys "$f" | tr '\n' ' ')"; then
+            warn "grok wrapper declares model: (Grok ignores it; pinned via ~/.grok/config.toml at install time): $f"
+          else
+            ok "grok wrapper declares no model key: $f"
+          fi
+          ;;
+        codex)
+          val=$(toml_field_value "$f" model)
+          if [ "$val" = "$expected" ]; then ok "model parity: $f ($val)"
+          else warn "model mismatch: $f (expected: $expected, got: '$val')"; fi
+          ;;
+        copilot)
+          val=$(yaml_frontmatter_value "$f" model)
+          case "$val" in
+            \[*) warn "copilot model: must be a string, not an array: $f (got: '$val')" ;;
+            *)
+              if [ "$val" = "$expected" ]; then ok "model parity: $f ($val)"
+              else warn "model mismatch: $f (expected: $expected, got: '$val')"; fi
+              ;;
+          esac
+          ;;
+        *)
+          val=$(yaml_frontmatter_value "$f" model)
+          if [ "$val" = "$expected" ]; then ok "model parity: $f ($val)"
+          else warn "model mismatch: $f (expected: $expected, got: '$val')"; fi
+          ;;
+      esac
+    done
+  done
+}
+
+check_effort_pinning() {
+  local a cat f eff val
+  for a in $(agent_names); do
+    cat=$(category_for "$a")
+    f=$(wrapper_path claude-code "$a")
+    if [ -f "$f" ]; then
+      eff=$(model_effort_for claude-code "$cat")
+      if [ -n "$eff" ]; then
+        val=$(yaml_frontmatter_value "$f" effort)
+        if [ "$val" = "$eff" ]; then ok "effort pinned: $f ($eff)"
+        else warn "effort not pinned or mismatched: $f (expected: $eff, got: '$val')"; fi
+      fi
+    fi
+    f=$(wrapper_path codex "$a")
+    if [ -f "$f" ]; then
+      eff=$(model_effort_for codex "$cat")
+      if [ -n "$eff" ]; then
+        val=$(toml_field_value "$f" model_reasoning_effort)
+        if [ "$val" = "$eff" ]; then ok "effort pinned: $f ($eff)"
+        else warn "effort not pinned or mismatched: $f (expected: $eff, got: '$val')"; fi
+      fi
+    fi
+  done
+}
+
+check_description_parity() {
+  local a h f val ext first
+  for a in $(agent_names); do
+    first=""
+    for h in $(harnesses); do
+      f=$(wrapper_path "$h" "$a")
+      [ -f "$f" ] || continue
+      ext=$(wrapper_ext "$h")
+      if [ "$ext" = toml ]; then
+        val=$(toml_field_value "$f" description)
+      else
+        val=$(yaml_frontmatter_value "$f" description)
+      fi
+      if [ -z "$first" ]; then
+        first="$val"
+        ok "description baseline set: $f"
+      elif [ "$val" = "$first" ]; then
+        ok "description matches baseline: $f"
+      else
+        warn "description diverges across wrappers for $a: $f"
+      fi
+    done
+  done
+}
+
+check_models_row_coverage() {
+  local h k rows
+  rows=$(awk -F'|' '$2 ~ /`[a-z0-9-]+`/ { k = $2; gsub(/[`[:space:]]/, "", k); print k }' "$MODELS_MAP" 2>/dev/null)
+  for h in $(harnesses); do
+    if in_list "$h" "$(echo "$rows" | tr '\n' ' ')"; then
+      ok "MODELS.md row present: $h"
+    else
+      warn "agents/$h/ has no MODELS.md row"
+    fi
+  done
+  for k in $rows; do
+    if [ -d "$AI_TOOLS/agents/$k" ]; then
+      ok "MODELS.md row has a wrapper directory: $k"
+    else
+      warn "MODELS.md row without agents/ directory: $k"
+    fi
+  done
+}
+
 # --- Run -----------------------------------------------------------------------
 
 check_wrapper_coverage
 check_naming
 check_skill_frontmatter
 check_skill_name_match
+check_wrapper_body
+check_model_parity
+check_effort_pinning
+check_description_parity
+check_models_row_coverage
 
 finish
