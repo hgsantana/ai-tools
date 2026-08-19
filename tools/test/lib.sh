@@ -378,3 +378,49 @@ t_assert_unchanged() {
   fi
   rm -f "$after"
 }
+
+# --- Origin mutation (stage 4: update contract) -------------------------------
+
+t_origin_commit() {
+  # usage: t_origin_commit <label>
+  # Clones the fixture's bare origin (T_ROOT/origin.git) into a scratch dir,
+  # makes one deterministic change — appends a marker line to
+  # agents/claude-code/maintainer-ai-tools.md and adds a new
+  # skills/<label>-ai-tools/SKILL.md — commits, and pushes to master, giving
+  # the fixture's clone something new to update to. Returns nothing; the
+  # caller already knows the paths it named via <label>.
+  local label="$1" origin scratch
+  origin="$T_ROOT/origin.git"
+  scratch=$(mktemp -d "${TMPDIR:-/tmp}/ai-tools-test-origin-commit.XXXXXX") \
+    || fatal "t_origin_commit: mktemp -d failed"
+
+  git clone -q "$origin" "$scratch" >/dev/null 2>&1 \
+    || fatal "t_origin_commit: cannot clone $origin"
+  git -C "$scratch" config user.name "ai-tools test" \
+    || fatal "t_origin_commit: git config user.name failed"
+  git -C "$scratch" config user.email "test@example.invalid" \
+    || fatal "t_origin_commit: git config user.email failed"
+
+  printf '\n<!-- t_origin_commit marker: %s -->\n' "$label" \
+    >> "$scratch/agents/claude-code/maintainer-ai-tools.md" \
+    || fatal "t_origin_commit: cannot append marker to wrapper"
+
+  mkdir -p "$scratch/skills/$label-ai-tools" \
+    || fatal "t_origin_commit: cannot create skill dir"
+  cat > "$scratch/skills/$label-ai-tools/SKILL.md" <<EOF
+---
+name: $label-ai-tools
+description: test-only skill added by t_origin_commit for marker $label.
+---
+
+# $label
+
+Test-only skill fixture, never shipped.
+EOF
+
+  git -C "$scratch" add -A || fatal "t_origin_commit: git add failed"
+  git -C "$scratch" commit -q -m "t_origin_commit: $label" \
+    || fatal "t_origin_commit: git commit failed"
+  git -C "$scratch" push -q origin master || fatal "t_origin_commit: git push failed"
+  rm -rf "$scratch"
+}

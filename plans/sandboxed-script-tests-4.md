@@ -56,3 +56,36 @@ Suggested message: `test(shell): cover the update contract`
 ## Implementation log
 
 (Append-only.)
+
+- Read `tools/test.sh` and `tools/test/lib.sh` in full before writing anything, plus `tools/test/smoke.sh` as the worked case-file example.
+- Two edits made, exactly as scoped: created `tools/test/update.sh` (14 `case_update_*` functions covering steps 2-14 of this stage), and appended `t_origin_commit` to the end of `tools/test/lib.sh` (single `cat >>` — `git diff tools/test/lib.sh` shows only new lines after the prior EOF, no existing line touched).
+- `t_origin_commit <label>` clones `$T_ROOT/origin.git` into a scratch dir, appends a marker comment to `agents/claude-code/maintainer-ai-tools.md`, adds `skills/<label>-ai-tools/SKILL.md`, commits, pushes to `master`, and removes the scratch clone.
+- Case-by-case mapping to the plan's steps:
+  - `case_update_reset_guard_dirty` (step 2): dirty edit in a tracked file → exit 1, `local changes in`, `the reset would discard the local work above`; edit still present; `home/.claude` snapshot unchanged via `t_snapshot`/`t_assert_unchanged`.
+  - `case_update_reset_guard_ahead` (step 3): local commit ahead → exit 1, `local commits ahead of origin/master:`; `HEAD` unchanged.
+  - `case_update_discard_local` (step 4): same dirty fixture + `--discard-local` → exit 0; `HEAD` equals `origin/master`; edit gone; `ok: source at` present.
+  - `case_update_reset_confined` (step 5): fixture built with `--foreign-agent`, `$HOME/AGENTS.md` and `$HOME/.claude/CLAUDE.md` pre-filled, then a dirty+ahead clone reset with `--discard-local` — all three byte-compared (via `cat` capture, not timestamps) before/after and found unchanged. Exit is 2 here (not 0): `verify_install` correctly warns that the foreign agent file and the pre-filled `CLAUDE.md` differ from source, which is the proof they were skipped rather than overwritten.
+  - `case_update_new_content_linked` (step 6): install, then `t_origin_commit`, then plain update → exit 0; new `skills/<marker>-ai-tools` symlinked into `home/.claude/skills/`; `already linked:` present for the untouched wrappers.
+  - `case_update_stale_copy_refreshed` (step 7): install via `t_run_no_symlink` (copies), `t_origin_commit` changes `maintainer-ai-tools.md`, update → `copy refreshed:` present; copy content now equals the new source. Exit is 2 in every `t_run_no_symlink` case in this file: the shimmed `ln` also blocks the instructions symlink, which has no copy fallback in `install_instructions`, so `verify_install` always warns `instructions missing`/`instructions differ from source` alongside whatever the case is actually proving — documented inline at each assertion, not a defect in the case.
+  - `case_update_modified_copy_kept` (step 8): same shape, copy locally edited first (matches neither revision) → `SKIP: copy modified locally (or predates`, exit 2, content byte-identical to the local edit.
+  - `case_update_up_to_date_copy` (step 9): a wrapper `t_origin_commit` never touches (`az-ai-tools.md`) stays equal to source across the reset → `copy up to date: <path>`.
+  - `case_update_no_reset` (step 10): dirty edit + `--no-reset` → `HEAD` unchanged, edit intact, `info: reset skipped (--no-reset)`; exit accepted as 0 or 2 per the plan (this run reported 0).
+  - `case_update_dry_run` (step 11): fixture behind origin (`t_origin_commit`) + `--dry-run`, snapshot around `home/.claude` (not the whole clone, for speed) → `would reset ... to origin/master`, `HEAD` unchanged, nothing linked, `dry-run: verification skipped`.
+  - `case_update_missing_clone` (step 12): `home/.ai-tools` removed, script invoked from the real repo tree (t_run still confines `HOME`/`AI_TOOLS` env vars to the sandbox — `require_clone` reads the sandboxed `$AI_TOOLS`, which is what matters) → exit 1, `is missing or not a clone — run scripts/shell/install.sh first`; nothing created.
+  - `case_update_fetch_failure` (step 13): `origin` remote pointed at a nonexistent local path → exit 1, `fetch failed`; timed with `date +%s`, returned in 0s in every run — confirms no network is attempted and the run never hangs.
+  - `case_update_preconditions` (step 14): `--harnesses bogus`, `--harnesses` with no value, and an unknown flag — each exit 1 with the expected message.
+- Each assertion class observed failing at least once during development, in a disposable copy of the whole repo under `/tmp` (never in the working tree — verified afterward with `diff` against the real `tools/test/update.sh`, no drift): deliberately flipped `t_assert_exit 1` → `t_assert_exit 0` and replaced the expected local-edit marker text, which produced 7 `WARN:` lines (`case_update_fetch_failure`, `case_update_missing_clone`, `case_update_preconditions` ×3, `case_update_reset_guard_ahead`, `case_update_reset_guard_dirty`); separately broke a `t_assert_line` (wrong literal), a `t_assert_symlink` (wrong target prefix), a `t_assert_regular_file` (wrong path), and a `t_assert_unchanged` (tampered the directory between snapshot and check) — each produced the expected single `WARN:` line. Scratch copy removed after.
+- Tests: `git --version` → `git version 2.53.0`. `git init -b master <dir>` is available and succeeds on this git (confirmed directly); `tools/test/lib.sh`'s `t_build_origin`/`t_fixture` and this stage's `t_origin_commit` nonetheless use the older-compatible `git init` + `symbolic-ref HEAD refs/heads/master` fallback path (matching stage 1's existing style), so the suite tolerates older git regardless of what's installed here.
+- `bash tools/test.sh --case update` → `done: 54 ok, 0 skipped, 0 warnings`, exit 0.
+- `bash tools/test.sh` (full suite, run after stages 2/3's `install.sh`/`verify.sh`/`remove.sh`/`reinstall.sh` landed) → `done: 252 ok, 0 skipped, 0 warnings`, exit 0.
+- `shellcheck`: not installed in this environment — not run; CI covers it later, per this stage's brief.
+- LF-only confirmed (`grep -c $'\r' tools/test/update.sh` → 0); `file` reports UTF-8 text.
+- `scripts/shell/**` untouched: no contract violation found in `update.sh`/`lib.sh` during this stage's development.
+
+## Dispatch log
+
+| Attempt | Status | Category | Runner | Session ID | Outcome |
+|---------|--------|----------|--------|------------|---------|
+| 1 | W | implementer | sonnet | 73dd13b2-f5c7-4350-b6be-1004a8a1e57f | V -> accepted |
+
+Status: V
