@@ -135,3 +135,7 @@ Accepted, on the basis the base plan sets for this stage: the PowerShell side ca
 - **Reverted, out of scope**: this stage also added `tools/test.ps1` and `tools/test/*.ps1` pins to `.gitattributes`. The concern is valid but `.gitattributes` belongs to stage 7, which pins `tools/** text eol=lf` — covering these files and the shell ones in one rule. The revert leaves the blobs LF either way, and stage 7 lands the attribute in the same pull request, before CI checks out the final tree.
 
 Execution evidence remains outstanding until the `windows-latest` job runs.
+
+### Acceptance evidence — CI
+
+The pull request branch's workflow run <https://github.com/hgsantana/ai-tools/actions/runs/32220935621> is green on all three jobs, including **`test-powershell` on `windows-latest`**, which runs `tools/test.ps1` under `pwsh` and again under `powershell.exe`. That job is the acceptance evidence the base plan reserves for the PowerShell stages; it is now in hand, and this stage's deferred evidence is satisfied.

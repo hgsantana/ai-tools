@@ -155,3 +155,7 @@ $ echo $?
 ```
 
 Status: V
+
+### Acceptance evidence — CI (after correction round 1)
+
+Run <https://github.com/hgsantana/ai-tools/actions/runs/32220935621>: `lint`, `test-shell` and `test-powershell` all **success**. The stage's "all three jobs green on the branch" criterion is met.

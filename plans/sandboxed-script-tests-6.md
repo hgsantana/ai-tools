@@ -154,3 +154,7 @@ Accepted on the basis the base plan sets for the PowerShell stages: no local exe
 - The absence of a `T-RunNoSymlink` counterpart is a harness gap, not a divergence in `scripts/powershell/**`: the stage stages copy-shaped destinations directly instead, and the symlink-to-copy fallback itself is covered at unit level by stage 5's `Case-InstallNoSymlinkFallback`, which is what this plan specified for the PowerShell side. Recorded as-is.
 
 Execution evidence remains outstanding until the `windows-latest` job runs.
+
+### Acceptance evidence — CI
+
+The pull request branch's workflow run <https://github.com/hgsantana/ai-tools/actions/runs/32220935621> is green on all three jobs, including **`test-powershell` on `windows-latest`**, which runs `tools/test.ps1` under `pwsh` and again under `powershell.exe`. That job is the acceptance evidence the base plan reserves for the PowerShell stages; it is now in hand, and this stage's deferred evidence is satisfied.
