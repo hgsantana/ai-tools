@@ -62,3 +62,58 @@ Suggested message: `chore(tools): add a sandboxed test harness for the scripts`
 ## Implementation log
 
 (Append-only.)
+
+- Created `tools/test.sh` (executable, LF), `tools/test/lib.sh` (sourced, `# shellcheck shell=bash` header), `tools/test/smoke.sh`. Followed `tools/lib.sh`/`tools/lint.sh`'s shape: resolve repo root from `$(dirname "$0")/..`, export `AI_TOOLS`, source `scripts/shell/lib.sh` then `tools/test/lib.sh`, report only via `ok`/`skip`/`warn`/`info`/`fatal`, close with `finish`.
+- Case discovery is by glob (`tools/test/*.sh` minus `lib.sh`), each defining `case_*` functions found via `declare -F`; nothing registers a case in a central list.
+- `t_fixture` builds `${TMPDIR:-/tmp}/ai-tools-test.XXXXXX` with all 15 harness config directories, a bare `origin.git` built by tarring the working tree (`--exclude=./.git --exclude=./plans`, `tar -cpf`/`-xpf` to preserve executable bits) into a scratch commit and pushing to the bare repo, a `git clone` of that bare repo into `home/.ai-tools`, and a `home/.gitconfig` with the `insteadOf` rewrite plus test identity. Six fixture options (`--foreign-agent`, `--foreign-instructions`, `--modified-copy`, `--unmanaged-grok-block`, `--stale-link`, `--external-symlink`) stage the conflicts stages 2-5 will need, each recording its path(s) in a `T_*` global. **Design correction during implementation**: `t_fixture` originally echoed its root for `root=$(t_fixture ...)` capture, which runs the whole function in a subshell and silently drops every `T_*` option variable it sets. Fixed by having `t_fixture` set global `T_ROOT` instead of echoing, called plainly (`t_fixture ...; root="$T_ROOT"`) — verified by a throwaway probe case exercising all six options plus `t_run_no_symlink`, all `T_*` variables read back correctly afterward.
+- `t_run`/`t_run_stdin`/`t_run_no_symlink` all call `t_sandbox_guard <root> <home> <ai_tools>` before touching `env -i`, which `fatal`s (exit 1) unless the sandbox root is non-empty, not `/`, and both `home` and `ai_tools` are prefixed by it. Confined env for the child: `PATH HOME USERPROFILE AI_TOOLS GIT_TERMINAL_PROMPT=0 GIT_CONFIG_NOSYSTEM=1 TERM LANG`, exactly per spec. `t_run_stdin` feeds `<input>\n` (a trailing newline is required — `remove.sh`'s `read -r answer || answer=""` treats a no-newline EOF as read failure and discards the answer; discovered via a probe case against `remove.sh --purge`, which reported "purge not confirmed" until the newline was added). `t_run_no_symlink` prepends a shim `ln` that exits 1; verified against `install.sh` under `--no-symlink`-style shimming, output contained `copied (will not track updates)` and exit 2.
+- Ten `t_assert_*`/`t_snapshot`/`t_assert_unchanged` helpers implemented; none aborts the suite, all report through `ok`/`warn` with `$T_CASE` and the offending value. `t_snapshot`/`t_assert_unchanged` use a sorted `find` listing plus concatenated file content compared via `cmp -s` (no md5sum/cksum dependency) — verified against `install.sh --dry-run`, confirming the sandbox tree is byte-identical before and after.
+- `t_cleanup` only removes a path matching `${TMPDIR:-/tmp}/ai-tools-test.*` (the exact pattern `t_fixture` creates via `mktemp -d`), otherwise warns and refuses.
+- Evidence:
+  - `bash tools/test.sh --help` → exit 0, lists `case_smoke`.
+  - `bash tools/test.sh --bogus` → `ERROR: unknown flag: --bogus (see --help)`, exit 1.
+  - `bash tools/test.sh` → `case_smoke` passes all 20 assertions (harness dirs, `.git`/`origin/master` in the fixture clone, `verify.sh --harnesses claude-code` exits 2 with `WARN: agent absent:` against the empty fixture, and a `find $HOME -maxdepth 1 -newer <marker>` check confirms the real `$HOME` was never touched), exit 0. Re-run twice more with identical results (idempotent, no leaked state).
+  - Deliberate sandbox-guard sabotage, done in a scratch copy at `/tmp/ai-tools-sabotage-check` (`cp -R` of the working tree, never edited in place): patched `t_run`'s `home="$root/home"` line to a hardcoded out-of-sandbox path (`/tmp/escaped-outside-sandbox-DO-NOT-USE`), ran a probe case that calls `t_fixture` then `t_run`, with an `echo "REACHED_AFTER_T_RUN"` immediately after the `t_run` call. Result: `ERROR: t_sandbox_guard: HOME escaped the sandbox: /tmp/escaped-outside-sandbox-DO-NOT-USE (root: /tmp/ai-tools-test.64FrQo)`, exit 1, and `REACHED_AFTER_T_RUN` never printed — `fatal` aborted the entire process before any script ran. Scratch copy and all `/tmp/ai-tools-test.*` sandboxes deleted afterward; `git status --porcelain` in the real working tree confirmed only the intended new files were added.
+  - `shellcheck` is not installed in this environment (`command -v shellcheck` fails); could not run `shellcheck -x -P scripts/shell -P tools/test tools/test.sh tools/test/*.sh` here. Relying on the CI job from stage 7 per the plan's fallback.
+- Files touched: `tools/test.sh` (new, executable, LF), `tools/test/lib.sh` (new), `tools/test/smoke.sh` (new). Nothing under `scripts/`, `agents/`, `skills/`, `README.md`, `ROADMAP.md`, `.github/`, or `plans/skill-wrapper-base-contract*` was touched.
+
+## Dispatch log
+
+| Attempt | Status | Category | Runner | Session ID | Outcome |
+|---------|--------|----------|--------|------------|---------|
+| 1 | W | implementer | sonnet | agent aa52b8201186e1588 | V -> failed validation (--case selects by function name, not case file) |
+| 2 | R1 | implementer | sonnet | agent aa52b8201186e1588 | V -> accepted |
+
+## Correction round 1 (planner)
+
+Validated attempt 1: the harness, the fixture, the sandbox guard and the smoke case are accepted. The guard was re-verified independently by the orchestrator (`t_sandbox_guard` with an out-of-sandbox `HOME` -> `ERROR: ... HOME escaped the sandbox`, exit 1). One blocking defect:
+
+1. **`--case <name>` must select a case *file*, not a `case_*` function.** This stage's step 2 specifies "run only the named case file, repeatable", and the later stages of this plan invoke the suite as `tools/test.sh --case install --case verify`, `--case remove --case reinstall`, and `--case update` -- i.e. the basename of `tools/test/<name>.sh`. Today `--case smoke` fails with `unknown case: smoke` and only `--case case_smoke` works, which will break every later stage.
+   - Make `--case <name>` accept the case-file basename (with or without the `.sh` suffix) and run every `case_*` function that file defines, in sorted order.
+   - Keep accepting an individual `case_*` function name as well, so a single case can still be isolated during development. Resolve a name as a file first, then as a function; an argument matching neither is still `fatal` + exit `1`.
+   - `--case` remains repeatable, and the order of execution stays deterministic.
+2. **Update `--help` accordingly**: say that `--case` takes a case-file name (or a single `case_*` function), and keep listing the discovered cases. Consider grouping the listing by file so the accepted names are visible.
+3. Re-run the evidence afterwards and append it: `--help` (exit 0), `--bogus` (exit 1), `--case smoke` (exit 0, runs the smoke case), `--case case_smoke` (exit 0), `--case nope` (exit 1), and the full `tools/test.sh` run (exit 0).
+
+Do not change anything else: no new fixture options, no assertion changes, no edits outside `tools/test.sh` (and `tools/test/lib.sh` only if the selection logic genuinely belongs there).
+
+## Correction round 1 — implementation
+
+- Change confined to `tools/test.sh`; `tools/test/lib.sh` untouched — the case-file/function selection logic is the runner's own CLI concern, not a helper other consumers need.
+- `t_source_case_files` now also builds `T_CASE_MAP`: for each discovered case file it snapshots `declare -F`'s `case_*` names before and after sourcing that one file (`grep -vFxf` against the "before" set via process substitution), sorts the new names, and records `"<file-basename-without-.sh>: <fn1> <fn2> ..."`. One line per file, in glob-discovery order.
+- Added `t_case_functions_for_file <base>` (an `awk -F': '` lookup into `T_CASE_MAP`) and `t_resolve_case <name>`, which strips a trailing `.sh`, tries the file map first, and falls back to an exact match against `$ALL_CASES` (a single `case_*` function name) — anything matching neither returns 1 with no output, which the caller turns into `fatal "unknown case: $c"` (exit 1).
+- The `--case` CLI loop no longer collects raw case names into `RUN_CASES` directly: each `--case <name>` argument is resolved via `t_resolve_case` at the point it's read (after `t_source_case_files`/`$ALL_CASES` are populated), and unresolved names abort immediately. Multiple `--case` arguments still accumulate, each contributing the function(s) it resolves to, in the order given; functions within one file run in sorted order (per `T_CASE_MAP`'s construction).
+- `usage()`/`--help` rewritten: describes `<name>` as "a case-file basename under tools/test/ (with or without \".sh\"), running every case_* function that file defines, or a single case_* function name, to isolate one case", and the discovered-cases listing is now grouped by file (`t_source_case_files` then dumps `T_CASE_MAP`, e.g. `  smoke: case_smoke`).
+- Verified with a throwaway two-function probe file (`tools/test/zz_multi.sh`, defining `case_multi_a`/`case_multi_b`, removed before finishing — never left in the tree) that `--case zz_multi` runs both functions in sorted order, and that `--case zz_multi --case smoke` (a case-file name mixed with an existing case-file name) runs all three in argument order. `git status --porcelain` after cleanup showed only the intended `tools/test.sh` (modified) and `tools/test/` (new, untracked) — no probe leftovers.
+- Evidence (re-run after the fix):
+  - `bash tools/test.sh --help` → exit 0; "Discovered cases (file: functions):" now lists `  smoke: case_smoke`.
+  - `bash tools/test.sh --bogus` → `ERROR: unknown flag: --bogus (see --help)`, exit 1.
+  - `bash tools/test.sh --case smoke` → resolves the file, runs `case_smoke`, 20/20 ok, exit 0.
+  - `bash tools/test.sh --case case_smoke` → resolves the bare function name (file lookup misses, function fallback hits), same result, exit 0.
+  - `bash tools/test.sh --case nope` → `ERROR: unknown case: nope (see --help)`, exit 1.
+  - `bash tools/test.sh --case smoke.sh` (extension included) → same as `--case smoke`, exit 0.
+  - `bash tools/test.sh` (no `--case`, full run) → `case_smoke` passes 20/20, exit 0.
+  - All `/tmp/ai-tools-test.*` sandboxes from this round's runs were removed afterward.
+- Nothing outside `tools/test.sh` was changed; no new fixture options or assertions were added, per the correction's scope.
+
+Status: V
