@@ -8,7 +8,6 @@ Status: `idea` (not refined) · `next` (agreed, ready to refine) · `doing` (a p
 
 | # | Story | Status |
 |---|---|---|
-| 2 | [Sandboxed script test suite](#2-sandboxed-script-test-suite) | idea |
 | 3 | [Skill wrapper, skill base, shared contract](#3-skill-wrapper-skill-base-shared-contract) | idea |
 | 4 | [Health-check entry point](#4-health-check-entry-point) | idea |
 | 5 | [The missing testing role](#5-the-missing-testing-role) | idea |
@@ -20,12 +19,6 @@ Status: `idea` (not refined) · `next` (agreed, ready to refine) · `doing` (a p
 | 11 | [Untrusted input handling](#11-untrusted-input-handling) | idea |
 | 12 | [Adding a harness, by checklist](#12-adding-a-harness-by-checklist) | idea |
 | 13 | [Cost visibility in the dispatch ledger](#13-cost-visibility-in-the-dispatch-ledger) | idea |
-
-## Quality net
-
-### 2. Sandboxed script test suite
-
-`install`, `remove`, `update`, and `reinstall` mutate the user's real `$HOME` and harness configuration, and their contract — idempotency, skip-and-report on conflict, never overwriting user files, symlink-to-copy fallback, destructive flags defaulting to refuse, exit codes `0`/`1`/`2` (rules 17–25) — is proven today only by running them for real. Build a test suite that runs each script against a fake `HOME` fixture containing a pre-populated harness layout, a foreign file on a destination path, and a locally modified copy, asserting the contract on both the shell and PowerShell sides, wired into the same CI as story 1. Route: `/vibe-ai-tools`.
 
 ## Consistency
 

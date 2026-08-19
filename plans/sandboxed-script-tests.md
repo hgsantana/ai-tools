@@ -11,7 +11,7 @@
 | 5 | F | implementer / sonnet |
 | 6 | F | implementer / sonnet |
 | 7 | F | implementer / sonnet |
-| 8 | | |
+| 8 | F | implementer / sonnet |
 
 ## Goal
 

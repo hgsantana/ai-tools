@@ -51,3 +51,19 @@ Suggested message: `docs: document the script test suites and bump the version`
 ## Implementation log
 
 (Append-only.)
+
+- Edited `README.md`: bumped the version line from `0.0.23-ALPHA` to `0.0.24-ALPHA` (once, this stage); replaced the CI paragraph's reference to `.github/workflows/lint.yml` with `.github/workflows/ci.yml` and named its three jobs (`lint`, `test-shell` on `ubuntu-latest`; `test-powershell` on `windows-latest` under both `pwsh` and `powershell.exe`); extended `Check families` → **encodings and endings** to state it covers `tools/` as well as `scripts/`; added a new *Development checks* block documenting `tools/test.sh` / `tools/test.ps1` — what they are, how to run them (two code blocks, shell and PowerShell, matching the linter's style), what the fixture stages, what is asserted (keyed to rules 17–25), and the two exclusions (`scripts/cmd` not covered; `tools/test.ps1` Windows-only). Confirmed no other `lint.yml` reference remained (`grep -n lint.yml README.md` → no output).
+- Edited `ROADMAP.md`: removed the `| 2 | ... |` status-table row and the `### 2. Sandboxed script test suite` entry; removed the now-empty `## Quality net` heading (story 3, the next entry, already sits under its own `## Consistency` heading, so nothing else needed re-parenting). Did not renumber any remaining story.
+- Note per step 5: `bash tools/lint.sh --base 033a809` reported `ok: no shipped content changed since 033a809: version bump not required` — the linter's own version-bump check (which diffs `agents/`, `skills/`, `scripts/`, `USER-AGENTS.md`) would *not* have demanded this bump on its own, since none of stages 1–7's `tools/` changes fall under those paths. The bump here is required by rule 4 ("any change to shipped content or process"), not by the linter.
+- Ran `bash tools/lint.sh --base 033a809` → tail: `done: 532 ok, 0 skipped, 0 warnings`, exit `0`.
+- Ran `bash tools/test.sh` → tail: `done: 252 ok, 0 skipped, 0 warnings`, exit `0`.
+- `shellcheck` is not installed in this environment; no shellcheck run was performed or claimed.
+- Files touched this stage: only `README.md` and `ROADMAP.md`, as declared.
+
+Status: V
+
+## Dispatch log
+
+| Attempt | Status | Category | Runner | Session ID | Outcome |
+|---------|--------|----------|--------|------------|---------|
+| 1 | W | implementer | sonnet | 3b6488c4-9b6b-48b5-9e1d-dddabc81c766 | V -> accepted |
