@@ -584,6 +584,16 @@ function Verify-Install([bool]$checkInstructions = $true) {
     Ok "agent base: $($base.FullName)"
   }
 
+  $skillContract = Join-Path $script:AI_TOOLS 'skills\SKILL-CONTRACT.md'
+  if (Test-Path -LiteralPath $skillContract) { Ok "skill contract: $skillContract" }
+  else { Warn "missing skill contract: $skillContract - agent-backed skill wrappers point at it before their base" }
+
+  foreach ($p in Get-ChildItem -LiteralPath (Join-Path $script:AI_TOOLS 'skills') -Directory -Filter '*-ai-tools' -ErrorAction SilentlyContinue) {
+    $skillBase = Join-Path $script:AI_TOOLS "skills\$($p.Name).md"
+    if (Test-Path -LiteralPath $skillBase) { Ok "skill base: $skillBase" }
+    else { Warn "missing skill base: $skillBase - the wrapper $(Join-Path $p.FullName 'SKILL.md') points at it" }
+  }
+
   if (Test-Path (Join-Path $HOME 'AGENTS.md')) { Ok "user overlay present: $(Join-Path $HOME 'AGENTS.md')" }
   else { Warn "missing user overlay: $(Join-Path $HOME 'AGENTS.md')" }
 

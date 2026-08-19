@@ -31,6 +31,15 @@ Checks:
   skill frontmatter every skills/*/SKILL.md exists with frontmatter keys a
                     subset of name, description, argument-hint (rule 9)
   skill name match  skills/<x>/SKILL.md declares name: <x>
+  skill wrapper body every skills/*/SKILL.md body is exactly the canonical
+                    text reconstructed from its own H1, scope line, and
+                    whether its base names an agent (rule 7)
+  skill wrapper cap every skills/*-ai-tools/SKILL.md file is at most 2000
+                    characters, frontmatter included (rule 7)
+  skill description cap every skill description is at most 500 characters,
+                    folded block included (rule 9)
+  skill layout      skills/SKILL-CONTRACT.md exists; every skill directory
+                    has a skills/<name>.md base and vice versa (rule 7)
   wrapper body      every wrapper body is exactly the canonical text
                     reconstructed from its harness key and agent name (rule 6)
   model parity      every wrapper's pinned model matches MODELS.md via
@@ -288,6 +297,151 @@ check_skill_name_match() {
       ok "skill name matches directory: $base"
     else
       warn "skill name does not match its directory: $f (name: '$val', directory: '$base')"
+    fi
+  done
+}
+
+# --- Check: skill wrapper body, caps, and base coverage (rules 7, 9) ---------
+# Never hard-code a skill or agent name here — agent-backed status is read
+# from each skill base's own declaration, never a fixed list (same principle
+# as base_has_category).
+
+skill_has_agent_base() {
+  # usage: skill_has_agent_base <skill-name> -- true when skills/<name>.md
+  # names an agent under agents/ via a "Agent: `<agent>`, base
+  # `$HOME/.ai-tools/agents/<agent>.md`" line, and that base file exists.
+  local f="$AI_TOOLS/skills/$1.md" agent
+  [ -f "$f" ] || return 1
+  # shellcheck disable=SC2016 # $HOME and \1 must stay literal — expanding either is the bug this check catches
+  agent=$(grep -oE '^Agent: `[A-Za-z0-9_-]+`, base `\$HOME/\.ai-tools/agents/[A-Za-z0-9_-]+\.md`' "$f" 2>/dev/null \
+    | head -1 | sed -E 's/^Agent: `([A-Za-z0-9_-]+)`.*/\1/')
+  [ -n "$agent" ] && [ -f "$AI_TOOLS/agents/$agent.md" ]
+}
+
+canonical_skill_body() {
+  # usage: canonical_skill_body <skill-name> <h1-line> <scope-line> <has-agent 0|1>
+  # Reconstructs the exact wrapper body text (README, "Model map and wrapper
+  # authoring"). The H1 and scope line are per-skill and taken as given;
+  # everything after them is fixed.
+  local name="$1" h1="$2" scope="$3" hasagent="$4"
+  printf '%s\n\n%s\n\n' "$h1" "$scope"
+  if [ "$hasagent" = 1 ]; then
+    # shellcheck disable=SC2016 # $HOME must stay literal — expanding it is the bug this check catches
+    printf 'You are running an agent-backed skill: your shared contract is `$HOME/.ai-tools/skills/SKILL-CONTRACT.md`.\n'
+    printf 'Read it and follow it — it governs the model check, the route offer, and the route mechanics.\n\n'
+    # shellcheck disable=SC2016 # $HOME must stay literal — expanding it is the bug this check catches
+    printf 'Your base file is `$HOME/.ai-tools/skills/%s.md`.\n' "$name"
+    printf 'Read it and follow it in full — it is the absolute rule set for this skill; the contract above governs only the mechanics it names.\n'
+  else
+    # shellcheck disable=SC2016 # $HOME must stay literal — expanding it is the bug this check catches
+    printf 'Your base file is `$HOME/.ai-tools/skills/%s.md`.\n' "$name"
+    printf 'Read it and follow it in full — it is the absolute rule set for this skill.\n'
+  fi
+}
+
+check_skill_wrapper_body() {
+  local d name f body h1 scope hasagent expected
+  for d in "$AI_TOOLS"/skills/*-ai-tools/; do
+    [ -d "$d" ] || continue
+    name=$(basename "$d")
+    f="${d}SKILL.md"
+    [ -f "$f" ] || continue
+    body=$(wrapper_body_md "$f")
+    h1=$(printf '%s\n' "$body" | sed -n '1p')
+    scope=$(printf '%s\n' "$body" | sed -n '3p')
+    if skill_has_agent_base "$name"; then hasagent=1; else hasagent=0; fi
+    expected=$(canonical_skill_body "$name" "$h1" "$scope" "$hasagent")
+    if [ "$body" = "$expected" ]; then
+      ok "skill wrapper body matches canonical text: $f"
+    else
+      warn "skill wrapper body does not match canonical text: $f"
+    fi
+  done
+}
+
+check_skill_wrapper_cap() {
+  local f count cap=2000 max=0 maxf=""
+  for f in "$AI_TOOLS"/skills/*-ai-tools/SKILL.md; do
+    [ -f "$f" ] || continue
+    count=$(char_count "$f")
+    if [ "$count" -le "$cap" ]; then ok "skill wrapper within cap: $f ($count/$cap)"
+    else warn "skill wrapper exceeds $cap chars: $f ($count)"; fi
+    if [ "$count" -gt "$max" ]; then max=$count; maxf=$f; fi
+  done
+  [ -n "$maxf" ] && ok "largest skill wrapper: $maxf ($max/$cap, headroom $((cap - max)))"
+}
+
+yaml_frontmatter_folded_value() {
+  # usage: yaml_frontmatter_folded_value <file> <key> -- the value of a
+  # "key: >" folded block, continuation lines joined by one space as the
+  # harness folds them. Falls back to a plain single-line value.
+  awk -v key="$2" '
+    NR == 1 && $0 == "---" { infm = 1; next }
+    infm && $0 == "---" { exit }
+    infm && folded && /^[A-Za-z0-9_-]+:/ { exit }
+    infm && folded {
+      sub(/^[ \t]+/, "")
+      out = (out == "") ? $0 : out " " $0
+      next
+    }
+    infm && $0 ~ "^" key ":[ \t]*>[ \t]*$" { folded = 1; next }
+    infm && $0 ~ "^" key ":" {
+      sub("^" key ":[ \t]*", "")
+      gsub(/^"|"$/, "")
+      out = $0
+      exit
+    }
+    END { print out }
+  ' "$1"
+}
+
+char_count_str() {
+  # usage: char_count_str <string> -- like char_count but for a string
+  if [ -n "$UTF8_LOCALE" ]; then
+    printf '%s' "$1" | LC_ALL="$UTF8_LOCALE" wc -m | tr -d ' '
+  else
+    printf '%s' "$1" | wc -m | tr -d ' '
+  fi
+}
+
+check_skill_description_cap() {
+  local d name f val count cap=500 max=0 maxf=""
+  for d in "$AI_TOOLS"/skills/*-ai-tools/; do
+    [ -d "$d" ] || continue
+    name=$(basename "$d")
+    f="${d}SKILL.md"
+    [ -f "$f" ] || continue
+    val=$(yaml_frontmatter_folded_value "$f" description)
+    count=$(char_count_str "$val")
+    if [ "$count" -le "$cap" ]; then ok "skill description within cap: $f ($count/$cap)"
+    else warn "skill description exceeds $cap chars: $f ($count)"; fi
+    if [ "$count" -gt "$max" ]; then max=$count; maxf=$f; fi
+  done
+  [ -n "$maxf" ] && ok "largest skill description: $maxf ($max/$cap, headroom $((cap - max)))"
+}
+
+check_skill_base_coverage() {
+  local f d name
+  f="$AI_TOOLS/skills/SKILL-CONTRACT.md"
+  if [ -f "$f" ]; then ok "skill contract present: $f"
+  else warn "missing: $f"; fi
+
+  for d in "$AI_TOOLS"/skills/*-ai-tools/; do
+    [ -d "$d" ] || continue
+    name=$(basename "$d")
+    f="$AI_TOOLS/skills/$name.md"
+    if [ -f "$f" ]; then ok "skill base present: $f"
+    else warn "missing skill base: $f"; fi
+  done
+
+  for f in "$AI_TOOLS"/skills/*.md; do
+    [ -f "$f" ] || continue
+    name=$(basename "$f" .md)
+    [ "$name" = SKILL-CONTRACT ] && continue
+    if [ -d "$AI_TOOLS/skills/$name" ]; then
+      ok "skill base has directory: $f"
+    else
+      warn "orphan skill base (no matching directory): $f"
     fi
   done
 }
@@ -678,6 +832,10 @@ check_wrapper_coverage
 check_naming
 check_skill_frontmatter
 check_skill_name_match
+check_skill_wrapper_body
+check_skill_wrapper_cap
+check_skill_description_cap
+check_skill_base_coverage
 check_wrapper_body
 check_model_parity
 check_effort_pinning

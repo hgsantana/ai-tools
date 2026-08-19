@@ -625,6 +625,16 @@ verify_install() {
     if [ -f "$base" ]; then ok "agent base: $base"; else warn "missing agent base: $base"; fi
   done
 
+  if [ -f "$AI_TOOLS/skills/SKILL-CONTRACT.md" ]; then ok "skill contract: $AI_TOOLS/skills/SKILL-CONTRACT.md"
+  else warn "missing skill contract: $AI_TOOLS/skills/SKILL-CONTRACT.md — agent-backed skill wrappers point at it before their base"; fi
+
+  for p in "$AI_TOOLS/skills"/*-ai-tools; do
+    [ -d "$p" ] || continue
+    name=$(basename "$p")
+    if [ -f "$AI_TOOLS/skills/$name.md" ]; then ok "skill base: $AI_TOOLS/skills/$name.md"
+    else warn "missing skill base: $AI_TOOLS/skills/$name.md — the wrapper $p/SKILL.md points at it"; fi
+  done
+
   if [ -e "$HOME/AGENTS.md" ]; then ok "user overlay present: $HOME/AGENTS.md"
   else warn "missing user overlay: $HOME/AGENTS.md"; fi
 
