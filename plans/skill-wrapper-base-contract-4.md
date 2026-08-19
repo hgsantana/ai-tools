@@ -61,3 +61,42 @@ Suggested message: `refactor(skills): split vibe-ai-tools into wrapper and base`
 ## Implementation log
 
 (Append-only log added by implementers and planner during execution.)
+
+- Created `skills/vibe-ai-tools.md`: pointer note (`> Skill base, loaded by the wrapper at ...`) followed by the full body of the former `skills/vibe-ai-tools/SKILL.md`, from `You run this workflow yourself…` through *Boundaries*, verbatim except the leading `# Vibe Coding` H1 which is not part of the base body.
+- Reduced `skills/vibe-ai-tools/SKILL.md` to frontmatter (unchanged) plus the wrapper body specified in Step 1 (H1 + scope line + base pointer), with no contract paragraph.
+- Ran the diff regression:
+  ```
+  $ diff <(git show HEAD:skills/vibe-ai-tools/SKILL.md | sed -n '/^# Vibe Coding/,$p') <(sed -n '/^You run this workflow yourself/,$p' skills/vibe-ai-tools.md)
+  1,2d0
+  < # Vibe Coding
+  < 
+  exit:1
+  ```
+  Only the old file's `# Vibe Coding` H1 and blank line are removed; every phase, gate item, and boundary line onward is identical (no other diff hunks reported).
+- Ran the grep evidence:
+  ```
+  $ grep -c "SKILL-CONTRACT" skills/vibe-ai-tools/SKILL.md skills/vibe-ai-tools.md
+  skills/vibe-ai-tools/SKILL.md:0
+  skills/vibe-ai-tools.md:0
+  ```
+- Ran the wc evidence:
+  ```
+  $ wc -c skills/vibe-ai-tools/SKILL.md
+  782 skills/vibe-ai-tools/SKILL.md
+  ```
+  782 ≤ 2,000-character cap.
+- Ran `bash tools/lint.sh` from the worktree root: `done: 499 ok, 1 skipped, 0 warnings`, `EXIT:0`. The 1 skip is the version-bump check, which needs `--base <ref>` supplied by the lint workflow (unrelated to this stage; stage 6 owns the version bump).
+
+## Dispatch log
+
+| Attempt | Status | Category | Runner | Session ID | Outcome |
+|---------|--------|----------|--------|------------|---------|
+| 1 | W | implementer | sonnet | a5e447c8578cd5fcf | V → accepted |
+
+**Status: V**
+
+### Planner validation (attempt 1)
+
+Diff inspected. `skills/vibe-ai-tools.md` carries the prescribed pointer note plus the body verbatim; the line-level regression sweep of the pre-split file against wrapper + base reported zero missing lines. The wrapper holds frontmatter (unchanged), H1, one scope line, and the base pointer only — 782 characters, no `SKILL-CONTRACT` reference in either file. The entry gate stays in the base and nothing was added to the contract. `tools/lint.sh` exit 0.
+
+**Status: F**
