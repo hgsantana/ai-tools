@@ -4,7 +4,7 @@
 
 | Stage | Status | Agent |
 |------:|:------:|-------|
-| 1 | | |
+| 1 | F | implementer · sonnet |
 | 2 | | |
 | 3 | | |
 | 4 | | |

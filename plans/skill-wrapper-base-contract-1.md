@@ -115,3 +115,26 @@ Suggested message: `feat(skills): add the shared skill contract and define the s
 ## Implementation log
 
 (Append-only log added by implementers and planner during execution.)
+
+- Created `skills/SKILL-CONTRACT.md` (3,990 bytes per `wc -c`) with the exact text from the stage's step 1, mirroring `agents/SUBAGENT-CONTRACT.md`'s structure. Confirmed `ls -d skills/*-ai-tools` (the installer's glob) does not match it — output lists only the nine existing `<name>-ai-tools` directories, no `SKILL-CONTRACT.md`.
+- README.md: replaced rule 7 with the three-part layout (wrapper/base/contract), the wrapper body order, and the 2,000-character wrapper cap, keeping the rule number. Kept rule 8 unchanged. Appended the 500-character `description` cap sentence to rule 9.
+- README.md, *Model map and wrapper authoring*: added the canonical skill wrapper body markdown block (title, one-sentence scope, contract pointer, base pointer, Windows/no-agent notes) immediately after the existing agent wrapper body block, before the `## Scripts` heading.
+- README.md, *What is inside*: rewrote the `skills/` row to describe the wrapper+base+contract split and the two caps, and added a new row for `skills/SKILL-CONTRACT.md` directly after it, phrased like the `agents/SUBAGENT-CONTRACT.md` row ("Not installed; read by path").
+- ROADMAP.md: changed story 3's status cell from `idea` to `doing` in the story table (line with `[Skill wrapper, skill base, shared contract]`).
+- Ran `bash tools/lint.sh` from the worktree root. Result: `done: 498 ok, 1 skipped, 0 warnings`, the one skip being `SKIP: version bump check needs --base <ref> (the lint workflow supplies it)` — expected, since this stage does not touch the README version line. Exit code: `0`.
+- No skill file under `skills/*/SKILL.md` references the new contract yet — verified no changes made to those files this stage.
+- README version line (`> **Version 0.0.23-ALPHA**`) left untouched, confirmed via `git diff README.md` review during edits — only rule 7, rule 9, the *What is inside* table, and the *Model map and wrapper authoring* section were changed.
+
+## Dispatch log
+
+| Attempt | Status | Category | Runner | Session ID | Outcome |
+|---------|--------|----------|--------|------------|---------|
+| 1 | W | implementer | sonnet | a11a7de19279f2ece | V → accepted |
+
+**Status: V**
+
+### Planner validation (attempt 1)
+
+Diff inspected. `skills/SKILL-CONTRACT.md` matches the stage text verbatim (3,990 chars) and is not matched by `ls -d skills/*-ai-tools`. README rules 7 and 9 extended in place, no rule inserted or renumbered; canonical skill wrapper body added; `skills/` row updated and a `skills/SKILL-CONTRACT.md` row added. ROADMAP story 3 reads `doing`. README version line untouched (no version hunk in the diff). `tools/lint.sh` exit 0.
+
+**Status: F**

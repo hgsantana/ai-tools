@@ -22,7 +22,8 @@ Clone it to `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows) and link it
 | [`agents/maintainer-ai-tools.md`](agents/maintainer-ai-tools.md) | Base: drives this README's [Update](#update), [Removal](#removal), or [Reinstallation](#reinstallation) via the [scripts](#scripts), returning destructive flags for approval. Never the first install — that is this README's bootstrap, before the agent exists |
 | [`agents/SUBAGENT-CONTRACT.md`](agents/SUBAGENT-CONTRACT.md) | Shared contract every wrapper loads before its base: what changes when an agent runs as a spawned subagent — no channel to the user, questions and approvals returned to the spawner, report by file. Not installed; read by path |
 | [`agents/<harness>/`](agents/) | Wrappers for the six agents: harness syntax, pinned model, this harness's `MODELS.md` row key, pointer to the shared contract, pointer to the base; nothing else |
-| [`skills/`](skills/) | Nine skills: one same-named skill per agent, except `maintainer-ai-tools` (three tasks: `update-ai-tools`, `remove-ai-tools`, `reinstall-ai-tools`); plus `vibe-ai-tools`, which has no agent and carries refine-confirm-deliver inline. Each agent-backed skill surfaces the stake, checks the session model, and offers three routes — dispatch the agent, run its base in this session, or stop (rule 8). A skill must run on **any** model; model-dependent work is an agent (rules 7–9) |
+| [`skills/`](skills/) | Nine skills: one same-named skill per agent, except `maintainer-ai-tools` (three tasks: `update-ai-tools`, `remove-ai-tools`, `reinstall-ai-tools`); plus `vibe-ai-tools`, which has no agent and carries refine-confirm-deliver inline. Each is split into a `skills/<name>/SKILL.md` wrapper (installed, ≤2,000 characters) and a `skills/<name>.md` base (behaviour). An agent-backed skill's wrapper also points to `skills/SKILL-CONTRACT.md`, which surfaces the stake, checks the session model, and offers three routes — dispatch the agent, run its base in this session, or stop (rule 8). A skill must run on **any** model; model-dependent work is an agent (rules 7–9) |
+| [`skills/SKILL-CONTRACT.md`](skills/SKILL-CONTRACT.md) | Shared contract every agent-backed skill wrapper loads before its base: the model check, the three-route offer, and the route mechanics. Not installed; read by path |
 | [`scripts/`](scripts/) | `install`, `remove`, `update`, `reinstall`, `verify` — shell, PowerShell, and CMD shims ([Scripts](#scripts); rules 23–26) |
 
 ### How to install, remove, update, or reinstall
@@ -56,9 +57,9 @@ Normative for every human and every AI maintaining this repository.
 
 5. Every agent has a harness-agnostic **base** at `agents/<name>.md` (full behaviour) and one **wrapper** per harness at `agents/<harness-short-name>/<agent-name>.<ext>`. A base states behaviour **mode-agnostically**: it says to ask the user or to require approval, never how that reaches them. How it reaches them belongs to whoever loads the base — `agents/SUBAGENT-CONTRACT.md` when a wrapper spawns it, the skill's *run it here* route when a session runs it.
 6. A wrapper header is only harness syntax (frontmatter or TOML, model pinning, file name). Its body is exactly, in this order: **(1)** the `MODELS.md` pointer naming this harness's row, only when the base cites **planner** / **implementer** / **mechanical**; **(2)** the pointer to `$HOME/.ai-tools/agents/SUBAGENT-CONTRACT.md`; **(3)** the pointer to `$HOME/.ai-tools/agents/<name>.md`, which prevails over the contract except on the channel to the user. Anything else is drift — move it to the base or to the contract. A wrapper is at most **1,000 characters**, frontmatter included: it is what the harness reads to decide whether to route to the agent, so it carries the summary and nothing else — the behaviour lives in the base it points to. Canonical body: [wrapper authoring](#model-map-and-wrapper-authoring).
-7. Skills are optional. A skill is harness-agnostic: one file, `skills/<name>/SKILL.md`, in one directory every harness registers as-is — no per-harness copies, no wrappers.
+7. Skills are optional and harness-agnostic — no per-harness copies, no wrappers per harness. A skill is split like an agent: a **wrapper** at `skills/<name>/SKILL.md`, the only installed file, in one directory every harness registers as-is; a **base** at `skills/<name>.md` holding the behaviour; and, for a skill that fronts an agent, `skills/SKILL-CONTRACT.md` — the model check, the three-route offer, and the route mechanics, shared by every agent-backed skill and read by path, never installed. The wrapper body is exactly, in this order: a one-line scope; the pointer to `$HOME/.ai-tools/skills/SKILL-CONTRACT.md` (agent-backed skills only); the pointer to `$HOME/.ai-tools/skills/<name>.md`, which prevails over the contract. Anything else is drift — move it to the base or the contract. A wrapper is at most **2,000 characters**, frontmatter included: it is what the harness reads to decide whether to route to the skill. That cap is concision (rule 14), not token economy — no supported harness preloads skill bodies; every one that documents the mechanics reads the body on invocation. Canonical body: [skill authoring](#model-map-and-wrapper-authoring).
 8. A skill must run on **any** model the session provides: it never requires a model or category and never refuses over one. It may read `MODELS.md` and advise which model would serve and how to switch — the user may decline; that is not a gate. If it cannot function without a given model, it must be an agent, whose wrapper pins the model. An agent-backed skill therefore owns the choice of runner and never makes it itself: it states the stake and that model check in one message, then asks for one of three routes — **dispatch the agent** (its wrapper pins the model), **run it here** (this session reads the base and follows it, loading no subagent contract — it is not a subagent), or **stop**.
-9. Skill frontmatter: only universally accepted keys (`name`, `description`) plus optional keys every supported harness tolerates (e.g. `argument-hint`). A key any supported harness rejects does not belong in a shared file.
+9. Skill frontmatter: only universally accepted keys (`name`, `description`) plus optional keys every supported harness tolerates (e.g. `argument-hint`). A key any supported harness rejects does not belong in a shared file. `description` is at most **500 characters**: harnesses budget the skill *list*, not the body — Codex caps it at 2% of the context window or 8,000 characters, Claude Code truncates a description at 1,536.
 10. Wrappers follow each harness's official documentation. Re-check vendor docs before adding a harness or editing a wrapper — formats change upstream.
 11. Vendor model names live in [`MODELS.md`](MODELS.md) and are repeated only in wrapper headers (harnesses read the wrapper). Everyone else — bases, skills, the scripts' Grok pin — reads `MODELS.md` at run time and hard-codes none. [Supported harnesses](#supported-harnesses) may show accepted value *shapes*, never the choice. Bases speak only in categories (**planner**, **implementer**, **mechanical**, defined in `USER-AGENTS.md`); skills cite categories only as advice (rule 8).
 12. `MODELS.md` and wrapper headers always match: a new agent, a new harness, or a model change updates the map and every affected wrapper in the same commit. Nothing else needs updating — a wrapper body never varies except by row key (rule 6). Fill each cell by the [selection method](#choosing-the-models) from current Artificial Analysis measurements and official harness model, plan, pricing, and configuration docs — never memory or unsourced claims.
@@ -127,6 +128,22 @@ Read it and follow it in full — it is the absolute rule set for this agent; th
 ```
 
 `<harness key>` is the wrapper's folder under `agents/` and its `MODELS.md` row. Omit the first paragraph when the base cites no category; the other two are always present. Codex carries the same text in `developer_instructions`, with Windows backslashes doubled for TOML.
+
+A skill wrapper carries frontmatter (rule 9), then exactly:
+
+```markdown
+# <Title>
+
+<One sentence: what this skill covers and who defines the work.>
+
+You are running an agent-backed skill: your shared contract is `$HOME/.ai-tools/skills/SKILL-CONTRACT.md`.
+Read it and follow it — it governs the model check, the route offer, and the route mechanics.
+
+Your base file is `$HOME/.ai-tools/skills/<name>.md`.
+Read it and follow it in full — it is the absolute rule set for this skill; the contract above governs only the mechanics it names.
+```
+
+On Windows, `%USERPROFILE%` replaces `$HOME`. A skill that fronts no agent omits the contract paragraph.
 
 ## Scripts
 
