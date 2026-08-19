@@ -22,10 +22,10 @@ Evidence in the Implementation log, from a throwaway clone: a commit touching on
 
 ## Acceptance criteria
 
-- [ ] Without `--base`, the check is skipped and the run can still exit `0`
-- [ ] With `--base`, a shipped-content change without a version bump exits `2` and names the paths
-- [ ] `MODELS.md`, `ROADMAP.md`, `plans/`, `tools/`, and `.github/` do not by themselves require a bump
-- [ ] The version is read from the README, never from a second copy of the string
+- [x] Without `--base`, the check is skipped and the run can still exit `0`
+- [x] With `--base`, a shipped-content change without a version bump exits `2` and names the paths
+- [x] `MODELS.md`, `ROADMAP.md`, `plans/`, `tools/`, and `.github/` do not by themselves require a bump
+- [x] The version is read from the README, never from a second copy of the string
 
 ## Commit
 
@@ -37,3 +37,45 @@ Suggested message: `chore(tools): require a version bump when shipped content ch
 - Parallel-safe with: none
 
 ## Implementation log
+
+Added `--base <ref>` to the flag loop and a `check_version_bump` function (with
+`readme_version`, reading the version from README.md's leading
+`> **Version X**` line via `git show <ref>:README.md`). Wired it into the Run
+section as the last check, and documented it in `--help`. Tested against a
+throwaway clone of `/home/wsl/.ai-tools` (built under the scratchpad, base
+commit `16dfcebd46bca09acf0bb2d3d4665be73f3e672f`, with `tools/lint.sh`
+copied in from this branch); all commits and test runs were made only in
+that clone, never in this repository.
+
+1. Commit touching only `README.md` prose (adding a comment line), run
+   `tools/lint.sh --base 16dfcebd46bca09acf0bb2d3d4665be73f3e672f`:
+   `ok: no shipped content changed since 16dfcebd46bca09acf0bb2d3d4665be73f3e672f: version bump not required`,
+   exit `0`.
+2. Commit touching `agents/maintainer-ai-tools.md` only (no version change),
+   same `--base`:
+   `WARN: shipped content changed without a README version bump (still 0.0.22-ALPHA, was 0.0.22-ALPHA): agents/maintainer-ai-tools.md`,
+   exit `2`.
+3. Commit touching both `agents/maintainer-ai-tools.md` and bumping the
+   README version line (`0.0.22-ALPHA` -> `0.0.23-ALPHA`), same `--base`:
+   `ok: version bumped for shipped content change: 0.0.22-ALPHA -> 0.0.23-ALPHA`,
+   exit `0`.
+4. Same clone, no `--base` flag, run `tools/lint.sh`:
+   `SKIP: version bump check needs --base <ref> (the lint workflow supplies it)`,
+   exit `0` (`done: 498 ok, 1 skipped, 0 warnings`).
+
+Extra sanity check (not required by the acceptance criteria but verified):
+a commit touching only `MODELS.md` and `ROADMAP.md` reported
+`ok: no shipped content changed since <base>: version bump not required`,
+exit `0` — confirming those paths, plus `plans/`, `.github/`, and `tools/`
+by the pathspec used, do not by themselves require a bump.
+
+Also verified: `tools/lint.sh --help` documents `--base <ref>` and marks the
+check CI-only; `tools/lint.sh --bogus` and `tools/lint.sh --base` (missing
+value) both exit `1` via `fatal`; a full run against this repository at HEAD
+(no `--base`) still reports `498 ok, 1 skipped, 0 warnings`, exit `0`.
+
+## Dispatch log
+
+| Attempt | Status | Category | Runner | Session ID | Outcome |
+|---------|--------|----------|--------|------------|---------|
+| 1 | V | implementer | sonnet | a10d79b3a94df47a0 | V -> accepted |

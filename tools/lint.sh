@@ -3,7 +3,7 @@
 # (outside the contract of README rules 23-25). Enforces this repository's
 # mechanically verifiable rules against the tree it runs in.
 #
-# Usage: tools/lint.sh [--help]
+# Usage: tools/lint.sh [--help] [--base <ref>]
 #
 # Run from anywhere; it resolves its own repository root. Exit: 0 clean,
 # 1 aborted on a precondition (bad flag, missing lib.sh), 2 finished with
@@ -17,7 +17,7 @@ export AI_TOOLS
 
 usage() {
   cat <<'EOF'
-usage: lint.sh [--help]
+usage: lint.sh [--help] [--base <ref>]
 
 Development check: enforces this repository's mechanically verifiable rules
 against the tree lint.sh runs in. Not an installation process (README rules
@@ -51,14 +51,28 @@ Checks:
                     tools/lint.sh are mode 100755 (rule 26)
   no binaries       every tracked file under agents/, skills/, scripts/, and
                     tools/ is text
+  version bump      CI-only, needs --base <ref> (skipped without it): when
+                    agents/, skills/, scripts/, or USER-AGENTS.md changed
+                    since <ref>, the README version line must have changed
+                    too (rule 4)
+
+--base <ref>  commit-ish to diff shipped content against for the version
+              bump check. Without it, that check is skipped. The lint
+              workflow (.github/workflows/lint.yml) supplies it.
 
 Exit codes: 0 clean, 1 aborted on a precondition, 2 finished with warnings.
 EOF
 }
 
+BASE_REF=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --help|-h) usage; exit 0 ;;
+    --base)
+      shift
+      [ $# -gt 0 ] || fatal "--base requires a ref argument (see --help)"
+      BASE_REF="$1"
+      ;;
     *) fatal "unknown flag: $1 (see --help)" ;;
   esac
   shift
@@ -615,6 +629,45 @@ check_no_binaries() {
   done
 }
 
+# --- Check: version bump on shipped content change (rule 4) ------------------
+# CI-only: needs --base <ref>, a commit-ish this run diffs against. Without
+# it there is no meaningful base for a dirty local tree, so the check is
+# skipped rather than guessed at.
+
+readme_version() {
+  # usage: readme_version <file> -- the version from the README's leading
+  # "> **Version X** ..." line, the single source this check reads from.
+  awk '
+    NR <= 5 && /^> \*\*Version [^*]+\*\*/ {
+      v = $0
+      sub(/^> \*\*Version /, "", v)
+      sub(/\*\*.*/, "", v)
+      print v
+      exit
+    }
+  ' "$1"
+}
+
+check_version_bump() {
+  local base="$BASE_REF" changed old new
+  if [ -z "$base" ]; then
+    skip "version bump check needs --base <ref> (the lint workflow supplies it)"
+    return
+  fi
+  changed=$(git -C "$AI_TOOLS" diff --name-only "$base...HEAD" -- agents skills scripts USER-AGENTS.md 2>/dev/null)
+  if [ -z "$changed" ]; then
+    ok "no shipped content changed since $base: version bump not required"
+    return
+  fi
+  old=$(readme_version <(git -C "$AI_TOOLS" show "$base:README.md" 2>/dev/null))
+  new=$(readme_version <(git -C "$AI_TOOLS" show "HEAD:README.md" 2>/dev/null))
+  if [ -n "$old" ] && [ -n "$new" ] && [ "$old" != "$new" ]; then
+    ok "version bumped for shipped content change: $old -> $new"
+  else
+    warn "shipped content changed without a README version bump (still ${new:-unreadable}, was ${old:-unreadable}): $(echo "$changed" | tr '\n' ' ')"
+  fi
+}
+
 # --- Run -----------------------------------------------------------------------
 
 check_wrapper_coverage
@@ -633,5 +686,6 @@ check_cmd_ascii
 check_line_endings
 check_executable_bits
 check_no_binaries
+check_version_bump
 
 finish

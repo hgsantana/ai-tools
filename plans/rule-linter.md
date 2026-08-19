@@ -8,9 +8,9 @@
 | 2 | F | implementer · sonnet |
 | 3 | F | implementer · sonnet |
 | 4 | F | implementer · sonnet |
-| 5 | W | implementer · sonnet |
+| 5 | F | implementer · sonnet |
 | 6 | F | implementer · sonnet |
-| 7 | | |
+| 7 | W | implementer · sonnet |
 
 ## Goal
 
