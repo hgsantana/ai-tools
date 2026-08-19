@@ -316,12 +316,16 @@ canonical_body() {
   # Reconstructs the exact wrapper body text (README, "Model map and wrapper
   # authoring"). A regex would accept the drift this check exists to reject.
   local h="$1" a="$2" hascat="$3"
+  # shellcheck disable=SC2016 # $HOME/%USERPROFILE% must stay literal — expanding them is the bug this check catches
   printf 'On Windows, %%USERPROFILE%% replaces $HOME.\n\n'
   if [ "$hascat" = 1 ]; then
+    # shellcheck disable=SC2016 # $HOME must stay literal — expanding it is the bug this check catches
     printf 'Category → model comes from `$HOME/.ai-tools/MODELS.md`, row `%s`. Resolve every category through it — your own and any you spawn; never assume a model name.\n\n' "$h"
   fi
+  # shellcheck disable=SC2016 # $HOME must stay literal — expanding it is the bug this check catches
   printf 'You are a spawned subagent: your shared contract is `$HOME/.ai-tools/agents/SUBAGENT-CONTRACT.md`.\n'
   printf 'Read it and follow it — it governs your channel to the user and your report.\n\n'
+  # shellcheck disable=SC2016 # $HOME must stay literal — expanding it is the bug this check catches
   printf 'Your base file is `$HOME/.ai-tools/agents/%s.md`.\n' "$a"
   printf 'Read it and follow it in full — it is the absolute rule set for this agent; the contract above prevails only on your channel to the user.\n'
 }

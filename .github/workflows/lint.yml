@@ -35,4 +35,4 @@ jobs:
           fi
 
       - name: Run shellcheck
-        run: shellcheck scripts/shell/*.sh tools/*.sh
+        run: shellcheck -x -P scripts/shell scripts/shell/*.sh tools/*.sh

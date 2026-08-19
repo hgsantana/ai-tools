@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # ai-tools shared helpers — sourced by every script in scripts/shell/.
 # Canonical implementation: scripts/powershell/lib.ps1 mirrors this file.
 # Compatible with bash 3.2+ (macOS default) and BSD/GNU userlands.
@@ -100,7 +101,7 @@ detect_harnesses() {
 }
 
 report_discovery() {
-  local h root name jb
+  local h root name entry jb nocasematch_was_set=0
   for h in $ALL_HARNESSES; do
     harness_detected "$h" && info "found: $h"
   done
@@ -110,15 +111,27 @@ report_discovery() {
   for jb in "$HOME"/.local/share/JetBrains/*/plugins; do
     [ -d "$jb" ] && jb_roots="$jb_roots $jb"
   done
+  # Glob instead of `ls | grep` so names with non-alphanumeric characters
+  # (spaces, globs, newlines) are handled correctly; nocasematch replaces
+  # the two grep -i passes and is restored to its prior state on exit.
+  shopt -q nocasematch && nocasematch_was_set=1
+  shopt -s nocasematch
   for root in $EXT_ROOTS $jb_roots; do
     [ -d "$root" ] || continue
-    ls "$root" 2>/dev/null \
-      | grep -iE 'gemini|claude|codeium|windsurf|antigravity|continue|cody|cursor|tabnine' \
-      | grep -viE '^(google\.geminicodeassist|anthropic\.claude-code|openai\.chatgpt|github\.copilot)' \
-      | while IFS= read -r name; do
-          info "possible AI extension (not offered): $name in $root"
-        done
+    for entry in "$root"/*; do
+      [ -e "$entry" ] || continue
+      name=${entry##*/}
+      case "$name" in
+        *gemini*|*claude*|*codeium*|*windsurf*|*antigravity*|*continue*|*cody*|*cursor*|*tabnine*) ;;
+        *) continue ;;
+      esac
+      case "$name" in
+        google.geminicodeassist*|anthropic.claude-code*|openai.chatgpt*|github.copilot*) continue ;;
+      esac
+      info "possible AI extension (not offered): $name in $root"
+    done
   done
+  [ "$nocasematch_was_set" = 1 ] || shopt -u nocasematch
   return 0
 }
 
@@ -199,9 +212,14 @@ link_or_copy() {
   safe_link "$target" "$dest"
   rc=$?
   [ "$rc" != 2 ] && return "$rc"
-  if [ -d "$target" ]; then cp -R "$target" "$dest" 2>/dev/null; else cp "$target" "$dest" 2>/dev/null; fi \
-    && ok "copied (will not track updates): $dest <- $target" \
-    || { warn "neither link nor copy possible: $dest"; return 1; }
+  if [ -d "$target" ]; then cp -R "$target" "$dest" 2>/dev/null; else cp "$target" "$dest" 2>/dev/null; fi
+  rc=$?
+  if [ "$rc" -eq 0 ]; then
+    ok "copied (will not track updates): $dest <- $target"
+  else
+    warn "neither link nor copy possible: $dest"
+    return 1
+  fi
 }
 
 safe_unlink() {
@@ -252,6 +270,7 @@ ensure_clone() {
   if [ ! -d "$AI_TOOLS" ]; then
     [ "$DRY_RUN" = 1 ] && fatal "$AI_TOOLS missing — clone it first: git clone $REPO_URL \"$AI_TOOLS\""
     git clone "$REPO_URL" "$AI_TOOLS" || fatal "clone failed: $REPO_URL -> $AI_TOOLS"
+    # shellcheck disable=SC2034 # read by scripts/shell/reinstall.sh, a separate sourcing script
     FRESH_CLONE=1
   fi
   { [ -f "$AI_TOOLS/USER-AGENTS.md" ] && [ -d "$AI_TOOLS/agents" ]; } \
@@ -295,8 +314,10 @@ install_instructions() {
   for h in $SCOPE; do
     dest=$(instructions_dest "$h")
     [ -n "$dest" ] || { info "no global instructions destination: $h"; continue; }
-    [ "$h" = codex ] && [ -f "$HOME/.codex/AGENTS.override.md" ] \
-      && info "~/.codex/AGENTS.override.md exists and takes precedence while present (never touched)"
+    if [ "$h" = codex ] && [ -f "$HOME/.codex/AGENTS.override.md" ]; then
+      # shellcheck disable=SC2088 # literal "~" in user-facing prose, not a path to expand
+      info "~/.codex/AGENTS.override.md exists and takes precedence while present (never touched)"
+    fi
     safe_link "$AI_TOOLS/USER-AGENTS.md" "$dest"
     rc=$?
     [ "$rc" = 2 ] && warn "symlink refused for $dest — add a one-line include pointer to $AI_TOOLS/USER-AGENTS.md instead of a copy"
@@ -422,9 +443,12 @@ install_grok_models() {
   fi
   if [ "$DRY_RUN" = 1 ]; then ok "would append grok models block: $GROK_TOML"; return 0; fi
   mkdir -p "$(dirname "$GROK_TOML")" 2>/dev/null
-  { [ -s "$GROK_TOML" ] && echo; printf '%s\n' "$desired"; } >> "$GROK_TOML" \
-    && ok "grok models block appended: $GROK_TOML" \
-    || warn "could not write $GROK_TOML — pin models manually (README, Installation)"
+  # shellcheck disable=SC2094 # [ -s ] stats the file, it does not read its content — no overlap with the append below
+  if { [ -s "$GROK_TOML" ] && echo; printf '%s\n' "$desired"; } >> "$GROK_TOML"; then
+    ok "grok models block appended: $GROK_TOML"
+  else
+    warn "could not write $GROK_TOML — pin models manually (README, Installation)"
+  fi
 }
 
 remove_grok_models() {
