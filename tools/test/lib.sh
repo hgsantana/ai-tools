@@ -387,9 +387,11 @@ t_origin_commit() {
   # Clones the fixture's bare origin (T_ROOT/origin.git) into a scratch dir,
   # makes one deterministic change — appends a marker line to
   # agents/claude-code/maintainer-ai-tools.md and adds a new
-  # skills/<label>-ai-tools/SKILL.md — commits, and pushes to master, giving
-  # the fixture's clone something new to update to. Returns nothing; the
-  # caller already knows the paths it named via <label>.
+  # skills/<label>-ai-tools/SKILL.md wrapper plus its skills/<label>-ai-tools.md
+  # base (the three-part layout the repo actually ships; verify_install warns
+  # on a wrapper with no base) — commits, and pushes to master, giving the
+  # fixture's clone something new to update to. Returns nothing; the caller
+  # already knows the paths it named via <label>.
   local label="$1" origin scratch
   origin="$T_ROOT/origin.git"
   scratch=$(mktemp -d "${TMPDIR:-/tmp}/ai-tools-test-origin-commit.XXXXXX") \
@@ -416,7 +418,10 @@ description: test-only skill added by t_origin_commit for marker $label.
 
 # $label
 
-Test-only skill fixture, never shipped.
+Test-only skill wrapper. Base: skills/$label-ai-tools.md. Never shipped.
+EOF
+  cat > "$scratch/skills/$label-ai-tools.md" <<EOF
+Test-only skill base, added by t_origin_commit for marker $label. Never shipped.
 EOF
 
   git -C "$scratch" add -A || fatal "t_origin_commit: git add failed"

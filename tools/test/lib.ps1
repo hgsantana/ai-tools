@@ -350,8 +350,10 @@ function T-OriginCommit([string]$Label) {
   # Clones the fixture's bare origin ($script:T_Root\origin.git) into a
   # scratch dir, makes one deterministic change -- appends a marker line to
   # agents\claude-code\maintainer-ai-tools.md and adds a new
-  # skills\<label>-ai-tools\SKILL.md -- commits, and pushes to master, giving
-  # the fixture's clone something new to update to. Mirrors t_origin_commit
+  # skills\<label>-ai-tools\SKILL.md wrapper plus its skills\<label>-ai-tools.md
+  # base (the three-part layout the repo actually ships; verify_install warns
+  # on a wrapper with no base) -- commits, and pushes to master, giving the
+  # fixture's clone something new to update to. Mirrors t_origin_commit
   # (tools/test/lib.sh, stage 4). Returns nothing; the caller already knows
   # the paths it named via <label>.
   $origin = Join-Path $script:T_Root 'origin.git'
@@ -377,8 +379,11 @@ function T-OriginCommit([string]$Label) {
     ''
     "# $Label"
     ''
-    'Test-only skill fixture, never shipped.'
+    "Test-only skill wrapper. Base: skills/$Label-ai-tools.md. Never shipped."
   ) | Set-Content -LiteralPath (Join-Path $skillDir 'SKILL.md')
+  @(
+    "Test-only skill base, added by T-OriginCommit for marker $Label. Never shipped."
+  ) | Set-Content -LiteralPath (Join-Path $scratch "skills\$Label-ai-tools.md")
 
   & git -C $scratch add -A
   if ($LASTEXITCODE -ne 0) { Fatal 'T-OriginCommit: git add failed' }
