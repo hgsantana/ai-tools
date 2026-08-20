@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ai-tools sandboxed test suite — a development check, not an installation
-# process (outside the contract of README rules 23-25), same standing as
+# process (outside the contract of README rules 23-24), same standing as
 # tools/lint.sh. Proves the install/remove/update/reinstall/verify contract
 # mechanically, against a disposable fake $HOME, never against the real one.
 #
@@ -90,9 +90,9 @@ usage() {
 usage: test.sh [--help] [--case <name>]... [--keep]
 
 Development check: builds a disposable fake $HOME per case and runs the
-scripts under scripts/shell against it (scripts/powershell has its own
-suite). Not an installation process (README rules 23-25); introduces no
-dependency beyond git, grep, awk, sed, cmp, diff, find, tar.
+scripts under scripts/shell against it. Not an installation process
+(README rules 23-24); introduces no dependency beyond git, grep, awk, sed,
+cmp, diff, find, tar.
 
   --case <name>   run one case, repeatable. <name> is either a case-file
                   basename under tools/test/ (with or without ".sh"),

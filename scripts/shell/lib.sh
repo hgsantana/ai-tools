@@ -1,13 +1,18 @@
 # shellcheck shell=bash
 # ai-tools shared helpers — sourced by every script in scripts/shell/.
-# Canonical implementation: scripts/powershell/lib.ps1 mirrors this file.
+# The only implementation (README rule 23); no PowerShell mirror.
 # Compatible with bash 3.2+ (macOS default) and BSD/GNU userlands.
 
 set -u
 
 AI_TOOLS="${AI_TOOLS:-$HOME/.ai-tools}"
 REPO_URL="https://github.com/hgsantana/ai-tools.git"
-ALL_HARNESSES="claude-code grok codex copilot cursor gemini antigravity"
+ALL_HARNESSES="claude-code grok codex copilot cursor antigravity"
+# Harnesses this repository no longer installs into, but whose links a previous
+# version created and removal must still clean. A retired harness is never in
+# scope for install or update, and is never accepted by --harnesses; it keeps
+# only the roots it owned exclusively (README "Retired harnesses").
+RETIRED_HARNESSES="gemini"
 EXT_ROOTS="$HOME/.vscode/extensions $HOME/.vscode-server/extensions $HOME/.vscode-insiders/extensions $HOME/.vscode-server-insiders/extensions $HOME/.vscodium/extensions"
 
 DRY_RUN=0
@@ -62,7 +67,10 @@ instructions_dest() {
     grok)        echo "$HOME/.grok/AGENTS.md" ;;
     codex)       echo "$HOME/.codex/AGENTS.md" ;;
     copilot)     echo "$HOME/.copilot/instructions/ai-tools.instructions.md" ;;
-    gemini|antigravity) echo "$HOME/.gemini/GEMINI.md" ;;
+    antigravity) echo "$HOME/.gemini/GEMINI.md" ;;
+    # Retired: GEMINI.md is shared and now belongs to Antigravity alone, so the
+    # retired harness claims no instructions destination and never removes it.
+    gemini)      echo "" ;;
     cursor)      echo "" ;;  # Cursor has no global instructions destination
   esac
 }
@@ -86,7 +94,9 @@ harness_detected() {
     codex)       [ -d "$HOME/.codex" ] || command -v codex >/dev/null 2>&1 || has_extension openai.chatgpt- ;;
     copilot)     [ -d "$HOME/.copilot" ] || command -v copilot >/dev/null 2>&1 || has_extension github.copilot-chat- ;;
     cursor)      [ -d "$HOME/.cursor" ] ;;
-    gemini)      [ -d "$HOME/.gemini" ] || command -v gemini >/dev/null 2>&1 || has_extension google.geminicodeassist- ;;
+    # Retired: must not match on $HOME/.gemini or the gemini CLI, both of which
+    # an Antigravity-only user has. Only the roots the Gemini CLI owned alone.
+    gemini)      [ -d "$HOME/.gemini/agents" ] || [ -d "$HOME/.gemini/skills" ] ;;
     antigravity) [ -d "$HOME/.gemini/config" ] || command -v antigravity >/dev/null 2>&1 ;;
     *) return 1 ;;
   esac
@@ -104,6 +114,9 @@ report_discovery() {
   local h root name entry jb nocasematch_was_set=0
   for h in $ALL_HARNESSES; do
     harness_detected "$h" && info "found: $h"
+  done
+  for h in $RETIRED_HARNESSES; do
+    harness_detected "$h" && info "found: $h (retired — removal cleans its links; never installed into)"
   done
   [ -d "$HOME/.agents" ] && info "found: $HOME/.agents (shared discovery root — never linked)"
   # Informational-only: possible AI extensions with no confirmed config convention.
@@ -158,6 +171,16 @@ in_scope() { case " $SCOPE " in *" $1 "*) return 0 ;; *) return 1 ;; esac; }
 scoped_roots() {
   local h
   for h in $SCOPE; do
+    agents_root "$h"
+    skills_root "$h"
+  done | sort -u
+}
+
+retired_roots() {
+  # Agents and skills roots of retired harnesses. Exclusive paths only: a root
+  # a live harness also uses would be swept out from under it.
+  local h
+  for h in $RETIRED_HARNESSES; do
     agents_root "$h"
     skills_root "$h"
   done | sort -u
@@ -533,13 +556,23 @@ sweep_stale_links() {
   # Alpha carries no backward compatibility: remove anything in the scoped roots
   # still resolving into ai-tools, whatever its name or era.
   local root p t
-  for root in $(scoped_roots); do
+  for root in $(scoped_roots) $(retired_roots); do
     [ -d "$root" ] || continue
     while IFS= read -r p; do
       [ -n "$p" ] || continue
       t=$(readlink "$p")
       case "$t" in *ai-tools*|"$AI_TOOLS"/*) safe_unlink "$p" || true ;; esac
     done < <(find "$root" -maxdepth 1 -type l 2>/dev/null)
+  done
+  # Retired harnesses: the sources are gone, so an installed copy can no longer
+  # be content-matched. Report it instead of deleting an unverifiable file
+  # (README "Safety rules"); links were already removed by the loop above.
+  for root in $(retired_roots); do
+    [ -d "$root" ] || continue
+    while IFS= read -r p; do
+      [ -n "$p" ] || continue
+      skip "retired harness copy left in place (remove by hand): $p"
+    done < <(find "$root" -maxdepth 1 -name '*-ai-tools*' \! -type l 2>/dev/null)
   done
   # Whole-directory links from an older alpha install (no-op on real directories)
   for root in "$HOME/.claude/agents" "$HOME/.grok/agents"; do
@@ -550,17 +583,10 @@ sweep_stale_links() {
 
 remove_instructions() {
   # Only harness destinations that are links into ai-tools. Never $HOME/AGENTS.md.
-  local h dest other
+  local h dest
   for h in $SCOPE; do
     dest=$(instructions_dest "$h")
     [ -n "$dest" ] || continue
-    if [ "$dest" = "$HOME/.gemini/GEMINI.md" ]; then
-      other=gemini; [ "$h" = gemini ] && other=antigravity
-      if harness_detected "$other" && ! in_scope "$other"; then
-        skip "GEMINI.md serves gemini and antigravity; $other not in scope: $dest kept"
-        continue
-      fi
-    fi
     safe_unlink "$dest" || true
   done
 }

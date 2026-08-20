@@ -37,16 +37,3 @@ jobs:
 
       - name: Run shell test suite
         run: tools/test.sh
-
-  test-powershell:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Run PowerShell test suite (pwsh)
-        run: pwsh -NoProfile -File tools/test.ps1
-
-      - name: Run PowerShell test suite (Windows PowerShell)
-        run: powershell -NoProfile -File tools/test.ps1

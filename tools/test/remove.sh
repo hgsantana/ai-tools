@@ -10,7 +10,7 @@
 #
 # Note on exit codes: SKIP (rule 20's "skip and report") does not itself
 # raise the exit code — only WARN does (scripts/shell/lib.sh: finish() exits
-# 2 only when $WARN > 0; see README rule 25, "2 finished with warnings").
+# 2 only when $WARN > 0; see README rule 24, "2 finished with warnings").
 # Several cases below observed exit 0 where an earlier draft of this file
 # (mirroring the base plan's prose) expected exit 2 for a skip-only run; the
 # assertions here follow the observed, README-consistent behaviour and this
@@ -176,18 +176,55 @@ case_remove_instructions_gate() {
   t_cleanup "$root"
 }
 
-case_remove_gemini_antigravity_shared_instructions() {
+case_remove_retired_harness_swept() {
+  # Links a previous version created in the retired Gemini CLI roots are still
+  # cleaned, and Antigravity's shared GEMINI.md is not touched doing it.
   local root
   t_fixture
   root="$T_ROOT"
 
-  t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses gemini,antigravity
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses antigravity
+  ln -s "$root/home/.ai-tools/agents/antigravity/planner-ai-tools.md" \
+    "$root/home/.gemini/agents/planner-ai-tools.md"
+  ln -s "$root/home/.ai-tools/skills/planner-ai-tools" \
+    "$root/home/.gemini/skills/planner-ai-tools"
 
-  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses gemini --instructions
-  t_assert_line "SKIP: GEMINI.md serves gemini and antigravity; antigravity not in scope"
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses antigravity
+  t_assert_absent "$root/home/.gemini/agents/planner-ai-tools.md"
+  t_assert_absent "$root/home/.gemini/skills/planner-ai-tools"
   t_assert_symlink "$root/home/.gemini/GEMINI.md" "$root/home/.ai-tools"
 
-  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses gemini,antigravity --instructions
+  t_cleanup "$root"
+}
+
+case_remove_retired_harness_copy_reported() {
+  # The wrapper sources are gone with the harness, so a copy cannot be
+  # content-matched. It is reported and kept, never deleted (README "Safety rules").
+  local root
+  t_fixture
+  root="$T_ROOT"
+
+  echo "an older alpha copied this here" >"$root/home/.gemini/agents/planner-ai-tools.md"
+
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses antigravity
+  t_assert_line "retired harness copy left in place (remove by hand)"
+  t_assert_content "$root/home/.gemini/agents/planner-ai-tools.md" "an older alpha copied this here"
+
+  t_cleanup "$root"
+}
+
+case_remove_retired_keeps_shared_instructions() {
+  # GEMINI.md is Antigravity's now. Removing with --instructions while only the
+  # retired roots are present must not take it.
+  local root
+  t_fixture
+  root="$T_ROOT"
+
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses antigravity
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code --instructions
+  t_assert_symlink "$root/home/.gemini/GEMINI.md" "$root/home/.ai-tools"
+
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses antigravity --instructions
   t_assert_absent "$root/home/.gemini/GEMINI.md"
 
   t_cleanup "$root"

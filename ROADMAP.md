@@ -8,7 +8,6 @@ Status: `idea` (not refined) · `next` (agreed, ready to refine) · `doing` (a p
 
 | # | Story | Status |
 |---|---|---|
-| 14 | [PowerShell suite: 68 real failures](#14-powershell-suite-68-real-failures) | next |
 | 4 | [Health-check entry point](#4-health-check-entry-point) | idea |
 | 5 | [The missing testing role](#5-the-missing-testing-role) | idea |
 | 6 | [Changelog for alpha testers](#6-changelog-for-alpha-testers) | idea |
@@ -19,12 +18,6 @@ Status: `idea` (not refined) · `next` (agreed, ready to refine) · `doing` (a p
 | 11 | [Untrusted input handling](#11-untrusted-input-handling) | idea |
 | 12 | [Adding a harness, by checklist](#12-adding-a-harness-by-checklist) | idea |
 | 13 | [Cost visibility in the dispatch ledger](#13-cost-visibility-in-the-dispatch-ledger) | idea |
-
-## Quality net
-
-### 14. PowerShell suite: 68 real failures
-
-The sandboxed test suite from story 2 shipped with a PowerShell runner that dot-sourced its case files inside a function, so every `Case-*` landed in a scope that died on return: all 56 cases failed with `CommandNotFoundException`, the failures never touched the counters, and the job reported `done: 0 ok, 0 warnings` and exited `0` — a green `windows-latest` that proved nothing, for as long as the suite existed. With the scope and the counting fixed, the cases run for the first time and the truth appears: **153 ok, 68 warnings**. Work through those 68 and decide, for each, whether it is a harness bug or a genuine `scripts/powershell` defect — the largest group, 22 `symlink target unexpected`, is the harness comparing a `$env:TEMP` short path (`C:\Users\RUNNER~1\...`) against the long form `Get-LinkTarget` returns, and one fix clears a third of them; then 21 `output missing` and 15 `expected exit N, got M` around output capture and exit-code propagation through `T-InvokeUnderSandbox`, 6 dry-run snapshot `changed`, and a read-only `HOME` assignment in `Case-InstallNoSymlinkFallback`. Nothing here can be reproduced without Windows, so each iteration costs a CI cycle; budget for that rather than guessing. Until this lands, the story-2 pull request stays red. Route: `/planner-ai-tools`.
 
 ## Consistency
 
@@ -44,7 +37,7 @@ Rule 4 waives backward compatibility and migration notes, and the README deliber
 
 ### 7. Repeatable model-map refresh
 
-The model selection method in the README is genuinely reproducible research — list names from official docs, join Artificial Analysis measurements, filter by category thresholds, rank by `(Intelligence Index / cost per task) × output speed` — but running it is a fully manual pass across seven harnesses, so the map decays silently with every model release and nothing signals that it is stale. Ship a `models-ai-tools` skill that walks the method end to end, records source URLs and retrieval dates, presents the resulting table as a diff against the current `MODELS.md`, and, on approval, updates the map and every affected wrapper header in one commit as rule 12 requires. Route: `/vibe-ai-tools`.
+Half of the model selection method is now scripted: `tools/models.sh` fetches the current LiveBench release and writes the scored evidence CSV, byte-identical per release. The other half — which models each harness actually offers — is still a manual pass across seven vendors' docs, so the map decays silently with every model release and nothing signals that it is stale. Ship a `models-ai-tools` skill that runs the script, walks the availability research and the band selection end to end, records source URLs and retrieval dates, presents the resulting table as a diff against the current `MODELS.md`, and, on approval, updates the map and every affected wrapper header in one commit as rule 12 requires. Route: `/vibe-ai-tools`.
 
 ### 8. Decisions that outlive the plan
 

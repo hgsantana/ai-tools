@@ -1,0 +1,23 @@
+{
+    "Reasoning": [
+        "r1",
+        "r2"
+    ],
+    "Coding": [
+        "c1",
+        "c2"
+    ],
+    "Mathematics": [
+        "m1"
+    ],
+    "Data Analysis": [
+        "d1"
+    ],
+    "Language": [
+        "l1"
+    ],
+    "IF": [
+        "i1",
+        "i2"
+    ]
+}

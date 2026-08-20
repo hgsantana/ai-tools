@@ -18,4 +18,3 @@ Which model each agent category uses in each harness. Agents, skills, and the in
 | `copilot` | GitHub Copilot | `GPT-5.6 Sol` | `Gemini 3.7 Flash` | `GPT-5.6 Luna` | `/model` in the session |
 | `antigravity` | Google Antigravity | `flash` | `flash` | `flash` | model selector in the Agent panel |
 | `cursor` | Cursor | `gpt-5.6-sol[effort=xhigh]` · xhigh | `gemini-3.7-flash[effort=medium]` · medium | `gpt-5.6-luna[effort=low]` · low | model picker under the chat input |
-| `gemini` | Gemini CLI | `gemini-3.1-pro-preview` | `gemini-3.1-pro-preview` | `gemma-4-31b-it` | `/model` in the session; `-m` at launch |

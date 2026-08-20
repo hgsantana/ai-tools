@@ -12,7 +12,7 @@ Settle the scope with the user before touching anything, and put every destructi
 
 ## Source of truth
 
-`$HOME/.ai-tools/README.md` defines the processes and their Safety rules; the scripts are their executable form — run them, never re-implement their steps by hand. Shell scripts on Linux/macOS/WSL/Git Bash; PowerShell on native Windows (flags spelled `-LikeThis`).
+`$HOME/.ai-tools/README.md` defines the processes and their Safety rules; the scripts are their executable form — run them, never re-implement their steps by hand. Shell scripts on Linux, macOS, WSL, and Git Bash; on native Windows, run the same scripts from Git Bash or WSL.
 
 | Task | Script | Flags needing explicit user approval |
 |---|---|---|

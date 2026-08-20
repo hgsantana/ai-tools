@@ -1,5 +1,3 @@
-# Line endings pinned per script style (README rule 26)
+# Line endings pinned per script style (README rule 25)
 scripts/shell/*      text eol=lf
-scripts/powershell/* text eol=lf
-scripts/cmd/*.cmd    text eol=crlf
 tools/**             text eol=lf

@@ -138,7 +138,7 @@ case_install_agents_md_present() {
 }
 
 case_install_dry_run() {
-  # Rule 25: --dry-run reports without changing anything.
+  # Rule 24: --dry-run reports without changing anything.
   local root before
   t_fixture
   root="$T_ROOT"
@@ -248,20 +248,50 @@ case_install_grok_no_model_row() {
   t_cleanup "$root"
 }
 
-case_install_gemini_shared_instructions() {
-  # gemini and antigravity share one GEMINI.md, but each keeps its own
-  # agents/ and skills/ roots.
+case_install_rejects_retired_harness() {
+  # A retired harness is not installable: --harnesses refuses its key outright
+  # (README "Retired harnesses").
   local root
   t_fixture
   root="$T_ROOT"
 
-  t_install "$root" --harnesses gemini,antigravity
+  t_install "$root" --harnesses gemini
+  t_assert_exit 1
+  t_assert_line "unknown harness: gemini"
+  t_assert_absent "$root/home/.gemini/agents/planner-ai-tools.md"
+
+  t_cleanup "$root"
+}
+
+case_install_antigravity_owns_gemini_md() {
+  # Antigravity alone now owns GEMINI.md and the config/ roots; the sibling
+  # agents/ and skills/ directories are the retired Gemini CLI's and stay empty.
+  local root
+  t_fixture
+  root="$T_ROOT"
+
+  t_install "$root" --harnesses antigravity
   t_assert_exit 0
   t_assert_symlink "$root/home/.gemini/GEMINI.md" "$root/home/.ai-tools"
-  t_assert_symlink "$root/home/.gemini/agents/planner-ai-tools.md" "$root/home/.ai-tools"
   t_assert_symlink "$root/home/.gemini/config/agents/planner-ai-tools.md" "$root/home/.ai-tools"
-  t_assert_symlink "$root/home/.gemini/skills/planner-ai-tools" "$root/home/.ai-tools"
   t_assert_symlink "$root/home/.gemini/config/skills/planner-ai-tools" "$root/home/.ai-tools"
+  t_assert_absent "$root/home/.gemini/agents/planner-ai-tools.md"
+  t_assert_absent "$root/home/.gemini/skills/planner-ai-tools"
+
+  t_cleanup "$root"
+}
+
+case_install_retired_not_detected_without_its_roots() {
+  # $HOME/.gemini exists for every Antigravity user. The retired detector must
+  # key on the roots the Gemini CLI owned alone, or it reports a phantom install.
+  local root
+  t_fixture
+  root="$T_ROOT"
+  rm -rf "$root/home/.gemini/agents" "$root/home/.gemini/skills"
+
+  t_install "$root" --harnesses antigravity
+  t_assert_exit 0
+  t_assert_no_line "found: gemini"
 
   t_cleanup "$root"
 }

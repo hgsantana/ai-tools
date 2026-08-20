@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ai-tools rule linter — a development check, not an installation process
-# (outside the contract of README rules 23-25). Enforces this repository's
+# (outside the contract of README rules 23-24). Enforces this repository's
 # mechanically verifiable rules against the tree it runs in.
 #
 # Usage: tools/lint.sh [--help] [--base <ref>]
@@ -51,14 +51,10 @@ Checks:
   instructions cap  USER-AGENTS.md is at most 8000 characters (rule 3)
   wrapper cap       every agents/<harness>/* file is at most 1000 characters,
                     frontmatter included (rule 6)
-  PowerShell BOM    every scripts/powershell/*.ps1, tools/test.ps1, and
-                    tools/test/*.ps1 starts with ef bb bf (rule 26)
-  CMD ASCII         every scripts/cmd/*.cmd is pure ASCII (rule 26)
   line endings      git ls-files --eol matches the declared eol= attribute:
-                    lf for shell/PowerShell/tools, crlf for .cmd (rule 26)
-  executable bits   scripts/shell/*.sh, scripts/powershell/*.ps1,
-                    tools/lint.sh, and tools/test.sh are mode 100755
-                    (rule 26)
+                    lf for shell and tools (rule 25)
+  executable bits   scripts/shell/*.sh, tools/lint.sh, and tools/test.sh
+                    are mode 100755 (rule 25)
   no binaries       every tracked file under agents/, skills/, scripts/, and
                     tools/ is text
   version bump      CI-only, needs --base <ref> (skipped without it): when
@@ -717,31 +713,11 @@ check_wrapper_cap() {
   [ -n "$maxf" ] && ok "largest wrapper: $maxf ($max/$cap, headroom $((cap - max)))"
 }
 
-check_powershell_bom() {
-  local f bom
-  for f in "$AI_TOOLS"/scripts/powershell/*.ps1 "$AI_TOOLS"/tools/test.ps1 "$AI_TOOLS"/tools/test/*.ps1; do
-    [ -f "$f" ] || continue
-    bom=$(od -An -tx1 -N3 "$f" 2>/dev/null | tr -d ' \n')
-    if [ "$bom" = "efbbbf" ]; then ok "PowerShell BOM present: $f"
-    else warn "PowerShell file missing BOM (ef bb bf): $f"; fi
-  done
-}
-
-check_cmd_ascii() {
-  local f n
-  for f in "$AI_TOOLS"/scripts/cmd/*.cmd; do
-    [ -f "$f" ] || continue
-    n=$(tr -d '\000-\177' <"$f" | wc -c | tr -d ' ')
-    if [ "$n" = 0 ]; then ok "CMD is pure ASCII: $f"
-    else warn "CMD file has non-ASCII byte(s): $f ($n)"; fi
-  done
-}
-
 check_line_endings() {
   # Reads git's own .gitattributes resolution via `ls-files --eol` rather
-  # than reimplementing it (rule 26): index side must be lf, working-tree
-  # side and the declared attribute must match the expected style per path.
-  local line path fields idx work attr expected
+  # than reimplementing it (rule 25): index side must be lf, working-tree
+  # side and the declared attribute must match the expected lf style.
+  local line path fields idx work attr expected=lf
   while IFS= read -r line; do
     [ -n "$line" ] || continue
     path=${line##*$'\t'}
@@ -749,10 +725,6 @@ check_line_endings() {
     idx=$(printf '%s\n' "$fields" | awk '{for(i=1;i<=NF;i++) if ($i ~ /^i\//) print $i}')
     work=$(printf '%s\n' "$fields" | awk '{for(i=1;i<=NF;i++) if ($i ~ /^w\//) print $i}')
     attr=$(printf '%s\n' "$fields" | grep -o 'eol=[a-z]*' || true)
-    case "$path" in
-      *.cmd) expected=crlf ;;
-      *)     expected=lf ;;
-    esac
     if [ "$attr" != "eol=$expected" ]; then
       warn "line-ending attribute unexpected: $path (attr: ${attr:-none}, expected: eol=$expected)"
     elif [ "$idx" != "i/lf" ]; then
@@ -762,12 +734,12 @@ check_line_endings() {
     else
       ok "line endings correct: $path ($expected)"
     fi
-  done < <(git -C "$AI_TOOLS" ls-files --eol -- scripts/shell scripts/powershell scripts/cmd tools)
+  done < <(git -C "$AI_TOOLS" ls-files --eol -- scripts/shell tools)
 }
 
 check_executable_bits() {
   local f mode
-  for f in "$AI_TOOLS"/scripts/shell/*.sh "$AI_TOOLS"/scripts/powershell/*.ps1 "$AI_TOOLS/tools/lint.sh" "$AI_TOOLS/tools/test.sh"; do
+  for f in "$AI_TOOLS"/scripts/shell/*.sh "$AI_TOOLS/tools/lint.sh" "$AI_TOOLS/tools/test.sh"; do
     [ -f "$f" ] || continue
     mode=$(git -C "$AI_TOOLS" ls-files -s -- "$f" | awk '{print $1}')
     if [ "$mode" = 100755 ]; then ok "executable bit set: $f"
@@ -844,8 +816,6 @@ check_description_parity
 check_models_row_coverage
 check_instructions_cap
 check_wrapper_cap
-check_powershell_bom
-check_cmd_ascii
 check_line_endings
 check_executable_bits
 check_no_binaries
