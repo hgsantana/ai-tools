@@ -1,7 +1,7 @@
 name = "gc-ai-tools"
 description = "Queries and manages Google Cloud via the gcloud CLI. Reads freely; returns every mutation for explicit per-action user approval, with cost impact. Can create billable resources and remove existing ones."
-model = "gpt-5.6-terra"
-model_reasoning_effort = "max"
+model = "gpt-5.5"
+model_reasoning_effort = "xhigh"
 developer_instructions = """
 On Windows, %USERPROFILE% replaces $HOME.
 

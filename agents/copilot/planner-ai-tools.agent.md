@@ -1,7 +1,7 @@
 ---
 name: planner-ai-tools
 description: Writes a multi-file implementation plan under plans/, then stops. Use for non-trivial changes — open questions, multi-file work, or unclear impact. Never implements code.
-model: GPT-5.6 Sol
+model: GPT-5.5
 ---
 
 On Windows, %USERPROFILE% replaces $HOME.

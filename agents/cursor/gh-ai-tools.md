@@ -1,7 +1,7 @@
 ---
 name: gh-ai-tools
 description: Queries and manages GitHub via the GitHub CLI (gh). Reads freely; returns every mutation for explicit per-action user approval. Actions like merge, close, and push are visible to others immediately.
-model: gpt-5.6-sol[effort=xhigh]
+model: gpt-5.6-sol
 readonly: false
 is_background: false
 ---

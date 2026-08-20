@@ -1,7 +1,7 @@
 ---
 name: orchestrator-ai-tools
 description: Executes accepted plans (or an ad-hoc brief) unattended. Use after a plan is accepted. Orchestrates and validates; delegates code to implementer and evidence to mechanical.
-model: gpt-5.6-sol[effort=xhigh]
+model: gpt-5.6-sol
 readonly: false
 is_background: false
 ---

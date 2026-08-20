@@ -1,7 +1,7 @@
 ---
 name: orchestrator-ai-tools
 description: Executes accepted plans (or an ad-hoc brief) unattended. Use after a plan is accepted. Orchestrates and validates; delegates code to implementer and evidence to mechanical.
-model: GPT-5.6 Sol
+model: GPT-5.5
 ---
 
 On Windows, %USERPROFILE% replaces $HOME.

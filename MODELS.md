@@ -12,9 +12,21 @@ Which model each agent category uses in each harness. Agents, skills, and the in
 
 | Harness key | Harness | planner | implementer | mechanical | Change the session model |
 |---|---|---|---|---|---|
-| `claude-code` | Claude Code | `opus` · medium | `sonnet` | `haiku` | `/model` in the session |
-| `grok` | Grok Build | `grok-4.6` | `grok-4.5` | `grok-4.5` | `/model` in the session; `[models] default` in `~/.grok/config.toml` |
-| `codex` | OpenAI Codex | `gpt-5.6-terra` · max | `gpt-5.6-luna` · max | `gpt-5.6-luna` · low | `/model` in the session; `--model` at launch |
-| `copilot` | GitHub Copilot | `GPT-5.6 Sol` | `Gemini 3.7 Flash` | `GPT-5.6 Luna` | `/model` in the session |
-| `antigravity` | Google Antigravity | `flash` | `flash` | `flash` | model selector in the Agent panel |
-| `cursor` | Cursor | `gpt-5.6-sol[effort=xhigh]` · xhigh | `gemini-3.7-flash[effort=medium]` · medium | `gpt-5.6-luna[effort=low]` · low | model picker under the chat input |
+| `claude-code` | Claude Code | `fable` · max | `opus` · max | `haiku` | `/model` in the session |
+| `grok` | Grok Build | `grok-4.6` | `grok-4.5` | `grok-build-0.1` | `/model` in the session; `[models] default` in `~/.grok/config.toml` |
+| `codex` | OpenAI Codex | `gpt-5.5` · xhigh | `gpt-5.6-terra` | `gpt-5.6-luna` | `/model` in the session; `--model` at launch |
+| `copilot` | GitHub Copilot | `GPT-5.5` | `Grok 4.6` | `Grok 4.5` | `/model` in the session |
+| `antigravity` | Google Antigravity | `pro` | `flash` | `flash` | model selector in the Agent panel |
+| `cursor` | Cursor | `gpt-5.6-sol` | `gemini-3.7-flash[effort=high]` · high | `gemini-3.7-flash[effort=high]` · high | model picker under the chat input |
+
+## Provenance
+
+Selected by the README's [selection method](README.md#choosing-the-models) from LiveBench release **2026-06-25** (`tools/models.sh`), joined to each harness's official model documentation, retrieved **2026-08-20**.
+
+Three cells are not measured selections, and say so here rather than pretending otherwise:
+
+- **`claude-code` mechanical** — `documented fallback`. LiveBench does not measure Claude Haiku 4.5, so the band saw only Fable, Opus, and Sonnet and returned Fable — the most expensive row in the release — for the cheapest category. `haiku` comes from Anthropic's own task guidance instead.
+- **`antigravity` planner / implementer / mechanical** — `tier exception`. The subagent `model:` field accepts `inherit`, `flash`, or `pro`: tiers, not model identifiers. There is nothing for a band to rank, so these follow Google's documented tier guidance.
+- **`copilot`** — the model tokens are display names because GitHub documents the `model:` field's meaning but publishes no enum of accepted strings. The selection itself is measured; only the spelling is unverifiable.
+
+Two efforts are deliberately absent. Codex rows won at LiveBench's *Max Effort*, but `model_reasoning_effort` documents only up to `xhigh`, so no effort is pinned for `gpt-5.6-terra` and `gpt-5.6-luna`. Cursor documents `[effort=…]` without publishing the per-model options; `high` is the one value confirmed by an official example, so it is the only one pinned.

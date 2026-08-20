@@ -1,7 +1,7 @@
 ---
 name: orchestrator-ai-tools
 description: Executes accepted plans (or an ad-hoc brief) unattended. Use after a plan is accepted. Orchestrates and validates; delegates code to implementer and evidence to mechanical.
-model: flash
+model: pro
 ---
 
 On Windows, %USERPROFILE% replaces $HOME.

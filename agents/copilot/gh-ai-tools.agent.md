@@ -1,7 +1,7 @@
 ---
 name: gh-ai-tools
 description: Queries and manages GitHub via the GitHub CLI (gh). Reads freely; returns every mutation for explicit per-action user approval. Actions like merge, close, and push are visible to others immediately.
-model: GPT-5.6 Sol
+model: GPT-5.5
 ---
 
 On Windows, %USERPROFILE% replaces $HOME.

@@ -1,6 +1,6 @@
 # ai-tools
 
-> **Version 0.0.27-ALPHA** — under active development. Usable for testing; no guarantees, and no backward compatibility between alpha versions (rule 4).
+> **Version 0.0.28-ALPHA** — under active development. Usable for testing; no guarantees, and no backward compatibility between alpha versions (rule 4).
 
 ## What is this repository
 
@@ -137,8 +137,12 @@ score_mechanical  = 0.55·if + 0.25·coding + 0.20·data_analysis
    - **implementer** — `score_implementer ≥ best − 5`. Implementation and mechanical work are the bulk of the token spend, so this band is wide enough for cost to decide, and narrow enough that the trade stays small.
    - **mechanical** — `score_mechanical ≥ best − 8`. Fully specified work; the widest band, and the cheapest survivor wins outright.
 
-   A category may select the same family — or the same family and effort — as another. That repetition is a real result, not a defect: do not force diversity. Prefer a candidate whose frontier flag is `1`; a banded winner off the frontier means something in the band is both better and cheaper, so re-read the join before writing it.
-5. **Fallback — only when measurement cannot decide** (no candidate of any listed name has a CSV row). Use only the harness's official task guidance: deep reasoning, architecture, and ambiguity for **planner**; agentic software development, implementation, and tool use for **implementer**; simple, repetitive, routine, fast, or cost-sensitive work for **mechanical**. Cite it and label `documented fallback`. If it does not name one model, report the ambiguity — do not invent a quantitative winner or keep the incumbent.
+   A category may select the same family — or the same family and effort — as another. That repetition is a real result, not a defect: do not force diversity. The `frontier_*` flags are computed across the whole release, not within one harness's pool, so a winner flagged `0` is normal — it only means some model the harness does not offer is both better and cheaper. Read the flag as a sanity check on the release, never as a verdict on a row.
+5. **Fallback**, in two cases. Use only the harness's official task guidance: deep reasoning, architecture, and ambiguity for **planner**; agentic software development, implementation, and tool use for **implementer**; simple, repetitive, routine, fast, or cost-sensitive work for **mechanical**. Cite it and label `documented fallback` in the map. If the guidance does not name one model, report the ambiguity — do not invent a quantitative winner or keep the incumbent.
+   - **Nothing measured** — no candidate of any listed name has a CSV row.
+   - **The cheap tier is unmeasured** — the same candidate wins **planner** and **mechanical**. A benchmark measures the models a lab submits, so a harness's small fast model is often absent, and the band then returns an expensive model for the category that exists to be cheap. Selecting both ends of the map with one row is the signal; when it fires, fall back for **mechanical** only and leave the measured planner in place.
+
+   A category whose field takes tiers rather than model identifiers has nothing to rank at all. Label it `tier exception`, select from the vendor's tier guidance, and record it — this is not a fallback, and no future release will fix it.
 6. **Write.** Put each winner in the map as the accepted model token. Append ` · effort` only when the selected CSV row carries an effort **and** official docs list a matching token, in the vendor's spelling. Otherwise the model token alone. Same commit (rule 12): update every affected wrapper — model token always; effort **only** if the cell has ` · effort` **and** the wrapper form can pin it. Map shape: one row per harness; column 1 is the backticked key matching `agents/<harness>/`; scripts take the first backtick-quoted token as the model. A new harness adds that row, its wrapper folder, and [Supported harnesses](#supported-harnesses) in the same commit.
 
 Every shipped agent runs as **planner** except `maintainer-ai-tools`, which runs as **implementer** (it drives this README's scripts). Each wrapper pins that category from `MODELS.md` in the header the harness requires. Body, in this order (rule 6):
