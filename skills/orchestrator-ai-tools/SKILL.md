@@ -1,7 +1,7 @@
 ---
 name: orchestrator-ai-tools
 description: >
-  Run the orchestrator-ai-tools work — execute accepted plans under plans/, or an explicit ad-hoc
+  Run the orchestrator-ai-tools work — execute accepted plans under dev/, or an explicit ad-hoc
   brief, unattended — either by dispatching the orchestrator-ai-tools agent or by running its base file
   in this session. Use for /orchestrator-ai-tools or after the user accepts a plan.
 argument-hint: "[plan paths or brief to execute]"
@@ -9,7 +9,7 @@ argument-hint: "[plan paths or brief to execute]"
 
 # Execution
 
-Executing accepted plans under `plans/`, or an explicit ad-hoc brief, unattended.
+Executing accepted plans under `dev/`, or an explicit ad-hoc brief, unattended.
 
 You are running an agent-backed skill: your shared contract is `$HOME/.ai-tools/skills/SKILL-CONTRACT.md`.
 Read it and follow it — it governs the model check, the route offer, and the route mechanics.

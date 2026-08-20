@@ -176,18 +176,15 @@ case_remove_instructions_gate() {
   t_cleanup "$root"
 }
 
-case_remove_gemini_antigravity_shared_instructions() {
+case_remove_antigravity_instructions() {
   local root
   t_fixture
   root="$T_ROOT"
 
-  t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses gemini,antigravity
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses antigravity
 
-  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses gemini --instructions
-  t_assert_line "SKIP: GEMINI.md serves gemini and antigravity; antigravity not in scope"
   t_assert_symlink "$root/home/.gemini/GEMINI.md" "$root/home/.ai-tools"
-
-  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses gemini,antigravity --instructions
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses antigravity --instructions
   t_assert_absent "$root/home/.gemini/GEMINI.md"
 
   t_cleanup "$root"

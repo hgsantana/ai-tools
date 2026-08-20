@@ -1,2 +1,2 @@
 # Keep root plan Markdown files trackable; ignore generated plan directories.
-/plans/*/
+/dev/*/

@@ -1,7 +1,7 @@
 ---
 name: planner-ai-tools
-description: Writes a multi-file implementation plan under plans/, then stops. Use for non-trivial changes — open questions, multi-file work, or unclear impact. Never implements code.
-model: gpt-5.6-sol[effort=xhigh]
+description: Writes a multi-file implementation plan under dev/, then stops. Use for non-trivial changes — open questions, multi-file work, or unclear impact. Never implements code.
+model: grok-4.6
 readonly: false
 is_background: false
 ---

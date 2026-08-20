@@ -1,6 +1,6 @@
 > Skill base, loaded by the wrapper at `skills/orchestrator-ai-tools/SKILL.md`, which loads `skills/SKILL-CONTRACT.md` before it. Edit this file, never the wrapper.
 
-Executing accepted plans under `plans/`, or an explicit ad-hoc brief, unattended. That work is defined by `$HOME/.ai-tools/agents/orchestrator-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\orchestrator-ai-tools.md`). This skill only decides **who runs it**: the shipped `orchestrator-ai-tools` agent, on the model its wrapper pins, or this session, on the model it already has. Never implement outside one of those two routes.
+Executing accepted plans under `dev/`, or an explicit ad-hoc brief, unattended. That work is defined by `$HOME/.ai-tools/agents/orchestrator-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\orchestrator-ai-tools.md`). This skill only decides **who runs it**: the shipped `orchestrator-ai-tools` agent, on the model its wrapper pins, or this session, on the model it already has. Never implement outside one of those two routes.
 
 ## Agent and category
 

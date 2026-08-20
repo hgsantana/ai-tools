@@ -1,6 +1,6 @@
 > Skill base, loaded by the wrapper at `skills/planner-ai-tools/SKILL.md`, which loads `skills/SKILL-CONTRACT.md` before it. Edit this file, never the wrapper.
 
-Designing a change: exploring the repository and writing a multi-file implementation plan under `plans/`, then stopping — never implementing. That work is defined by `$HOME/.ai-tools/agents/planner-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`). This skill only decides **who runs it**: the shipped `planner-ai-tools` agent, on the model its wrapper pins, or this session, on the model it already has. Never plan outside one of those two routes, and never implement under this skill.
+Designing a change: exploring the repository and writing a multi-file implementation plan under `dev/`, then stopping — never implementing. That work is defined by `$HOME/.ai-tools/agents/planner-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`). This skill only decides **who runs it**: the shipped `planner-ai-tools` agent, on the model its wrapper pins, or this session, on the model it already has. Never plan outside one of those two routes, and never implement under this skill.
 
 ## Agent and category
 
@@ -8,7 +8,7 @@ Agent: `planner-ai-tools`, base `$HOME/.ai-tools/agents/planner-ai-tools.md` (Wi
 
 ## Stake
 
-No destructive stake: planning writes only under `plans/` and changes no product code. Say so in one line — the user is choosing a route, not accepting a risk.
+No destructive stake: planning writes only under `dev/` and changes no product code. Say so in one line — the user is choosing a route, not accepting a risk.
 
 ## Route A — dispatch
 

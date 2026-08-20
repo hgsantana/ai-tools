@@ -1,7 +1,7 @@
 ---
 name: az-ai-tools
 description: Queries and manages Azure via the Azure CLI (az). Reads freely; returns every mutation for explicit per-action user approval, with cost impact. Can create billable resources and remove existing ones.
-model: gpt-5.6-sol[effort=xhigh]
+model: grok-4.6
 readonly: false
 is_background: false
 ---

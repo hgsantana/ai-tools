@@ -1,10 +1,10 @@
 # ai-tools
 
-> **Version 0.0.25-ALPHA** — under active development. Usable for testing; no guarantees, and no backward compatibility between alpha versions (rule 4).
+> **Version 0.0.26-ALPHA** — under active development. Usable for testing; no guarantees, and no backward compatibility between alpha versions (rule 4).
 
 ## What is this repository
 
-A toolkit of **agents**, **skills**, and **instructions**, written once for Grok Build, Claude Code, OpenAI Codex, GitHub Copilot, Google Antigravity, Cursor, and Gemini CLI.
+A toolkit of **agents**, **skills**, and **instructions**, written once for Grok Build, Claude Code, OpenAI Codex, GitHub Copilot, Google Antigravity, and Cursor.
 
 Clone it to `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows) and link it into each harness's user config so every tool loads the same set. Each wrapper pins its model from [`MODELS.md`](MODELS.md), so the category's model is fixed at execution time.
 
@@ -14,7 +14,7 @@ Clone it to `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows) and link it
 |---|---|
 | [`USER-AGENTS.md`](USER-AGENTS.md) | Install artifact: each harness's user-wide instructions. What is installed, how to route a request to a skill, agent categories, language, and security. Behaviour owned by a skill or a base is documented there, never here |
 | [`MODELS.md`](MODELS.md) | Lookup: which model each category (**planner** / **implementer** / **mechanical**) uses per harness, and how to change the session model. The only place vendor model names live besides wrapper headers (rules 11–12); user-editable, reset by an [update](#update) |
-| [`agents/planner-ai-tools.md`](agents/planner-ai-tools.md) | Base: explores the repository, writes a multi-file plan under `plans/`, stops; never implements |
+| [`agents/planner-ai-tools.md`](agents/planner-ai-tools.md) | Base: explores the repository, writes a multi-file plan under `dev/`, stops; never implements |
 | [`agents/orchestrator-ai-tools.md`](agents/orchestrator-ai-tools.md) | Base: executes accepted plans or an ad-hoc brief unattended; code to **implementer**, evidence to **mechanical** |
 | [`agents/az-ai-tools.md`](agents/az-ai-tools.md) | Base: Azure CLI (`az`) — read freely, return mutations for per-action approval, surface cost |
 | [`agents/gh-ai-tools.md`](agents/gh-ai-tools.md) | Base: GitHub CLI (`gh`) — read freely, return mutations for per-action approval |
@@ -24,14 +24,14 @@ Clone it to `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows) and link it
 | [`agents/<harness>/`](agents/) | Wrappers for the six agents: harness syntax, pinned model, this harness's `MODELS.md` row key, pointer to the shared contract, pointer to the base; nothing else |
 | [`skills/`](skills/) | Nine skills: one same-named skill per agent, except `maintainer-ai-tools` (three tasks: `update-ai-tools`, `remove-ai-tools`, `reinstall-ai-tools`); plus `vibe-ai-tools`, which has no agent and carries refine-confirm-deliver inline. Each is split into a `skills/<name>/SKILL.md` wrapper (installed, ≤2,000 characters) and a `skills/<name>.md` base (behaviour). An agent-backed skill's wrapper also points to `skills/SKILL-CONTRACT.md`, which surfaces the stake, checks the session model, and offers three routes — dispatch the agent, run its base in this session, or stop (rule 8). A skill must run on **any** model; model-dependent work is an agent (rules 7–9) |
 | [`skills/SKILL-CONTRACT.md`](skills/SKILL-CONTRACT.md) | Shared contract every agent-backed skill wrapper loads before its base: the model check, the three-route offer, and the route mechanics. Not installed; read by path |
-| [`scripts/`](scripts/) | `install`, `remove`, `update`, `reinstall`, `verify` — shell, PowerShell, and CMD shims ([Scripts](#scripts); rules 23–26) |
+| [`scripts/`](scripts/) | `install`, `remove`, `update`, `reinstall`, `verify` — bash ([Scripts](#scripts); rules 23–26). Windows: WSL or Git Bash |
 
 ### How to install, remove, update, or reinstall
 
 Same command for a human or an AI ([Scripts](#scripts)):
 
 ```bash
-# Linux, macOS, WSL, Git Bash — Windows: scripts/powershell/*.ps1 or scripts/cmd/*.cmd
+# Linux, macOS, WSL, Git Bash (Windows: WSL or Git Bash — no PowerShell)
 git clone https://github.com/hgsantana/ai-tools.git "$HOME/.ai-tools"   # first install only
 "$HOME/.ai-tools/scripts/shell/install.sh"
 ```
@@ -51,7 +51,7 @@ Normative for every human and every AI maintaining this repository.
 1. This `README.md` is the single source of truth for this repository: explanation, rules, and processes (install, remove, update, reinstall). Their executable form is `scripts/` (rules 23–26).
 2. AIs working on this repository take instructions **about this repository** only from this README. User-wide or harness-global files — including an installed `USER-AGENTS.md` — yield to it here.
 3. `USER-AGENTS.md` is an install artifact: user-wide harness instructions, not a rule file for this repository. It is capped at a self-imposed **8,000 characters**, deliberately tighter than any harness constraint, to force concision. Every shipped artifact must fit every supported harness that consumes it: the tightest constraint governs (today: Antigravity's 12,000-character cap on rules files, looser than the self-imposed cap). Register constraints in [Supported harnesses](#supported-harnesses); a stricter one updates those notes and the affected artifacts in the same commit.
-4. Pre-release (`0.x`/ALPHA at the top): no backward compatibility. This README describes the current state only; breaking changes carry no migration notes. Fix an older layout with [Reinstallation](#reinstallation) and its stale-link sweep. Bump the version in the same commit as any change to shipped content or process. Backward-compatibility records begin at the first stable release.
+4. Pre-release (`0.x`/ALPHA at the top): no backward compatibility. This README describes the current state only; breaking changes carry no migration notes. Fix an older layout with [Reinstallation](#reinstallation) and its stale-link sweep. The version at the top of this README changes only when the change lands on `master` — never on any other branch, and never in uncommitted work. Bump in the commit or merge that introduces it onto `master`. Backward-compatibility records begin at the first stable release.
 
 ### Structure and authoring
 
@@ -62,7 +62,7 @@ Normative for every human and every AI maintaining this repository.
 9. Skill frontmatter: only universally accepted keys (`name`, `description`) plus optional keys every supported harness tolerates (e.g. `argument-hint`). A key any supported harness rejects does not belong in a shared file. `description` is at most **500 characters**: harnesses budget the skill *list*, not the body — Codex caps it at 2% of the context window or 8,000 characters, Claude Code truncates a description at 1,536.
 10. Wrappers follow each harness's official documentation. Re-check vendor docs before adding a harness or editing a wrapper — formats change upstream.
 11. Vendor model names live in [`MODELS.md`](MODELS.md) and are repeated only in wrapper headers (harnesses read the wrapper). Everyone else — bases, skills, the scripts' Grok pin — reads `MODELS.md` at run time and hard-codes none. [Supported harnesses](#supported-harnesses) may show accepted value *shapes*, never the choice. Bases speak only in categories (**planner**, **implementer**, **mechanical**, defined in `USER-AGENTS.md`); skills cite categories only as advice (rule 8).
-12. `MODELS.md` and wrapper headers always match: a new agent, a new harness, or a model change updates the map and every affected wrapper in the same commit. Nothing else needs updating — a wrapper body never varies except by row key (rule 6). Fill each cell by the [selection method](#choosing-the-models) from current Artificial Analysis measurements and official harness model, plan, pricing, and configuration docs — never memory or unsourced claims.
+12. `MODELS.md` and wrapper headers always match: a new agent, a new harness, or a model change updates the map and every affected wrapper in the same commit. Nothing else needs updating — a wrapper body never varies except by row key (rule 6). Fill each cell by the [selection method](#choosing-the-models) — never memory or unsourced claims.
 13. Everything installed from this repo — agent name, skill directory, slash command, frontmatter `name:`, file basename — ends in `-ai-tools`. Never install a bare name (`planner`, `az`).
 14. Extreme conciseness: no ambiguity or redundancy, and no omitted instruction, rule, or intention in exchange for brevity.
 15. Disk in this repository is concise English. Chat is in the user's language.
@@ -79,14 +79,14 @@ Normative for every human and every AI maintaining this repository.
 
 ### Script contract
 
-23. Each process — install, remove, update, reinstall, verify — is `scripts/shell/<process>.sh` (Linux, macOS, WSL, Git Bash; bash 3.2+, BSD/GNU tools) and `scripts/powershell/<process>.ps1` (Windows PowerShell 5.1+ and pwsh). `scripts/cmd/<process>.cmd` only delegates to PowerShell. Shared logic lives in `lib.sh` / `lib.ps1`, never duplicated across scripts.
-24. `scripts/shell` is canonical. A behaviour change lands there, in the PowerShell mirror, and in the process sections below, in the same commit.
+23. Each process — install, remove, update, reinstall, verify — is `scripts/shell/<process>.sh` (Linux, macOS, WSL, Git Bash; bash 3.2+, BSD/GNU tools). Shared logic lives in `lib.sh`, never duplicated across scripts. No PowerShell or CMD mirror: on Windows, use WSL or Git Bash.
+24. `scripts/shell` is canonical. A behaviour change lands there and in the process sections below, in the same commit.
 25. Scripts run to completion: per-item conflicts skip and report. Destructive steps need explicit flags (`--discard-local`, `--instructions`, `--purge`) and default to refuse. Every mutating script supports `--dry-run`. Exit: `0` clean, `1` aborted on a precondition, `2` finished with warnings.
-26. Shell and PowerShell scripts are committed executable; `.gitattributes` pins them to LF and CMD shims to CRLF. PowerShell is **UTF-8 with BOM** (Windows PowerShell 5.1 reads BOM-less files as ANSI; one em dash closes a string and breaks the script). CMD shims stay pure ASCII — a BOM there is a command.
+26. Shell scripts are committed executable; `.gitattributes` pins them to LF.
 
 ### Model map and wrapper authoring
 
-[`MODELS.md`](MODELS.md) is a lookup: one row per harness, one column per category, plus how to change the session model. It does not restate the arithmetic below. Availability and accepted values come from official harness docs; measurements come from [Artificial Analysis](https://artificialanalysis.ai/) **model** pages (Intelligence Index, cost per task, output speed, end-to-end time) — the model itself, not a model-plus-harness run. The map judges potential, not a frozen stack.
+[`MODELS.md`](MODELS.md) is a lookup: one row per harness, one column per category, plus how to change the session model. It does not restate the arithmetic below. Family + version, and official effort when the table names it, come from the harness's official **pricing/models** table for individual plans on this agent surface. Measurements come from [Artificial Analysis (AA)](https://artificialanalysis.ai/) **model** pages (Intelligence Index, Cost per Task, Time per Task) — the model itself, not a model-plus-harness run. Cost is AA Cost per Task only. Fetch those inputs with [`tools/harness-models.sh`](tools/harness-models.sh) and [`tools/aa-metrics.sh`](tools/aa-metrics.sh); they write CSVs under `dev/wip/`. The map judges potential, not a frozen stack.
 
 Wrappers pin the model token always, and pin effort only when the cell has an official effort **and** the wrapper form can hold it (`effort:` Claude Code, `model_reasoning_effort` Codex, `[effort=…]` Cursor).
 
@@ -99,19 +99,19 @@ A map row is reproducible research, never recollection. Re-run on every model re
 | Term | Meaning |
 |---|---|
 | **Family** | One official family + version from step 1 |
-| **Official effort** | A level the harness documents for that surface and model. A label that exists only on Artificial Analysis (reasoning, non-reasoning, Adaptive Reasoning) is not one |
-| **Complete row** | An AA **model** row with independently finished numeric Intelligence Index, Intelligence Index Cost per Task, Output Speed, and End-to-End Response Time — no `*`, no lab-claim stand-in |
+| **Official effort** | A level the harness's individual-plan pricing/models table names for that surface and model. If the table names none, the family has no official effort. A label that exists only on Artificial Analysis (reasoning, non-reasoning, Adaptive Reasoning) is not one |
+| **Complete row** | An AA **model** row with independently finished numeric Intelligence Index, Cost per Task, and Time per Task > 0 — no `*`, no lab-claim stand-in |
 | **Effort-comparable** | The family has a complete row for **two or more** official efforts. One complete official row, or none, is not comparable; a later rematch adds ` · effort` when more levels are measured |
-| **Score** | `(Intelligence Index / Intelligence Index Cost per Task) × Output Speed` — higher first |
+| **Score** | `(Intelligence Index / Cost per Task) / Time per Task` — higher first |
 
-1. **List names.** From the harness's official model, plan, pricing, and configuration docs, list every model on the most permissive documented first-party plan for this exact agent surface. Collapse the same family + version into one name (drop effort, Fast/standard, and other mode suffixes: `Grok 4.6 Fast` and `Grok 4.6 High` are both `Grok 4.6`). Record the accepted configuration value, underlying model, plan, surface, and every official effort token (`low`, `medium`, `high`, `xhigh`, `max`, or whatever the vendor names). Omit retired, utility, internal, arbitrary BYOK, and auto-routing. An alias or tier counts only when official docs resolve it to one family + version on the research date.
-2. **Join measurements.** For each name, every AA **model** row of that family + version — every measured effort and mode — is its own candidate. Record the four metrics, one table per harness. Do not use harness-stack scores (Coding Agent Index or any model-plus-agent run). Show gaps as `N/A`; exclude `*` estimates and lab claims from selection. Never substitute per-token or subscription price for Cost per Task. Calculate with downloadable source precision, never rounded display values.
-3. **Select.** Do not drop a candidate for a missing metric that category uses. Impute `0` where higher is better, and that category's current maximum + `1` where lower is better. Thresholds are inclusive. Every category uses the same four metrics. After the filter, rank survivors by score; break a remaining tie with the lowest End-to-End Response Time.
-   - **planner** — keep Intelligence Index ≥ `best − 5`, then rank.
-   - **implementer** — keep ≥ `best − 10`, then rank. If the first family is the planner's, a different effort is not a different model. Compare it with each other family still in the band at the **highest official effort both have as a complete row** (one reaches `xhigh`, the other only `high` → `high`); take the better score. If no other family shares such an effort, keep the planner family.
-   - **mechanical** — keep Cost per Task ≤ `10 ×` the harness minimum, then rank. If the first family is the planner's or the implementer's, apply that same highest-common-effort comparison against any unused family still in the band; if none shares a complete official effort, the family may repeat. If it still matches the implementer in **family and official effort**, and the family is effort-comparable, set effort to that family's **lowest official complete row**. If it is not effort-comparable or has no lower complete official effort, keep the family and write no effort.
-4. **Fallback — only when measurement cannot decide** (no complete candidate, or the time comparison still ties). Use only the harness's official task guidance: deep reasoning, architecture, and ambiguity for **planner**; agentic software development, implementation, and tool use for **implementer**; simple, repetitive, routine, fast, or cost-sensitive work for **mechanical**. Cite it and label `documented fallback`. If it does not name one model, report the ambiguity — do not invent a quantitative winner or keep the incumbent.
-5. **Write.** Put each winner in the map as the accepted model token. Append ` · effort` only when the family is effort-comparable **and** official docs list a token that matches the selected row (or the mechanical lowest-complete-effort adjustment), in the vendor's spelling. Otherwise the model token alone. A measured winner may not be `N/A`. Same commit (rule 12): update every affected wrapper — model token always; effort **only** if the cell has ` · effort` **and** the wrapper form can pin it. Map shape: one row per harness; column 1 is the backticked key matching `agents/<harness>/`; scripts take the first backtick-quoted token as the model. A new harness adds that row, its wrapper folder, and [Supported harnesses](#supported-harnesses) in the same commit.
+1. **List names.** From the harness's official **pricing/models** table for **individual** plans on this exact agent surface, list every model the most permissive documented first-party individual plan names. Collapse the same family + version into one name (drop effort, Fast/standard, and other mode suffixes: `Grok 4.6 Fast` and `Grok 4.6 High` are both `Grok 4.6`). Record the accepted configuration value, underlying model, plan, surface, and every **official effort** token that table names for that model (`low`, `medium`, `high`, `xhigh`, `max`, or whatever the vendor names). If the table names none, record no official effort. Omit retired, utility, internal, arbitrary BYOK, and auto-routing. An alias or tier counts only when official docs resolve it to one family + version on the research date. Take names and effort from that harness table only — not from a vendor API catalog, a team/enterprise-only list, or Artificial Analysis.
+2. **Join measurements.** Filter the AA catalog to the complete step-1 name list (every supported harness together): only families + versions those harnesses list remain — drop every other AA model. Then, for each name, every AA **model** row of that family + version — every measured effort and mode — is its own candidate. Record Intelligence Index, Cost per Task, and Time per Task, one table per harness. Do not use harness-stack scores (Coding Agent Index or any model-plus-agent run). Show gaps as `N/A`; exclude `*` estimates and lab claims from selection. Never substitute per-token or subscription price for Cost per Task. Calculate with downloadable source precision, never rounded display values.
+3. **Select.** Drop any candidate missing Intelligence Index, Cost per Task, or Time per Task — only rows with all three remain. Do not impute. Thresholds are inclusive. This step is per harness. When this harness names no official effort for a family, collapse that family's remaining complete rows into one candidate **before** the filters: the unweighted mean of Intelligence Index, Cost per Task, and Time per Task; name it family + version only — not a measured effort or mode. Filter and rank on the collapsed candidate. After the filter, rank survivors by score; break a remaining tie with the lowest Cost per Task, then the lowest Time per Task.
+   - **planner** — keep Intelligence Index ≥ that harness's best − `3`, then rank.
+   - **implementer** — keep Intelligence Index ≥ that harness's best − `10`. Drop any survivor whose family + version is the planner's. Keep Cost per Task **strictly less** than the planner's. Then rank.
+   - **mechanical** — keep Cost per Task between that harness's minimum and `3 ×` that minimum. Drop any survivor whose family + version is the planner's or the implementer's. Keep Cost per Task **strictly less** than the implementer's (and thus than the planner's). Then rank. An empty band after those cuts is a fallback — do not reopen the planner or implementer family.
+4. **Fallback — only when measurement cannot decide** (empty band after step 3, no complete candidate, or Cost per Task then Time per Task still ties). Use only the harness's official task guidance: deep reasoning, architecture, and ambiguity for **planner**; agentic software development, implementation, and tool use for **implementer**; simple, repetitive, routine, fast, or cost-sensitive work for **mechanical**. Cite it and label `documented fallback`. If that guidance names **one** model, write that token (and an official effort token when the same guidance names one). If it does not name one model (including Auto/routing, or two names with no single winner), **repeat the previous category's cell**: implementer copies planner; mechanical copies implementer. Do not invent a quantitative winner.
+5. **Write.** Put each winner in the map as the accepted model token. Append ` · effort` only when the family is effort-comparable **and** official docs list a token that matches the selected row (or the documented-fallback effort the guidance named), in the vendor's spelling. Otherwise the model token alone. A measured winner may not be `N/A`. Same commit (rule 12): update every affected wrapper — model token always; effort **only** if the cell has ` · effort` **and** the wrapper form can pin it. Map shape: one row per harness; column 1 is the backticked key matching `agents/<harness>/`; scripts take the first backtick-quoted token as the model. A new harness adds that row, its wrapper folder, and [Supported harnesses](#supported-harnesses) in the same commit.
 
 Every shipped agent runs as **planner** except `maintainer-ai-tools`, which runs as **implementer** (it drives this README's scripts). Each wrapper pins that category from `MODELS.md` in the header the harness requires. Body, in this order (rule 6):
 
@@ -152,10 +152,8 @@ Every process below is an executable script — the same command for a human or 
 | Platform | Folder | Invocation |
 |---|---|---|
 | Linux, macOS, WSL, Git Bash | [`scripts/shell/`](scripts/shell/) | `"$HOME/.ai-tools/scripts/shell/<process>.sh" [flags]` |
-| Windows — PowerShell 5.1+ or pwsh | [`scripts/powershell/`](scripts/powershell/) | `& "$env:USERPROFILE\.ai-tools\scripts\powershell\<process>.ps1" [flags]` |
-| Windows — CMD | [`scripts/cmd/`](scripts/cmd/) | `%USERPROFILE%\.ai-tools\scripts\cmd\<process>.cmd [flags]` — delegates to PowerShell |
 
-Processes: `install`, `remove`, `update`, `reinstall`, and read-only `verify`. `--help` (shell) or the header comment (PowerShell) lists flags; PowerShell spells a flag `-LikeThis` (`--dry-run` → `-DryRun`).
+Processes: `install`, `remove`, `update`, `reinstall`, and read-only `verify`. `--help` lists flags. On Windows, run those same scripts from WSL or Git Bash.
 
 On top of rules 23–25:
 
@@ -182,33 +180,24 @@ Check families:
 - **skill wrapper body** — every `skills/*/SKILL.md` matches this README's canonical skill wrapper body (rule 7)
 - **skill layout** — `skills/SKILL-CONTRACT.md` exists, and every skill has exactly one base at `skills/<name>.md`, with no orphans (rule 7)
 - **model parity and effort pinning** — every pinned model and effort resolves through `MODELS.md` (rules 11–12); Grok wrappers declare no model
-- **description parity** — an agent's `description` is identical across all seven wrappers
+- **description parity** — an agent's `description` is identical across all six wrappers
 - **`MODELS.md` row coverage** — every harness directory has a row and vice versa (rule 12)
 - **size caps** — `USER-AGENTS.md` at most 8,000 characters (rule 3), every wrapper at most 1,000 (rule 6), every skill wrapper at most 2,000 characters and every skill `description` at most 500 (rules 7, 9)
-- **encodings and endings** — PowerShell BOM, pure-ASCII CMD, line endings (`git ls-files --eol`), executable bits, no binaries in shipped paths (rule 26)
-- **version bump** — only with `--base <ref>`: a change under `agents/`, `skills/`, `scripts/`, or `USER-AGENTS.md` requires the README version to change too (rule 4)
+- **encodings and endings** — line endings (`git ls-files --eol`), executable bits, no binaries in shipped paths (rule 26)
+- **version bump** — only with `--base <ref>`: a change under `agents/`, `skills/`, `scripts/`, or `USER-AGENTS.md` that lands on `master` requires the README version to change too (rule 4)
 
-Exit codes: `0` clean, `1` aborted on a precondition (unknown flag, `--base` without a value), `2` finished with findings. CI (`.github/workflows/ci.yml`) runs three independent jobs: `lint` (`ubuntu-latest`) runs the version-bump check on pull requests and `shellcheck -x -P scripts/shell -P tools/test scripts/shell/*.sh tools/*.sh tools/test/*.sh` on every push and pull request; `test-shell` (`ubuntu-latest`) runs `tools/test.sh`; `test-powershell` (`windows-latest`) runs `tools/test.ps1` under both `pwsh` and `powershell.exe`.
-
-`tools/lint.sh` ships **without** a PowerShell mirror, deliberately outside rules 23–25's contract: a mirror only a Windows maintainer exercises drifts in silence, which is exactly the failure this linter exists to catch. Windows contributors run it from Git Bash.
+Exit codes: `0` clean, `1` aborted on a precondition (unknown flag, `--base` without a value), `2` finished with findings. CI (`.github/workflows/ci.yml`) runs two jobs on `ubuntu-latest`: `lint` runs the version-bump check on pull requests and `shellcheck -x -P scripts/shell -P tools/test scripts/shell/*.sh tools/*.sh tools/test/*.sh` on every push and pull request; `test-shell` runs `tools/test.sh`.
 
 When a rule in this README becomes mechanically verifiable, add its check to `tools/lint.sh` and its rule number to the list above in the same commit — the two caps above (rules 3, 6) are stated here as rules; the linter only enforces them, and this README is the number a reader trusts.
 
-`tools/test.sh` and `tools/test.ps1` are development checks too, and outside rules 23–25 the same way: they run `install`, `remove`, `update`, `reinstall`, and `verify` against a disposable fake `HOME`, never the real one, and assert the installation and script contract (rules 17–25). Run them from anywhere:
+`tools/test.sh` is a development check too, and outside rules 23–25 the same way: it runs `install`, `remove`, `update`, `reinstall`, and `verify` against a disposable fake `HOME`, never the real one, and asserts the installation and script contract (rules 17–25). Run it from anywhere:
 
 ```bash
 "$HOME/.ai-tools/tools/test.sh"                    # run every case
 "$HOME/.ai-tools/tools/test.sh" --case install --keep   # one case file, keep the sandbox
 ```
 
-```powershell
-& "$env:USERPROFILE\.ai-tools\tools\test.ps1"                       # run every case
-& "$env:USERPROFILE\.ai-tools\tools\test.ps1" -Case install -Keep   # one case file, keep the sandbox
-```
-
-`-Runner <path>` picks the PowerShell executable the scripts under test run with (default: the current host's own).
-
-The fixture stages, before any script runs: a pre-populated harness layout for all seven harnesses, a local `origin` git remote so no run reaches the network, a foreign file on a destination path, a locally modified copy, an unmanaged Grok block, and a stale link from an older layout. Against it, the suites assert:
+The fixture stages, before any script runs: a pre-populated harness layout for all six harnesses, a local `origin` git remote so no run reaches the network, a foreign file on a destination path, a locally modified copy, an unmanaged Grok block, and a stale link from an older layout. Against it, the suites assert:
 
 - symlink first, copy fallback (rule 17)
 - never overwrite a user file (rule 18)
@@ -217,8 +206,6 @@ The fixture stages, before any script runs: a pre-populated harness layout for a
 - `$HOME/AGENTS.md` untouched (rule 22)
 - destructive flags default to refuse, `--dry-run` changes nothing (rule 25)
 - exit codes `0`/`1`/`2` (rule 25)
-
-Two exclusions, both deliberate: `scripts/cmd` is not covered — the shims only delegate to PowerShell and carry no contract of their own; and `tools/test.ps1` runs on Windows only, because `scripts/powershell` builds Windows paths by construction.
 
 ## Safety rules
 
@@ -230,7 +217,7 @@ These bind the scripts and any human or AI intervening manually in [Installation
 - Never touch vendor bundles (`~/.grok/bundled/`), unrelated user agents or skills, a repository's own `AGENTS.md` (that application's architecture), or `$HOME/AGENTS.md` (rule 22).
 - An AI operating the scripts asks which harnesses are in scope and reports discovery before a mutating run; the scripts themselves default to every detected harness.
 
-Implemented once — `safe_link`, `link_or_copy`, `safe_unlink`, `safe_uninstall_copy` in [`scripts/shell/lib.sh`](scripts/shell/lib.sh), mirrored in [`scripts/powershell/lib.ps1`](scripts/powershell/lib.ps1). Scripts refuse the unsafe path; manual intervention must honour the same rules.
+Implemented once — `safe_link`, `link_or_copy`, `safe_unlink`, `safe_uninstall_copy` in [`scripts/shell/lib.sh`](scripts/shell/lib.sh). Scripts refuse the unsafe path; manual intervention must honour the same rules.
 
 ## Supported harnesses
 
@@ -242,13 +229,12 @@ One row per harness: global instructions, skills, agents, wrapper folder, and wr
 | Grok Build | `$HOME/.grok/AGENTS.md` | `$HOME/.grok/skills/` | `$HOME/.grok/agents/` | `agents/grok/` · `*.md`; **no `model:` in frontmatter** — models pinned in `~/.grok/config.toml` (see [Installation](#installation)) |
 | OpenAI Codex | `$HOME/.codex/AGENTS.md` | `$HOME/.codex/skills/` | `$HOME/.codex/agents/` | `agents/codex/` · `*.toml`, keys `name`, `description`, `developer_instructions`, `model`, `model_reasoning_effort` |
 | GitHub Copilot | `$HOME/.copilot/instructions/ai-tools.instructions.md` | `$HOME/.copilot/skills/` | `$HOME/.copilot/agents/` | `agents/copilot/` · `*.agent.md`; `model:` must be a **string** — the CLI rejects the array form VS Code Copilot Chat accepts |
-| Google Antigravity | `$HOME/.gemini/GEMINI.md` (shared with Gemini CLI) | `$HOME/.gemini/config/skills/` | `$HOME/.gemini/config/agents/` | `agents/antigravity/` · `*.md`, frontmatter `name`, `description`, `model` (`inherit`/`flash`/`pro`), `subagent`, `mainAgent`, `commandExecutionPolicy` |
+| Google Antigravity | `$HOME/.gemini/GEMINI.md` | `$HOME/.gemini/config/skills/` | `$HOME/.gemini/config/agents/` | `agents/antigravity/` · `*.md`, frontmatter `name`, `description`, `model` (`inherit`/`flash`/`pro`), `subagent`, `mainAgent`, `commandExecutionPolicy` |
 | Cursor | Not linked — no documented path for global User Rules; Cursor reads project-root `AGENTS.md` natively | `$HOME/.cursor/skills/` | `$HOME/.cursor/agents/` | `agents/cursor/` · `*.md`, `model:` accepts bracketed parameters (`<model>[effort=high]`) |
-| Gemini CLI | `$HOME/.gemini/GEMINI.md` | `$HOME/.gemini/skills/` (**not** `$HOME/.gemini/config/skills/`) | `$HOME/.gemini/agents/` | `agents/gemini/` · `*.md`, frontmatter `kind`, `model`, `temperature`, `max_turns`, `timeout_mins` |
 
 Notes:
 
-- **Antigravity and Gemini CLI share `$HOME/.gemini`** but not the same roots: one `GEMINI.md` serves both; skills and agents go to `config/skills/` / `config/agents/` (Antigravity) and `skills/` / `agents/` (Gemini CLI). Scripts install into each selected harness's own roots.
+- **Antigravity lives under `$HOME/.gemini`**: instructions at `GEMINI.md`, skills and agents at `config/skills/` and `config/agents/`. Do not install into `$HOME/.gemini/skills/` or `$HOME/.gemini/agents/` (retired Gemini CLI roots). The stale-link sweep unlinks leftover ai-tools links there without touching `config/`.
 - **Antigravity limits rules files to 12,000 characters** — the tightest instructions-file constraint, so it caps `USER-AGENTS.md` (rule 3). Over it, the file is truncated or rejected there.
 - **Codex** reads `~/.codex/AGENTS.override.md` first if it exists, else `~/.codex/AGENTS.md`. Never create, edit, or remove an existing `AGENTS.override.md` — user-authored, out of scope.
 - **Never link into `$HOME/.agents/`.** Several harnesses discover it; linking there as well as into each harness root would double-register every agent.
@@ -265,7 +251,7 @@ Every step is idempotent; conflicts are skipped and reported.
 
 1. **Preconditions** — clone to `$HOME/.ai-tools` when missing and validate the tree (rule 21; move any existing clone there — no other location is recoverable by configuration).
 2. **Discovery** — report each detected harness (config directory, CLI, or known IDE extension) and possible AI extensions it will never touch. `$HOME/.agents` is reported, never linked into.
-3. **Instructions** — link `USER-AGENTS.md` to each scoped harness's global instructions destination (`--no-instructions` skips). Cursor has none; one `GEMINI.md` serves Gemini CLI and Antigravity; an existing `~/.codex/AGENTS.override.md` is reported, never touched.
+3. **Instructions** — link `USER-AGENTS.md` to each scoped harness's global instructions destination (`--no-instructions` skips). Cursor has none; Antigravity uses `$HOME/.gemini/GEMINI.md`; an existing `~/.codex/AGENTS.override.md` is reported, never touched.
 4. **User overlay** — create `$HOME/AGENTS.md` empty only when missing (rule 22). Write its contents only if the user later asks for that directly.
 5. **Agents** — link each wrapper from `agents/<harness>/` into that harness's agents root, per file, never per directory — those roots hold other agents, and a directory link would shadow them.
 6. **Skills** — link each `skills/*-ai-tools` directory into each scoped skills root; the same shared directory serves every harness (rules 7–9). Prefer these links over harness scan paths (Grok `[skills] paths`), which can clobber existing names.
@@ -287,7 +273,7 @@ Unlink from harnesses — not delete the clone. Leaving `$HOME/.ai-tools` on dis
 2. **Agents and skills** — unlink links; remove copies only while their contents still match their source. A locally modified copy is user work: skip and keep (rule 19).
 3. **Grok** — delete only the marker-delimited ai-tools block in `~/.grok/config.toml`. Leave an unmanaged `[subagents.models]` untouched; never remove the file.
 4. **Stale-link sweep** — remove anything in the scoped roots that still resolves into the clone, whatever its name or era. Alpha keeps no backward compatibility (rule 4); the sweep cleans older layouts. `--no-sweep` skips it.
-5. **Instructions** — only with `--instructions`, and only destinations that are ai-tools links. Keep `GEMINI.md` while the other of Gemini CLI / Antigravity is out of scope. Edit an include pointer out by hand; never delete that file. **Never `$HOME/AGENTS.md`** (rule 22).
+5. **Instructions** — only with `--instructions`, and only destinations that are ai-tools links. Edit an include pointer out by hand; never delete that file. **Never `$HOME/AGENTS.md`** (rule 22).
 6. **Verify** — report any ai-tools link still in the scoped roots; expected none.
 7. **Purge** — only with `--purge` (prompt; `--yes` skips): delete `$HOME/.ai-tools`. Never includes `$HOME/AGENTS.md`.
 

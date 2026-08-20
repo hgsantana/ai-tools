@@ -90,8 +90,8 @@ usage() {
 usage: test.sh [--help] [--case <name>]... [--keep]
 
 Development check: builds a disposable fake $HOME per case and runs the
-scripts under scripts/shell against it (scripts/powershell has its own
-suite). Not an installation process (README rules 23-25); introduces no
+scripts under scripts/shell against it. Not an installation process
+(README rules 23-25); introduces no
 dependency beyond git, grep, awk, sed, cmp, diff, find, tar.
 
   --case <name>   run one case, repeatable. <name> is either a case-file

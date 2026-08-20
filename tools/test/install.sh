@@ -248,20 +248,20 @@ case_install_grok_no_model_row() {
   t_cleanup "$root"
 }
 
-case_install_gemini_shared_instructions() {
-  # gemini and antigravity share one GEMINI.md, but each keeps its own
-  # agents/ and skills/ roots.
+case_install_antigravity_instructions() {
+  # Antigravity uses GEMINI.md plus config/{agents,skills}. Do not install
+  # into the retired Gemini CLI roots ~/.gemini/agents or ~/.gemini/skills.
   local root
   t_fixture
   root="$T_ROOT"
 
-  t_install "$root" --harnesses gemini,antigravity
+  t_install "$root" --harnesses antigravity
   t_assert_exit 0
   t_assert_symlink "$root/home/.gemini/GEMINI.md" "$root/home/.ai-tools"
-  t_assert_symlink "$root/home/.gemini/agents/planner-ai-tools.md" "$root/home/.ai-tools"
   t_assert_symlink "$root/home/.gemini/config/agents/planner-ai-tools.md" "$root/home/.ai-tools"
-  t_assert_symlink "$root/home/.gemini/skills/planner-ai-tools" "$root/home/.ai-tools"
   t_assert_symlink "$root/home/.gemini/config/skills/planner-ai-tools" "$root/home/.ai-tools"
+  t_assert_absent "$root/home/.gemini/agents/planner-ai-tools.md"
+  t_assert_absent "$root/home/.gemini/skills/planner-ai-tools"
 
   t_cleanup "$root"
 }

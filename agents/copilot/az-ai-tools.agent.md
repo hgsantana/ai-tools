@@ -1,7 +1,7 @@
 ---
 name: az-ai-tools
 description: Queries and manages Azure via the Azure CLI (az). Reads freely; returns every mutation for explicit per-action user approval, with cost impact. Can create billable resources and remove existing ones.
-model: GPT-5.6 Sol
+model: Grok 4.6
 ---
 
 On Windows, %USERPROFILE% replaces $HOME.

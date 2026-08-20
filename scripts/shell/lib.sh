@@ -1,13 +1,13 @@
 # shellcheck shell=bash
 # ai-tools shared helpers — sourced by every script in scripts/shell/.
-# Canonical implementation: scripts/powershell/lib.ps1 mirrors this file.
 # Compatible with bash 3.2+ (macOS default) and BSD/GNU userlands.
+# Windows: WSL or Git Bash. No PowerShell mirror.
 
 set -u
 
 AI_TOOLS="${AI_TOOLS:-$HOME/.ai-tools}"
 REPO_URL="https://github.com/hgsantana/ai-tools.git"
-ALL_HARNESSES="claude-code grok codex copilot cursor gemini antigravity"
+ALL_HARNESSES="claude-code grok codex copilot cursor antigravity"
 EXT_ROOTS="$HOME/.vscode/extensions $HOME/.vscode-server/extensions $HOME/.vscode-insiders/extensions $HOME/.vscode-server-insiders/extensions $HOME/.vscodium/extensions"
 
 DRY_RUN=0
@@ -39,7 +39,6 @@ agents_root() {
     codex)       echo "$HOME/.codex/agents" ;;
     copilot)     echo "$HOME/.copilot/agents" ;;
     cursor)      echo "$HOME/.cursor/agents" ;;
-    gemini)      echo "$HOME/.gemini/agents" ;;
     antigravity) echo "$HOME/.gemini/config/agents" ;;
   esac
 }
@@ -51,7 +50,6 @@ skills_root() {
     codex)       echo "$HOME/.codex/skills" ;;
     copilot)     echo "$HOME/.copilot/skills" ;;
     cursor)      echo "$HOME/.cursor/skills" ;;
-    gemini)      echo "$HOME/.gemini/skills" ;;
     antigravity) echo "$HOME/.gemini/config/skills" ;;
   esac
 }
@@ -62,7 +60,7 @@ instructions_dest() {
     grok)        echo "$HOME/.grok/AGENTS.md" ;;
     codex)       echo "$HOME/.codex/AGENTS.md" ;;
     copilot)     echo "$HOME/.copilot/instructions/ai-tools.instructions.md" ;;
-    gemini|antigravity) echo "$HOME/.gemini/GEMINI.md" ;;
+    antigravity) echo "$HOME/.gemini/GEMINI.md" ;;
     cursor)      echo "" ;;  # Cursor has no global instructions destination
   esac
 }
@@ -86,7 +84,6 @@ harness_detected() {
     codex)       [ -d "$HOME/.codex" ] || command -v codex >/dev/null 2>&1 || has_extension openai.chatgpt- ;;
     copilot)     [ -d "$HOME/.copilot" ] || command -v copilot >/dev/null 2>&1 || has_extension github.copilot-chat- ;;
     cursor)      [ -d "$HOME/.cursor" ] ;;
-    gemini)      [ -d "$HOME/.gemini" ] || command -v gemini >/dev/null 2>&1 || has_extension google.geminicodeassist- ;;
     antigravity) [ -d "$HOME/.gemini/config" ] || command -v antigravity >/dev/null 2>&1 ;;
     *) return 1 ;;
   esac
@@ -545,22 +542,25 @@ sweep_stale_links() {
   for root in "$HOME/.claude/agents" "$HOME/.grok/agents"; do
     [ -L "$root" ] && safe_unlink "$root"
   done
+  # Retired Gemini CLI roots (not a harness). Do not touch Antigravity's
+  # $HOME/.gemini/config/{agents,skills} or GEMINI.md.
+  for root in "$HOME/.gemini/agents" "$HOME/.gemini/skills"; do
+    [ -d "$root" ] || continue
+    while IFS= read -r p; do
+      [ -n "$p" ] || continue
+      t=$(readlink "$p")
+      case "$t" in *ai-tools*|"$AI_TOOLS"/*) safe_unlink "$p" || true ;; esac
+    done < <(find "$root" -maxdepth 1 -type l 2>/dev/null)
+  done
   return 0
 }
 
 remove_instructions() {
   # Only harness destinations that are links into ai-tools. Never $HOME/AGENTS.md.
-  local h dest other
+  local h dest
   for h in $SCOPE; do
     dest=$(instructions_dest "$h")
     [ -n "$dest" ] || continue
-    if [ "$dest" = "$HOME/.gemini/GEMINI.md" ]; then
-      other=gemini; [ "$h" = gemini ] && other=antigravity
-      if harness_detected "$other" && ! in_scope "$other"; then
-        skip "GEMINI.md serves gemini and antigravity; $other not in scope: $dest kept"
-        continue
-      fi
-    fi
     safe_unlink "$dest" || true
   done
 }

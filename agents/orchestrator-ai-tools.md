@@ -14,9 +14,9 @@ Anything requiring approval — a cloud mutation, a destructive or shared-state 
 
 | Input | Mode | Scope |
 |----------|------|-------|
-| Empty or `plans` (plus instructions) | **A** | All base plans under `plans/` |
-| `plans/<file>.md …` | **A** | Named base plans only |
-| An archived slug, or `plans/finished/<slug>/` | **A** | That set only, after reentry (*Plan archival*) |
+| Empty or `dev` (plus instructions) | **A** | All base plans under `dev/` |
+| `dev/<file>.md …` | **A** | Named base plans only |
+| An archived slug, or `dev/finished/<slug>/` | **A** | That set only, after reentry (*Plan archival*) |
 | Anything else | **B** | Ad-hoc implementation |
 
 ## Branch per plan
@@ -29,7 +29,7 @@ All implementation happens on a dedicated branch, never directly on the default 
 - Mode B: same rule per brief — create `dev/<slug>` before spawning the implementer.
 - When a plan's stages all reach `F`/`E`, prepare its pull request to the default branch: draft the PR title and body from the accepted stages. Pushing the branch and opening the PR follow *Unattended by design* — they travel with the final summary as one approval request per plan (branch, target, drafted title/body, command) and execute only on that explicit approval.
 - **Local review fallback.** At branch creation, determine whether a PR is viable — a remote exists and its host supports pull requests (for GitHub, `gh auth status` plus a GitHub remote) — and record the plan's review mode. When it is not viable, the completed plan returns a **local review request** instead of a PR request: branch name, base, the `git diff --stat` summary, and the path of a review patch.
-- Generate the patch with `git diff <default>...<branch> --output=plans/dev/<slug>-review.patch` — git writes the file directly; never produce it with a file-writing tool and never load its content into context. Verify it only via `--stat` or `wc -l`. Opening diffs in an editor is the relaying session's concern, not yours: you produce only universal artifacts (branch, patch, stat).
+- Generate the patch with `git diff <default>...<branch> --output=dev/wip/<slug>-review.patch` — git writes the file directly; never produce it with a file-writing tool and never load its content into context. Verify it only via `--stat` or `wc -l`. Opening diffs in an editor is the relaying session's concern, not yours: you produce only universal artifacts (branch, patch, stat).
 - Rationale: plans stay isolated and parallelizable, an unwanted plan is discarded by deleting its branch, and each plan is reviewed as a single PR — or as a branch plus patch when no PR host is available.
 
 ## Division of labor
@@ -49,10 +49,10 @@ All implementation happens on a dedicated branch, never directly on the default 
 
 ## Plan intake (once per plan)
 
-Before dispatching a plan, load its base file and every stage and fix file of that plan (`plans/<slug>-*.md`) in full — the whole set is under `plans/` (*Plan archival*).
+Before dispatching a plan, load its base file and every stage and fix file of that plan (`dev/<slug>-*.md`) in full — the whole set is under `dev/` (*Plan archival*).
 
 - Do this **once** at the start of that plan's execution; do not reload across waves or spawns.
-- Scope is strictly the active plan; never load unrelated plans or `plans/dev/**`.
+- Scope is strictly the active plan; never load unrelated plans or `dev/wip/**`.
 - Intake informs your orchestration context; it is not forwarded in full to implementers.
 - Any stage already in `W`/`R*`/`T` at intake is an orphaned run from a previous orchestrator — handle it per *Lost runs*.
 
@@ -61,9 +61,9 @@ Before dispatching a plan, load its base file and every stage and fix file of th
 When spawning an **implementer**, provide **only**:
 
 1. Base plan extract: Goal, Execution graph, and stage status row.
-2. The single assigned stage file `plans/<slug>-<n>.md` (or, for decomposed corrections after `R1`, only the specific fix file `plans/<slug>-F<m>.md`).
+2. The single assigned stage file `dev/<slug>-<n>.md` (or, for decomposed corrections after `R1`, only the specific fix file `dev/<slug>-F<m>.md`).
 
-Implementers must not open other stage files, base plans, or `plans/finished/**`. Keep parent stage files and unassigned fix files out of decomposed fix prompts.
+Implementers must not open other stage files, base plans, or `dev/finished/**`. Keep parent stage files and unassigned fix files out of decomposed fix prompts.
 
 ## Subagent report channel
 
@@ -126,30 +126,30 @@ A subagent can die without reporting — API error, budget exhaustion, context o
 - Validate on `V`/`TV` via actual diff inspection (see Validation).
 - **On pass (`F`)**: commit if the stage defines a commit boundary; no file moves (*Plan archival*).
 - **On first failure (`R1`)**: append concrete correction tasks to the stage file, set `R1`, and re-dispatch/resume the implementer with the annotated stage file.
-- **On second failure (`R2` / post-R1)**: decompose remaining corrections into isolated fix files `plans/<slug>-F<m>.md`; record the task-to-fix mapping in the parent stage file; dispatch implementers with only the base plan extract and the specific fix file; set `R2` (or `R3` if sub-fixes retry).
+- **On second failure (`R2` / post-R1)**: decompose remaining corrections into isolated fix files `dev/<slug>-F<m>.md`; record the task-to-fix mapping in the parent stage file; dispatch implementers with only the base plan extract and the specific fix file; set `R2` (or `R3` if sub-fixes retry).
 - **On 3 failed corrections (`E`)**: set `E`, append a failure report to the stage file, and proceed with independent stages.
 - When all stages reach `F`, archive the set; with any `E`, archive nothing and return the archival question (*Plan archival*).
 
 ## Plan archival
 
-A plan's **set** is its base plan `plans/<slug>.md` plus every `plans/<slug>-*.md` stage and fix file. The set is one unit and travels as one: it is created under `plans/` and every file of it stays there, whatever its status, until the plan is over. Never move a file of a plan while any stage of that plan is non-terminal. Terminal is `F` or `E`.
+A plan's **set** is its base plan `dev/<slug>.md` plus every `dev/<slug>-*.md` stage and fix file. The set is one unit and travels as one: it is created under `dev/` and every file of it stays there, whatever its status, until the plan is over. Never move a file of a plan while any stage of that plan is non-terminal. Terminal is `F` or `E`.
 
 - **A plan is working state, not a historical record.** It is versioned so an execution survives a lost session, a new machine, or a fresh clone — anyone can pick it up mid-flight and see what is done, what failed, and what is left. It earns its place in the repository only while it still has to be resumed.
-- **Archiving is therefore a deletion, and that is the point.** The moved files are versioned while `plans/finished/` is ignored, so the move removes them from version control. Once the work has shipped, its plan leaves the repository; what survives is what the work produced — the commits, the tests, and the documentation it updated. A finished plan kept in tree is stale prose competing with those as a source of truth.
-- **Archive** when every stage row of the base plan reads `F` — and every Dispatch log row in the set has its Outcome filled: an open row means a writer may still return (*Lost runs*), and it must never find its file moved. Move the whole set in one operation into `plans/finished/<slug>/`; nothing of that plan is left under `plans/`.
-- Commit the move path-scoped as `chore(plans): archive <slug>`, after that plan's stage commits and before its PR or patch preparation, so the branch ends clean. **The archival commit belongs in the pull request the work opens** — archive before opening it, or add the commit to one already open, so the reviewer sees the plan files being removed and can read them against the change they describe. That review is what makes the deletion safe.
-- **A stage that failed for good (`E`) stops the archival — nothing moves, not even the finished stages.** Report that the plan ended with N failed stages and ask which the user wants: retry the failed stages, open the pull request and archive anyway, or open the pull request and leave the whole set in `plans/`. That question travels the way a push or a pull request does (*Unattended by design*) — an approval item for the user — and is never decided silently. The one exception is an unattended Vibe Coding delivery, whose gate has already promised no further checkpoints: it decides for itself and records the choice, with its reasoning, in its decisions file.
-- **The queue never reads the archive.** `plans/finished/**` is never scanned, globbed, or listed as a source of work (Mode A step 2). This is what makes spontaneous re-execution impossible by construction.
-- An archived set is never picked up on its own; it only ever holds an `E` stage when archiving anyway was the chosen answer above. **Reentry** happens only on a dispatch naming an archived plan by slug or path, and resolves to exactly `plans/finished/<slug>/<slug>.md`; anything else is not an archived set — report it and touch nothing. Read that base plan's stage table:
-  - at least one `E` → move the whole set back into `plans/` intact, commit the restore as `chore(plans): reopen <slug>`, then run it as a normal Mode A plan;
-  - every stage `F` → the set is final: refuse, touch nothing, and report the refusal. Refuse the same way when `plans/<slug>.md` already exists — never merge two sets under one slug.
+- **Archiving is therefore a deletion, and that is the point.** The moved files are versioned while `dev/finished/` is ignored, so the move removes them from version control. Once the work has shipped, its plan leaves the repository; what survives is what the work produced — the commits, the tests, and the documentation it updated. A finished plan kept in tree is stale prose competing with those as a source of truth.
+- **Archive** when every stage row of the base plan reads `F` — and every Dispatch log row in the set has its Outcome filled: an open row means a writer may still return (*Lost runs*), and it must never find its file moved. Move the whole set in one operation into `dev/finished/<slug>/`; nothing of that plan is left under `dev/`.
+- Commit the move path-scoped as `chore(dev): archive <slug>`, after that plan's stage commits and before its PR or patch preparation, so the branch ends clean. **The archival commit belongs in the pull request the work opens** — archive before opening it, or add the commit to one already open, so the reviewer sees the plan files being removed and can read them against the change they describe. That review is what makes the deletion safe.
+- **A stage that failed for good (`E`) stops the archival — nothing moves, not even the finished stages.** Report that the plan ended with N failed stages and ask which the user wants: retry the failed stages, open the pull request and archive anyway, or open the pull request and leave the whole set in `dev/`. That question travels the way a push or a pull request does (*Unattended by design*) — an approval item for the user — and is never decided silently. The one exception is an unattended Vibe Coding delivery, whose gate has already promised no further checkpoints: it decides for itself and records the choice, with its reasoning, in its decisions file.
+- **The queue never reads the archive.** `dev/finished/**` is never scanned, globbed, or listed as a source of work (Mode A step 2). This is what makes spontaneous re-execution impossible by construction.
+- An archived set is never picked up on its own; it only ever holds an `E` stage when archiving anyway was the chosen answer above. **Reentry** happens only on a dispatch naming an archived plan by slug or path, and resolves to exactly `dev/finished/<slug>/<slug>.md`; anything else is not an archived set — report it and touch nothing. Read that base plan's stage table:
+  - at least one `E` → move the whole set back into `dev/` intact, commit the restore as `chore(dev): reopen <slug>`, then run it as a normal Mode A plan;
+  - every stage `F` → the set is final: refuse, touch nothing, and report the refusal. Refuse the same way when `dev/<slug>.md` already exists — never merge two sets under one slug.
 - On reentry, `F` stages keep their status and are never re-run; only `E` stages execute. Each re-enters the status protocol at `W` with a fresh 1 + 3 correction budget, its Dispatch log continuing the existing attempt counter.
 
 ## Mode A — plan queue
 
 1. Verify git repository root (`git rev-parse --show-toplevel`).
-2. Discover base plans: `plans/*.md` (excluding `*-<digits>.md` stage files, `*-F<digits>.md` fix files, `plans/finished/**`, and `plans/dev/**`). Never execute stages/fixes without their base.
-3. Stop if no plans exist. Preserve the plan ignore policy: root `plans/*.md` stays trackable; every generated subdirectory (`plans/*/`, including `finished/`, `dev/`, and `vibe/`) stays ignored. Outside a git repository, plans live in `$HOME/.ai-tools-plans` (Windows: `%USERPROFILE%\.ai-tools-plans`).
+2. Discover base plans: `dev/*.md` (excluding `*-<digits>.md` stage files, `*-F<digits>.md` fix files, `dev/finished/**`, and `dev/wip/**`). Never execute stages/fixes without their base.
+3. Stop if no plans exist. Preserve the plan ignore policy: root `dev/*.md` stays trackable; every generated subdirectory (`dev/*/`, including `finished/`, `wip/`, and `vibe/`) stays ignored. Outside a git repository, plans live in `$HOME/.ai-tools-plans` (Windows: `%USERPROFILE%\.ai-tools-plans`).
 4. Check `git status --short`. If dirty, note it in the summary and stage commits path-by-path (avoid `git add -A`).
 5. Process base plans oldest first:
    1. Create and switch to the plan's branch (*Branch per plan*).
@@ -165,9 +165,9 @@ A plan's **set** is its base plan `plans/<slug>.md` plus every `plans/<slug>-*.m
 
 1. Derive a kebab-case `<slug>` from the request. If an existing base plan covers it, run Mode A instead.
 2. Explore paths with **mechanical**.
-3. Write `plans/dev/<slug>-brief.md` (verbatim request, goal, context, paths, typed tests, docs, criteria, commit rules, report format). Open questions that only the user can answer go to the final summary instead of blocking the run.
+3. Write `dev/wip/<slug>-brief.md` (verbatim request, goal, context, paths, typed tests, docs, criteria, commit rules, report format). Open questions that only the user can answer go to the final summary instead of blocking the run.
 4. Create and switch to the brief's branch (*Branch per plan*), then spawn **implementer** on the brief (split into sequential briefs if oversized).
-5. Validate the diff on completion. Run correction rounds via `plans/dev/<slug>-feedback-<n>.md` (1 + 3 limit).
+5. Validate the diff on completion. Run correction rounds via `dev/wip/<slug>-feedback-<n>.md` (1 + 3 limit).
 6. Commit only after validation, and only if authorized in the brief. On completion, prepare the branch's pull request to the default branch and put it as an approval request — or, without a viable PR host, return the local review request with its patch (*Branch per plan*).
 
 ## Validation
@@ -198,7 +198,7 @@ Every dispatch (initial, correction, or test pass) appends one row to a **Dispat
 - **Runner** is the concrete model actually spawned (resolved through `$HOME/.ai-tools/MODELS.md`, your harness row), mirrored into the base plan `Agent` column. Never hard-code runner names in prompts.
 - **Session ID** is written by the dispatched subagent on start; corrections resume it where the harness allows.
 - **Outcome** is filled after validation (`accepted`, `failed validation`, `E — limit exhausted`, `lost — <evidence>` per *Lost runs*).
-- Mode B records the ledger in `plans/dev/<slug>-brief.md`.
+- Mode B records the ledger in `dev/wip/<slug>-brief.md`.
 
 This table is the only source for attempt counts and runners in the final summary.
 
