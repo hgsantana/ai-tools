@@ -1,10 +1,5 @@
 {
   "features": {
-    "ghcr.io/aqua/devcontainer-antigravity-cli/antigravity-cli:1": {
-      "version": "1.0.2",
-      "resolved": "ghcr.io/aqua/devcontainer-antigravity-cli/antigravity-cli@sha256:d7ae5139e62443070175cae13c275ae08efa8d89d6d5d432f96f3f9df51c2030",
-      "integrity": "sha256:d7ae5139e62443070175cae13c275ae08efa8d89d6d5d432f96f3f9df51c2030"
-    },
     "ghcr.io/devcontainers/features/common-utils:2": {
       "version": "2.5.9",
       "resolved": "ghcr.io/devcontainers/features/common-utils@sha256:cb0c4d3c276f157eed17935747e364178d75fee17f55c4e129966f64633deb3a",
@@ -14,11 +9,6 @@
       "version": "1.1.1",
       "resolved": "ghcr.io/devcontainers/features/github-cli@sha256:94879eebb6a0e4e2f197de9f12db7427cb4a25b82d93c55239ce8c8fc394a1b4",
       "integrity": "sha256:94879eebb6a0e4e2f197de9f12db7427cb4a25b82d93c55239ce8c8fc394a1b4"
-    },
-    "ghcr.io/sliekens/devcontainer-features/grok-build:1": {
-      "version": "1.0.2",
-      "resolved": "ghcr.io/sliekens/devcontainer-features/grok-build@sha256:22c5e406f1c1c55126a40c8ac668b5cad61b96762c794ef5ae390461432ce0c3",
-      "integrity": "sha256:22c5e406f1c1c55126a40c8ac668b5cad61b96762c794ef5ae390461432ce0c3"
     }
   }
 }

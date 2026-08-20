@@ -11,10 +11,6 @@
 			"upgradePackages": "false",
 			"nonFreePackages": "true"
 		},
-		"ghcr.io/sliekens/devcontainer-features/grok-build:1": {
-			"channel": "stable"
-		},
-		"ghcr.io/aqua/devcontainer-antigravity-cli/antigravity-cli:1": {},
 		"ghcr.io/devcontainers/features/github-cli:1": {}
 	},
 
@@ -22,11 +18,13 @@
 	// as credenciais HTTPS vem do encaminhamento nativo da extensao Dev Containers.
 	"mounts": [
 		"source=${localEnv:HOME}/.gitconfig,target=/usr/local/share/host-git/gitconfig,type=bind,readonly",
-		"source=${localEnv:HOME}/.config/gh,target=/usr/local/share/host-gh,type=bind,readonly"
+		"source=${localEnv:HOME}/.config/gh,target=/usr/local/share/host-gh,type=bind,readonly",
+		"source=${localEnv:HOME}/.grok,target=/home/vscode/.grok/,type=bind",
+		"source=${localEnv:HOME}/.gemini,target=/home/vscode/.gemini/,type=bind"
 	],
 
 
-	"postCreateCommand": "sudo chsh vscode -s \"$(which pwsh)\" && bash .devcontainer/setup-git.sh",
+	"postCreateCommand": "sudo chsh vscode -s \"$(which pwsh)\" && bash .devcontainer/setup.sh",
 	// A imagem base roda como root; sem isto, arquivos criados no workspace
 	// (inclusive objetos em .git) ficam root:root no host.
 	"remoteUser": "vscode",
