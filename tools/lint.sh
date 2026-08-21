@@ -38,10 +38,11 @@ Checks:
                     characters, frontmatter included (rule 7)
   skill description cap every skill description is at most 500 characters,
                     folded block included (rule 9)
-  skill layout      skills/SKILL-CONTRACT.md exists; every skill directory
-                    has a skills/<name>.md base and vice versa (rule 7)
+  skill layout      skills/SKILL-CONTRACT.md and skills/MAINTAINER.md exist;
+                    every skill directory has a skills/<name>.md base and
+                    vice versa (rule 7)
   wrapper body      every wrapper body is exactly the canonical text
-                    reconstructed from its harness key and agent name (rule 6)
+                    reconstructed from the agent name (rule 6)
   model parity      every wrapper's pinned model matches MODELS.md via
                     model_for; Grok wrappers declare no model: (rules 11-12)
   effort pinning    the wrapper pins the MODELS.md cell's effort where its
@@ -420,6 +421,9 @@ check_skill_base_coverage() {
   local f d name
   f="$AI_TOOLS/skills/SKILL-CONTRACT.md"
   if [ -f "$f" ]; then ok "skill contract present: $f"
+  else warn "missing: $f"; fi
+  f="$AI_TOOLS/skills/MAINTAINER.md"
+  if [ -f "$f" ]; then ok "maintainer workflow present: $f"
   else warn "missing: $f"; fi
 
   for d in "$AI_TOOLS"/skills/*-ai-tools/; do

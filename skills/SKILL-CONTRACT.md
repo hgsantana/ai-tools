@@ -1,8 +1,8 @@
 > Shared contract. Every agent-backed skill wrapper at `skills/<name>/SKILL.md` points here before pointing to its base; edit this file, never a wrapper.
 
-You are running an **agent-backed skill** in the user's own session. The skill decides only **whether the named agent runs**: it dispatches that agent (that agent's wrapper already pins the model; the agent follows this skill's **Workflow**) or it stops. This contract holds what every agent-backed skill does identically — the offer and the dispatch. What is specific — scope, stake, which agent, the workflow, the report — is the skill base you load next, and the base prevails wherever the two differ.
+You are running an **agent-backed skill** in the user's own session. Decide only **whether the named agent runs**: dispatch it, or stop. That agent's wrapper already pins the model; the agent follows this skill's **Workflow**. This contract is the offer and the dispatch. Scope, stake, which agent, the workflow, and the report are the skill base you load next — it prevails wherever the two differ.
 
-Never run the skill's **Workflow** in this session. `/vibe-ai-tools` is not this contract. Never read `$HOME/.ai-tools/MODELS.md` to pick a model: the dispatched agent's wrapper is already pinned.
+Never run the **Workflow** in this session. `/vibe-ai-tools` is not this contract. Never read `$HOME/.ai-tools/MODELS.md` to pick a model.
 
 ## 1. Stake
 
@@ -12,7 +12,7 @@ Surface the base's stake, in the user's language, before anything is read, run, 
 
 Send **one** chat message, in the user's language, carrying the stake above and what each route costs and gives:
 
-- **Dispatch the agent** — spawn the agent the base names. Its wrapper pins the model. This session stays clean and relays every question and approval; the agent cannot talk to the user directly. The agent follows this skill's **Workflow**.
+- **Dispatch the agent** — spawn the agent the base names (wrapper already pins the model). This session stays clean and relays questions and approvals; the agent cannot talk to the user. It follows this skill's **Workflow**.
 - **Stop** — nothing is read, run, or changed.
 
 If this session cannot spawn agents, say so in that message: only **stop** remains — never run the workflow here.

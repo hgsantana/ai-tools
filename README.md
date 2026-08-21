@@ -4,23 +4,24 @@
 
 ## What is this repository
 
-A toolkit of **agents**, **skills**, and **instructions**, written once for Grok Build, Claude Code, OpenAI Codex, GitHub Copilot, Google Antigravity, and Cursor.
+A toolkit of **skills**, **three agents**, and **instructions**, written once for Grok Build, Claude Code, OpenAI Codex, GitHub Copilot, Google Antigravity, and Cursor.
 
-Clone it to `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows) and link it into each harness's user config so every tool loads the same set. Each wrapper pins its model from [`MODELS.md`](MODELS.md), so the agent's model is fixed at execution time.
+Clone it to `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows) and link it into each harness's user config so every tool loads the same set. Skills are the entry point; three spawn-only agents run the work. Wrappers pin models from [`MODELS.md`](MODELS.md) at authoring — dispatch uses those pins, not the map.
 
 ### What is inside
 
 | Path | What it is |
 |---|---|
-| [`USER-AGENTS.md`](USER-AGENTS.md) | Install artifact: each harness's user-wide instructions. What is installed, how to route a request to a skill, the three agents, language, and security. Behaviour owned by a skill or a base is documented there, never here |
-| [`MODELS.md`](MODELS.md) | Authoring/install lookup: which model each of the three agents uses per harness (**planner** / **implementer** / **mechanical** columns). Not read at dispatch. The only place vendor model names live besides wrapper headers (rules 11–12); user-editable, reset by an [update](#update) |
-| [`agents/planner-ai-tools.md`](agents/planner-ai-tools.md) | Base: `planner-ai-tools` — decomposes, designs, owns acceptance; writes no production code. Follows a skill **Workflow** when that is the brief |
-| [`agents/implementer-ai-tools.md`](agents/implementer-ai-tools.md) | Base: `implementer-ai-tools` — writes and edits code for one specified stage or brief |
-| [`agents/mechanical-ai-tools.md`](agents/mechanical-ai-tools.md) | Base: `mechanical-ai-tools` — specified patches, renames, builds, tests, evidence; no design |
-| [`agents/SUBAGENT-CONTRACT.md`](agents/SUBAGENT-CONTRACT.md) | Shared contract every wrapper loads before its base: what changes when an agent runs as a spawned subagent — no channel to the user, questions and approvals returned to the spawner, report by file. Not installed; read by path |
-| [`agents/<harness>/`](agents/) | Wrappers for the three agents: harness syntax, pinned model in the header, pointer to the shared contract, pointer to the base; nothing else |
-| [`skills/`](skills/) | Ten skills, each a `skills/<name>/SKILL.md` wrapper (installed, ≤2,000 characters) and a `skills/<name>.md` base (the workflow). The three agents have no skill. Every skill but `vibe-ai-tools` dispatches one of those agents; its wrapper points to `skills/SKILL-CONTRACT.md`, which surfaces the stake and offers **dispatch** or **stop** (rule 8). `vibe-ai-tools` fronts no agent and runs refine-confirm-deliver in session. `skills/MAINTAINER.md` is the shared update/remove/reinstall workflow, not installed. A skill must run on **any** model; model-dependent work is an agent (rules 7–9) |
-| [`skills/SKILL-CONTRACT.md`](skills/SKILL-CONTRACT.md) | Shared contract every agent-backed skill wrapper loads before its base: the two-route offer and dispatch. Not installed; read by path |
+| [`USER-AGENTS.md`](USER-AGENTS.md) | Install artifact: user-wide harness instructions — routing, the three agents' roles, language, security. Workflows live in skill and agent bases, not here |
+| [`MODELS.md`](MODELS.md) | Authoring/install map: model per agent per harness. Not read at dispatch. Vendor names live here and in wrapper headers (rules 11–12); user-editable, reset by an [update](#update) |
+| [`agents/planner-ai-tools.md`](agents/planner-ai-tools.md) | `planner-ai-tools` — decomposes, designs, owns acceptance; no production code. Follows a skill **Workflow** when that is the brief |
+| [`agents/implementer-ai-tools.md`](agents/implementer-ai-tools.md) | `implementer-ai-tools` — writes and edits code for one specified stage or brief |
+| [`agents/mechanical-ai-tools.md`](agents/mechanical-ai-tools.md) | `mechanical-ai-tools` — specified patches, renames, builds, tests, evidence; no design |
+| [`agents/SUBAGENT-CONTRACT.md`](agents/SUBAGENT-CONTRACT.md) | Shared spawned-subagent contract: no channel to the user; questions and approvals returned to the spawner; report by file. Not installed; read by path |
+| [`agents/<harness>/`](agents/) | One wrapper per agent: header pin, contract pointer, base pointer |
+| [`skills/`](skills/) | Ten skills: installed `skills/<name>/SKILL.md` plus `skills/<name>.md` (the workflow). The three agents have no skill. All but `vibe-ai-tools` dispatch a named agent (rule 8); vibe runs in session |
+| [`skills/SKILL-CONTRACT.md`](skills/SKILL-CONTRACT.md) | Offer and dispatch for agent-backed skills. Not installed; read by path |
+| [`skills/MAINTAINER.md`](skills/MAINTAINER.md) | Shared update/remove/reinstall workflow. Not installed |
 | [`scripts/`](scripts/) | `install`, `remove`, `update`, `reinstall`, `verify` — bash ([Scripts](#scripts); rules 23–26). Windows: WSL or Git Bash |
 
 ### How to install, remove, update, or reinstall
@@ -52,14 +53,14 @@ Normative for every human and every AI maintaining this repository.
 
 ### Structure and authoring
 
-5. Only three agents ship: `planner-ai-tools`, `implementer-ai-tools`, `mechanical-ai-tools`. Each has a harness-agnostic **base** at `agents/<name>.md` (worker behaviour) and one **wrapper** per harness at `agents/<harness-short-name>/<agent-name>.<ext>`. A base states behaviour **mode-agnostically**: it says to ask the user or to require approval, never how that reaches them. How it reaches them belongs to `agents/SUBAGENT-CONTRACT.md` when a wrapper spawns it. All other behaviour lives in skill bases. When a skill dispatches an agent, that agent follows the skill's **Workflow** heading.
-6. A wrapper header is only harness syntax (frontmatter or TOML, model pinning, file name). The pin is the header: `model:` (and effort when the map cell has one). The body is exactly, in this order: **(1)** the pointer to `$HOME/.ai-tools/agents/SUBAGENT-CONTRACT.md`; **(2)** the pointer to `$HOME/.ai-tools/agents/<name>.md`, which prevails over the contract except on the channel to the user. Anything else is drift — move it to the base or to the contract. A wrapper is at most **1,000 characters**, frontmatter included: it is what the harness reads to decide whether to route to the agent, so it carries the summary and nothing else — the behaviour lives in the base it points to. Canonical body: [wrapper authoring](#model-map-and-wrapper-authoring).
-7. Skills are optional and harness-agnostic — no per-harness copies, no wrappers per harness. A skill is split like an agent: a **wrapper** at `skills/<name>/SKILL.md`, the only installed file, in one directory every harness registers as-is; a **base** at `skills/<name>.md` holding the workflow; and, for a skill that dispatches an agent, `skills/SKILL-CONTRACT.md` — the two-route offer and dispatch, shared by every agent-backed skill and read by path, never installed. The wrapper body is exactly, in this order: a one-line scope; the pointer to `$HOME/.ai-tools/skills/SKILL-CONTRACT.md` (agent-backed skills only); the pointer to `$HOME/.ai-tools/skills/<name>.md`, which prevails over the contract. Anything else is drift — move it to the base or the contract. A wrapper is at most **2,000 characters**, frontmatter included: it is what the harness reads to decide whether to route to the skill. That cap is concision (rule 14), not token economy — no supported harness preloads skill bodies; every one that documents the mechanics reads the body on invocation. Canonical body: [skill authoring](#model-map-and-wrapper-authoring).
-8. A skill must run on **any** model the session provides: it never requires a model and never refuses over one. It does not read [`MODELS.md`](MODELS.md) and does not compare the session model to a pin. Model-dependent work is dispatched to one of the three agents, whose wrapper already pins the model. An agent-backed skill therefore never runs its **Workflow** in the session: it states the stake in one message, then asks for one of two routes — **dispatch the agent** the skill names, or **stop**. `/vibe-ai-tools` is the exception: it fronts no agent and runs itself.
+5. Only three agents ship: `planner-ai-tools`, `implementer-ai-tools`, `mechanical-ai-tools`. Each has a harness-agnostic **base** at `agents/<name>.md` and one **wrapper** per harness at `agents/<harness-short-name>/<agent-name>.<ext>`. A base is **mode-agnostic**: it says to ask or to require approval, never how that reaches them — `agents/SUBAGENT-CONTRACT.md` owns the channel when spawned. All other behaviour lives in skill bases. A dispatched agent follows the skill's **Workflow** heading.
+6. Wrapper header: harness syntax and the pin (`model:`; effort only when the map cell has one). Body, in this order: pointer to `$HOME/.ai-tools/agents/SUBAGENT-CONTRACT.md`; pointer to `$HOME/.ai-tools/agents/<name>.md` (prevails except on the channel to the user). Anything else is drift. Cap **1,000 characters**, frontmatter included. Canonical body: [wrapper authoring](#model-map-and-wrapper-authoring).
+7. Skills are harness-agnostic — no per-harness copies. Split: installed **wrapper** `skills/<name>/SKILL.md`; **base** `skills/<name>.md` (the workflow); agent-backed skills also load `skills/SKILL-CONTRACT.md` by path, never installed. Wrapper body, in this order: one-line scope; SKILL-CONTRACT pointer (agent-backed only); skill-base pointer (prevails over the contract). Anything else is drift. Cap **2,000 characters**, frontmatter included. No supported harness preloads skill bodies; the cap is concision (rule 14). Canonical body: [skill authoring](#model-map-and-wrapper-authoring).
+8. A skill runs on **any** session model and never refuses over one. It does not read [`MODELS.md`](MODELS.md). Work that needs a pin is dispatched to a named agent, whose wrapper already pins the model. An agent-backed skill never runs its **Workflow** in the session: stake, then **dispatch the agent** or **stop**. `/vibe-ai-tools` fronts no agent and runs itself.
 9. Skill frontmatter: only universally accepted keys (`name`, `description`) plus optional keys every supported harness tolerates (e.g. `argument-hint`). A key any supported harness rejects does not belong in a shared file. `description` is at most **500 characters**: harnesses budget the skill *list*, not the body — Codex caps it at 2% of the context window or 8,000 characters, Claude Code truncates a description at 1,536.
 10. Wrappers follow each harness's official documentation. Re-check vendor docs before adding a harness or editing a wrapper — formats change upstream.
-11. Vendor model names live in [`MODELS.md`](MODELS.md) and are repeated only in wrapper headers (harnesses read the wrapper). Bases, skills, and spawn do **not** read `MODELS.md` to pick a model — the named agent's wrapper is already pinned. The Grok install pin and `tools/lint.sh` still read the map (install-time / authoring). [Supported harnesses](#supported-harnesses) may show accepted value *shapes*, never the choice. The three agent bases cite **planner** / **implementer** / **mechanical** (`USER-AGENTS.md` → *The three agents*) so authoring can pin the matching column. Spawn prose uses the agent names. Skills name the agent they dispatch.
-12. `MODELS.md` and wrapper **headers** always match: a new agent, a new harness, or a model change updates the map and every affected wrapper header in the same commit. Wrapper bodies do not name a harness row or a model. Fill each cell by the [selection method](#choosing-the-models) — never memory or unsourced claims.
+11. Vendor model names live in [`MODELS.md`](MODELS.md) and wrapper headers only. Dispatch uses the named agent's already-pinned wrapper — bases, skills, and spawn do not read the map. Grok install and `tools/lint.sh` still do (install / authoring). [Supported harnesses](#supported-harnesses) may show accepted value *shapes*, never the choice. Bases cite **planner** / **implementer** / **mechanical** as roles (`USER-AGENTS.md` → *The three agents*). Spawn and skills use agent names.
+12. `MODELS.md` and wrapper **headers** match in the same commit (new agent, new harness, or model change). Wrapper bodies name neither a row nor a model. Fill each cell by the [selection method](#choosing-the-models) — never memory or unsourced claims.
 13. Everything installed from this repo — agent name, skill directory, slash command, frontmatter `name:`, file basename — ends in `-ai-tools`. Never install a bare name (`planner`, `az`).
 14. Extreme conciseness: no ambiguity or redundancy, and no omitted instruction, rule, or intention in exchange for brevity.
 15. Disk in this repository is concise English. Chat is in the user's language.
@@ -110,7 +111,7 @@ A map row is reproducible research, never recollection. Re-run on every model re
 4. **Fallback — only when measurement cannot decide** (empty band after step 3, no complete candidate, or Cost per Task then Time per Task still ties). Use only the harness's official task guidance: deep reasoning, architecture, and ambiguity for **planner**; agentic software development, implementation, and tool use for **implementer**; simple, repetitive, routine, fast, or cost-sensitive work for **mechanical**. Cite it and label `documented fallback`. If that guidance names **one** model, write that token (and an official effort token when the same guidance names one). If it does not name one model (including Auto/routing, or two names with no single winner), **repeat the previous category's cell**: implementer copies planner; mechanical copies implementer. Do not invent a quantitative winner.
 5. **Write.** Put each winner in the map as the accepted model token. Append ` · effort` only when the family is effort-comparable **and** official docs list a token that matches the selected row (or the documented-fallback effort the guidance named), in the vendor's spelling. Otherwise the model token alone. A measured winner may not be `N/A`. Same commit (rule 12): update every affected wrapper — model token always; effort **only** if the cell has ` · effort` **and** the wrapper form can pin it. Map shape: one row per harness; column 1 is the backticked key matching `agents/<harness>/`; scripts take the first backtick-quoted token as the model. A new harness adds that row, its wrapper folder, and [Supported harnesses](#supported-harnesses) in the same commit.
 
-Each wrapper pins the role its base names (`You are the **planner** / **implementer** / **mechanical**`) from `MODELS.md` in the header the harness requires. The body never names a model or a map row (rule 6):
+Pin the role the base names (`You are the **planner** / **implementer** / **mechanical**`) from `MODELS.md` in the header. Body (rule 6):
 
 ```markdown
 On Windows, %USERPROFILE% replaces $HOME.
@@ -173,7 +174,7 @@ Check families:
 - **skill frontmatter** — every `skills/*/SKILL.md` exists, keys a subset of `name`/`description`/`argument-hint`, and `name:` matches its directory (rule 9)
 - **wrapper body** — the body is reconstructed from this README's canonical text and compared exactly (rule 6)
 - **skill wrapper body** — every `skills/*/SKILL.md` matches this README's canonical skill wrapper body (rule 7)
-- **skill layout** — `skills/SKILL-CONTRACT.md` exists, `skills/MAINTAINER.md` is the shared maintainer workflow, and every skill has exactly one base at `skills/<name>.md`, with no orphans (rule 7)
+- **skill layout** — `skills/SKILL-CONTRACT.md` and `skills/MAINTAINER.md` exist; every skill has exactly one base at `skills/<name>.md`, with no orphans (rule 7)
 - **model parity and effort pinning** — every pinned model and effort resolves through `MODELS.md` (rules 11–12); Grok wrappers declare no model
 - **description parity** — an agent's `description` is identical across all six wrappers
 - **`MODELS.md` row coverage** — every harness directory has a row and vice versa (rule 12)
@@ -253,7 +254,7 @@ Every step is idempotent; conflicts are skipped and reported.
 7. **Grok model pinning** — Grok ignores `model:` in frontmatter and reads `~/.grok/config.toml`. The script maintains a marker-delimited `[subagents.models]` block: names from the tree, models from [`MODELS.md`](MODELS.md) (unreadable map → skip and report, never guess). A pre-existing unmanaged block is skipped and reported, never edited. Without the pin, agents still load but inherit the session model — the strong-model guarantee is lost. The same fallback applies to any harness that ignores `model:`.
 8. **Verify** — instructions resolve into the clone, `USER-AGENTS.md` fits the 12,000-character cap (rule 3), `agents/SUBAGENT-CONTRACT.md`, `skills/SKILL-CONTRACT.md`, and every agent and skill base exist at the pinned path, and every installed agent and skill is a link or an unmodified copy. Skipped under `--dry-run`; re-run anytime with `verify`.
 
-Then restart or reload any harness that caches agents or skills at startup. Confirm every shipped agent appears in its agent list, plus a slash command for every shipped skill — including `/vibe-ai-tools`, which is a skill only.
+Then restart or reload any harness that caches agents or skills at startup. Confirm the three agents (`planner-ai-tools`, `implementer-ai-tools`, `mechanical-ai-tools`) and a slash command for every shipped skill — `/vibe-ai-tools` is a skill only.
 
 ## Removal
 
@@ -303,7 +304,7 @@ Full removal + installation against a fresh `origin/master`, when [Update](#upda
 3. **Install** — the Installation steps against the fresh tree, listing agents and skills from the tree, never from hardcoded names.
 4. **Verify** — the Installation checks, plus no stale links left behind.
 
-Then restart or reload the harness and confirm every shipped agent appears in its agent list, plus a slash command for every shipped skill.
+Then restart or reload the harness and confirm the three agents and a slash command for every shipped skill.
 
 ## Troubleshooting
 
@@ -320,7 +321,7 @@ Then restart or reload the harness and confirm every shipped agent appears in it
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE). Use, modify, fork, redistribute, and sell freely, including in closed-source work; the only condition is carrying the copyright and permission notice with copies or substantial portions. The `AS IS` disclaimer covers what these tools do by design: scripts that unlink and delete harness configuration, agents that create billable cloud resources, and unattended code execution.
+MIT — see [`LICENSE`](LICENSE). Use, modify, fork, redistribute, and sell freely, including in closed-source work; the only condition is carrying the copyright and permission notice with copies or substantial portions. The `AS IS` disclaimer covers what these tools do by design: scripts that unlink and delete harness configuration, dispatched work that can create billable cloud resources, and unattended code execution.
 
 Maintenance consequences:
 

@@ -17,4 +17,4 @@ You are running as a **spawned subagent**: a session dispatched you, cannot see 
 
 ## Model
 
-Your model is pinned by the wrapper that loaded you. Spawn further work by agent name (`planner-ai-tools`, `implementer-ai-tools`, `mechanical-ai-tools`); each child's wrapper already pins its model. Never read `$HOME/.ai-tools/MODELS.md` to choose a model, and never assume a vendor model name.
+Pinned by the wrapper that loaded you. Spawn further work by agent name (`planner-ai-tools`, `implementer-ai-tools`, `mechanical-ai-tools`); each child's wrapper already pins its model. Never read `$HOME/.ai-tools/MODELS.md` to choose a model.

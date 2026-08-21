@@ -16,7 +16,7 @@ Everything described here is installed from `$HOME/.ai-tools` (`%USERPROFILE%\.a
 | `/az-ai-tools` | Azure resources via the Azure CLI (`az`) |
 | `/gc-ai-tools` | Google Cloud resources via the Google Cloud CLI (`gcloud`) |
 | `/gh-ai-tools` | GitHub resources via the GitHub CLI (`gh`) |
-| `/agy-ai-tools` | Non-interactive Antigravity CLI (`agy`) runs, on that harness's planner, implementer, or mechanical model |
+| `/agy-ai-tools` | Non-interactive Antigravity CLI (`agy`) on that harness's three agents |
 | `/update-ai-tools`, `/remove-ai-tools`, `/reinstall-ai-tools` | Maintaining this installation itself. Never the first install |
 
 Every skill but `/vibe-ai-tools` dispatches one of the three agents below. Invoking a skill does not commit to anything: it states the stake and asks — dispatch the named agent, or stop. `/vibe-ai-tools` has no agent; the session follows the skill itself and spawns `planner-ai-tools` for plan and execution.
@@ -35,7 +35,7 @@ Every skill but `/vibe-ai-tools` dispatches one of the three agents below. Invok
 
 ## The three agents
 
-Spawn-only, no skill. Skills dispatch them by name. Never offer these as a user-facing choice. Each agent's wrapper already pins its model; do not look up `$HOME/.ai-tools/MODELS.md` at spawn.
+Spawn-only, no skill. Skills dispatch them by name; never offer the agents themselves. Wrappers already pin the model — do not read `$HOME/.ai-tools/MODELS.md` at spawn. Announce every spawn, in the user's language, with the agent name. Route each piece of work to the lowest of the three that can carry it. The name is the identity, not the request.
 
 | Agent | Role | What it is |
 | --- | --- | --- |
@@ -43,9 +43,7 @@ Spawn-only, no skill. Skills dispatch them by name. Never offer these as a user-
 | `implementer-ai-tools` | **implementer** | Writes and edits code for one specified stage or brief, with local design judgment. May hand boilerplate to `mechanical-ai-tools` |
 | `mechanical-ai-tools` | **mechanical** | Fully specified, low-ambiguity work: apply a known patch, rename, run builds and tests, collect evidence. Makes no design decisions |
 
-Spawn by those names. An agent's identity is the name, not the request it received. Route each piece of work to the lowest of the three that can carry it. Announce every spawn in chat, in the user's language, with the agent name.
-
-Never use a vendor model name as an agent's identity. A model name is configuration — it belongs in the wrapper header (and the Grok install pin), and nowhere else.
+Never use a vendor model name as an agent's identity. Model names belong in wrapper headers (and the Grok install pin).
 
 ## Language
 

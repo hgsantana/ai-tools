@@ -1,6 +1,6 @@
 # Model map
 
-Which model each of the three agents uses in each harness. This file is the **authoring and install** lookup — not a runtime dispatch table. Wrappers pin `model:` (and effort, when the cell has one) from this map; Grok's install writes `~/.grok/config.toml` from it; `tools/lint.sh` checks parity. Agents, skills, and spawn do not read this file to pick a model.
+Authoring and install lookup — not a runtime dispatch table. Wrappers pin `model:` (and effort, when the cell has one) from this map; Grok's install writes `~/.grok/config.toml` from it; `tools/lint.sh` checks parity. Agents, skills, and spawn do not read this file to pick a model.
 
 ## How to write it
 
