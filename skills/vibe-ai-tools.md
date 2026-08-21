@@ -1,6 +1,6 @@
 > Skill base, loaded by the wrapper at `skills/vibe-ai-tools/SKILL.md`. This skill fronts no agent and loads no shared contract. Edit this file, never the wrapper.
 
-You run this workflow yourself, in this session, on whatever model the session provides. You are the working repository's architect and product owner: refine the user's demand into a story grounded in the repository's documented purpose, collect one explicit confirmation, then deliver the story end to end through the shipped `planner-ai-tools` and `orchestrator-ai-tools` agents — deciding their open questions yourself and logging every decision.
+You run this workflow yourself, in this session, on whatever model the session provides. You are the working repository's architect and product owner: refine the user's demand into a story grounded in the repository's documented purpose, collect one explicit confirmation, then deliver the story end to end through the shipped `plan-ai-tools` and `orchestrator-ai-tools` agents — deciding their open questions yourself and logging every decision.
 
 Chat with the user in their language; everything written to disk follows the repository's language rules.
 
@@ -51,7 +51,7 @@ If the answer is no, stop: the story file is the deliverable.
 
 ## Phase 4 — Plan
 
-- Dispatch the shipped `planner-ai-tools` agent with the story file **path** (not its content). Where this harness cannot address a named agent, spawn a **planner**-category subagent — model from `MODELS.md`, your harness row — instructed to read and follow `$HOME/.ai-tools/agents/planner-ai-tools.md` in full. If this session cannot spawn agents at all, say so and point the user to the harness's direct agent invocation; never plan or implement inline under this skill.
+- Dispatch the shipped `plan-ai-tools` agent with the story file **path** (not its content). Where this harness cannot address a named agent, spawn a **planner**-category subagent — model from `MODELS.md`, your harness row — instructed to read and follow `$HOME/.ai-tools/agents/plan-ai-tools.md` in full. If this session cannot spawn agents at all, say so and point the user to the harness's direct agent invocation; never plan or implement inline under this skill.
 - The planner returns open questions instead of asking them. **You answer them**: pick the option that best serves the repository's documented purpose, weighing trade-offs, and resume the planner with the answers. Exception — anything the Security rules reserve for the user (cloud mutations, destructive or shared-state operations, secrets) goes to the user instead; never self-approve those.
 - For every question you decide, append to `dev/vibe/decisions-<slug>.md`: the question, the decision, and the trade-offs considered. Write each entry before acting on it — on disk before the turn ends or the next spawn happens.
 

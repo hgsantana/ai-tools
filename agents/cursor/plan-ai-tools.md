@@ -1,6 +1,6 @@
 ---
-name: planner-ai-tools
-description: Planner-category worker: decomposes work, designs the approach, owns acceptance, writes no production code. Spawned for planner-model work; not the plan-ai-tools planning workflow.
+name: plan-ai-tools
+description: Writes a multi-file implementation plan under dev/, then stops. Use for non-trivial changes — open questions, multi-file work, or unclear impact. Never implements code.
 model: grok-4.6
 readonly: false
 is_background: false
@@ -13,5 +13,5 @@ Category → model comes from `$HOME/.ai-tools/MODELS.md`, row `cursor`. Resolve
 You are a spawned subagent: your shared contract is `$HOME/.ai-tools/agents/SUBAGENT-CONTRACT.md`.
 Read it and follow it — it governs your channel to the user and your report.
 
-Your base file is `$HOME/.ai-tools/agents/planner-ai-tools.md`.
+Your base file is `$HOME/.ai-tools/agents/plan-ai-tools.md`.
 Read it and follow it in full — it is the absolute rule set for this agent; the contract above prevails only on your channel to the user.

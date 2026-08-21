@@ -41,7 +41,7 @@ case_remove_unlinks_what_install_linked() {
   t_assert_exit 0
   t_assert_line "removed link:"
   t_assert_absent "$root/home/.claude/agents/planner-ai-tools.md"
-  t_assert_absent "$root/home/.claude/skills/planner-ai-tools"
+  t_assert_absent "$root/home/.claude/skills/plan-ai-tools"
   if [ -e "$root/home/.claude/CLAUDE.md" ] || [ -L "$root/home/.claude/CLAUDE.md" ]; then
     ok "$T_CASE: instructions still present (no --instructions): $root/home/.claude/CLAUDE.md"
   else

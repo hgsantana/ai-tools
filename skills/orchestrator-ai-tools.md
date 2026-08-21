@@ -8,7 +8,7 @@ Agent: `orchestrator-ai-tools`, base `$HOME/.ai-tools/agents/orchestrator-ai-too
 
 ## Stake
 
-Tell the user, in their language, before anything runs: this work edits code, runs commands, and creates local commits **unattended** once started, on a dedicated branch. Offer it only for work they approved — an accepted plan, or an explicit ad-hoc brief; if there is no accepted plan and the work is non-trivial, offer the `planner-ai-tools` skill instead.
+Tell the user, in their language, before anything runs: this work edits code, runs commands, and creates local commits **unattended** once started, on a dedicated branch. Offer it only for work they approved — an accepted plan, or an explicit ad-hoc brief; if there is no accepted plan and the work is non-trivial, offer the `plan-ai-tools` skill instead.
 
 ## Route A — dispatch
 

@@ -182,7 +182,7 @@ case_install_grok_models() {
   # Grok model pinning: names from the tree, models from the fixture's own
   # MODELS.md, resolved through the shipped model_for (never a hard-coded
   # vendor name here).
-  local root saved_map planner_model implementer_model
+  local root saved_map planner_model implementer_model mechanical_model
   t_fixture
   root="$T_ROOT"
 
@@ -190,9 +190,10 @@ case_install_grok_models() {
   MODELS_MAP="$root/home/.ai-tools/MODELS.md"
   planner_model=$(model_for grok planner)
   implementer_model=$(model_for grok implementer)
+  mechanical_model=$(model_for grok mechanical)
   MODELS_MAP="$saved_map"
 
-  if [ -z "$planner_model" ] || [ -z "$implementer_model" ]; then
+  if [ -z "$planner_model" ] || [ -z "$implementer_model" ] || [ -z "$mechanical_model" ]; then
     warn "$T_CASE: could not resolve grok models from fixture MODELS.md"
     t_cleanup "$root"
     return 0
@@ -202,6 +203,11 @@ case_install_grok_models() {
   t_assert_exit 0
   t_assert_line "ok: grok models block appended: $root/home/.grok/config.toml"
   t_assert_content "$root/home/.grok/config.toml" "az-ai-tools = \"$planner_model\""
+  t_assert_content "$root/home/.grok/config.toml" "plan-ai-tools = \"$planner_model\""
+  t_assert_content "$root/home/.grok/config.toml" "planner-ai-tools = \"$planner_model\""
+  t_assert_content "$root/home/.grok/config.toml" "agy-ai-tools = \"$planner_model\""
+  t_assert_content "$root/home/.grok/config.toml" "implementer-ai-tools = \"$implementer_model\""
+  t_assert_content "$root/home/.grok/config.toml" "mechanical-ai-tools = \"$mechanical_model\""
   t_assert_content "$root/home/.grok/config.toml" "maintainer-ai-tools = \"$implementer_model\""
 
   t_install "$root" --harnesses grok
@@ -259,8 +265,10 @@ case_install_antigravity_instructions() {
   t_assert_exit 0
   t_assert_symlink "$root/home/.gemini/GEMINI.md" "$root/home/.ai-tools"
   t_assert_symlink "$root/home/.gemini/config/agents/planner-ai-tools.md" "$root/home/.ai-tools"
-  t_assert_symlink "$root/home/.gemini/config/skills/planner-ai-tools" "$root/home/.ai-tools"
+  t_assert_symlink "$root/home/.gemini/config/skills/plan-ai-tools" "$root/home/.ai-tools"
+  t_assert_symlink "$root/home/.gemini/config/skills/agy-ai-tools" "$root/home/.ai-tools"
   t_assert_absent "$root/home/.gemini/agents/planner-ai-tools.md"
+  t_assert_absent "$root/home/.gemini/skills/plan-ai-tools"
   t_assert_absent "$root/home/.gemini/skills/planner-ai-tools"
 
   t_cleanup "$root"

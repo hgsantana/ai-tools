@@ -6,19 +6,20 @@ Everything described here is installed from `$HOME/.ai-tools` (`%USERPROFILE%\.a
 
 ## What is installed here
 
-**Nine skills.** A skill is the entry point; agents are its implementation detail, so offer skills and never agents.
+**Ten skills.** A skill is the entry point; agents are its implementation detail, so offer skills and never agents.
 
 | Skill | Use for |
 | --- | --- |
 | `/vibe-ai-tools` | **The default for any non-trivial change.** Refines the demand into a story, takes one explicit confirmation, then delivers it end to end — plan, decisions, implementation, pull request |
-| `/planner-ai-tools` | Designing a change only: a multi-file plan under `dev/`, no implementation |
+| `/plan-ai-tools` | Designing a change only: a multi-file plan under `dev/`, no implementation |
 | `/orchestrator-ai-tools` | Executing an already accepted plan, or an explicit ad-hoc brief, unattended |
 | `/az-ai-tools` | Azure resources via the Azure CLI (`az`) |
 | `/gc-ai-tools` | Google Cloud resources via the Google Cloud CLI (`gcloud`) |
 | `/gh-ai-tools` | GitHub resources via the GitHub CLI (`gh`) |
+| `/agy-ai-tools` | Non-interactive Antigravity CLI (`agy`) runs, on that harness's planner, implementer, or mechanical model |
 | `/update-ai-tools`, `/remove-ai-tools`, `/reinstall-ai-tools` | Maintaining this installation itself. Never the first install |
 
-Every skill but `/vibe-ai-tools` fronts a same-named agent (the three maintenance skills share one). Invoking it does not commit to anything: the skill states the stake, checks the session model, and asks the user how to run the work — dispatch the agent, run it in this session, or stop. `/vibe-ai-tools` has no agent; the session follows the skill itself and dispatches what it needs.
+Every skill but `/vibe-ai-tools` fronts a same-named agent (the three maintenance skills share one). Invoking it does not commit to anything: the skill states the stake, checks the session model, and asks the user how to run the work — dispatch the agent, run it in this session, or stop. `/vibe-ai-tools` has no agent; the session follows the skill itself and dispatches what it needs. Named category workers `planner-ai-tools`, `implementer-ai-tools`, and `mechanical-ai-tools` pin those models — spawn-only, no skill.
 
 ## How to route a request
 
@@ -27,7 +28,7 @@ Every skill but `/vibe-ai-tools` fronts a same-named agent (the three maintenanc
    1. One chat message, in the user's language, explaining the options and what each one costs and gives — including the stake of any skill you are about to offer.
    2. Then one short question referring back to that message, with these answers:
       - **`/vibe-ai-tools`** (recommended) — refines the demand with them and, after one explicit confirmation, delivers it end to end;
-      - **the skill that fits the request**, when one does — it will ask how to run it;
+      - **the skill that fits the request**, when one does (`/plan-ai-tools` for plan-only) — it will ask how to run it;
       - **run it here**, ignoring the ai-tools skills, directly in this session.
 
 **When in doubt, treat it as case 2.** Wait for an explicit answer; never pick for the user, and never chain from a request straight into implementation.

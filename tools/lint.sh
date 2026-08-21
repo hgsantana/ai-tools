@@ -447,15 +447,6 @@ check_skill_base_coverage() {
 # Never hard-code a vendor model name here — every expected model is resolved
 # through model_for, reading MODELS.md in place.
 
-category_for() {
-  # usage: category_for <agent-name> -- every shipped agent runs as planner
-  # except maintainer-ai-tools, which runs as implementer (README rule 6).
-  case "$1" in
-    maintainer-ai-tools) echo implementer ;;
-    *)                   echo planner ;;
-  esac
-}
-
 base_has_category() {
   # usage: base_has_category <agent-name> -- true when its base file cites
   # one of the three category names (never a hard-coded agent list).
@@ -553,6 +544,7 @@ model_effort_for() {
 }
 
 check_model_parity() {
+  # category_for lives in scripts/shell/lib.sh — the category the base claims.
   local h a f val expected cat
   for h in $(harnesses); do
     for a in $(agent_names); do
