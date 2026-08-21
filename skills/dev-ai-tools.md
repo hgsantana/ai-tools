@@ -2,9 +2,9 @@
 
 Executing accepted plans under `dev/`, or an explicit ad-hoc brief, unattended. Dispatches `planner-ai-tools` to follow **Workflow**. That run spawns `implementer-ai-tools` and `mechanical-ai-tools`. Never implement outside that dispatch.
 
-## Agent and category
+## Agent
 
-Agent: `planner-ai-tools`, base `$HOME/.ai-tools/agents/planner-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`). Category for the contract's model check: **planner**.
+Agent: `planner-ai-tools`, base `$HOME/.ai-tools/agents/planner-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`).
 
 ## Stake
 
@@ -215,7 +215,7 @@ Every dispatch (initial, correction, or test pass) appends one row to a **Dispat
 ```
 
 - **Attempt** counts from 1; correction rounds continue the counter (`R1` = attempt 2).
-- **Runner** is the concrete model actually spawned (resolved through `$HOME/.ai-tools/MODELS.md`, your harness row), mirrored into the base plan `Agent` column. Never hard-code runner names in prompts.
+- **Runner** is the concrete model the harness assigned to the named agent (that agent's wrapper pin). Mirror it into the base plan `Agent` column. Never look up `$HOME/.ai-tools/MODELS.md`. Never hard-code vendor model names in prompts.
 - **Session ID** is written by the dispatched subagent on start; corrections resume it where the harness allows.
 - **Outcome** is filled after validation (`accepted`, `failed validation`, `E — limit exhausted`, `lost — <evidence>` per *Lost runs*).
 - Mode B records the ledger in `dev/wip/<slug>-brief.md`.

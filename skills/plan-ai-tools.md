@@ -2,9 +2,9 @@
 
 Designing a change: exploring the repository and writing a multi-file implementation plan under `dev/`, then stopping — never implementing. Dispatches `planner-ai-tools` to follow **Workflow**. Never plan outside that dispatch, and never implement under this skill.
 
-## Agent and category
+## Agent
 
-Agent: `planner-ai-tools`, base `$HOME/.ai-tools/agents/planner-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`). Category for the contract's model check: **planner**.
+Agent: `planner-ai-tools`, base `$HOME/.ai-tools/agents/planner-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`).
 
 ## Stake
 

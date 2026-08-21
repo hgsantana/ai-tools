@@ -19,7 +19,7 @@ Everything described here is installed from `$HOME/.ai-tools` (`%USERPROFILE%\.a
 | `/agy-ai-tools` | Non-interactive Antigravity CLI (`agy`) runs, on that harness's planner, implementer, or mechanical model |
 | `/update-ai-tools`, `/remove-ai-tools`, `/reinstall-ai-tools` | Maintaining this installation itself. Never the first install |
 
-Every skill but `/vibe-ai-tools` dispatches one of the three agents below. Invoking a skill does not commit to anything: it states the stake, checks the session model, and asks — dispatch the named agent, or stop. `/vibe-ai-tools` has no agent; the session follows the skill itself and spawns `planner-ai-tools` for plan and execution.
+Every skill but `/vibe-ai-tools` dispatches one of the three agents below. Invoking a skill does not commit to anything: it states the stake and asks — dispatch the named agent, or stop. `/vibe-ai-tools` has no agent; the session follows the skill itself and spawns `planner-ai-tools` for plan and execution.
 
 ## How to route a request
 
@@ -35,17 +35,17 @@ Every skill but `/vibe-ai-tools` dispatches one of the three agents below. Invok
 
 ## The three agents
 
-Spawn-only, no skill. Skills dispatch them by name. Wrappers pin the matching `$HOME/.ai-tools/MODELS.md` column. Never offer these as a user-facing choice.
+Spawn-only, no skill. Skills dispatch them by name. Never offer these as a user-facing choice. Each agent's wrapper already pins its model; do not look up `$HOME/.ai-tools/MODELS.md` at spawn.
 
-| Agent | What it is | Which model fits |
+| Agent | Role | What it is |
 | --- | --- | --- |
-| `planner-ai-tools` | Decomposes work, designs architecture, owns acceptance, validates deliveries, handles escalations. Writes no production code while orchestrating | The strongest available; cost separates candidates of comparable capability, and never buys a weaker plan |
-| `implementer-ai-tools` | Writes and edits code for one specified stage or brief, with local design judgment. May hand boilerplate to `mechanical-ai-tools` | The best code-quality-to-cost ratio; flagship tiers only when the quality gain justifies the cost |
-| `mechanical-ai-tools` | Fully specified, low-ambiguity work: apply a known patch, rename, run builds and tests, collect evidence. Makes no design decisions | The cheapest, fastest model that finishes reliably; upgrade only on failure |
+| `planner-ai-tools` | **planner** | Decomposes work, designs architecture, owns acceptance, validates deliveries, handles escalations. Writes no production code while orchestrating |
+| `implementer-ai-tools` | **implementer** | Writes and edits code for one specified stage or brief, with local design judgment. May hand boilerplate to `mechanical-ai-tools` |
+| `mechanical-ai-tools` | **mechanical** | Fully specified, low-ambiguity work: apply a known patch, rename, run builds and tests, collect evidence. Makes no design decisions |
 
-Spawn by those names, never by a vendor model. An agent's identity is the name, not the request it received. Route each piece of work to the lowest of the three that can carry it. Models resolve through `$HOME/.ai-tools/MODELS.md`, the row of the harness you are running in — read it there, never from memory. Announce every spawn in chat, in the user's language, with the agent name and the concrete model behind it.
+Spawn by those names. An agent's identity is the name, not the request it received. Route each piece of work to the lowest of the three that can carry it. Announce every spawn in chat, in the user's language, with the agent name.
 
-Never use a vendor model name as an agent's identity. A model name is configuration — it belongs where the harness requires it, and nowhere else.
+Never use a vendor model name as an agent's identity. A model name is configuration — it belongs in the wrapper header (and the Grok install pin), and nowhere else.
 
 ## Language
 

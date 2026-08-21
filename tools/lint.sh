@@ -300,8 +300,7 @@ check_skill_name_match() {
 
 # --- Check: skill wrapper body, caps, and base coverage (rules 7, 9) ---------
 # Never hard-code a skill or agent name here — agent-backed status is read
-# from each skill base's own declaration, never a fixed list (same principle
-# as base_has_category).
+# from each skill base's own declaration, never a fixed list.
 
 skill_has_agent_base() {
   # usage: skill_has_agent_base <skill-name> -- true when skills/<name>.md
@@ -325,7 +324,7 @@ canonical_skill_body() {
   if [ "$hasagent" = 1 ]; then
     # shellcheck disable=SC2016 # $HOME must stay literal — expanding it is the bug this check catches
     printf 'You are running an agent-backed skill: your shared contract is `$HOME/.ai-tools/skills/SKILL-CONTRACT.md`.\n'
-    printf 'Read it and follow it — it governs the model check, the route offer, and dispatch.\n\n'
+    printf 'Read it and follow it — it governs the route offer and dispatch.\n\n'
     # shellcheck disable=SC2016 # $HOME must stay literal — expanding it is the bug this check catches
     printf 'Your base file is `$HOME/.ai-tools/skills/%s.md`.\n' "$name"
     printf 'Read it and follow it in full — it is the absolute rule set for this skill; the contract above governs only the mechanics it names.\n'
@@ -448,23 +447,14 @@ check_skill_base_coverage() {
 # Never hard-code a vendor model name here — every expected model is resolved
 # through model_for, reading MODELS.md in place.
 
-base_has_category() {
-  # usage: base_has_category <agent-name> -- true when its base file cites
-  # one of the three category names (never a hard-coded agent list).
-  grep -qE '\*\*(planner|implementer|mechanical)\*\*' "$AI_TOOLS/agents/$1.md" 2>/dev/null
-}
-
 canonical_body() {
-  # usage: canonical_body <harness-key> <agent-name> <has-category 0|1>
+  # usage: canonical_body <agent-name>
   # Reconstructs the exact wrapper body text (README, "Model map and wrapper
   # authoring"). A regex would accept the drift this check exists to reject.
-  local h="$1" a="$2" hascat="$3"
+  # The pin lives in the header; the body never names MODELS.md or a harness row.
+  local a="$1"
   # shellcheck disable=SC2016 # $HOME/%USERPROFILE% must stay literal — expanding them is the bug this check catches
   printf 'On Windows, %%USERPROFILE%% replaces $HOME.\n\n'
-  if [ "$hascat" = 1 ]; then
-    # shellcheck disable=SC2016 # $HOME must stay literal — expanding it is the bug this check catches
-    printf 'Category → model comes from `$HOME/.ai-tools/MODELS.md`, row `%s`. Resolve every category through it — your own and any you spawn; never assume a model name.\n\n' "$h"
-  fi
   # shellcheck disable=SC2016 # $HOME must stay literal — expanding it is the bug this check catches
   printf 'You are a spawned subagent: your shared contract is `$HOME/.ai-tools/agents/SUBAGENT-CONTRACT.md`.\n'
   printf 'Read it and follow it — it governs your channel to the user and your report.\n\n'
@@ -495,9 +485,9 @@ wrapper_body_toml() {
 }
 
 check_wrapper_body() {
-  local a h f ext hascat actual expected
+  local a h f ext actual expected
   for a in $(agent_names); do
-    if base_has_category "$a"; then hascat=1; else hascat=0; fi
+    expected=$(canonical_body "$a")
     for h in $(harnesses); do
       f=$(wrapper_path "$h" "$a")
       [ -f "$f" ] || continue
@@ -507,7 +497,6 @@ check_wrapper_body() {
       else
         actual=$(wrapper_body_md "$f")
       fi
-      expected=$(canonical_body "$h" "$a" "$hascat")
       if [ "$actual" = "$expected" ]; then
         ok "wrapper body matches canonical text: $f"
       else

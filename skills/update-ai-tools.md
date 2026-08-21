@@ -2,9 +2,9 @@
 
 Updating the ai-tools installation, task `update`. Dispatches `implementer-ai-tools` to follow **Workflow**. Never run the procedure outside that dispatch.
 
-## Agent and category
+## Agent
 
-Agent: `implementer-ai-tools`, base `$HOME/.ai-tools/agents/implementer-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\implementer-ai-tools.md`). Task: `update`. Category for the contract's model check: **implementer**.
+Agent: `implementer-ai-tools`, base `$HOME/.ai-tools/agents/implementer-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\implementer-ai-tools.md`). Task: `update`.
 
 ## Stake
 

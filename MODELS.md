@@ -1,12 +1,14 @@
 # Model map
 
-Which model each of the three agents uses in each harness. Agents, skills, and the installation scripts read this file in place at `$HOME/.ai-tools/MODELS.md` (Windows: `%USERPROFILE%\.ai-tools\MODELS.md`).
+Which model each of the three agents uses in each harness. This file is the **authoring and install** lookup — not a runtime dispatch table. Wrappers pin `model:` (and effort, when the cell has one) from this map; Grok's install writes `~/.grok/config.toml` from it; `tools/lint.sh` checks parity. Agents, skills, and spawn do not read this file to pick a model.
 
-## How to read it
+## How to write it
 
-1. Identify the harness — the wrapper names its row key; otherwise infer it from the running CLI or IDE. When you cannot tell, say so instead of guessing a row.
-2. Take that row's column for the agent you are spawning. Columns (**planner**, **implementer**, **mechanical**) match `planner-ai-tools`, `implementer-ai-tools`, and `mechanical-ai-tools` in `USER-AGENTS.md` → *The three agents*.
-3. Use the backticked model token in the harness's own syntax. When the cell has `` · effort ``, that is the official effort for this category — pin it if this harness's wrapper form accepts effort. When the cell has no effort, leave effort to the harness or the session.
+1. Identify the harness — the wrapper folder under `agents/<key>/` is the row key.
+2. Columns (**planner**, **implementer**, **mechanical**) match `planner-ai-tools`, `implementer-ai-tools`, and `mechanical-ai-tools` in `USER-AGENTS.md` → *The three agents*.
+3. Put the backticked model token in the harness's own syntax. When the cell has `` · effort ``, that is the official effort — pin it if this harness's wrapper form accepts effort. When the cell has no effort, leave effort off the wrapper.
+
+The last column is how a human changes the *session* model in that harness. It is not used at spawn: spawned agents use the wrapper pin.
 
 ## Map
 

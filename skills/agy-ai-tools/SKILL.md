@@ -12,7 +12,7 @@ argument-hint: "[prompt or brief to run through agy]"
 Non-interactive runs of the Antigravity CLI (`agy`) on that harness's planner, implementer, or mechanical model.
 
 You are running an agent-backed skill: your shared contract is `$HOME/.ai-tools/skills/SKILL-CONTRACT.md`.
-Read it and follow it — it governs the model check, the route offer, and dispatch.
+Read it and follow it — it governs the route offer and dispatch.
 
 Your base file is `$HOME/.ai-tools/skills/agy-ai-tools.md`.
 Read it and follow it in full — it is the absolute rule set for this skill; the contract above governs only the mechanics it names.

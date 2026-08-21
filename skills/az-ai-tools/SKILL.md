@@ -13,7 +13,7 @@ argument-hint: "[what to inspect or change in Azure]"
 Inventory, cost, and operations on Azure through the Azure CLI (`az`).
 
 You are running an agent-backed skill: your shared contract is `$HOME/.ai-tools/skills/SKILL-CONTRACT.md`.
-Read it and follow it — it governs the model check, the route offer, and dispatch.
+Read it and follow it — it governs the route offer and dispatch.
 
 Your base file is `$HOME/.ai-tools/skills/az-ai-tools.md`.
 Read it and follow it in full — it is the absolute rule set for this skill; the contract above governs only the mechanics it names.

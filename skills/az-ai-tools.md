@@ -2,9 +2,9 @@
 
 Inventory, cost, and operations on Azure through the Azure CLI (`az`). Dispatches `planner-ai-tools` to follow **Workflow**. Never run `az` outside that dispatch.
 
-## Agent and category
+## Agent
 
-Agent: `planner-ai-tools`, base `$HOME/.ai-tools/agents/planner-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`). Category for the contract's model check: **planner**.
+Agent: `planner-ai-tools`, base `$HOME/.ai-tools/agents/planner-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`).
 
 ## Stake
 

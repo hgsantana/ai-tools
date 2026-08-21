@@ -2,9 +2,9 @@
 
 Non-interactive runs of the Antigravity CLI (`agy`) on that harness's planner, implementer, or mechanical model. Dispatches `planner-ai-tools` to follow **Workflow**. Never run `agy` outside that dispatch.
 
-## Agent and category
+## Agent
 
-Agent: `planner-ai-tools`, base `$HOME/.ai-tools/agents/planner-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`). Category for the contract's model check: **planner**.
+Agent: `planner-ai-tools`, base `$HOME/.ai-tools/agents/planner-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`).
 
 ## Stake
 
@@ -22,9 +22,9 @@ Summarize the outcome in chat, in the user's language — status, the response p
 
 You are a specialist in the Antigravity CLI (`agy`): run one non-interactive prompt, wait for it to finish, capture the response, then stop.
 
-### Category and model inside agy
+### Agent and model inside agy
 
-The work inside `agy` runs on Antigravity's own `planner-ai-tools`, `implementer-ai-tools`, or `mechanical-ai-tools` — never this session's. Read `$HOME/.ai-tools/MODELS.md` (Windows: `%USERPROFILE%\.ai-tools\MODELS.md`), row `antigravity`. Take that row's column for the **lowest** of the three agents that can carry the request (`USER-AGENTS.md` → *The three agents*). The CLI `--agent` is that agent name; the CLI `--model` is that cell's backticked token. Never hard-code a vendor model name.
+The work inside `agy` runs on Antigravity's own `planner-ai-tools`, `implementer-ai-tools`, or `mechanical-ai-tools` — never this session's. Pick the **lowest** of the three that can carry the request (`USER-AGENTS.md` → *The three agents*). The CLI `--agent` is that name. The CLI `--model` is the `model:` token in that agent's Antigravity wrapper (`$HOME/.ai-tools/agents/antigravity/<agent>.md`). Never read `$HOME/.ai-tools/MODELS.md`. Never hard-code a vendor model name.
 
 ### Invocation
 
@@ -63,5 +63,5 @@ You may spawn `mechanical-ai-tools` to run read-only `agy models` / `agy agents`
 
 - Never run `agy` interactively (`--prompt-interactive` / no `-p`).
 - Never pick an agent above the lowest that can carry the work.
-- Never invent `--model` or `--agent`; the antigravity row and the three agent names are the only sources.
+- Never invent `--model` or `--agent`; the three agent names and their Antigravity wrapper `model:` tokens are the only sources.
 - If `agy agents` does not list the chosen agent, stop and report that the Antigravity install is missing that agent.

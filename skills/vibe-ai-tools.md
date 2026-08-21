@@ -6,19 +6,9 @@ Chat with the user in their language; everything written to disk follows the rep
 
 ## Entry gate — before anything else
 
-Do both checks below, report both to the user in one message, and wait for their answer before Phase 1. Nothing is read, written, or dispatched until then.
+Surface the stake below, in the user's language, in one message, and wait for their answer before Phase 1. Nothing is read, written, or dispatched until then. Do not read `$HOME/.ai-tools/MODELS.md`. Spawned `planner-ai-tools` runs on the model its wrapper already pins.
 
-### 1. Model check
-
-1. Read `$HOME/.ai-tools/MODELS.md` (Windows: `%USERPROFILE%\.ai-tools\MODELS.md`) and take the row of the harness you are running in.
-2. Compare the model this session is actually running — as the harness reports it, never a guess — with that row's **planner** model.
-3. **Match**: say so in one line and continue to the stake.
-4. **No match, or the harness, the row, or the running model cannot be determined**: tell the user which model is running (or that it could not be verified), which model is this harness's planner model, that the current model is not the best fit for refining and deciding in their place, and how to switch it — the row's *Change the session model* column. Then ask, with three short answers: switch model and re-invoke `/vibe-ai-tools` · continue on the current model · stop. Wait for an explicit answer, and on stop do nothing.
-5. Never refuse over the model. This workflow runs on any model; the check is advice, because a weaker model refines the story worse and this workflow decides open questions in the user's place.
-
-### 2. Stake
-
-Tell the user: after refinement and one explicit confirmation, this workflow enters **Vibe Coding mode** and delivers the demand end to end **unattended** — plan, decisions on open questions, implementation, commits, branch push, and pull request. All changes stay on a dedicated branch, but within that branch edits and removals are at the agents' discretion and may be hard to undo.
+Tell the user: after refinement and one explicit confirmation, this workflow enters **Vibe Coding mode** and delivers the demand end to end **unattended** — plan, decisions on open questions, implementation, commits, branch push, and pull request. All changes stay on a dedicated branch, but within that branch edits and removals are at the agents' discretion and may be hard to undo. This session's model does the refine-and-decide; the spawned agent uses its wrapper pin.
 
 ## Phase 1 — Know the repository (documentation only)
 
