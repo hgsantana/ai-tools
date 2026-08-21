@@ -19,8 +19,8 @@ Never guess one: scope boundaries, trade-offs the repository's documentation doe
 
 - `dev/` in the working repository holds every plan. Outside a git repository, write to `$HOME/.ai-tools-plans` (Windows: `%USERPROFILE%\.ai-tools-plans`) instead.
 - In a git repository, root plan files (`dev/*.md`) are versioned: keep them out of ignore rules and include them in path-scoped commits. Every generated subdirectory under `dev/` is transient and must be ignored (`dev/*/`), including `finished/`, `wip/`, and `vibe/`.
-- `dev/wip/` (ad-hoc briefs and feedback for the orchestrator) and `dev/vibe/` (the vibe workflow's story and decision records) stay out of the plan queue; never plan into them.
-- A plan is **working state, not a historical record**: it is versioned so an execution survives a lost session, a new machine, or a fresh clone. It earns its place in the repository only while it still has to be resumed — the orchestrator removes it from the tree when the work ships.
+- `dev/wip/` (ad-hoc briefs and feedback for `dev-ai-tools`) and `dev/vibe/` (the vibe workflow's story and decision records) stay out of the plan queue; never plan into them.
+- A plan is **working state, not a historical record**: it is versioned so an execution survives a lost session, a new machine, or a fresh clone. It earns its place in the repository only while it still has to be resumed — `dev-ai-tools` removes it from the tree when the work ships.
 - Plan files hold the detail — steps, validation notes, command output. Chat gets a short summary and file links.
 
 ## Truth on disk
@@ -33,15 +33,15 @@ Durable state — anything a later agent, a retry, or a recovery will depend on 
 
 ## Plan file format
 
-Canonical format for multi-file plans (the orchestrator reads and updates these):
+Canonical format for multi-file plans (`dev-ai-tools` reads and updates these):
 
 ```text
 dev/
   <slug>.md           # base plan
   <slug>-1.md         # stage 1
   <slug>-2.md         # stage 2
-  <slug>-F1.md        # fix file, added by the orchestrator during corrections
-  finished/<slug>/    # the whole set, moved here by the orchestrator in one move, only once every stage is terminal (`F` or `E`)
+  <slug>-F1.md        # fix file, added by `dev-ai-tools` during corrections
+  finished/<slug>/    # the whole set, moved here by `dev-ai-tools` in one move, only once every stage is terminal (`F` or `E`)
 ```
 
 ### Base file (`dev/<slug>.md`)
@@ -75,7 +75,7 @@ Example: 1 before 2 and 3 (parallel-safe); 4 after 2 and 3.
 Optional: commit strategy, risks, out of scope.
 ```
 
-**Status codes** (maintained by the orchestrator; left empty at creation):
+**Status codes** (maintained by `dev-ai-tools`; left empty at creation):
 
 | Code | Meaning | Set by |
 |------|---------|--------|
@@ -88,7 +88,7 @@ Optional: commit strategy, risks, out of scope.
 | `E` | Error — correction limit exhausted | **planner** |
 | `F` | Finished — stage accepted | **planner** |
 
-**Agent**: who is working the stage — category plus the concrete model or agent dispatched. Per-attempt history lives in the stage file's Dispatch log, maintained by the orchestrator.
+**Agent**: who is working the stage — category plus the concrete model or agent dispatched. Per-attempt history lives in the stage file's Dispatch log, maintained by `dev-ai-tools`.
 
 ### Stage file (`dev/<slug>-<n>.md`)
 
@@ -137,7 +137,7 @@ Suggested message: `feat: …` (or fix/chore/…)
 
 ## Boundaries
 
-- Write only under `dev/`, never into `dev/finished/` — the archive is the orchestrator's.
+- Write only under `dev/`, never into `dev/finished/` — `dev-ai-tools` owns the archive.
 - Never edit product code, run verification builds, spawn implementers, or implement anything.
 - Never delegate this role to another agent.
 - The saved plan is the deliverable; the session decides with the user whether to implement it.

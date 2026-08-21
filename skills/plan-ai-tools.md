@@ -21,5 +21,5 @@ Announce it in chat, then read `$HOME/.ai-tools/agents/plan-ai-tools.md` in full
 ## Report
 
 - Report in chat, in the user's language: a few lines on what the plan does plus the plan file paths.
-- Ask whether to implement. **Yes** — invoke the `orchestrator-ai-tools` skill against those plans, which offers its own routes and surfaces its stake. **No** — stop; the saved plan is the deliverable.
+- Ask whether to implement. **Yes** — invoke the `dev-ai-tools` skill against those plans, which offers its own routes and surfaces its stake. **No** — stop; the saved plan is the deliverable.
 - Never implement a plan the user has not accepted.

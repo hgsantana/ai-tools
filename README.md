@@ -19,7 +19,7 @@ Clone it to `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows) and link it
 | [`agents/implementer-ai-tools.md`](agents/implementer-ai-tools.md) | Base: implementer-category worker — writes and edits code for one specified stage or brief |
 | [`agents/mechanical-ai-tools.md`](agents/mechanical-ai-tools.md) | Base: mechanical-category worker — specified patches, renames, builds, tests, evidence; no design |
 | [`agents/agy-ai-tools.md`](agents/agy-ai-tools.md) | Base: Antigravity CLI (`agy`) specialist — one non-interactive prompt on that harness's planner, implementer, or mechanical model |
-| [`agents/orchestrator-ai-tools.md`](agents/orchestrator-ai-tools.md) | Base: executes accepted plans or an ad-hoc brief unattended; code to **implementer**, evidence to **mechanical** |
+| [`agents/dev-ai-tools.md`](agents/dev-ai-tools.md) | Base: executes accepted plans or an ad-hoc brief unattended; code to **implementer**, evidence to **mechanical** |
 | [`agents/az-ai-tools.md`](agents/az-ai-tools.md) | Base: Azure CLI (`az`) — read freely, return mutations for per-action approval, surface cost |
 | [`agents/gh-ai-tools.md`](agents/gh-ai-tools.md) | Base: GitHub CLI (`gh`) — read freely, return mutations for per-action approval |
 | [`agents/gc-ai-tools.md`](agents/gc-ai-tools.md) | Base: Google Cloud CLI (`gcloud`) — read freely, return mutations for per-action approval, surface cost |

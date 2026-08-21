@@ -27,7 +27,7 @@ Status: `idea` (not refined) · `next` (agreed, ready to refine) · `doing` (a p
 
 ### 5. The missing testing role
 
-Both the planner's and the orchestrator's status tables define `TV` as set by a "testing agent", and the orchestrator dispatches a dedicated `T` test pass, but no such agent or category is shipped: the three categories are planner, implementer, and mechanical, and mechanical is explicitly barred from writing test code. Close the gap in one direction — either ship the testing role properly (base, wrappers, `MODELS.md` column) or state that the `T`/`TV` pass is an implementer dispatch with a test-only brief — and make every base, table, and wrapper agree in the same commit. Route: `/plan-ai-tools`; the decision changes the model map.
+Both `plan-ai-tools` and `dev-ai-tools` status tables define `TV` as set by a "testing agent", and `dev-ai-tools` dispatches a dedicated `T` test pass, but no such agent or category is shipped: the three categories are planner, implementer, and mechanical, and mechanical is explicitly barred from writing test code. Close the gap in one direction — either ship the testing role properly (base, wrappers, `MODELS.md` column) or state that the `T`/`TV` pass is an implementer dispatch with a test-only brief — and make every base, table, and wrapper agree in the same commit. Route: `/plan-ai-tools`; the decision changes the model map.
 
 ### 6. Changelog for alpha testers
 
@@ -45,11 +45,11 @@ The vibe workflow answers the planner's open questions on the user's behalf and 
 
 ### 9. Resuming an interrupted delivery
 
-The orchestrator has a detailed recovery story for a dead subagent — the dispatch ledger, snapshot-based liveness, orphaned `W` stages re-audited at intake — but the vibe workflow above it has none: if the session running it dies after the gate, the story and decisions files are on disk in an ignored directory, the plan branch exists half-implemented, and nothing documents how to pick it up. Define the resume path — how a new session detects an interrupted delivery, which files authorize it to continue without a second gate, and what it must re-verify first — and write it into the vibe skill. Route: `/plan-ai-tools`.
+`dev-ai-tools` has a detailed recovery story for a dead subagent — the dispatch ledger, snapshot-based liveness, orphaned `W` stages re-audited at intake — but the vibe workflow above it has none: if the session running it dies after the gate, the story and decisions files are on disk in an ignored directory, the plan branch exists half-implemented, and nothing documents how to pick it up. Define the resume path — how a new session detects an interrupted delivery, which files authorize it to continue without a second gate, and what it must re-verify first — and write it into the vibe skill. Route: `/plan-ai-tools`.
 
 ### 10. Execution outside a git repository
 
-Planning outside a git repository is defined (plans go to `$HOME/.ai-tools-plans`), but execution is not: the orchestrator opens Mode A by requiring a git root, and its whole model — a branch per plan, path-scoped commits, diff-based validation, a pull request or a review patch — assumes version control exists. Decide and document the behaviour: either a reduced no-git mode with explicit limits, or an early, explicit refusal that tells the user what to do instead. Route: `/plan-ai-tools`.
+Planning outside a git repository is defined (plans go to `$HOME/.ai-tools-plans`), but execution is not: `dev-ai-tools` opens Mode A by requiring a git root, and its whole model — a branch per plan, path-scoped commits, diff-based validation, a pull request or a review patch — assumes version control exists. Decide and document the behaviour: either a reduced no-git mode with explicit limits, or an early, explicit refusal that tells the user what to do instead. Route: `/plan-ai-tools`.
 
 ## Hardening
 

@@ -12,7 +12,7 @@ Everything described here is installed from `$HOME/.ai-tools` (`%USERPROFILE%\.a
 | --- | --- |
 | `/vibe-ai-tools` | **The default for any non-trivial change.** Refines the demand into a story, takes one explicit confirmation, then delivers it end to end — plan, decisions, implementation, pull request |
 | `/plan-ai-tools` | Designing a change only: a multi-file plan under `dev/`, no implementation |
-| `/orchestrator-ai-tools` | Executing an already accepted plan, or an explicit ad-hoc brief, unattended |
+| `/dev-ai-tools` | Executing an already accepted plan, or an explicit ad-hoc brief, unattended |
 | `/az-ai-tools` | Azure resources via the Azure CLI (`az`) |
 | `/gc-ai-tools` | Google Cloud resources via the Google Cloud CLI (`gcloud`) |
 | `/gh-ai-tools` | GitHub resources via the GitHub CLI (`gh`) |

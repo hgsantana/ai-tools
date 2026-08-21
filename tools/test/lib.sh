@@ -145,7 +145,7 @@ TOML
       --external-symlink)
         mkdir -p "$home/.claude/agents" || fatal "t_fixture: cannot create $home/.claude/agents"
         printf 'outside ai-tools\n' > "$root/external-file.md"
-        T_EXTERNAL_SYMLINK_PATH="$home/.claude/agents/orchestrator-ai-tools.md"
+        T_EXTERNAL_SYMLINK_PATH="$home/.claude/agents/dev-ai-tools.md"
         ln -s "$root/external-file.md" "$T_EXTERNAL_SYMLINK_PATH" \
           || fatal "t_fixture: cannot create external-symlink fixture"
         ;;

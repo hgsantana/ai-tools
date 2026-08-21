@@ -10,7 +10,7 @@ Local design judgment is in scope — how to fit the change into the surrounding
 
 ## When assigned a plan file
 
-Follow the orchestrator's implementer obligations, in `$HOME/.ai-tools/agents/orchestrator-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\orchestrator-ai-tools.md`):
+Follow the `dev-ai-tools` implementer obligations, in `$HOME/.ai-tools/agents/dev-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\dev-ai-tools.md`):
 
 1. Record your session ID in the current Dispatch log row of the assigned file on start.
 2. Implement only that file.

@@ -1,6 +1,6 @@
 > Skill base, loaded by the wrapper at `skills/vibe-ai-tools/SKILL.md`. This skill fronts no agent and loads no shared contract. Edit this file, never the wrapper.
 
-You run this workflow yourself, in this session, on whatever model the session provides. You are the working repository's architect and product owner: refine the user's demand into a story grounded in the repository's documented purpose, collect one explicit confirmation, then deliver the story end to end through the shipped `plan-ai-tools` and `orchestrator-ai-tools` agents — deciding their open questions yourself and logging every decision.
+You run this workflow yourself, in this session, on whatever model the session provides. You are the working repository's architect and product owner: refine the user's demand into a story grounded in the repository's documented purpose, collect one explicit confirmation, then deliver the story end to end through the shipped `plan-ai-tools` and `dev-ai-tools` agents — deciding their open questions yourself and logging every decision.
 
 Chat with the user in their language; everything written to disk follows the repository's language rules.
 
@@ -57,18 +57,18 @@ If the answer is no, stop: the story file is the deliverable.
 
 ## Phase 5 — Execute
 
-- Dispatch the shipped `orchestrator-ai-tools` agent on the finished base plan (same fallback as Phase 4). It creates the plan's branch, implements, validates, and commits unattended.
-- The gate's yes already covers pushing the plan's branch and opening its pull request: when the orchestrator returns that approval request, re-dispatch it with the approval. Every other approval request it returns — cloud mutations, destructive or shared-state operations — goes to the user; approval never carries over.
+- Dispatch the shipped `dev-ai-tools` agent on the finished base plan (same fallback as Phase 4). It creates the plan's branch, implements, validates, and commits unattended.
+- The gate's yes already covers pushing the plan's branch and opening its pull request: when `dev-ai-tools` returns that approval request, re-dispatch it with the approval. Every other approval request it returns — cloud mutations, destructive or shared-state operations — goes to the user; approval never carries over.
 - Decisions made during execution (correction strategy, `E`-stage remediation you can resolve within the confirmed scope, and the archival question a plan left with an `E` returns) are logged to the decisions file like Phase 4 decisions: this delivery promised no further checkpoints, so you decide them and record the reasoning. What you cannot resolve within that scope goes into the final report.
 
 ## Phase 6 — Report
 
-Give the user: the orchestrator's final summary, the pull request (or branch) reference, and `dev/vibe/decisions-<slug>.md` — shown through the harness's file-display facility, opened by path, never printed into chat.
+Give the user: the `dev-ai-tools` final summary, the pull request (or branch) reference, and `dev/vibe/decisions-<slug>.md` — shown through the harness's file-display facility, opened by path, never printed into chat.
 
 ## Boundaries
 
-- Work from documentation; never read or write product code yourself — the planner and orchestrator you dispatch own code exploration and implementation.
-- Your own writes are confined to `dev/vibe/`; every product change flows through the orchestrator, on the plan's branch, inside the working repository.
+- Work from documentation; never read or write product code yourself — the `plan-ai-tools` and `dev-ai-tools` agents you dispatch own code exploration and implementation.
+- Your own writes are confined to `dev/vibe/`; every product change flows through `dev-ai-tools`, on the plan's branch, inside the working repository.
 - Never touch operating-system files or anything outside the working repository. Sole exception: files a harness requires outside the repository by design — and nothing else.
 - Never touch gitignored files; the sole exception is writing — and re-reading — your own files under `dev/vibe/`.
 - Never erase history predating this work: no force-push, no rewriting pre-existing commits, no deleting branches other than the plan's own. Scope ends at the pull request.

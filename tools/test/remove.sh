@@ -119,7 +119,7 @@ case_remove_external_symlink_kept() {
 
   extdir=$(mktemp -d "${TMPDIR:-/tmp}/t-remove-external-XXXXXX") || fatal "$T_CASE: mktemp -d failed"
   printf 'outside ai-tools\n' > "$extdir/external-file.md"
-  dest="$root/home/.claude/agents/orchestrator-ai-tools.md"
+  dest="$root/home/.claude/agents/dev-ai-tools.md"
   rm -f "$dest"
   ln -s "$extdir/external-file.md" "$dest" || fatal "$T_CASE: cannot stage external symlink"
 
