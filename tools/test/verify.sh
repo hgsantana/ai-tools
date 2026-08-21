@@ -1,5 +1,5 @@
 # shellcheck shell=bash
-# verify.sh case file — README rules 18-23, 26 against scripts/shell/verify.sh.
+# verify.sh case file — README rules 19-24, 27 against scripts/shell/verify.sh.
 # verify.sh is read-only: every case snapshots the sandboxed $HOME before the
 # run under test and asserts it is byte-for-byte unchanged afterward.
 
