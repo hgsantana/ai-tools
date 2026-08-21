@@ -6,7 +6,7 @@ Chat with the user in their language; everything written to disk follows the rep
 
 ## Entry gate — before anything else
 
-Surface the stake below, in the user's language, in one message, and wait for their answer before Phase 1. Nothing is read, written, or dispatched until then. Do not read `$HOME/.ai-tools/MODELS.md`. Spawned `planner-ai-tools` runs on the model its wrapper already pins.
+Surface the stake below, in the user's language, in one message, and wait for their answer before Phase 1. Nothing is read, written, or dispatched until then. Spawned `planner-ai-tools` runs on the model its wrapper already pins.
 
 Tell the user: after refinement and one explicit confirmation, this workflow enters **Vibe Coding mode** and delivers the demand end to end **unattended** — plan, decisions on open questions, implementation, commits, branch push, and pull request. All changes stay on a dedicated branch, but within that branch edits and removals are at the agents' discretion and may be hard to undo. This session's model does the refine-and-decide; the spawned agent uses its wrapper pin.
 

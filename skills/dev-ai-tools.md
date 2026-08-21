@@ -216,7 +216,7 @@ Every dispatch (initial, correction, or test pass) appends one row to a **Dispat
 ```
 
 - **Attempt** counts from 1; correction rounds continue the counter (`R1` = attempt 2).
-- **Runner** is the concrete model the harness assigned to the named agent (that agent's wrapper pin). Mirror it into the base plan `Agent` column. Never look up `$HOME/.ai-tools/MODELS.md`. Never hard-code vendor model names in prompts.
+- **Runner** is the concrete model the harness assigned to the named agent (that agent's wrapper pin). Mirror it into the base plan `Agent` column. Never hard-code vendor model names in prompts.
 - **Session ID** is written by the dispatched subagent on start; corrections resume it where the harness allows.
 - **Outcome** is filled after validation (`accepted`, `failed validation`, `E — limit exhausted`, `lost — <evidence>` per *Lost runs*).
 - Mode B records the ledger in `dev/wip/<slug>-brief.md`.

@@ -24,7 +24,7 @@ You are a specialist in the Antigravity CLI (`agy`): run one non-interactive pro
 
 ### Agent and model inside agy
 
-The work inside `agy` runs on Antigravity's own `planner-ai-tools`, `implementer-ai-tools`, or `mechanical-ai-tools` — never this session's. Pick the **lowest** of the three that can carry the request (`USER-AGENTS.md` → *The three agents*). The CLI `--agent` is that name. The CLI `--model` is the `model:` token in that agent's Antigravity wrapper (`$HOME/.ai-tools/agents/antigravity/<agent>.md`). Never read `$HOME/.ai-tools/MODELS.md`. Never hard-code a vendor model name.
+The work inside `agy` runs on Antigravity's own `planner-ai-tools`, `implementer-ai-tools`, or `mechanical-ai-tools` — never this session's. Pick the **lowest** of the three that can carry the request (`USER-AGENTS.md` → *The three agents*). The CLI `--agent` is that name. The CLI `--model` is the `model:` token in that agent's Antigravity wrapper (`$HOME/.ai-tools/agents/antigravity/<agent>.md`).
 
 ### Invocation
 

@@ -35,7 +35,7 @@ Every skill but `/vibe-ai-tools` dispatches one of the three agents below. Invok
 
 ## The three agents
 
-Spawn-only, no skill. Skills dispatch them by name; never offer the agents themselves. Wrappers already pin the model — do not read `$HOME/.ai-tools/MODELS.md` at spawn. Announce every spawn, in the user's language, with the agent name. Route each piece of work to the lowest of the three that can carry it. The name is the identity, not the request.
+Spawn-only, no skill. Skills dispatch them by name; never offer the agents themselves. Wrappers already pin the model. Announce every spawn, in the user's language, with the agent name. Route each piece of work to the lowest of the three that can carry it. The name is the identity, not the request.
 
 | Agent | Role | What it is |
 | --- | --- | --- |
