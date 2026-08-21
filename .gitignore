@@ -1,2 +1,2 @@
-# Keep root plan Markdown files trackable; ignore generated plan directories.
-/dev/*/
+# Plans are versioned per directory under dev/; generated state is not.
+/dev/tmp/

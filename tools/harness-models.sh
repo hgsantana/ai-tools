@@ -15,7 +15,7 @@ usage() {
   cat <<'EOF'
 usage: harness-models.sh [--help] [--dry-run] [--output-dir DIR] [--input-dir DIR]
 
-Writes dev/wip/harness-models.csv. One GET of each harness's official
+Writes dev/tmp/harness-models.csv. One GET of each harness's official
 markdown pricing/models page (not the JS HTML). --input-dir uses recorded
 files named <harness>.md and does not hit the network.
 Requires python3. Live run also requires curl.
@@ -23,7 +23,7 @@ A harness that yields zero rows is skipped (exit 2).
 EOF
 }
 
-OUT_DIR="$AI_TOOLS/dev/wip"
+OUT_DIR="$AI_TOOLS/dev/tmp"
 IN_DIR=""
 DRY=0
 while [ $# -gt 0 ]; do

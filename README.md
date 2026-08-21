@@ -1,6 +1,6 @@
 # ai-tools
 
-> **Version 0.0.27-ALPHA** — under active development. Usable for testing; no guarantees, and no backward compatibility between alpha versions (rule 4).
+> **Version 0.0.28-ALPHA** — under active development. Usable for testing; no guarantees, and no backward compatibility between alpha versions (rule 4).
 
 ## What is this repository
 
@@ -85,7 +85,7 @@ Normative for every human and every AI maintaining this repository.
 
 ### Model map and wrapper authoring
 
-[`MODELS.md`](MODELS.md) is an authoring and install lookup: one row per harness, one column per agent role, plus how a human changes the session model. It does not restate the arithmetic below. Family + version, and official effort when the table names it, come from the harness's official **pricing/models** table for individual plans on this agent surface. Measurements come from [Artificial Analysis (AA)](https://artificialanalysis.ai/) **model** pages (Intelligence Index, Cost per Task, Time per Task) — the model itself, not a model-plus-harness run. Cost is AA Cost per Task only. Fetch those inputs with [`tools/harness-models.sh`](tools/harness-models.sh) and [`tools/aa-metrics.sh`](tools/aa-metrics.sh); they write CSVs under `dev/wip/`. The map judges potential, not a frozen stack.
+[`MODELS.md`](MODELS.md) is an authoring and install lookup: one row per harness, one column per agent role, plus how a human changes the session model. It does not restate the arithmetic below. Family + version, and official effort when the table names it, come from the harness's official **pricing/models** table for individual plans on this agent surface. Measurements come from [Artificial Analysis (AA)](https://artificialanalysis.ai/) **model** pages (Intelligence Index, Cost per Task, Time per Task) — the model itself, not a model-plus-harness run. Cost is AA Cost per Task only. Fetch those inputs with [`tools/harness-models.sh`](tools/harness-models.sh) and [`tools/aa-metrics.sh`](tools/aa-metrics.sh); they write CSVs under `dev/tmp/`. The map judges potential, not a frozen stack.
 
 Wrappers pin the model token always, and pin effort only when the cell has an official effort **and** the wrapper form can hold it (`effort:` Claude Code, `model_reasoning_effort` Codex, `[effort=…]` Cursor).
 
