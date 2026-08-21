@@ -174,7 +174,7 @@ case_update_stale_copy_refreshed() {
   root="$T_ROOT"
   home="$root/home"
   marker="stalecopy"
-  wrapper="$home/.claude/agents/maintainer-ai-tools.md"
+  wrapper="$home/.claude/agents/implementer-ai-tools.md"
 
   t_run_no_symlink "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   # exit 2: the shimmed `ln` also blocks the instructions symlink (which has
@@ -189,7 +189,7 @@ case_update_stale_copy_refreshed() {
   t_assert_exit 2
   t_assert_line "copy refreshed:"
 
-  if cmp -s "$wrapper" "$home/.ai-tools/agents/claude-code/maintainer-ai-tools.md"; then
+  if cmp -s "$wrapper" "$home/.ai-tools/agents/claude-code/implementer-ai-tools.md"; then
     ok "$T_CASE: copy matches refreshed source"
   else
     warn "$T_CASE: copy does not match refreshed source"
@@ -205,7 +205,7 @@ case_update_modified_copy_kept() {
   root="$T_ROOT"
   home="$root/home"
   marker="modcopy"
-  wrapper="$home/.claude/agents/maintainer-ai-tools.md"
+  wrapper="$home/.claude/agents/implementer-ai-tools.md"
 
   t_run_no_symlink "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   # exit 2: the shimmed `ln` also blocks the instructions symlink (no copy
@@ -237,14 +237,14 @@ case_update_up_to_date_copy() {
   root="$T_ROOT"
   home="$root/home"
   marker="uptodate"
-  wrapper="$home/.claude/agents/az-ai-tools.md"
+  wrapper="$home/.claude/agents/planner-ai-tools.md"
 
   t_run_no_symlink "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   # exit 2: the shimmed `ln` also blocks the instructions symlink (no copy
   # fallback there), unrelated to the up-to-date-copy behavior under test.
   t_assert_exit 2
 
-  # t_origin_commit only touches maintainer-ai-tools.md; az-ai-tools.md's
+  # t_origin_commit only touches implementer-ai-tools.md; planner-ai-tools.md's
   # copy stays equal to its (unchanged) source across the reset.
   t_origin_commit "$marker"
 

@@ -71,7 +71,7 @@ case_install_foreign_file_skipped() {
   t_assert_line "SKIP: exists, not overwriting: $T_FOREIGN_AGENT_PATH"
   t_assert_regular_file "$T_FOREIGN_AGENT_PATH"
   t_assert_content "$T_FOREIGN_AGENT_PATH" "not an ai-tools file"
-  t_assert_symlink "$root/home/.claude/agents/az-ai-tools.md" "$root/home/.ai-tools"
+  t_assert_symlink "$root/home/.claude/agents/implementer-ai-tools.md" "$root/home/.ai-tools"
 
   t_cleanup "$root"
 }
@@ -202,13 +202,9 @@ case_install_grok_models() {
   t_install "$root" --harnesses grok
   t_assert_exit 0
   t_assert_line "ok: grok models block appended: $root/home/.grok/config.toml"
-  t_assert_content "$root/home/.grok/config.toml" "az-ai-tools = \"$planner_model\""
-  t_assert_content "$root/home/.grok/config.toml" "plan-ai-tools = \"$planner_model\""
   t_assert_content "$root/home/.grok/config.toml" "planner-ai-tools = \"$planner_model\""
-  t_assert_content "$root/home/.grok/config.toml" "agy-ai-tools = \"$planner_model\""
   t_assert_content "$root/home/.grok/config.toml" "implementer-ai-tools = \"$implementer_model\""
   t_assert_content "$root/home/.grok/config.toml" "mechanical-ai-tools = \"$mechanical_model\""
-  t_assert_content "$root/home/.grok/config.toml" "maintainer-ai-tools = \"$implementer_model\""
 
   t_install "$root" --harnesses grok
   t_assert_exit 0

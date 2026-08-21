@@ -1,10 +1,8 @@
-> Base instruction, loaded either by a harness wrapper under `agents/<harness>/`, which spawns it as a subagent under `agents/SUBAGENT-CONTRACT.md`, or by the same-named skill, which runs it in the user's own session. Edit this file, never a wrapper.
+> Shared workflow for `/update-ai-tools`, `/remove-ai-tools`, and `/reinstall-ai-tools`. Not installed. The dispatching skill names the **Task**. Edit this file, never a wrapper.
 
-> **Stake — surface to the user before this agent runs**: this agent rewires harness configuration — linking, unlinking, refreshing, and removing ai-tools agents, skills, and instructions across harness config directories — and its update path **resets `$HOME/.ai-tools` to `origin/master`, discarding local commits and edits there**. Destructive steps run only after explicit per-action user approval.
+Drive the scripts shipped under `$HOME/.ai-tools/scripts/` for the task you were given, then stop.
 
-You are the **implementer** category (*Agent categories*, in the user-wide agent instructions). You maintain the ai-tools installation by driving the scripts shipped under `$HOME/.ai-tools/scripts/` for the task you were given, then stop.
-
-You are not the installer. A fresh installation is the README's own bootstrap — it happens before you exist in any harness. Install steps run only where `update`/`reinstall` embed them.
+You are not the installer. A fresh installation is the README's own bootstrap — it happens before these skills exist in any harness. Install steps run only where `update`/`reinstall` embed them.
 
 ## Scope and approvals
 

@@ -23,7 +23,7 @@ Status: `idea` (not refined) · `next` (agreed, ready to refine) · `doing` (a p
 
 ### 4. Health-check entry point
 
-`verify` is a first-class read-only process with a script, but it is the only one without a slash command: the user can update, remove, and reinstall by name, yet has to remember a path to check whether their installation is intact. Add a `verify-ai-tools` skill fronting the same `maintainer-ai-tools` agent, which runs `verify`, and — this is the point — maps each finding onto the matching entry in the README's Troubleshooting section: dangling links to Reinstallation, stale copies to Update, an agent on the wrong model to the Grok pin or the wrapper comparison. Route: `/vibe-ai-tools`.
+`verify` is a first-class read-only process with a script, but it is the only one without a slash command: the user can update, remove, and reinstall by name, yet has to remember a path to check whether their installation is intact. Add a `verify-ai-tools` skill dispatching `implementer-ai-tools` to run `verify`, and — this is the point — maps each finding onto the matching entry in the README's Troubleshooting section: dangling links to Reinstallation, stale copies to Update, an agent on the wrong model to the Grok pin or the wrapper comparison. Route: `/vibe-ai-tools`.
 
 ### 5. The missing testing role
 

@@ -17,4 +17,4 @@ You are running as a **spawned subagent**: a session dispatched you, cannot see 
 
 ## Model
 
-Your model is pinned by the wrapper that loaded you, and that wrapper names your harness row in `$HOME/.ai-tools/MODELS.md` (Windows: `%USERPROFILE%\.ai-tools\MODELS.md`). Every category you spawn resolves through that row — never assume a model name.
+Your model is pinned by the wrapper that loaded you, and that wrapper names your harness row in `$HOME/.ai-tools/MODELS.md` (Windows: `%USERPROFILE%\.ai-tools\MODELS.md`). Spawn further work by agent name (`planner-ai-tools`, `implementer-ai-tools`, `mechanical-ai-tools`); each resolves through that row — never assume a model name.

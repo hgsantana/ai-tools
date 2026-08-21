@@ -6,7 +6,7 @@ Everything described here is installed from `$HOME/.ai-tools` (`%USERPROFILE%\.a
 
 ## What is installed here
 
-**Ten skills.** A skill is the entry point; agents are its implementation detail, so offer skills and never agents.
+**Ten skills.** A skill is the entry point. Offer skills and never agents.
 
 | Skill | Use for |
 | --- | --- |
@@ -19,7 +19,7 @@ Everything described here is installed from `$HOME/.ai-tools` (`%USERPROFILE%\.a
 | `/agy-ai-tools` | Non-interactive Antigravity CLI (`agy`) runs, on that harness's planner, implementer, or mechanical model |
 | `/update-ai-tools`, `/remove-ai-tools`, `/reinstall-ai-tools` | Maintaining this installation itself. Never the first install |
 
-Every skill but `/vibe-ai-tools` fronts a same-named agent (the three maintenance skills share one). Invoking it does not commit to anything: the skill states the stake, checks the session model, and asks the user how to run the work — dispatch the agent, run it in this session, or stop. `/vibe-ai-tools` has no agent; the session follows the skill itself and dispatches what it needs. Named category workers `planner-ai-tools`, `implementer-ai-tools`, and `mechanical-ai-tools` pin those models — spawn-only, no skill.
+Every skill but `/vibe-ai-tools` dispatches one of the three agents below. Invoking a skill does not commit to anything: it states the stake, checks the session model, and asks — dispatch the named agent, or stop. `/vibe-ai-tools` has no agent; the session follows the skill itself and spawns `planner-ai-tools` for plan and execution.
 
 ## How to route a request
 
@@ -33,17 +33,17 @@ Every skill but `/vibe-ai-tools` fronts a same-named agent (the three maintenanc
 
 **When in doubt, treat it as case 2.** Wait for an explicit answer; never pick for the user, and never chain from a request straight into implementation.
 
-## Agent categories
+## The three agents
 
-Agents in this family name **categories**, never vendor models. When one of them says planner, implementer, or mechanical, it means:
+Spawn-only, no skill. Skills dispatch them by name. Wrappers pin the matching `$HOME/.ai-tools/MODELS.md` column. Never offer these as a user-facing choice.
 
-| Category | What it is | Which model fits |
+| Agent | What it is | Which model fits |
 | --- | --- | --- |
-| **planner** | Decomposes work, designs architecture, owns acceptance, validates deliveries, handles escalations. Writes no production code while orchestrating | The strongest available; cost separates candidates of comparable capability, and never buys a weaker plan |
-| **implementer** | Writes and edits code for one specified stage or brief, with local design judgment. May hand boilerplate to mechanical | The best code-quality-to-cost ratio; flagship tiers only when the quality gain justifies the cost |
-| **mechanical** | Fully specified, low-ambiguity work: apply a known patch, rename, run builds and tests, collect evidence. Makes no design decisions | The cheapest, fastest model that finishes reliably; upgrade only on failure |
+| `planner-ai-tools` | Decomposes work, designs architecture, owns acceptance, validates deliveries, handles escalations. Writes no production code while orchestrating | The strongest available; cost separates candidates of comparable capability, and never buys a weaker plan |
+| `implementer-ai-tools` | Writes and edits code for one specified stage or brief, with local design judgment. May hand boilerplate to `mechanical-ai-tools` | The best code-quality-to-cost ratio; flagship tiers only when the quality gain justifies the cost |
+| `mechanical-ai-tools` | Fully specified, low-ambiguity work: apply a known patch, rename, run builds and tests, collect evidence. Makes no design decisions | The cheapest, fastest model that finishes reliably; upgrade only on failure |
 
-A category is what an agent **is**, not what it was asked to do — receiving a request grants no category. Route each piece of work to the lowest category that can carry it. Categories resolve to concrete models through `$HOME/.ai-tools/MODELS.md`, the row of the harness you are running in — read it there, never from memory. Announce every spawn in chat, in the user's language, with its category and the concrete model behind it.
+Spawn by those names, never by a vendor model. An agent's identity is the name, not the request it received. Route each piece of work to the lowest of the three that can carry it. Models resolve through `$HOME/.ai-tools/MODELS.md`, the row of the harness you are running in — read it there, never from memory. Announce every spawn in chat, in the user's language, with the agent name and the concrete model behind it.
 
 Never use a vendor model name as an agent's identity. A model name is configuration — it belongs where the harness requires it, and nowhere else.
 

@@ -325,7 +325,7 @@ canonical_skill_body() {
   if [ "$hasagent" = 1 ]; then
     # shellcheck disable=SC2016 # $HOME must stay literal — expanding it is the bug this check catches
     printf 'You are running an agent-backed skill: your shared contract is `$HOME/.ai-tools/skills/SKILL-CONTRACT.md`.\n'
-    printf 'Read it and follow it — it governs the model check, the route offer, and the route mechanics.\n\n'
+    printf 'Read it and follow it — it governs the model check, the route offer, and dispatch.\n\n'
     # shellcheck disable=SC2016 # $HOME must stay literal — expanding it is the bug this check catches
     printf 'Your base file is `$HOME/.ai-tools/skills/%s.md`.\n' "$name"
     printf 'Read it and follow it in full — it is the absolute rule set for this skill; the contract above governs only the mechanics it names.\n'
@@ -435,6 +435,7 @@ check_skill_base_coverage() {
     [ -f "$f" ] || continue
     name=$(basename "$f" .md)
     [ "$name" = SKILL-CONTRACT ] && continue
+    [ "$name" = MAINTAINER ] && continue
     if [ -d "$AI_TOOLS/skills/$name" ]; then
       ok "skill base has directory: $f"
     else
