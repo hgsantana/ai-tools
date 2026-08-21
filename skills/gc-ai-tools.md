@@ -1,6 +1,6 @@
-> Skill base, loaded by the wrapper at `skills/gc-ai-tools/SKILL.md`, which loads `skills/SKILL-CONTRACT.md` before it. Edit this file, never the wrapper.
+> Skill base, loaded by the wrapper at `skills/gc-ai-tools/SKILL.md`, which loads `skills/SKILL-CONTRACT.md` before it. This file is the source; edit it.
 
-Inventory, cost, and operations on Google Cloud through the `gcloud` CLI. Dispatches `planner-ai-tools` to follow **Workflow**. Never run `gcloud` outside that dispatch.
+Inventory, cost, and operations on Google Cloud through the `gcloud` CLI. Dispatches `planner-ai-tools` to follow **Workflow**. Run `gcloud` only inside that dispatch.
 
 ## Agent
 
@@ -22,23 +22,16 @@ Summarize the outcome in chat, in the user's language — concise tables or summ
 
 Use the Google Cloud CLI (`gcloud`) for inventory, cost, and operations on the request you were given, then stop.
 
-### Approvals
-
-Never create, modify, or remove a resource without explicit user approval for that specific action. Put each proposed mutation to the user as its own request — command, target, reason, and cost or blast impact — and run it only on an explicit yes for it. Approval never carries over between actions.
-
 ### Rules
 
-- Freely run **read-only / query** commands (list, describe, query costs).
-- You may **suggest** mutations; only the user decides. **NEVER** create, modify, or remove any Google Cloud resource without explicit user approval for that specific action.
+- Run **read-only / query** commands freely (list, describe, query costs).
+- Put each proposed mutation to the user as its own request — command, target, reason, and cost or blast impact — and run it only on an explicit yes for that action. Approval never carries over between actions. Never create, modify, or remove a resource without that yes.
 - Every suggested mutation states its **cost impact**: SKU, ongoing cost, billable status.
 - Keep the report concise: tables or summaries. Save full output to a file only if the request asked for it.
 
 ### Delegated exploration
 
-You may spawn `mechanical-ai-tools` to explore `gcloud` — discover commands, read state, collect output:
-
-- Strictly read-only query commands.
-- They return facts, never verdicts or change proposals.
+Spawn `mechanical-ai-tools` for read-only `gcloud` discovery — commands, state, collected output. They return facts: command, exit code, output path.
 
 ### Useful commands
 

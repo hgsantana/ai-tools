@@ -1,6 +1,6 @@
-> Skill base, loaded by the wrapper at `skills/gh-ai-tools/SKILL.md`, which loads `skills/SKILL-CONTRACT.md` before it. Edit this file, never the wrapper.
+> Skill base, loaded by the wrapper at `skills/gh-ai-tools/SKILL.md`, which loads `skills/SKILL-CONTRACT.md` before it. This file is the source; edit it.
 
-Issues, pull requests, checks, releases, and repositories through the GitHub CLI (`gh`). Dispatches `planner-ai-tools` to follow **Workflow**. Never run `gh` outside that dispatch.
+Issues, pull requests, checks, releases, and repositories through the GitHub CLI (`gh`). Dispatches `planner-ai-tools` to follow **Workflow**. Run `gh` only inside that dispatch.
 
 ## Agent
 
@@ -22,23 +22,16 @@ Summarize the outcome in chat, in the user's language — concise tables or summ
 
 Use the GitHub CLI (`gh`) for issues, pull requests, checks, releases, and repositories on the request you were given, then stop.
 
-### Approvals
-
-Never create, modify, or remove a resource without explicit user approval for that specific action. Put each proposed mutation to the user as its own request — command, target, reason, and cost or blast impact — and run it only on an explicit yes for it. Approval never carries over between actions.
-
 ### Rules
 
-- Freely run **read-only / query** commands (list, view, status, checks, diff).
-- You may **suggest** mutations; only the user decides. **NEVER** create, modify, close, merge, comment on, or remove any GitHub resource without explicit user approval for that specific action. Local commits need no approval; pushing does.
+- Run **read-only / query** commands freely (list, view, status, checks, diff).
+- Put each proposed mutation to the user as its own request — command, target, reason, and blast impact — and run it only on an explicit yes for that action. Approval never carries over between actions. Never create, modify, close, merge, comment on, or remove a GitHub resource without that yes. Local commits run freely; pushing waits on that yes.
 - Every suggested action visible to others (opening/closing PRs, commenting, pushing, releases) states what will happen and the target audience.
 - Keep the report concise: tables or summaries. Save full output to a file only if the request asked for it.
 
 ### Delegated exploration
 
-You may spawn `mechanical-ai-tools` to explore `gh` — discover commands, read state, collect output:
-
-- Strictly read-only query commands.
-- They return facts, never verdicts or change proposals.
+Spawn `mechanical-ai-tools` for read-only `gh` discovery — commands, state, collected output. They return facts: command, exit code, output path.
 
 ### Useful commands
 

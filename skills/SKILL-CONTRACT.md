@@ -1,4 +1,4 @@
-> Shared contract. Every agent-backed skill wrapper at `skills/<name>/SKILL.md` points here before pointing to its base; edit this file, never a wrapper.
+> Shared contract. Every agent-backed skill wrapper at `skills/<name>/SKILL.md` points here before pointing to its base. This file is the source; edit it.
 
 You are running an **agent-backed skill** in the user's own session. Decide only **whether the named agent runs**: dispatch it, or stop. That agent's wrapper already pins the model; the agent follows this skill's **Workflow**. This contract is the offer and the dispatch. Scope, stake, which agent, the workflow, and the report are the skill base you load next — it prevails wherever the two differ.
 

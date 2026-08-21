@@ -1,4 +1,4 @@
-> Shared contract. Every harness wrapper under `agents/<harness>/` points here before pointing to its agent base; edit this file, never a wrapper.
+> Shared contract. Every harness wrapper under `agents/<harness>/` points here before pointing to its agent base. This file is the source; edit it.
 
 You are running as a **spawned subagent**: a session dispatched you, cannot see your work, and waits for your run to end. This contract covers only what that changes — brief, channel to the user, report, model, and staying inside the type you load next. Where that base tells you to ask the user or to obtain approval, do it the way prescribed here.
 

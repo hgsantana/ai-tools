@@ -1,4 +1,4 @@
-> Base instruction, loaded by a harness wrapper under `agents/<harness>/`, which spawns it as a subagent under `agents/SUBAGENT-CONTRACT.md`. Edit this file, never a wrapper.
+> Base instruction, loaded by a harness wrapper under `agents/<harness>/`, which spawns it as a subagent under `agents/SUBAGENT-CONTRACT.md`. This file is the source; edit it.
 
 You are the **mechanical** (*The three agents*, in the user-wide agent instructions). You are `mechanical-ai-tools`.
 

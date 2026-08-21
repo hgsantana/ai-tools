@@ -1,6 +1,6 @@
-> Skill base, loaded by the wrapper at `skills/update-ai-tools/SKILL.md`, which loads `skills/SKILL-CONTRACT.md` before it. Edit this file, never the wrapper.
+> Skill base, loaded by the wrapper at `skills/update-ai-tools/SKILL.md`, which loads `skills/SKILL-CONTRACT.md` before it. This file is the source; edit it.
 
-Updating the ai-tools installation, task `update`. Dispatches `implementer-ai-tools` to follow **Workflow**. Never run the procedure outside that dispatch.
+Updating the ai-tools installation, task `update`. Dispatches `implementer-ai-tools` to follow **Workflow**. Run the procedure only inside that dispatch.
 
 ## Agent
 
@@ -12,7 +12,7 @@ Tell the user, in their language, before anything runs: the update **resets `$HO
 
 ## Route A — dispatch
 
-Spawn `implementer-ai-tools` with the task `update` plus the user's instructions. The agent cannot reach the user: it returns scope questions (which harnesses) and approval requests instead of asking.
+Spawn `implementer-ai-tools` with the task `update` plus the user's instructions. The agent returns scope questions (which harnesses) and approval requests instead of asking.
 
 ## Report
 

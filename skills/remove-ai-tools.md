@@ -1,6 +1,6 @@
-> Skill base, loaded by the wrapper at `skills/remove-ai-tools/SKILL.md`, which loads `skills/SKILL-CONTRACT.md` before it. Edit this file, never the wrapper.
+> Skill base, loaded by the wrapper at `skills/remove-ai-tools/SKILL.md`, which loads `skills/SKILL-CONTRACT.md` before it. This file is the source; edit it.
 
-Removing the ai-tools installation, task `remove`. Dispatches `implementer-ai-tools` to follow **Workflow**. Never run the procedure outside that dispatch.
+Removing the ai-tools installation, task `remove`. Dispatches `implementer-ai-tools` to follow **Workflow**. Run the procedure only inside that dispatch.
 
 ## Agent
 
@@ -12,7 +12,7 @@ Tell the user, in their language, before anything runs: this unlinks ai-tools ag
 
 ## Route A — dispatch
 
-Spawn `implementer-ai-tools` with the task `remove` plus the user's instructions. The agent cannot reach the user: it returns discovery results and the removal targets to confirm, and approval requests, instead of asking.
+Spawn `implementer-ai-tools` with the task `remove` plus the user's instructions. The agent returns discovery results and the removal targets to confirm, and approval requests, instead of asking.
 
 ## Report
 
