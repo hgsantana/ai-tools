@@ -41,7 +41,7 @@ The model selection method in the README is genuinely reproducible research — 
 
 ### 8. Decisions that outlive the plan
 
-The vibe workflow answers the planner's open questions on the user's behalf and logs each one with its trade-offs, but that file lives under `dev/vibe/`, which is gitignored, and a plan is deliberately deleted when it is archived — so the reasoning behind a shipped change disappears the moment the pull request merges, leaving only the diff. Define a small versioned decision record (a `docs/decisions/` entry, one file per accepted decision) that the vibe workflow promotes from its decisions file before opening the pull request, so the "why" is reviewed alongside the change and survives the archival. Route: `/vibe-ai-tools`.
+The vibe workflow answers the planner's open questions on the user's behalf and logs each one with its trade-offs, but that file lives under `dev/tmp/vibe/`, which is gitignored, and a plan is deliberately deleted when it is archived — so the reasoning behind a shipped change disappears the moment the pull request merges, leaving only the diff. Define a small versioned decision record (a `docs/decisions/` entry, one file per accepted decision) that the vibe workflow promotes from its decisions file before opening the pull request, so the "why" is reviewed alongside the change and survives the archival. Route: `/vibe-ai-tools`.
 
 ### 9. Resuming an interrupted delivery
 

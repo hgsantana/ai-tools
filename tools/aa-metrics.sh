@@ -13,7 +13,7 @@ usage() {
   cat <<'EOF'
 usage: aa-metrics.sh [--help] [--dry-run] [--output-dir DIR] [--input-dir DIR]
 
-Writes dev/wip/aa-metrics.csv. Unions JSON-LD datasets named
+Writes dev/tmp/aa-metrics.csv. Unions JSON-LD datasets named
 "Artificial Analysis Intelligence Index", "Cost per Task", and
 "Time per Intelligence Index Task" from each fetched page.
 A live run GETs English /models/<slug> locs from sitemap.xml, then each page.
@@ -22,7 +22,7 @@ Requires python3. Live run also requires curl.
 EOF
 }
 
-OUT_DIR="$AI_TOOLS/dev/wip"
+OUT_DIR="$AI_TOOLS/dev/tmp"
 IN_DIR=""
 DRY=0
 while [ $# -gt 0 ]; do
