@@ -1,5 +1,5 @@
 # shellcheck shell=bash
-# reinstall.sh — proves README rules 18-20, 25 against scripts/shell/reinstall.sh:
+# reinstall.sh — proves README rules 19-21, 26 against scripts/shell/reinstall.sh:
 # a full removal + installation pass ends in the same state a fresh install
 # produces, sweeps stale links, keeps a locally modified copy, refuses to
 # discard local clone work without --discard-local, runs the fresh-clone

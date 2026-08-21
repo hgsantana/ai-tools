@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ai-tools rule linter — a development check, not an installation process
-# (outside the contract of README rules 23-25). Enforces this repository's
+# (outside the contract of README rules 24-26). Enforces this repository's
 # mechanically verifiable rules against the tree it runs in.
 #
 # Usage: tools/lint.sh [--help] [--base <ref>]
@@ -21,7 +21,7 @@ usage: lint.sh [--help] [--base <ref>]
 
 Development check: enforces this repository's mechanically verifiable rules
 against the tree lint.sh runs in. Not an installation process (README rules
-23-25); introduces no new dependency beyond git, grep, awk, sed, wc, tr.
+24-26); introduces no new dependency beyond git, grep, awk, sed, wc, tr.
 
 Checks:
   wrapper coverage  every agent has exactly one wrapper per harness, with
@@ -53,9 +53,9 @@ Checks:
   wrapper cap       every agents/<harness>/* file is at most 1000 characters,
                     frontmatter included (rule 6)
   line endings      git ls-files --eol matches the declared eol= attribute:
-                    lf for scripts/shell and tools (rule 26)
+                    lf for scripts/shell and tools (rule 27)
   executable bits   scripts/shell/*.sh, tools/lint.sh, tools/test.sh,
-                    and tools/*.sh are mode 100755 (rule 26)
+                    and tools/*.sh are mode 100755 (rule 27)
   no binaries       every tracked file under agents/, skills/, scripts/, and
                     tools/ is text
   version bump      CI-only, needs --base <ref> (skipped without it): when
@@ -701,7 +701,7 @@ check_wrapper_cap() {
 
 check_line_endings() {
   # Reads git's own .gitattributes resolution via `ls-files --eol` rather
-  # than reimplementing it (rule 26): index side must be lf, working-tree
+  # than reimplementing it (rule 27): index side must be lf, working-tree
   # side and the declared attribute must match the expected style per path.
   local line path fields idx work attr expected
   while IFS= read -r line; do

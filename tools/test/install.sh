@@ -1,5 +1,5 @@
 # shellcheck shell=bash
-# install.sh case file — README rules 17-22, 25 against scripts/shell/install.sh.
+# install.sh case file — README rules 18-23, 26 against scripts/shell/install.sh.
 # Each case builds its own fixture via t_fixture and passes an explicit
 # --harnesses list so assertions can name exact destination paths.
 

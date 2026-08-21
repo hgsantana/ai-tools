@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Fetch Artificial Analysis model pages and write Intelligence Index, Cost per
 # Task, and Time per Task from JSON-LD Datasets. Deterministic given the same
-# HTML. python3 stdlib only. Not an installation process (README rules 23-25).
+# HTML. python3 stdlib only. Not an installation process (README rules 24-26).
 #
 # usage: aa-metrics.sh [--help] [--dry-run] [--output-dir DIR] [--input-dir DIR]
 set -u

@@ -6,7 +6,7 @@ Everything described here is installed from `$HOME/.ai-tools` (`%USERPROFILE%\.a
 
 ## What is installed here
 
-**Ten skills.** A skill is the entry point. Offer skills and never agents.
+**Ten skills.** A skill is the entry point. Offer skills; agents are spawn-only.
 
 | Skill | Use for |
 | --- | --- |
@@ -43,7 +43,7 @@ Spawn-only, no skill. Skills dispatch them by name; never offer the agents thems
 | `implementer-ai-tools` | **implementer** | Writes and edits code for one specified stage or brief, with local design judgment. May hand boilerplate to `mechanical-ai-tools` |
 | `mechanical-ai-tools` | **mechanical** | Fully specified, low-ambiguity work: apply a known patch, rename, run builds and tests, collect evidence. Makes no design decisions |
 
-Never use a vendor model name as an agent's identity. Model names belong in wrapper headers (and the Grok install pin).
+An agent's identity is its name. Model names belong in wrapper headers (and the Grok install pin).
 
 ## Language
 

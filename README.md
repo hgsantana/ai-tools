@@ -17,12 +17,12 @@ Clone it to `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows) and link it
 | [`agents/planner-ai-tools.md`](agents/planner-ai-tools.md) | `planner-ai-tools` — decomposes, designs, owns acceptance; no production code. Type rules only; the brief is the job |
 | [`agents/implementer-ai-tools.md`](agents/implementer-ai-tools.md) | `implementer-ai-tools` — writes and edits code for one assignment. Type rules only; the brief is the job |
 | [`agents/mechanical-ai-tools.md`](agents/mechanical-ai-tools.md) | `mechanical-ai-tools` — specified patches, renames, builds, tests, evidence; no design. Type rules only; the brief is the job |
-| [`agents/SUBAGENT-CONTRACT.md`](agents/SUBAGENT-CONTRACT.md) | Shared spawned-subagent contract: brief, channel to the user, report, model pin. Not installed; read by path |
+| [`agents/SUBAGENT-CONTRACT.md`](agents/SUBAGENT-CONTRACT.md) | Shared spawned-subagent contract: brief, channel to the user, report, model pin, stay inside the type. Not installed; read by path |
 | [`agents/<harness>/`](agents/) | One wrapper per agent: header pin, contract pointer, base pointer |
 | [`skills/`](skills/) | Ten skills: installed `skills/<name>/SKILL.md` plus `skills/<name>.md` (the workflow). The three agents have no skill. All but `vibe-ai-tools` dispatch a named agent (rule 8); vibe runs in session |
 | [`skills/SKILL-CONTRACT.md`](skills/SKILL-CONTRACT.md) | Offer and dispatch for agent-backed skills. Not installed; read by path |
 | [`skills/MAINTAINER.md`](skills/MAINTAINER.md) | Shared update/remove/reinstall workflow. Not installed |
-| [`scripts/`](scripts/) | `install`, `remove`, `update`, `reinstall`, `verify` — bash ([Scripts](#scripts); rules 23–26). Windows: WSL or Git Bash |
+| [`scripts/`](scripts/) | `install`, `remove`, `update`, `reinstall`, `verify` — bash ([Scripts](#scripts); rules 24–27). Windows: WSL or Git Bash |
 
 ### How to install, remove, update, or reinstall
 
@@ -46,14 +46,14 @@ Normative for every human and every AI maintaining this repository.
 
 ### Source of truth
 
-1. This `README.md` is the single source of truth for this repository: explanation, rules, and processes (install, remove, update, reinstall). Their executable form is `scripts/` (rules 23–26).
+1. This `README.md` is the single source of truth for this repository: explanation, rules, and processes (install, remove, update, reinstall). Their executable form is `scripts/` (rules 24–27).
 2. AIs working on this repository take instructions **about this repository** only from this README. User-wide or harness-global files — including an installed `USER-AGENTS.md` — yield to it here.
 3. `USER-AGENTS.md` is an install artifact: user-wide harness instructions, not a rule file for this repository. It is capped at a self-imposed **8,000 characters**, deliberately tighter than any harness constraint, to force concision. Every shipped artifact must fit every supported harness that consumes it: the tightest constraint governs (today: Antigravity's 12,000-character cap on rules files, looser than the self-imposed cap). Register constraints in [Supported harnesses](#supported-harnesses); a stricter one updates those notes and the affected artifacts in the same commit.
 4. Pre-release (`0.x`/ALPHA at the top): no backward compatibility. This README describes the current state only; breaking changes carry no migration notes. Fix an older layout with [Reinstallation](#reinstallation) and its stale-link sweep. The version at the top of this README changes only when the change lands on `master` — never on any other branch, and never in uncommitted work. Bump in the commit or merge that introduces it onto `master`. Backward-compatibility records begin at the first stable release.
 
 ### Structure and authoring
 
-5. Only three agents ship: `planner-ai-tools`, `implementer-ai-tools`, `mechanical-ai-tools`. Each has a harness-agnostic **base** at `agents/<name>.md` (type rules, request-agnostic) and one **wrapper** per harness at `agents/<harness-short-name>/<agent-name>.<ext>`. A base is **mode-agnostic**: it says to ask or to require approval, never how that reaches them — `agents/SUBAGENT-CONTRACT.md` owns the channel when spawned. Skills pass a complete brief (the **Workflow** plus the user's request). Type rules prevail if the brief conflicts.
+5. Only three agents ship: `planner-ai-tools`, `implementer-ai-tools`, `mechanical-ai-tools`. Each has a harness-agnostic **base** at `agents/<name>.md` (type rules, request-agnostic) and one **wrapper** per harness at `agents/<harness-short-name>/<agent-name>.<ext>`. A base is **mode-agnostic**: it says to ask or to require approval, never how that reaches them — `agents/SUBAGENT-CONTRACT.md` owns the channel when spawned, and that type rules prevail if the brief conflicts. Skills pass a complete brief (the **Workflow** plus the user's request).
 6. Wrapper header: harness syntax and the pin (`model:`; effort only when the map cell has one). Body, in this order: pointer to `$HOME/.ai-tools/agents/SUBAGENT-CONTRACT.md`; pointer to `$HOME/.ai-tools/agents/<name>.md` (prevails except on the channel to the user). Anything else is drift. Cap **1,000 characters**, frontmatter included. Canonical body: [wrapper authoring](#model-map-and-wrapper-authoring).
 7. Skills are harness-agnostic — no per-harness copies. Split: installed **wrapper** `skills/<name>/SKILL.md`; **base** `skills/<name>.md` (the workflow); agent-backed skills also load `skills/SKILL-CONTRACT.md` by path, never installed. Wrapper body, in this order: one-line scope; SKILL-CONTRACT pointer (agent-backed only); skill-base pointer (prevails over the contract). Anything else is drift. Cap **2,000 characters**, frontmatter included. No supported harness preloads skill bodies; the cap is concision (rule 14). Canonical body: [skill authoring](#model-map-and-wrapper-authoring).
 8. A skill runs on **any** session model and never refuses over one. Work that needs a pin is dispatched to a named agent, whose wrapper already pins the model. An agent-backed skill never runs its **Workflow** in the session: stake, then **dispatch the agent** or **stop**. `/vibe-ai-tools` fronts no agent and runs itself.
@@ -63,24 +63,25 @@ Normative for every human and every AI maintaining this repository.
 12. `MODELS.md` and wrapper **headers** match in the same commit (new agent, new harness, or model change). Wrapper bodies name neither a row nor a model. Fill each cell by the [selection method](#choosing-the-models) — never memory or unsourced claims.
 13. Everything installed from this repo — agent name, skill directory, slash command, frontmatter `name:`, file basename — ends in `-ai-tools`. Never install a bare name (`planner`, `az`).
 14. Extreme conciseness: no ambiguity or redundancy, and no omitted instruction, rule, or intention in exchange for brevity.
-15. Disk in this repository is concise English. Chat is in the user's language.
-16. A skill or agent that can be **destructive** or **generate cost** opens with a stake disclaimer — one short block before any workflow, naming what can be billed and what can be deleted, removed, or destroyed (when each applies). Whoever invokes it — the skill offering the routes, or the agent spawning it — surfaces that warning **before** anything runs.
+15. Skills, agent bases, contracts, and `USER-AGENTS.md` state what to do. A negative (`never`, `do not`) is used only when it reinforces an essential positive, or when the positive phrasing would lose force or not make sense.
+16. Disk in this repository is concise English. Chat is in the user's language.
+17. A skill or agent that can be **destructive** or **generate cost** opens with a stake disclaimer — one short block before any workflow, naming what can be billed and what can be deleted, removed, or destroyed (when each applies). Whoever invokes it — the skill offering the routes, or the agent spawning it — surfaces that warning **before** anything runs.
 
 ### Installation contract
 
-17. **Symlink** when possible; copy only when the OS or filesystem refuses, and report every copy.
-18. Never overwrite user files on install, update, or reinstall — only ai-tools links or unmodified ai-tools copies.
-19. Never remove anything ai-tools did not create.
-20. Every install/remove/update/reinstall step is idempotent; on conflict, skip and report — do not fail or overwrite.
-21. `$HOME/.ai-tools` is the only supported clone location — user-level, never inside a project. Wrappers hardcode it; any other path breaks them.
-22. `$HOME/AGENTS.md` (`%USERPROFILE%\AGENTS.md` on Windows) is user-owned: created empty only when missing at install; never edited, overwritten, truncated, symlinked, or removed.
+18. **Symlink** when possible; copy only when the OS or filesystem refuses, and report every copy.
+19. Never overwrite user files on install, update, or reinstall — only ai-tools links or unmodified ai-tools copies.
+20. Never remove anything ai-tools did not create.
+21. Every install/remove/update/reinstall step is idempotent; on conflict, skip and report — do not fail or overwrite.
+22. `$HOME/.ai-tools` is the only supported clone location — user-level, never inside a project. Wrappers hardcode it; any other path breaks them.
+23. `$HOME/AGENTS.md` (`%USERPROFILE%\AGENTS.md` on Windows) is user-owned: created empty only when missing at install; never edited, overwritten, truncated, symlinked, or removed.
 
 ### Script contract
 
-23. Each process — install, remove, update, reinstall, verify — is `scripts/shell/<process>.sh` (Linux, macOS, WSL, Git Bash; bash 3.2+, BSD/GNU tools). Shared logic lives in `lib.sh`, never duplicated across scripts. No PowerShell or CMD mirror: on Windows, use WSL or Git Bash.
-24. `scripts/shell` is canonical. A behaviour change lands there and in the process sections below, in the same commit.
-25. Scripts run to completion: per-item conflicts skip and report. Destructive steps need explicit flags (`--discard-local`, `--instructions`, `--purge`) and default to refuse. Every mutating script supports `--dry-run`. Exit: `0` clean, `1` aborted on a precondition, `2` finished with warnings.
-26. Shell scripts are committed executable; `.gitattributes` pins them to LF.
+24. Each process — install, remove, update, reinstall, verify — is `scripts/shell/<process>.sh` (Linux, macOS, WSL, Git Bash; bash 3.2+, BSD/GNU tools). Shared logic lives in `lib.sh`, never duplicated across scripts. No PowerShell or CMD mirror: on Windows, use WSL or Git Bash.
+25. `scripts/shell` is canonical. A behaviour change lands there and in the process sections below, in the same commit.
+26. Scripts run to completion: per-item conflicts skip and report. Destructive steps need explicit flags (`--discard-local`, `--instructions`, `--purge`) and default to refuse. Every mutating script supports `--dry-run`. Exit: `0` clean, `1` aborted on a precondition, `2` finished with warnings.
+27. Shell scripts are committed executable; `.gitattributes` pins them to LF.
 
 ### Model map and wrapper authoring
 
@@ -151,7 +152,7 @@ Every process below is an executable script — the same command for a human or 
 
 Processes: `install`, `remove`, `update`, `reinstall`, and read-only `verify`. `--help` lists flags. On Windows, run those same scripts from WSL or Git Bash.
 
-On top of rules 23–25:
+On top of rules 24–26:
 
 - **Scope** — `--harnesses <list>` (comma-separated folder names under `agents/`); default is every detected harness. An AI running a mutating script asks for scope first and passes the flag.
 - **Dry run** — `--dry-run` reports every action and changes nothing: the findings/approval report for unattended runs.
@@ -160,7 +161,7 @@ On top of rules 23–25:
 
 ## Development checks
 
-`tools/` holds development tooling — `scripts/` remains exactly the five installation processes (rules 23–25). [`tools/lint.sh`](tools/lint.sh) is a development check, not an installation process: it enforces this repository's mechanically verifiable rules against the tree it runs in, with no dependency beyond `git`, `grep`, `awk`, `sed`, `wc`, `od`, `tr`. Run it from anywhere:
+`tools/` holds development tooling — `scripts/` remains exactly the five installation processes (rules 24–26). [`tools/lint.sh`](tools/lint.sh) is a development check, not an installation process: it enforces this repository's mechanically verifiable rules against the tree it runs in, with no dependency beyond `git`, `grep`, `awk`, `sed`, `wc`, `od`, `tr`. Run it from anywhere:
 
 ```bash
 "$HOME/.ai-tools/tools/lint.sh"              # check the working tree
@@ -179,14 +180,14 @@ Check families:
 - **description parity** — an agent's `description` is identical across all six wrappers
 - **`MODELS.md` row coverage** — every harness directory has a row and vice versa (rule 12)
 - **size caps** — `USER-AGENTS.md` at most 8,000 characters (rule 3), every wrapper at most 1,000 (rule 6), every skill wrapper at most 2,000 characters and every skill `description` at most 500 (rules 7, 9)
-- **encodings and endings** — line endings (`git ls-files --eol`), executable bits, no binaries in shipped paths (rule 26)
+- **encodings and endings** — line endings (`git ls-files --eol`), executable bits, no binaries in shipped paths (rule 27)
 - **version bump** — only with `--base <ref>`: a change under `agents/`, `skills/`, `scripts/`, or `USER-AGENTS.md` that lands on `master` requires the README version to change too (rule 4)
 
 Exit codes: `0` clean, `1` aborted on a precondition (unknown flag, `--base` without a value), `2` finished with findings. CI (`.github/workflows/ci.yml`) runs two jobs on `ubuntu-latest`: `lint` runs the version-bump check on pull requests and `shellcheck -x -P scripts/shell -P tools/test scripts/shell/*.sh tools/*.sh tools/test/*.sh` on every push and pull request; `test-shell` runs `tools/test.sh`.
 
 When a rule in this README becomes mechanically verifiable, add its check to `tools/lint.sh` and its rule number to the list above in the same commit — the two caps above (rules 3, 6) are stated here as rules; the linter only enforces them, and this README is the number a reader trusts.
 
-`tools/test.sh` is a development check too, and outside rules 23–25 the same way: it runs `install`, `remove`, `update`, `reinstall`, and `verify` against a disposable fake `HOME`, never the real one, and asserts the installation and script contract (rules 17–25). Run it from anywhere:
+`tools/test.sh` is a development check too, and outside rules 24–26 the same way: it runs `install`, `remove`, `update`, `reinstall`, and `verify` against a disposable fake `HOME`, never the real one, and asserts the installation and script contract (rules 18–26). Run it from anywhere:
 
 ```bash
 "$HOME/.ai-tools/tools/test.sh"                    # run every case
@@ -195,22 +196,22 @@ When a rule in this README becomes mechanically verifiable, add its check to `to
 
 The fixture stages, before any script runs: a pre-populated harness layout for all six harnesses, a local `origin` git remote so no run reaches the network, a foreign file on a destination path, a locally modified copy, an unmanaged Grok block, and a stale link from an older layout. Against it, the suites assert:
 
-- symlink first, copy fallback (rule 17)
-- never overwrite a user file (rule 18)
-- never remove what ai-tools did not create (rule 19)
-- idempotency and skip-and-report on conflict (rule 20)
-- `$HOME/AGENTS.md` untouched (rule 22)
-- destructive flags default to refuse, `--dry-run` changes nothing (rule 25)
-- exit codes `0`/`1`/`2` (rule 25)
+- symlink first, copy fallback (rule 18)
+- never overwrite a user file (rule 19)
+- never remove what ai-tools did not create (rule 20)
+- idempotency and skip-and-report on conflict (rule 21)
+- `$HOME/AGENTS.md` untouched (rule 23)
+- destructive flags default to refuse, `--dry-run` changes nothing (rule 26)
+- exit codes `0`/`1`/`2` (rule 26)
 
 ## Safety rules
 
-These bind the scripts and any human or AI intervening manually in [Installation](#installation), [Removal](#removal), [Update](#update), and [Reinstallation](#reinstallation), on top of rules 17–22:
+These bind the scripts and any human or AI intervening manually in [Installation](#installation), [Removal](#removal), [Update](#update), and [Reinstallation](#reinstallation), on top of rules 18–23:
 
-- **Never replace** an existing regular file or a symlink pointing outside `$AI_TOOLS`: **skip, report, continue** (rules 18, 20). Silent overwrite is a bug. A destination that is already the correct link is left alone.
+- **Never replace** an existing regular file or a symlink pointing outside `$AI_TOOLS`: **skip, report, continue** (rules 19, 21). Silent overwrite is a bug. A destination that is already the correct link is left alone.
 - **Never** `rm -rf` a harness agents or skills root; remove individual links only.
-- Remove a destination only when it is a symlink resolving under `$AI_TOOLS`, or a copy whose contents still match their `$AI_TOOLS` source. A locally modified copy is user work: skip it, do not delete it (rule 19).
-- Never touch vendor bundles (`~/.grok/bundled/`), unrelated user agents or skills, a repository's own `AGENTS.md` (that application's architecture), or `$HOME/AGENTS.md` (rule 22).
+- Remove a destination only when it is a symlink resolving under `$AI_TOOLS`, or a copy whose contents still match their `$AI_TOOLS` source. A locally modified copy is user work: skip it, do not delete it (rule 20).
+- Never touch vendor bundles (`~/.grok/bundled/`), unrelated user agents or skills, a repository's own `AGENTS.md` (that application's architecture), or `$HOME/AGENTS.md` (rule 23).
 - An AI operating the scripts asks which harnesses are in scope and reports discovery before a mutating run; the scripts themselves default to every detected harness.
 
 Implemented once — `safe_link`, `link_or_copy`, `safe_unlink`, `safe_uninstall_copy` in [`scripts/shell/lib.sh`](scripts/shell/lib.sh). Scripts refuse the unsafe path; manual intervention must honour the same rules.
@@ -245,10 +246,10 @@ git clone https://github.com/hgsantana/ai-tools.git "$HOME/.ai-tools"   # first 
 
 Every step is idempotent; conflicts are skipped and reported.
 
-1. **Preconditions** — clone to `$HOME/.ai-tools` when missing and validate the tree (rule 21; move any existing clone there — no other location is recoverable by configuration).
+1. **Preconditions** — clone to `$HOME/.ai-tools` when missing and validate the tree (rule 22; move any existing clone there — no other location is recoverable by configuration).
 2. **Discovery** — report each detected harness (config directory, CLI, or known IDE extension) and possible AI extensions it will never touch. `$HOME/.agents` is reported, never linked into.
 3. **Instructions** — link `USER-AGENTS.md` to each scoped harness's global instructions destination (`--no-instructions` skips). Cursor has none; Antigravity uses `$HOME/.gemini/GEMINI.md`; an existing `~/.codex/AGENTS.override.md` is reported, never touched.
-4. **User overlay** — create `$HOME/AGENTS.md` empty only when missing (rule 22). Write its contents only if the user later asks for that directly.
+4. **User overlay** — create `$HOME/AGENTS.md` empty only when missing (rule 23). Write its contents only if the user later asks for that directly.
 5. **Agents** — link each wrapper from `agents/<harness>/` into that harness's agents root, per file, never per directory — those roots hold other agents, and a directory link would shadow them.
 6. **Skills** — link each `skills/*-ai-tools` directory into each scoped skills root; the same shared directory serves every harness (rules 7–9). Prefer these links over harness scan paths (Grok `[skills] paths`), which can clobber existing names.
 7. **Grok model pinning** — Grok ignores `model:` in frontmatter and reads `~/.grok/config.toml`. The script maintains a marker-delimited `[subagents.models]` block: names from the tree, models from [`MODELS.md`](MODELS.md) (unreadable map → skip and report, never guess). A pre-existing unmanaged block is skipped and reported, never edited. Without the pin, agents still load but inherit the session model — the strong-model guarantee is lost. The same fallback applies to any harness that ignores `model:`.
@@ -266,10 +267,10 @@ Unlink from harnesses — not delete the clone. Leaving `$HOME/.ai-tools` on dis
 ```
 
 1. **Report** — list every ai-tools link, possible copy, and instructions link in the scoped roots before touching anything.
-2. **Agents and skills** — unlink links; remove copies only while their contents still match their source. A locally modified copy is user work: skip and keep (rule 19).
+2. **Agents and skills** — unlink links; remove copies only while their contents still match their source. A locally modified copy is user work: skip and keep (rule 20).
 3. **Grok** — delete only the marker-delimited ai-tools block in `~/.grok/config.toml`. Leave an unmanaged `[subagents.models]` untouched; never remove the file.
 4. **Stale-link sweep** — remove anything in the scoped roots that still resolves into the clone, whatever its name or era. Alpha keeps no backward compatibility (rule 4); the sweep cleans older layouts. `--no-sweep` skips it.
-5. **Instructions** — only with `--instructions`, and only destinations that are ai-tools links. Edit an include pointer out by hand; never delete that file. **Never `$HOME/AGENTS.md`** (rule 22).
+5. **Instructions** — only with `--instructions`, and only destinations that are ai-tools links. Edit an include pointer out by hand; never delete that file. **Never `$HOME/AGENTS.md`** (rule 23).
 6. **Verify** — report any ai-tools link still in the scoped roots; expected none.
 7. **Purge** — only with `--purge` (prompt; `--yes` skips): delete `$HOME/.ai-tools`. Never includes `$HOME/AGENTS.md`.
 
@@ -285,7 +286,7 @@ Bring the clone to `origin/master` and re-synchronize what is installed. Symlink
 
 1. **Preconditions** — require the clone at `$HOME/.ai-tools`; if missing, [Installation](#installation) instead.
 2. **Reset** — fetch and reset to `origin/master`. If local commits or uncommitted edits would be discarded, print them and stop until re-run with `--discard-local`. `--no-reset` re-synchronizes from the current tree instead. Destructive **inside the clone only**: harness config and `$HOME/AGENTS.md` are never touched by the reset.
-3. **Refresh copies** — a copy matching the pre-reset revision is stale, not user work: replace it. One matching neither revision was modified locally: skip and keep (rule 19).
+3. **Refresh copies** — a copy matching the pre-reset revision is stale, not user work: replace it. One matching neither revision was modified locally: skip and keep (rule 20).
 4. **Link anything newly shipped** — re-run the idempotent install steps for the scoped harnesses: existing installs untouched, new agents or skills added, `$HOME/AGENTS.md` created only if missing.
 5. **Verify** — the Installation checks.
 
@@ -311,7 +312,7 @@ Then restart or reload the harness and confirm the three agents and a slash comm
 - **Local changes the user wants to keep:** the scripts refuse the reset and show what would be lost — stash, branch, or explicitly approve `--discard-local`; never reset manually around the guard.
 - **`origin/master` missing or fetch failed:** fix remote auth or URL; never invent a remote.
 - **Not a clone / no remote:** the user sets a remote or re-clones from `https://github.com/hgsantana/ai-tools.git`; never invent a URL.
-- **Clone is not at `$HOME/.ai-tools`:** move it there (rule 21). Wrappers hardcode that path; no other location is recoverable by configuration.
+- **Clone is not at `$HOME/.ai-tools`:** move it there (rule 22). Wrappers hardcode that path; no other location is recoverable by configuration.
 - **Agents missing after install/update:** the harness caches agents at startup — fully restart the CLI or IDE, then `verify`.
 - **Dangling links after an upstream rename or layout change:** [Reinstallation](#reinstallation); links are never upgraded in place.
 - **Copied agents out of date:** copies do not track `git pull` — [Update](#update). If a copy predates the locally known previous revision, [Reinstallation](#reinstallation).
