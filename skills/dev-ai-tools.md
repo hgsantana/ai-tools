@@ -78,10 +78,11 @@ Before dispatching a plan, load its base file and every stage and fix file of th
 
 ## Context isolation (token discipline)
 
-When spawning an `implementer-ai-tools`, provide **only**:
+When spawning an `implementer-ai-tools`, the brief must be self-contained — that agent does not load this skill. Provide **only**:
 
 1. Base plan extract: Goal, Execution graph, and stage status row.
 2. The single assigned stage file `dev/<slug>-<n>.md` (or, for decomposed corrections after `R1`, only the specific fix file `dev/<slug>-F<m>.md`).
+3. This skill's *Implementer obligations* and *Subagent report channel*, verbatim.
 
 Implementers must not open other stage files, base plans, or `dev/finished/**`. Keep parent stage files and unassigned fix files out of decomposed fix prompts.
 
@@ -186,7 +187,7 @@ A plan's **set** is its base plan `dev/<slug>.md` plus every `dev/<slug>-*.md` s
 1. Derive a kebab-case `<slug>` from the request. If an existing base plan covers it, run Mode A instead.
 2. Explore paths with `mechanical-ai-tools`.
 3. Write `dev/wip/<slug>-brief.md` (verbatim request, goal, context, paths, typed tests, docs, criteria, commit rules, report format). Open questions that only the user can answer go to the final summary instead of blocking the run.
-4. Create and switch to the brief's branch (*Branch per plan*), then spawn `implementer-ai-tools` on the brief (split into sequential briefs if oversized).
+4. Create and switch to the brief's branch (*Branch per plan*), then spawn `implementer-ai-tools` on the brief (split into sequential briefs if oversized). The spawn brief must include this skill's *Implementer obligations* — that agent does not load this skill.
 5. Validate the diff on completion. Run correction rounds via `dev/wip/<slug>-feedback-<n>.md` (1 + 3 limit).
 6. Commit only after validation, and only if authorized in the brief. On completion, prepare the branch's pull request to the default branch and put it as an approval request — or, without a viable PR host, return the local review request with its patch (*Branch per plan*).
 

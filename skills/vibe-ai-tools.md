@@ -41,13 +41,13 @@ If the answer is no, stop: the story file is the deliverable.
 
 ## Phase 4 — Plan
 
-- Spawn `planner-ai-tools` with the story file **path** (not its content) and instruct it to read `$HOME/.ai-tools/skills/plan-ai-tools.md` from the heading **Workflow** to the end as the absolute rule set. Do not go through the `plan-ai-tools` skill's dispatch offer. If this session cannot spawn agents at all, say so and point the user to the harness's direct agent invocation; never plan or implement inline under this skill.
+- Spawn `planner-ai-tools` with a complete brief: the story file **path** (not its content) plus `$HOME/.ai-tools/skills/plan-ai-tools.md` from the heading **Workflow** to the end. Type rules on the agent base still apply. Do not go through the `plan-ai-tools` skill's dispatch offer. If this session cannot spawn agents at all, say so and point the user to the harness's direct agent invocation; never plan or implement inline under this skill.
 - `planner-ai-tools` returns open questions instead of asking them. **You answer them**: pick the option that best serves the repository's documented purpose, weighing trade-offs, and resume it with the answers. Exception — anything the Security rules reserve for the user (cloud mutations, destructive or shared-state operations, secrets) goes to the user instead; never self-approve those.
 - For every question you decide, append to `dev/vibe/decisions-<slug>.md`: the question, the decision, and the trade-offs considered. Write each entry before acting on it — on disk before the turn ends or the next spawn happens.
 
 ## Phase 5 — Execute
 
-- Spawn `planner-ai-tools` on the finished base plan, instructed to read `$HOME/.ai-tools/skills/dev-ai-tools.md` from the heading **Workflow** to the end (same no-skill-offer rule as Phase 4). It creates the plan's branch, implements, validates, and commits unattended.
+- Spawn `planner-ai-tools` on the finished base plan with a complete brief: the plan path plus `$HOME/.ai-tools/skills/dev-ai-tools.md` from the heading **Workflow** to the end (same no-skill-offer rule as Phase 4). Type rules still apply. It creates the plan's branch, implements, validates, and commits unattended.
 - The gate's yes already covers pushing the plan's branch and opening its pull request: when that run returns that approval request, re-dispatch it with the approval. Every other approval request it returns — cloud mutations, destructive or shared-state operations — goes to the user; approval never carries over.
 - Decisions made during execution (correction strategy, `E`-stage remediation you can resolve within the confirmed scope, and the archival question a plan left with an `E` returns) are logged to the decisions file like Phase 4 decisions: this delivery promised no further checkpoints, so you decide them and record the reasoning. What you cannot resolve within that scope goes into the final report.
 
