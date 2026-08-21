@@ -123,8 +123,8 @@ EOF
         ;;
       --modified-copy)
         mkdir -p "$home/.claude/agents" || fatal "t_fixture: cannot create $home/.claude/agents"
-        T_MODIFIED_COPY_PATH="$home/.claude/agents/maintainer-ai-tools.md"
-        cp "$home/.ai-tools/agents/claude-code/maintainer-ai-tools.md" "$T_MODIFIED_COPY_PATH" \
+        T_MODIFIED_COPY_PATH="$home/.claude/agents/implementer-ai-tools.md"
+        cp "$home/.ai-tools/agents/claude-code/implementer-ai-tools.md" "$T_MODIFIED_COPY_PATH" \
           || fatal "t_fixture: cannot stage modified copy"
         printf '\nlocal edit that matches no revision\n' >> "$T_MODIFIED_COPY_PATH"
         ;;
@@ -145,7 +145,7 @@ TOML
       --external-symlink)
         mkdir -p "$home/.claude/agents" || fatal "t_fixture: cannot create $home/.claude/agents"
         printf 'outside ai-tools\n' > "$root/external-file.md"
-        T_EXTERNAL_SYMLINK_PATH="$home/.claude/agents/orchestrator-ai-tools.md"
+        T_EXTERNAL_SYMLINK_PATH="$home/.claude/agents/implementer-ai-tools.md"
         ln -s "$root/external-file.md" "$T_EXTERNAL_SYMLINK_PATH" \
           || fatal "t_fixture: cannot create external-symlink fixture"
         ;;
@@ -384,7 +384,7 @@ t_origin_commit() {
   # usage: t_origin_commit <label>
   # Clones the fixture's bare origin (T_ROOT/origin.git) into a scratch dir,
   # makes one deterministic change — appends a marker line to
-  # agents/claude-code/maintainer-ai-tools.md and adds a new
+  # agents/claude-code/implementer-ai-tools.md and adds a new
   # skills/<label>-ai-tools/SKILL.md wrapper plus its skills/<label>-ai-tools.md
   # base (the three-part layout the repo actually ships; verify_install warns
   # on a wrapper with no base) — commits, and pushes to master, giving the
@@ -403,7 +403,7 @@ t_origin_commit() {
     || fatal "t_origin_commit: git config user.email failed"
 
   printf '\n<!-- t_origin_commit marker: %s -->\n' "$label" \
-    >> "$scratch/agents/claude-code/maintainer-ai-tools.md" \
+    >> "$scratch/agents/claude-code/implementer-ai-tools.md" \
     || fatal "t_origin_commit: cannot append marker to wrapper"
 
   mkdir -p "$scratch/skills/$label-ai-tools" \

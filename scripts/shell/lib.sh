@@ -367,6 +367,26 @@ GROK_TOML="$HOME/.grok/config.toml"
 GROK_BEGIN="# >>> ai-tools managed subagent models — do not edit inside this block"
 GROK_END="# <<< ai-tools managed subagent models"
 
+category_for() {
+  # usage: category_for <agent-name>
+  # Role the base claims via "You are the **<planner|implementer|mechanical>**".
+  # Used at install/lint to pin wrappers from MODELS.md — never at dispatch.
+  # Falls back to planner when the base cites none.
+  local f="$AI_TOOLS/agents/$1.md" cat
+  [ -f "$f" ] || return 1
+  cat=$(awk '
+    match($0, /You are the \*\*(planner|implementer|mechanical)\*\*/) {
+      s = substr($0, RSTART, RLENGTH)
+      sub(/You are the \*\*/, "", s)
+      sub(/\*\*.*/, "", s)
+      print s
+      exit
+    }
+  ' "$f")
+  [ -n "$cat" ] || cat=planner
+  printf '%s\n' "$cat"
+}
+
 model_for() {
   # usage: model_for <harness key> <planner|implementer|mechanical>
   # Reads MODELS.md, the single source of model names (README rules 11-12).
@@ -394,19 +414,15 @@ model_for() {
 }
 
 grok_models_toml() {
-  # Names from the tree; models from MODELS.md, row `grok`:
-  # every shipped agent runs as planner, except maintainer-ai-tools (implementer).
-  local f name model planner implementer
-  planner=$(model_for grok planner) || return 1
-  implementer=$(model_for grok implementer) || return 1
+  # Names from the tree; models from MODELS.md, row `grok`, via the
+  # category each base claims (category_for).
+  local f name cat model
   echo "[subagents.models]"
   for f in "$AI_TOOLS/agents"/*-ai-tools.md; do
     [ -f "$f" ] || continue
     name=$(basename "$f" .md)
-    case "$name" in
-      maintainer-ai-tools) model="$implementer" ;;
-      *)                   model="$planner" ;;
-    esac
+    cat=$(category_for "$name") || return 1
+    model=$(model_for grok "$cat") || return 1
     printf '%s = "%s"\n' "$name" "$model"
   done
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ai-tools rule linter — a development check, not an installation process
-# (outside the contract of README rules 23-25). Enforces this repository's
+# (outside the contract of README rules 24-26). Enforces this repository's
 # mechanically verifiable rules against the tree it runs in.
 #
 # Usage: tools/lint.sh [--help] [--base <ref>]
@@ -21,7 +21,7 @@ usage: lint.sh [--help] [--base <ref>]
 
 Development check: enforces this repository's mechanically verifiable rules
 against the tree lint.sh runs in. Not an installation process (README rules
-23-25); introduces no new dependency beyond git, grep, awk, sed, wc, tr.
+24-26); introduces no new dependency beyond git, grep, awk, sed, wc, tr.
 
 Checks:
   wrapper coverage  every agent has exactly one wrapper per harness, with
@@ -38,10 +38,11 @@ Checks:
                     characters, frontmatter included (rule 7)
   skill description cap every skill description is at most 500 characters,
                     folded block included (rule 9)
-  skill layout      skills/SKILL-CONTRACT.md exists; every skill directory
-                    has a skills/<name>.md base and vice versa (rule 7)
+  skill layout      skills/SKILL-CONTRACT.md and skills/MAINTAINER.md exist;
+                    every skill directory has a skills/<name>.md base and
+                    vice versa (rule 7)
   wrapper body      every wrapper body is exactly the canonical text
-                    reconstructed from its harness key and agent name (rule 6)
+                    reconstructed from the agent name (rule 6)
   model parity      every wrapper's pinned model matches MODELS.md via
                     model_for; Grok wrappers declare no model: (rules 11-12)
   effort pinning    the wrapper pins the MODELS.md cell's effort where its
@@ -52,9 +53,9 @@ Checks:
   wrapper cap       every agents/<harness>/* file is at most 1000 characters,
                     frontmatter included (rule 6)
   line endings      git ls-files --eol matches the declared eol= attribute:
-                    lf for scripts/shell and tools (rule 26)
+                    lf for scripts/shell and tools (rule 27)
   executable bits   scripts/shell/*.sh, tools/lint.sh, tools/test.sh,
-                    and tools/*.sh are mode 100755 (rule 26)
+                    and tools/*.sh are mode 100755 (rule 27)
   no binaries       every tracked file under agents/, skills/, scripts/, and
                     tools/ is text
   version bump      CI-only, needs --base <ref> (skipped without it): when
@@ -300,8 +301,7 @@ check_skill_name_match() {
 
 # --- Check: skill wrapper body, caps, and base coverage (rules 7, 9) ---------
 # Never hard-code a skill or agent name here — agent-backed status is read
-# from each skill base's own declaration, never a fixed list (same principle
-# as base_has_category).
+# from each skill base's own declaration, never a fixed list.
 
 skill_has_agent_base() {
   # usage: skill_has_agent_base <skill-name> -- true when skills/<name>.md
@@ -325,7 +325,7 @@ canonical_skill_body() {
   if [ "$hasagent" = 1 ]; then
     # shellcheck disable=SC2016 # $HOME must stay literal — expanding it is the bug this check catches
     printf 'You are running an agent-backed skill: your shared contract is `$HOME/.ai-tools/skills/SKILL-CONTRACT.md`.\n'
-    printf 'Read it and follow it — it governs the model check, the route offer, and the route mechanics.\n\n'
+    printf 'Read it and follow it — it governs the route offer and dispatch.\n\n'
     # shellcheck disable=SC2016 # $HOME must stay literal — expanding it is the bug this check catches
     printf 'Your base file is `$HOME/.ai-tools/skills/%s.md`.\n' "$name"
     printf 'Read it and follow it in full — it is the absolute rule set for this skill; the contract above governs only the mechanics it names.\n'
@@ -422,6 +422,9 @@ check_skill_base_coverage() {
   f="$AI_TOOLS/skills/SKILL-CONTRACT.md"
   if [ -f "$f" ]; then ok "skill contract present: $f"
   else warn "missing: $f"; fi
+  f="$AI_TOOLS/skills/MAINTAINER.md"
+  if [ -f "$f" ]; then ok "maintainer workflow present: $f"
+  else warn "missing: $f"; fi
 
   for d in "$AI_TOOLS"/skills/*-ai-tools/; do
     [ -d "$d" ] || continue
@@ -435,6 +438,7 @@ check_skill_base_coverage() {
     [ -f "$f" ] || continue
     name=$(basename "$f" .md)
     [ "$name" = SKILL-CONTRACT ] && continue
+    [ "$name" = MAINTAINER ] && continue
     if [ -d "$AI_TOOLS/skills/$name" ]; then
       ok "skill base has directory: $f"
     else
@@ -447,32 +451,14 @@ check_skill_base_coverage() {
 # Never hard-code a vendor model name here — every expected model is resolved
 # through model_for, reading MODELS.md in place.
 
-category_for() {
-  # usage: category_for <agent-name> -- every shipped agent runs as planner
-  # except maintainer-ai-tools, which runs as implementer (README rule 6).
-  case "$1" in
-    maintainer-ai-tools) echo implementer ;;
-    *)                   echo planner ;;
-  esac
-}
-
-base_has_category() {
-  # usage: base_has_category <agent-name> -- true when its base file cites
-  # one of the three category names (never a hard-coded agent list).
-  grep -qE '\*\*(planner|implementer|mechanical)\*\*' "$AI_TOOLS/agents/$1.md" 2>/dev/null
-}
-
 canonical_body() {
-  # usage: canonical_body <harness-key> <agent-name> <has-category 0|1>
+  # usage: canonical_body <agent-name>
   # Reconstructs the exact wrapper body text (README, "Model map and wrapper
   # authoring"). A regex would accept the drift this check exists to reject.
-  local h="$1" a="$2" hascat="$3"
+  # The pin lives in the header; the body never names MODELS.md or a harness row.
+  local a="$1"
   # shellcheck disable=SC2016 # $HOME/%USERPROFILE% must stay literal — expanding them is the bug this check catches
   printf 'On Windows, %%USERPROFILE%% replaces $HOME.\n\n'
-  if [ "$hascat" = 1 ]; then
-    # shellcheck disable=SC2016 # $HOME must stay literal — expanding it is the bug this check catches
-    printf 'Category → model comes from `$HOME/.ai-tools/MODELS.md`, row `%s`. Resolve every category through it — your own and any you spawn; never assume a model name.\n\n' "$h"
-  fi
   # shellcheck disable=SC2016 # $HOME must stay literal — expanding it is the bug this check catches
   printf 'You are a spawned subagent: your shared contract is `$HOME/.ai-tools/agents/SUBAGENT-CONTRACT.md`.\n'
   printf 'Read it and follow it — it governs your channel to the user and your report.\n\n'
@@ -503,9 +489,9 @@ wrapper_body_toml() {
 }
 
 check_wrapper_body() {
-  local a h f ext hascat actual expected
+  local a h f ext actual expected
   for a in $(agent_names); do
-    if base_has_category "$a"; then hascat=1; else hascat=0; fi
+    expected=$(canonical_body "$a")
     for h in $(harnesses); do
       f=$(wrapper_path "$h" "$a")
       [ -f "$f" ] || continue
@@ -515,7 +501,6 @@ check_wrapper_body() {
       else
         actual=$(wrapper_body_md "$f")
       fi
-      expected=$(canonical_body "$h" "$a" "$hascat")
       if [ "$actual" = "$expected" ]; then
         ok "wrapper body matches canonical text: $f"
       else
@@ -553,6 +538,7 @@ model_effort_for() {
 }
 
 check_model_parity() {
+  # category_for lives in scripts/shell/lib.sh — the category the base claims.
   local h a f val expected cat
   for h in $(harnesses); do
     for a in $(agent_names); do
@@ -715,7 +701,7 @@ check_wrapper_cap() {
 
 check_line_endings() {
   # Reads git's own .gitattributes resolution via `ls-files --eol` rather
-  # than reimplementing it (rule 26): index side must be lf, working-tree
+  # than reimplementing it (rule 27): index side must be lf, working-tree
   # side and the declared attribute must match the expected style per path.
   local line path fields idx work attr expected
   while IFS= read -r line; do

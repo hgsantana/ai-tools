@@ -3,7 +3,7 @@
 # and write a CSV of table (and Codex ModelDetails) rows.
 # Deterministic given the same markdown: one GET per URL, python3 stdlib only.
 # HTML SPAs are not a source — they omit the tables. Not an installation
-# process (README rules 23-25).
+# process (README rules 24-26).
 #
 # usage: harness-models.sh [--help] [--dry-run] [--output-dir DIR] [--input-dir DIR]
 set -u

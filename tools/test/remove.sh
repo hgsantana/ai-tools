@@ -1,5 +1,5 @@
 # shellcheck shell=bash
-# remove.sh — proves README rules 18-20, 22, 25 against scripts/shell/remove.sh:
+# remove.sh — proves README rules 19-21, 23, 26 against scripts/shell/remove.sh:
 # unlink only what ai-tools created, keep locally modified copies, never touch
 # a foreign file or a symlink pointing elsewhere, gate --instructions and
 # --purge, sweep stale links without crossing outside $AI_TOOLS, and never
@@ -8,9 +8,9 @@
 # Every case installs first (via t_run on install.sh) unless noted otherwise,
 # so removal has something real to act on.
 #
-# Note on exit codes: SKIP (rule 20's "skip and report") does not itself
+# Note on exit codes: SKIP (rule 21's "skip and report") does not itself
 # raise the exit code — only WARN does (scripts/shell/lib.sh: finish() exits
-# 2 only when $WARN > 0; see README rule 25, "2 finished with warnings").
+# 2 only when $WARN > 0; see README rule 26, "2 finished with warnings").
 # Several cases below observed exit 0 where an earlier draft of this file
 # (mirroring the base plan's prose) expected exit 2 for a skip-only run; the
 # assertions here follow the observed, README-consistent behaviour and this
@@ -41,7 +41,7 @@ case_remove_unlinks_what_install_linked() {
   t_assert_exit 0
   t_assert_line "removed link:"
   t_assert_absent "$root/home/.claude/agents/planner-ai-tools.md"
-  t_assert_absent "$root/home/.claude/skills/planner-ai-tools"
+  t_assert_absent "$root/home/.claude/skills/plan-ai-tools"
   if [ -e "$root/home/.claude/CLAUDE.md" ] || [ -L "$root/home/.claude/CLAUDE.md" ]; then
     ok "$T_CASE: instructions still present (no --instructions): $root/home/.claude/CLAUDE.md"
   else
@@ -119,7 +119,7 @@ case_remove_external_symlink_kept() {
 
   extdir=$(mktemp -d "${TMPDIR:-/tmp}/t-remove-external-XXXXXX") || fatal "$T_CASE: mktemp -d failed"
   printf 'outside ai-tools\n' > "$extdir/external-file.md"
-  dest="$root/home/.claude/agents/orchestrator-ai-tools.md"
+  dest="$root/home/.claude/agents/implementer-ai-tools.md"
   rm -f "$dest"
   ln -s "$extdir/external-file.md" "$dest" || fatal "$T_CASE: cannot stage external symlink"
 
