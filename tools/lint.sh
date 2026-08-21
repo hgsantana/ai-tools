@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ai-tools rule linter — a development check, not an installation process
-# (outside the contract of README rules 24-26). Enforces this repository's
+# (outside the contract of README rules 25-27). Enforces this repository's
 # mechanically verifiable rules against the tree it runs in.
 #
 # Usage: tools/lint.sh [--help] [--base <ref>]
@@ -27,7 +27,7 @@ Checks:
   wrapper coverage  every agent has exactly one wrapper per harness, with
                     that harness's extension; no orphan wrapper (rule 5)
   naming            every agent base file, wrapper, skills/*/ directory, and
-                    frontmatter name: ends in -ai-tools (rule 13)
+                    frontmatter name: ends in -ai-tools (rule 14)
   skill frontmatter every skills/*/SKILL.md exists with frontmatter keys a
                     subset of name, description, argument-hint (rule 9)
   skill name match  skills/<x>/SKILL.md declares name: <x>
@@ -53,9 +53,9 @@ Checks:
   wrapper cap       every agents/<harness>/* file is at most 1000 characters,
                     frontmatter included (rule 6)
   line endings      git ls-files --eol matches the declared eol= attribute:
-                    lf for scripts/shell and tools (rule 27)
+                    lf for scripts/shell and tools (rule 28)
   executable bits   scripts/shell/*.sh, tools/lint.sh, tools/test.sh,
-                    and tools/*.sh are mode 100755 (rule 27)
+                    and tools/*.sh are mode 100755 (rule 28)
   no binaries       every tracked file under agents/, skills/, scripts/, and
                     tools/ is text
   version bump      CI-only, needs --base <ref> (skipped without it): when
@@ -199,7 +199,7 @@ check_wrapper_coverage() {
   done
 }
 
-# --- Check: naming (rule 13) --------------------------------------------------
+# --- Check: naming (rule 14) --------------------------------------------------
 
 check_naming() {
   local f b h ext d name val
@@ -701,7 +701,7 @@ check_wrapper_cap() {
 
 check_line_endings() {
   # Reads git's own .gitattributes resolution via `ls-files --eol` rather
-  # than reimplementing it (rule 27): index side must be lf, working-tree
+  # than reimplementing it (rule 28): index side must be lf, working-tree
   # side and the declared attribute must match the expected style per path.
   local line path fields idx work attr expected
   while IFS= read -r line; do
