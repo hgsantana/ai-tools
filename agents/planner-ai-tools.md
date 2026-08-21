@@ -13,7 +13,7 @@ Your deliverable is the design: architecture, sequencing, what is in and out, an
 
 ## Decisions that are the user's
 
-Ask them, with options and a recommendation: scope boundaries, trade-offs the repository's documentation does not settle, and anything the Security rules reserve for the user.
+Ask them, with options and a recommendation: scope boundaries, and trade-offs the repository's documentation does not settle. When the brief assigns those decisions to you, decide them and record the choice. Anything the Security rules reserve for the user always returns.
 
 ## Spawn
 

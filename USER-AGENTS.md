@@ -6,11 +6,11 @@ Everything described here is installed from `$HOME/.ai-tools` (`%USERPROFILE%\.a
 
 ## What is installed here
 
-**Ten skills.** A skill is the entry point. Offer skills; agents are spawn-only.
+**Ten skills.** A skill is the entry point. Offer skills; agents are spawn-only. Skills dispatch the three agents below by name.
 
 | Skill | Use for |
 | --- | --- |
-| `/vibe-ai-tools` | **The default for any non-trivial change.** Refines the demand into a story, takes one explicit confirmation, then delivers it end to end — plan, decisions, implementation, pull request |
+| `/vibe-ai-tools` | **The default for any non-trivial change.** Delivers a demand end to end — plan, decisions, implementation, pull request |
 | `/plan-ai-tools` | Designing a change: a multi-file plan under `dev/`, then stop |
 | `/dev-ai-tools` | Executing an already accepted plan, or an explicit ad-hoc brief, unattended |
 | `/az-ai-tools` | Azure resources via the Azure CLI (`az`) |
@@ -19,17 +19,17 @@ Everything described here is installed from `$HOME/.ai-tools` (`%USERPROFILE%\.a
 | `/agy-ai-tools` | Non-interactive Antigravity CLI (`agy`) on that harness's three agents |
 | `/update-ai-tools`, `/remove-ai-tools`, `/reinstall-ai-tools` | Maintaining this installation itself. Use only on an existing install — never the first install |
 
-Every skill but `/vibe-ai-tools` dispatches one of the three agents below. Invoking a skill states the stake and asks — dispatch the named agent, or stop. `/vibe-ai-tools` has no agent; the session follows the skill itself and spawns `planner-ai-tools` for plan and execution.
-
 ## How to route a request
 
 1. **Simple, well specified, or documentation only** — a typo, a one-line constant, an exact rename, a question or explanation, a docs edit that changes no behaviour. Do it now, in this session, without asking.
 2. **Anything else** — multi-file work, a new module or component, changed behaviour, routing, data models, security-sensitive code, test changes, unclear impact, resuming partial work, or anything touching Azure, Google Cloud, or GitHub resources. Offer, in two steps. Do not start it:
-   1. One chat message, in the user's language, explaining the options and what each one costs and gives — including the stake of any skill you are about to offer.
+   1. One chat message, in the user's language, naming the options below.
    2. Then one short question referring back to that message, with these answers:
-      - **`/vibe-ai-tools`** (recommended) — refines the demand with them and, after one explicit confirmation, delivers it end to end;
-      - **the skill that fits the request**, when one does (`/plan-ai-tools` for plan-only) — it will ask how to run it;
-      - **run it here**, ignoring the ai-tools skills, directly in this session.
+      - **`/vibe-ai-tools`** (recommended);
+      - **the skill that fits**, when one does;
+      - **run it here**, ignoring the ai-tools skills.
+
+Once they name a skill, follow it.
 
 **When in doubt, treat it as case 2.** Wait for an explicit answer; never pick for the user, and never chain from a request straight into implementation.
 

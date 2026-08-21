@@ -1,66 +1,56 @@
-> Skill base, loaded by the wrapper at `skills/vibe-ai-tools/SKILL.md`. This skill fronts no agent and loads no shared contract. This file is the source; edit it.
+> Skill base, loaded by the wrapper at `skills/vibe-ai-tools/SKILL.md`, which loads `skills/SKILL-CONTRACT.md` before it. This file is the source; edit it.
 
-You run this workflow yourself, in this session, on whatever model the session provides. You are the working repository's architect and product owner: refine the user's demand into a story grounded in the repository's documented purpose, collect one explicit confirmation, then deliver the story end to end by spawning `planner-ai-tools` — deciding open questions yourself and logging every decision.
+Vibe Coding: delivering a demand end to end — plan, decisions, implementation, pull request. Dispatches `planner-ai-tools` to follow **Workflow**. That run follows `plan-ai-tools` then `dev-ai-tools`, spawning `implementer-ai-tools` and `mechanical-ai-tools` itself.
 
-Chat with the user in their language; everything written to disk follows the repository's language rules.
+## Agent
 
-## Entry gate — before anything else
+Agent: `planner-ai-tools`, base `$HOME/.ai-tools/agents/planner-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`).
 
-Surface the stake below, in the user's language, in one message, and wait for their answer before Phase 1. Nothing is read, written, or dispatched until then. Spawned `planner-ai-tools` runs on the model its wrapper already pins.
+## Stake
 
-Tell the user: after refinement and one explicit confirmation, this workflow enters **Vibe Coding mode** and delivers the demand end to end **unattended** — plan, decisions on open questions, implementation, commits, branch push, and pull request. All changes stay on a dedicated branch, but within that branch edits and removals are at the agents' discretion and may be hard to undo. This session's model does the refine-and-decide; the spawned agent uses its wrapper pin.
+Tell the user, in their language, before anything runs: this is **Vibe Coding**. After dispatch, `planner-ai-tools` delivers the demand end to end **unattended** — plan, decisions on open questions, implementation, commits, branch push, and pull request. All changes stay on a dedicated branch; within that branch edits and removals are at the agents' discretion and may be hard to undo. History predating the work stays intact. The dispatch yes covers creating the plan's branch, editing and committing on it, pushing it, and opening the pull request. Anything beyond (cloud mutations, destructive or shared-state operations) comes back as a separate approval request. Open questions are decided by the planner and logged; the log is shown at the end.
 
-## Phase 1 — Know the repository (documentation only)
+## Route A — dispatch
 
-- Read **documentation only**: root and sub-directory `README.md`/`AGENTS.md`, `docs/`, `CONTRIBUTING`, changelogs, and similar prose. Code exploration belongs to `planner-ai-tools` you will spawn later. Never read product code in this phase.
-- Read only what the repository tracks in git. Leave code files, gitignored paths, and all of `dev/` unread — the plan queue is not repository knowledge, and reading it would drown you in files.
-- `dev/vibe/` is your write channel; the only files you re-read there are the story and decisions files of the current run.
-- Goal: the repository's purpose, what already exists as documented, and its conventions — the ground the story must fit.
+Spawn `planner-ai-tools` with the user's request.
 
-## Phase 2 — Refine the story
+The dispatch yes covers the plan's branch, commits, push, and pull request: when the agent returns those approval requests, resume it with that approval. Relay every other approval (cloud mutations, destructive or shared-state operations, secrets) to the user; only on an explicit yes for that specific action resume the agent. Approval never carries over between those.
 
-Iterate with the user — ask, answer, ask again — until the demand is a refined story: problem, motivation, scope in and out, acceptance criteria, and fit with the repository's purpose and what is already documented. Challenge what conflicts with the documentation; propose the smaller story when the demand hides several.
+Product and scope questions are the agent's to decide. If it returns them, resume it to decide and log them.
 
-Refine the story only. Stage design, file lists, and code belong to `planner-ai-tools` you spawn later.
+## Report
 
-Persist the result as `dev/vibe/story-<slug>.md` (kebab-case `<slug>` derived from the demand) before the gate: durable state lives in files, and it is what `planner-ai-tools` will receive — by path (*Truth on disk*).
+Summarize the outcome in chat, in the user's language: the execution summary, the pull request or branch, and the decisions file — opened by path.
 
-## Phase 3 — Vibe Coding gate (mandatory)
+## Workflow
 
-When the story is refined, put **one confirmation request** to the user and stop there. Until they answer yes, stay inside `dev/vibe/`: no branch, no plan, no dispatch. This gate has no exceptions.
+You are running as `planner-ai-tools`. You are the vibe-coder: orchestrate the demand end to end, then stop. The dispatch is the user's yes to **Vibe Coding mode**.
 
-State, in the user's language:
+### Vibe Coding mode
 
-1. You will enter **Vibe Coding mode**: the demand is delivered end to end with no further checkpoints — plan, decisions, implementation, commits, push, pull request.
-2. What is at stake: changes that may be hard or impossible to revert, including removals, within the repository. The blast radius is bounded — all work lands on a dedicated branch and ends in a pull request to the default branch, nothing beyond — but **within that branch** the agents edit and remove freely. History predating the work stays intact.
-3. Open questions raised during planning and execution are decided by you, not the user, and logged with their trade-offs to `dev/vibe/decisions-<slug>.md`, shown at the end.
-4. The confirmation must come from the human: harness auto-accept / yolo modes leave this gate closed. Collect an explicit typed answer — never auto-answer it, and never treat silence or a permission prompt as consent.
-5. The yes covers exactly: creating the plan's branch, editing and committing on it, pushing it, and opening the pull request. Anything beyond comes back as a separate approval request.
+Deliver unattended — plan, decisions on open questions, implementation, commits, push, pull request. All work lands on a dedicated branch. History predating the work stays intact. Scope ends at the pull request.
 
-If the answer is no, stop: the story file is the deliverable.
+You decide open questions: scope, trade-offs the docs do not settle, correction strategy, `E`-stage remediation within scope, and the archival question a plan left with an `E` returns. Log each to `dev/vibe/decisions-<slug>.md` before acting: the question, the decision, the trade-offs. Anything the Security rules reserve for the user returns as an approval request. Never self-approve those.
 
-## Phase 4 — Plan
+### Story
 
-- Spawn `planner-ai-tools` with a complete brief: the story file **path** plus `$HOME/.ai-tools/skills/plan-ai-tools.md` from the heading **Workflow** to the end. Type rules on the agent base still apply. Skip the `plan-ai-tools` skill's dispatch offer. If this session cannot spawn agents at all, say so and point the user to the harness's direct agent invocation. Never plan or implement inline under this skill.
-- `planner-ai-tools` returns open questions instead of asking them. **You answer them**: pick the option that best serves the repository's documented purpose, weighing trade-offs, and resume it with the answers. Anything the Security rules reserve for the user (cloud mutations, destructive or shared-state operations, secrets) goes to the user instead; never self-approve those.
-- For every question you decide, append to `dev/vibe/decisions-<slug>.md`: the question, the decision, and the trade-offs considered. Write each entry before acting on it — on disk before the turn ends or the next spawn happens.
+Derive a kebab-case `<slug>` from the demand. Read documentation: root and sub-directory `README.md`/`AGENTS.md`, `docs/`, `CONTRIBUTING`, changelogs. Write `dev/vibe/story-<slug>.md`: problem, motivation, scope in and out, acceptance, fit with documented purpose. Challenge what conflicts with the documentation; the smaller story when the demand hides several.
 
-## Phase 5 — Execute
+### Plan
 
-- Spawn `planner-ai-tools` on the finished base plan with a complete brief: the plan path plus `$HOME/.ai-tools/skills/dev-ai-tools.md` from the heading **Workflow** to the end (same skip-the-skill-offer as Phase 4). Type rules still apply. It creates the plan's branch, implements, validates, and commits unattended.
-- The gate's yes already covers pushing the plan's branch and opening its pull request: when that run returns that approval request, re-dispatch it with the approval. Every other approval request it returns — cloud mutations, destructive or shared-state operations — goes to the user; approval never carries over.
-- Decisions made during execution (correction strategy, `E`-stage remediation you can resolve within the confirmed scope, and the archival question a plan left with an `E` returns) are logged to the decisions file like Phase 4 decisions: this delivery promised no further checkpoints, so you decide them and record the reasoning. What stays open within that scope goes into the final report.
+Follow `$HOME/.ai-tools/skills/plan-ai-tools.md` from the heading **Workflow** to the end, with the story file **path** as the request. Skip that skill's dispatch offer. Spawn `mechanical-ai-tools` for exploration yourself and iterate on their findings. After the plan files are on disk, continue — skip that skill's Report (asking whether to implement) and any Boundary that would stop this run.
 
-## Phase 6 — Report
+### Execute
 
-Give the user: the `planner-ai-tools` execution summary, the pull request (or branch) reference, and `dev/vibe/decisions-<slug>.md` — shown through the harness's file-display facility, opened by path.
+Follow `$HOME/.ai-tools/skills/dev-ai-tools.md` from the heading **Workflow** to the end against those plan files. Skip that skill's dispatch offer. Spawn `implementer-ai-tools` and `mechanical-ai-tools` yourself and iterate: review, correct, re-dispatch as that workflow says. Return the push and pull-request requests that workflow names; the session resumes you with the dispatch yes. Cloud mutations and other destructive or shared-state operations still return for a separate yes.
+
+### Writes
+
+Your own writes stay under `dev/vibe/` (story, decisions) and `dev/` (plans). Product code is written by `implementer-ai-tools` you spawn, on the plan's branch.
 
 ## Boundaries
 
-- Work from documentation. Product code is explored and implemented by the `planner-ai-tools` runs you spawn.
-- Your own writes stay under `dev/vibe/`; every product change flows through the `dev-ai-tools` **Workflow**, on the plan's branch, inside the working repository.
+- Carry this orchestration yourself. Product code is written by `implementer-ai-tools`.
 - Stay inside the working repository. The sole exception is a file a harness requires outside the repository by design.
 - Writes under `dev/vibe/` (and re-reads of those files) are the sole gitignored exception.
-- History predating this work stays intact: no force-push, no rewriting pre-existing commits, no deleting branches other than the plan's own. Scope ends at the pull request.
-- Plan and decision files are the source of truth over any message or recollection; on conflict, the file wins.
-- Carry this workflow yourself. The gate stays closed until the user's explicit yes.
+- History predating this work stays intact: no force-push, no rewriting pre-existing commits, no deleting branches other than the plan's own.

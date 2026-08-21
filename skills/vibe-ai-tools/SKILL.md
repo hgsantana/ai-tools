@@ -1,16 +1,19 @@
 ---
 name: vibe-ai-tools
 description: >
-  Vibe Coding — refine a demand into a story from the repository's documentation, take one
-  explicit confirmation, then deliver it end to end (plan, decisions, implementation, pull
-  request) by spawning planner-ai-tools on the plan and dev skill workflows. Use for
-  /vibe-ai-tools or whenever a demand should be refined and delivered end to end.
-argument-hint: "[the demand to refine and deliver]"
+  Vibe Coding — deliver a demand end to end (plan, decisions, implementation, pull
+  request) by dispatching planner-ai-tools to follow this skill. That run follows
+  plan-ai-tools then dev-ai-tools. Use for /vibe-ai-tools or whenever a demand
+  should be delivered end to end. The default for any non-trivial change.
+argument-hint: "[the demand to deliver]"
 ---
 
 # Vibe Coding
 
-Refining a demand into a story and delivering it end to end by spawning `planner-ai-tools` on the plan and dev skill workflows, in this session, on whatever model it provides.
+Delivering a demand end to end — plan, decisions, implementation, pull request.
+
+You are running an agent-backed skill: your shared contract is `$HOME/.ai-tools/skills/SKILL-CONTRACT.md`.
+Read it and follow it — it governs the route offer and dispatch.
 
 Your base file is `$HOME/.ai-tools/skills/vibe-ai-tools.md`.
-Read it and follow it in full — it is the absolute rule set for this skill.
+Read it and follow it in full — it is the absolute rule set for this skill; the contract above governs only the mechanics it names.
