@@ -59,6 +59,7 @@ Checks:
                     agents/, skills/, scripts/, or USER-AGENTS.md changed
                     since <ref>, the README version line must have changed
                     too (rule 4)
+  dev/tmp untracked git ls-files dev/tmp returns nothing (rule 29)
 
 --base <ref>  commit-ish to diff shipped content against for the version
               bump check. Without it, that check is skipped. The lint
@@ -736,6 +737,18 @@ check_no_binaries() {
   done
 }
 
+# --- Check: dev/tmp untracked (rule 29) ---------------------------------------
+
+check_dev_tmp_untracked() {
+  local tracked
+  tracked=$(git -C "$AI_TOOLS" ls-files dev/tmp)
+  if [ -z "$tracked" ]; then
+    ok "dev/tmp untracked: no tracked files under dev/tmp"
+  else
+    warn "tracked file(s) under dev/tmp (rule 29): $(echo "$tracked" | tr '\n' ' ')"
+  fi
+}
+
 # --- Check: version bump on shipped content change (rule 4) ------------------
 # CI-only: needs --base <ref>, a commit-ish this run diffs against. Without
 # it there is no meaningful base for a dirty local tree, so the check is
@@ -794,6 +807,7 @@ check_wrapper_cap
 check_line_endings
 check_executable_bits
 check_no_binaries
+check_dev_tmp_untracked
 check_version_bump
 
 finish

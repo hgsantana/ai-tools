@@ -82,6 +82,10 @@ Normative for every human and every AI maintaining this repository.
 27. Scripts run to completion: per-item conflicts skip and report. Destructive steps need explicit flags (`--discard-local`, `--instructions`, `--purge`) and default to refuse. Every mutating script supports `--dry-run`. Exit: `0` clean, `1` aborted on a precondition, `2` finished with warnings.
 28. Shell scripts are committed executable; `.gitattributes` pins them to LF.
 
+### Plan state
+
+29. Plans are versioned per directory `dev/<slug>/`. `dev/tmp/` is generated state and is never tracked: ignore rules do not untrack a path already in the index, so archiving a plan is `git mv` plus `git rm -r --cached`, leaving the files on disk and out of version control.
+
 ### Model map and wrapper authoring
 
 [`MODELS.md`](MODELS.md) is an authoring and install lookup: one row per harness, one column per agent role, plus how a human changes the session model. It does not restate the arithmetic below. Family + version, and official effort when the table names it, come from the harness's official **pricing/models** table for individual plans on this agent surface. Measurements come from [Artificial Analysis (AA)](https://artificialanalysis.ai/) **model** pages (Intelligence Index, Cost per Task, Time per Task) — the model itself, not a model-plus-harness run. Cost is AA Cost per Task only. Fetch those inputs with [`tools/harness-models.sh`](tools/harness-models.sh) and [`tools/aa-metrics.sh`](tools/aa-metrics.sh); they write CSVs under `dev/tmp/`. The map judges potential, not a frozen stack.
@@ -166,6 +170,7 @@ Check families:
 - **`MODELS.md` row coverage** — every harness directory has a row and vice versa (rule 12)
 - **size caps** — `USER-AGENTS.md` at most 8,000 characters (rule 3), every wrapper at most 1,000 (rule 6), every skill `description` at most 500 (rule 9)
 - **encodings and endings** — line endings (`git ls-files --eol`), executable bits, no binaries in shipped paths (rule 28)
+- **`dev/tmp` untracked** — `git ls-files dev/tmp` returns nothing (rule 29)
 - **version bump** — only with `--base <ref>`: a change under `agents/`, `skills/`, `scripts/`, or `USER-AGENTS.md` that lands on `master` requires the README version to change too (rule 4)
 
 Exit codes: `0` clean, `1` aborted on a precondition (unknown flag, `--base` without a value), `2` finished with findings. CI (`.github/workflows/ci.yml`) runs two jobs on `ubuntu-latest`: `lint` runs the version-bump check on pull requests and `shellcheck -x -P scripts/shell -P tools/test scripts/shell/*.sh tools/*.sh tools/test/*.sh` on every push and pull request; `test-shell` runs `tools/test.sh`.
