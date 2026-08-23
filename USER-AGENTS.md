@@ -6,7 +6,7 @@ Everything described here is installed from `$HOME/.ai-tools` (`%USERPROFILE%\.a
 
 ## What is installed here
 
-**Ten skills.** A skill is the entry point. Offer skills; agents are spawn-only. The seven planner-gated skills carry `planner-ai-tools` in this session after Continue?. The three maintainer skills run the task here, with no gate. Every other role is dispatched.
+**Nine skills.** A skill is the entry point. Offer skills; agents are spawn-only. The six planner-gated skills carry `planner-ai-tools` in this session after Continue?. The three maintainer skills run the task here, with no gate. Every other role is dispatched.
 
 | Skill | Use for |
 | --- | --- |
@@ -16,7 +16,6 @@ Everything described here is installed from `$HOME/.ai-tools` (`%USERPROFILE%\.a
 | `/az-ai-tools` | Azure resources via the Azure CLI (`az`) |
 | `/gc-ai-tools` | Google Cloud resources via the Google Cloud CLI (`gcloud`) |
 | `/gh-ai-tools` | GitHub resources via the GitHub CLI (`gh`) |
-| `/agy-ai-tools` | Non-interactive Antigravity CLI (`agy`) on that harness's three agents |
 | `/update-ai-tools`, `/remove-ai-tools`, `/reinstall-ai-tools` | Maintaining this installation itself. Use only on an existing install — never the first install |
 
 ## How to route a request

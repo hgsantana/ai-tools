@@ -262,7 +262,7 @@ case_install_antigravity_instructions() {
   t_assert_symlink "$root/home/.gemini/GEMINI.md" "$root/home/.ai-tools"
   t_assert_symlink "$root/home/.gemini/config/agents/planner-ai-tools.md" "$root/home/.ai-tools"
   t_assert_symlink "$root/home/.gemini/config/skills/plan-ai-tools" "$root/home/.ai-tools"
-  t_assert_symlink "$root/home/.gemini/config/skills/agy-ai-tools" "$root/home/.ai-tools"
+  t_assert_symlink "$root/home/.gemini/config/skills/az-ai-tools" "$root/home/.ai-tools"
   t_assert_absent "$root/home/.gemini/agents/planner-ai-tools.md"
   t_assert_absent "$root/home/.gemini/skills/plan-ai-tools"
   t_assert_absent "$root/home/.gemini/skills/planner-ai-tools"
