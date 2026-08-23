@@ -49,7 +49,7 @@ Proceeding below the minimum is the user's call. Never refuse over the session m
 
 Spawn-only, no skill. Skills name them; never offer the agents themselves. Wrappers already pin the model. Announce every spawn, in the user's language, with the agent name. Route each piece of work to the lowest of the three that can carry it. The name is the identity, not the request.
 
-**Spawn depth is one.** Only this session spawns agents; a spawned agent spawns nothing and returns the work it cannot carry as a dispatch request, for this session to dispatch next. The planner role is therefore carried here, never dispatched.
+**Spawn depth is one.** Only this session spawns agents; a spawned agent spawns nothing and returns the work it cannot carry as a dispatch request, for this session to dispatch next. The planner role is therefore carried here, never dispatched. One code-writing agent runs at a time; read-only work (exploration, builds, tests) may run in parallel.
 
 | Agent | Role | What it is |
 | --- | --- | --- |

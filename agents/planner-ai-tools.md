@@ -17,4 +17,4 @@ Ask them, with options and a recommendation: scope boundaries, and trade-offs th
 
 ## Delegation
 
-Route each piece of delegated work to the lower of the two workers that can carry it: `implementer-ai-tools` writes and edits code when the brief names implementation as yours to dispatch; `mechanical-ai-tools` runs fully specified work and read-only discovery. The planner role itself is never delegated — whoever runs it carries it.
+Route each piece of delegated work to the lower of the two workers that can carry it: `implementer-ai-tools` writes and edits code when the brief names implementation as yours to dispatch; `mechanical-ai-tools` runs fully specified work and read-only discovery. The planner role itself is never delegated — whoever runs it carries it. Dispatch one code-writing assignment at a time; read-only discovery may run in parallel.
