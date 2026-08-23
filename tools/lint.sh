@@ -31,11 +31,13 @@ Checks:
   skill frontmatter every skills/*/SKILL.md exists with frontmatter keys a
                     subset of name, description, argument-hint (rule 9)
   skill name match  skills/<x>/SKILL.md declares name: <x>
-  skill description cap every skill description is at most 500 characters,
-                    folded block included (rule 9)
+  skill description every skill description is at most 500 characters,
+                    folded block included, and states what the skill does
+                    then Impact: plus the Stake (rule 9)
   skill layout      no skill-root markdown, every skill directory has
-                    SKILL.md, planner-gated skills have Continue?, maintainer
-                    skills do not, and no mentions of deleted files (rule 7)
+                    SKILL.md, no SKILL.md contains Continue? or Stake,
+                    USER-AGENTS.md has How to route a request and Min. role, and no
+                    mentions of deleted files (rule 7)
   wrapper body      every wrapper body is exactly the canonical text
                     reconstructed from the agent name (rule 6)
   model parity      every wrapper's pinned model matches MODELS.md via
@@ -311,31 +313,24 @@ check_skill_layout() {
     warn "skill-root markdown file must not exist: $f"
   done
 
-  for name in $gated; do
-    f="$AI_TOOLS/skills/$name/SKILL.md"
-    if [ -f "$f" ]; then
-      ok "planner-gated skill present: $f"
-      if grep -q '^## Continue?' "$f"; then
-        ok "planner-gated skill has Continue? heading: $f"
-      else
-        warn "planner-gated skill missing '## Continue?' heading: $f"
-      fi
-    else
-      warn "missing planner-gated skill: $f"
-    fi
-  done
+  f="$AI_TOOLS/USER-AGENTS.md"
+  if grep -q '^## How to route a request' "$f"; then
+    ok "USER-AGENTS.md has How to route a request heading: $f"
+  else
+    warn "USER-AGENTS.md missing '## How to route a request' heading: $f"
+  fi
+  if grep -q 'Min\. role' "$f"; then
+    ok "USER-AGENTS.md has Min. role column: $f"
+  else
+    warn "USER-AGENTS.md missing 'Min. role' column: $f"
+  fi
 
-  for name in $maintainer; do
+  for name in $gated $maintainer; do
     f="$AI_TOOLS/skills/$name/SKILL.md"
     if [ -f "$f" ]; then
-      ok "maintainer skill present: $f"
-      if grep -q '^## Continue?' "$f"; then
-        warn "maintainer skill must not contain Continue? heading: $f"
-      else
-        ok "maintainer skill has no Continue? heading: $f"
-      fi
+      ok "shipped skill present: $f"
     else
-      warn "missing maintainer skill: $f"
+      warn "missing shipped skill: $f"
     fi
   done
 
@@ -344,6 +339,16 @@ check_skill_layout() {
     f="${d}SKILL.md"
     if [ -f "$f" ]; then
       ok "skill directory has SKILL.md: $f"
+      if grep -q '^## Continue?' "$f"; then
+        warn "SKILL.md must not contain Continue? heading: $f"
+      else
+        ok "SKILL.md has no Continue? heading: $f"
+      fi
+      if grep -q '^## Stake' "$f"; then
+        warn "SKILL.md must not contain Stake heading: $f"
+      else
+        ok "SKILL.md has no Stake heading: $f"
+      fi
       if grep -qE 'SKILL-CONTRACT|MAINTAINER\.md' "$f"; then
         warn "SKILL.md mentions deleted contract or maintainer file: $f"
       else
@@ -402,6 +407,33 @@ check_skill_description_cap() {
     if [ "$count" -gt "$max" ]; then max=$count; maxf=$f; fi
   done
   [ -n "$maxf" ] && ok "largest skill description: $maxf ($max/$cap, headroom $((cap - max)))"
+}
+
+check_skill_description_content() {
+  # rule 9: description states (1) what the skill does, then (2) Impact: plus the Stake
+  local d f val before after
+  for d in "$AI_TOOLS"/skills/*-ai-tools/; do
+    [ -d "$d" ] || continue
+    f="${d}SKILL.md"
+    [ -f "$f" ] || continue
+    val=$(yaml_frontmatter_folded_value "$f" description)
+    case "$val" in
+      *"Impact:"*)
+        before=$(printf '%s\n' "$val" | awk '{ sub(/Impact:.*/, ""); gsub(/^[ \t]+|[ \t]+$/, ""); print }')
+        after=$(printf '%s\n' "$val" | awk '{ sub(/.*Impact:/, ""); gsub(/^[ \t]+|[ \t]+$/, ""); print }')
+        if [ -z "$before" ]; then
+          warn "skill description has no what-it-does before Impact: $f"
+        elif [ -z "$after" ]; then
+          warn "skill description Impact has no stake text: $f"
+        else
+          ok "skill description has what + Impact: $f"
+        fi
+        ;;
+      *)
+        warn "skill description missing Impact: (rule 9): $f"
+        ;;
+    esac
+  done
 }
 
 # --- Check: wrapper body and model parity (rules 6, 11-12) --------------------
@@ -751,6 +783,7 @@ check_skill_frontmatter
 check_skill_name_match
 check_skill_layout
 check_skill_description_cap
+check_skill_description_content
 check_wrapper_body
 check_model_parity
 check_effort_pinning

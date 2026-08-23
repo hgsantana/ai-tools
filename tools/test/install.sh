@@ -99,26 +99,20 @@ case_install_symlink_elsewhere_skipped() {
 }
 
 case_install_agents_md_absent() {
-  # Rule 22: $HOME/AGENTS.md is created empty when absent.
+  # Rule 24: $HOME/AGENTS.md is not an install artifact — absent stays absent.
   local root
   t_fixture
   root="$T_ROOT"
 
   t_install "$root" --harnesses claude-code
   t_assert_exit 0
-  t_assert_line "ok: created empty: $root/home/AGENTS.md"
-  t_assert_regular_file "$root/home/AGENTS.md"
-  if [ -s "$root/home/AGENTS.md" ]; then
-    warn "$T_CASE: AGENTS.md is not empty: $root/home/AGENTS.md"
-  else
-    ok "$T_CASE: AGENTS.md is empty: $root/home/AGENTS.md"
-  fi
+  t_assert_absent "$root/home/AGENTS.md"
 
   t_cleanup "$root"
 }
 
 case_install_agents_md_present() {
-  # Rule 22: $HOME/AGENTS.md is user-owned and never touched when present.
+  # Rule 24: $HOME/AGENTS.md is user-owned and never touched when present.
   local root
   t_fixture
   root="$T_ROOT"
@@ -126,7 +120,6 @@ case_install_agents_md_present() {
 
   t_install "$root" --harnesses claude-code
   t_assert_exit 0
-  t_assert_line "ok: already present, untouched: $root/home/AGENTS.md"
   t_assert_content "$root/home/AGENTS.md" "user overrides"
   if [ -L "$root/home/AGENTS.md" ]; then
     warn "$T_CASE: AGENTS.md became a symlink: $root/home/AGENTS.md"

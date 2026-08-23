@@ -1,9 +1,11 @@
 ---
 name: dev-ai-tools
 description: >
-  Run the dev-ai-tools work — execute accepted plans under dev/, or an explicit ad-hoc
-  brief, unattended — carried in this session under the planner-ai-tools role. Use for
-  /dev-ai-tools or after the user accepts a plan.
+  Execute an accepted plan under dev/, or an explicit ad-hoc brief,
+  unattended — carried in this session under the planner-ai-tools role. Use
+  for /dev-ai-tools or after the user accepts a plan. Impact: once started,
+  edits code, runs commands, and creates local commits on a dedicated branch
+  with no checkpoints. Push and pull request wait on a separate yes.
 argument-hint: "[plan paths or brief to execute]"
 ---
 
@@ -11,36 +13,9 @@ argument-hint: "[plan paths or brief to execute]"
 
 Executing accepted plans under `dev/`, or an explicit ad-hoc brief, unattended.
 
-## Continue?
-
-This skill expects this session to be the **planner** (`MODELS.md` planner cell for this harness).
-
-Before anything is read, run, or changed, send **one** short message in the user's language:
-
-1. The stake (**Stake** below).
-2. Whether this session is the planner: read this harness's `planner` cell in `$HOME/.ai-tools/MODELS.md` and compare it with the session model.
-   - They match — this session is the planner. Say so in one line.
-   - They differ, or the session model is undetermined — this session is not the planner. Name the session model, or say it is undetermined, and name how to change the session model in this harness (`MODELS.md` last column).
-3. Then ask: do you want to continue?
-   - a) yes
-   - b) no
-
-Wait for an explicit answer. Never pick for the user.
-
-- **No** (or anything that is not yes) — stop. Nothing is read, run, or changed.
-- **Yes** — this session carries `planner-ai-tools` (base `$HOME/.ai-tools/agents/planner-ai-tools.md`; on Windows `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`) and follows **Workflow**. Announce every spawn in the user's language with the agent name. Spawn depth is one.
-
-Proceeding on a non-planner session is the user's call. This skill never refuses over the session model.
-
-Skip this whole section when another planner-gated skill that already passed Continue? tells you to skip this skill's gate and follow Workflow (today: vibe-ai-tools).
-
-## Stake
-
-Tell the user, in their language, before anything runs: this work edits code, runs commands, and creates local commits **unattended** once started, on a dedicated branch. Offer it only for work they approved — an accepted plan, or an explicit ad-hoc brief; if there is no accepted plan and the work is non-trivial, offer the `plan-ai-tools` skill instead.
-
 ## Workflow
 
-You are carrying the `planner-ai-tools` role in this session. Execute the plans or the ad-hoc request you were given, then stop. Implement only once Continue? has a yes.
+You are carrying the `planner-ai-tools` role in this session. Execute the plans or the ad-hoc request you were given, then stop. Offer this skill only for work they approved — an accepted plan, or an explicit ad-hoc brief; if there is no accepted plan and the work is non-trivial, offer the `plan-ai-tools` skill instead.
 
 ## Unattended by design
 

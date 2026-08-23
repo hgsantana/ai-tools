@@ -322,17 +322,6 @@ install_instructions() {
   return 0
 }
 
-ensure_user_agents_md() {
-  # $HOME/AGENTS.md is user-owned: created empty only when missing, never edited.
-  if [ -e "$HOME/AGENTS.md" ] || [ -L "$HOME/AGENTS.md" ]; then
-    ok "already present, untouched: $HOME/AGENTS.md"
-  elif [ "$DRY_RUN" = 1 ]; then
-    ok "would create empty: $HOME/AGENTS.md"
-  else
-    : > "$HOME/AGENTS.md" && ok "created empty: $HOME/AGENTS.md"
-  fi
-}
-
 install_agents() {
   # Per file, never per directory — the roots hold agents from other sources.
   local h src root f
@@ -647,9 +636,6 @@ verify_install() {
     if [ -f "$p/SKILL.md" ]; then ok "skill source: $p/SKILL.md"
     else warn "missing skill source: $p/SKILL.md"; fi
   done
-
-  if [ -e "$HOME/AGENTS.md" ]; then ok "user overlay present: $HOME/AGENTS.md"
-  else warn "missing user overlay: $HOME/AGENTS.md"; fi
 
   if [ "$check_instr" = 1 ]; then
     for h in $SCOPE; do

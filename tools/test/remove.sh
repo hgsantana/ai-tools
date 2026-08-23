@@ -266,6 +266,7 @@ case_remove_purge_refuses_without_confirmation() {
   root="$T_ROOT"
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
+  printf 'keep me\n' > "$root/home/AGENTS.md"
 
   t_run_stdin "$root" "no" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code --purge
   t_assert_exit 0
@@ -279,6 +280,7 @@ case_remove_purge_refuses_without_confirmation() {
   if [ ! -d "$root/home/.ai-tools" ]; then ok "$T_CASE: clone deleted by --purge --yes"
   else warn "$T_CASE: clone survived --purge --yes"; fi
   t_assert_regular_file "$root/home/AGENTS.md"
+  t_assert_content "$root/home/AGENTS.md" "keep me"
 
   t_cleanup "$root"
 

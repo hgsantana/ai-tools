@@ -1,40 +1,18 @@
 ---
 name: gh-ai-tools
 description: >
-  Run the gh-ai-tools work — query or manage GitHub via the GitHub CLI (gh) — carried in this session under the planner-ai-tools role. Use for /gh-ai-tools or whenever the user asks about GitHub
-  repositories, pull requests, issues, releases, or workflows, or wants something created, changed,
-  or removed there.
+  Query or manage GitHub via the GitHub CLI (gh). Use for /gh-ai-tools or
+  GitHub
+  repositories, pull requests, issues, releases, or workflows. Impact:
+  mutations can merge, close, comment, push, and delete — visible to others
+  immediately and often irreversible. Reads run freely; each mutation needs
+  an explicit yes for that action.
 argument-hint: "[what to inspect or change on GitHub]"
 ---
 
 # GitHub
 
 Issues, pull requests, checks, releases, and repositories through the GitHub CLI (`gh`).
-
-## Continue?
-
-This skill expects this session to be the **planner** (`MODELS.md` planner cell for this harness).
-
-Before anything is read, run, or changed, send **one** short message in the user's language:
-
-1. The stake (**Stake** below).
-2. Whether this session is the planner: read this harness's `planner` cell in `$HOME/.ai-tools/MODELS.md` and compare it with the session model.
-   - They match — this session is the planner. Say so in one line.
-   - They differ, or the session model is undetermined — this session is not the planner. Name the session model, or say it is undetermined, and name how to change the session model in this harness (`MODELS.md` last column).
-3. Then ask: do you want to continue?
-   - a) yes
-   - b) no
-
-Wait for an explicit answer. Never pick for the user.
-
-- **No** (or anything that is not yes) — stop. Nothing is read, run, or changed.
-- **Yes** — this session carries `planner-ai-tools` (base `$HOME/.ai-tools/agents/planner-ai-tools.md`; on Windows `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`) and follows **Workflow**. Announce every spawn in the user's language with the agent name. Spawn depth is one.
-
-Proceeding on a non-planner session is the user's call. This skill never refuses over the session model.
-
-## Stake
-
-Tell the user, in their language, before anything runs: this work touches GitHub, where actions can merge, close, comment, push, and delete — visible to other people immediately and often irreversible. A mutation runs only after their explicit approval for that specific action.
 
 ## Workflow
 
