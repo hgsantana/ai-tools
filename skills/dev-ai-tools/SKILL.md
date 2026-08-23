@@ -37,13 +37,13 @@ Anything requiring approval — a cloud mutation, a destructive or shared-state 
 All implementation happens on a dedicated branch. Leave the default branch untouched:
 
 - Before a base plan's first dispatch, create its branch from the default branch (`git symbolic-ref --short refs/remotes/origin/HEAD`, falling back to `main`/`master`, or to the current branch when there is no remote): `plan/<slug>`. Every stage, fix, and commit of that plan lands on this branch.
-- One branch per base plan: with several open plans, each gets its own branch cut from the default branch. Switch to a plan's branch before running any of its waves.
+- One branch per base plan: with several open plans, each gets its own branch cut from the default branch. Switch to a plan's branch before running any of its stages.
 - A reentered plan (*Plan archival*) reuses its existing `plan/<slug>` branch, which carries the work already accepted; cut a new one only when it is absent.
 - Mode B: same rule per brief — create `plan/<slug>` before spawning `implementer-ai-tools`.
 - When a plan's stages all reach `F`/`E`, prepare its pull request to the default branch: draft the PR title and body from the accepted stages. Pushing the branch and opening the PR follow *Unattended by design* — they travel with the final summary as one approval request per plan (branch, target, drafted title/body, command) and execute only on that explicit approval.
 - **Local review fallback.** At branch creation, determine whether a PR is viable — a remote exists and its host supports pull requests (for GitHub, `gh auth status` plus a GitHub remote) — and record the plan's review mode. When it is not viable, the completed plan returns a **local review request** instead of a PR request: branch name, base, the `git diff --stat` summary, and the path of a review patch.
 - Generate the patch with `git diff <default>...<branch> --output=dev/tmp/<slug>-review.patch` — git writes the file directly. Verify it only via `--stat` or `wc -l`. Opening diffs in an editor is the user's concern, not yours: you produce only universal artifacts (branch, patch, stat). Never produce the patch with a file-writing tool, and leave its content on disk.
-- Rationale: plans stay isolated and parallelizable, an unwanted plan is discarded by deleting its branch, and each plan is reviewed as a single PR — or as a branch plus patch when no PR host is available.
+- Rationale: plans stay isolated, an unwanted plan is discarded by deleting its branch, and each plan is reviewed as a single PR — or as a branch plus patch when no PR host is available.
 
 ## Division of labor
 
@@ -55,6 +55,8 @@ All implementation happens on a dedicated branch. Leave the default branch untou
 
 **Limit**: 1 initial attempt + up to 3 correction rounds per stage, then set `E`. Only `implementer-ai-tools` writes repository code. `mechanical-ai-tools` collects evidence — never edits production or test code in this workflow. You are the only spawner: a worker returns the work it cannot carry as a dispatch request, and you dispatch it.
 
+**Serial implementation.** One code-writing subagent runs at a time: dispatch the next stage, fix, or brief only after the current one reaches a terminal status (`F` or `E`). Read-only work — exploration, builds, tests, evidence collection — may run concurrently; it writes no repository code.
+
 ### Output discipline
 
 - Plan files store all detail (steps, logs, diffs, outputs).
@@ -64,7 +66,7 @@ All implementation happens on a dedicated branch. Leave the default branch untou
 
 Before dispatching a plan, load its base file and every stage and fix file of that plan (`dev/<slug>/`) in full — the whole plan directory is under `dev/` (*Plan archival*).
 
-- Do this **once** at the start of that plan's execution. Intake is not repeated across waves or spawns.
+- Do this **once** at the start of that plan's execution. Intake is not repeated across stages or spawns.
 - Scope is the active plan. Leave unrelated plans and `dev/tmp/**` unread.
 - Intake informs your orchestration context; it is not forwarded in full to `implementer-ai-tools`.
 - Any stage already in `W`/`R*`/`T` at intake is an orphaned run from a previous `dev-ai-tools` — handle it per *Lost runs*.
@@ -89,7 +91,7 @@ Every dispatch prompt and every correction round — whether a fresh spawn or a 
 
 > Report by appending to your assigned plan file, then finish your run — your final output reaches whoever spawned you automatically. Messaging and agent-addressing tools have no reliable address for your spawner or the user; a guessed name misroutes the report.
 
-**One live writer per file.** A stage, fix, or brief file is owned by exactly one running subagent at a time. Ownership opens when its Dispatch log row is appended and closes when that row's Outcome is filled. Append the next row — and spawn against that file — only after the previous row's Outcome is filled: two writers appending to one file interleave their Implementation logs, produce two final status lines, and corrupt the ledger the final summary is built from. Parallel waves apply the same invariant across stages: concurrent batches each own a distinct stage file.
+**One live writer per file.** A stage, fix, or brief file is owned by exactly one running subagent at a time. Ownership opens when its Dispatch log row is appended and closes when that row's Outcome is filled. Append the next row — and spawn against that file — only after the previous row's Outcome is filled: two writers appending to one file interleave their Implementation logs, produce two final status lines, and corrupt the ledger the final summary is built from.
 
 ## Truth on disk
 
@@ -149,8 +151,8 @@ A subagent can die without reporting — API error, budget exhaustion, context o
 A plan's **set** is its directory `dev/<slug>/` — the base plan `0-<slug>.md` plus every `<n>-<slug>.md` stage and `F<m>-<slug>.md` fix file in it. The set is one unit and travels as one directory, whatever its stages' statuses, until the plan is over. Move a plan only when every stage is terminal (`F` or `E`).
 
 - **A plan is working state, not a historical record.** It is versioned so an execution survives a lost session, a new machine, or a fresh clone — anyone can pick it up mid-flight and see what is done, what failed, and what is left. It earns its place in the repository only while it still has to be resumed.
-- **Archiving is therefore a deletion, and that is the point.** The moved files are versioned while `dev/tmp/finished/` is ignored, so the move removes them from version control. Once the work has shipped, its plan leaves the repository; what survives is what the work produced — the commits, the tests, and the documentation it updated. A finished plan kept in tree is stale prose competing with those as a source of truth.
-- **Archive** when every stage row of the base plan reads `F` — and every Dispatch log row in the set has its Outcome filled: an open row means a writer may still return (*Lost runs*), and that writer still owns the file. Move the plan directory in one operation to `dev/tmp/finished/<slug>/`; nothing of that plan is left under `dev/`. A single `git mv dev/<slug> dev/tmp/finished/<slug>` is now atomic by construction.
+- **Archiving is therefore a deletion, and that is the point.** Ignore rules never apply to a path already in the index, so moving the files into `dev/tmp/finished/` only records a rename — untracking them takes a second, explicit step. Once the work has shipped, its plan leaves the repository; what survives is what the work produced — the commits, the tests, and the documentation it updated. A finished plan kept in tree is stale prose competing with those as a source of truth.
+- **Archive** when every stage row of the base plan reads `F` — and every Dispatch log row in the set has its Outcome filled: an open row means a writer may still return (*Lost runs*), and that writer still owns the file. Move the plan directory, then untrack it: `git mv dev/<slug> dev/tmp/finished/<slug>` followed by `git rm -r --cached dev/tmp/finished/<slug>`. Verify before committing that `git ls-files dev/tmp` prints nothing — the archival commit then shows the plan files as deletions, not as renames.
 - Commit the move path-scoped as `chore(dev): archive <slug>`, after that plan's stage commits and before its PR or patch preparation, so the branch ends clean. **The archival commit belongs in the pull request the work opens** — archive before opening it, or add the commit to one already open, so the reviewer sees the plan files being removed and can read them against the change they describe. That review is what makes the deletion safe.
 - **A stage that failed for good (`E`) stops the archival — nothing moves, not even the finished stages.** Report that the plan ended with N failed stages and ask which the user wants: retry the failed stages, open the pull request and archive anyway, or open the pull request and leave the whole set in `dev/`. That question travels the way a push or a pull request does (*Unattended by design*) — an approval item for the user. The one exception is an unattended Vibe Coding delivery, whose gate has already promised no further checkpoints: it decides for itself and records the choice, with its reasoning, in its decisions file.
 - **The queue reads work under `dev/`.** `dev/tmp/finished/**` stays out of Mode A step 2. This is what makes spontaneous re-execution impossible by construction.
@@ -168,8 +170,8 @@ A plan's **set** is its directory `dev/<slug>/` — the base plan `0-<slug>.md` 
 5. Process base plans oldest first:
    1. Create and switch to the plan's branch (*Branch per plan*).
    2. Perform Plan intake.
-   3. Build stage waves from the execution graph (skip `F` stages; defer `E`).
-   4. Run waves: sequential stages one-by-one; parallel-safe stages in concurrent non-overlapping implementer batches.
+   3. Order the stages from the execution graph (skip `F` stages; defer `E`).
+   4. Run the stages one at a time in that order: dispatch a stage only after the previous one is terminal (`F` or `E`).
    5. Validate on `V`. Run a dedicated test pass (`T`/`TV`) if required.
    6. On `F`, commit if the stage defines a boundary (Conventional Commits; check for secrets/binaries).
    7. When the plan resolves, prepare its pull request — or, without a viable PR host, its review patch (*Branch per plan*).
