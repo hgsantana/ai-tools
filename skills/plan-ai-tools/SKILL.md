@@ -26,7 +26,7 @@ Ask the user — numbered when there are several, each with the options you see 
 1. **Clarify task & scope**: resolve ambiguities and explicit out-of-scope boundaries up front — asking the user the questions that are theirs to answer.
 2. **Read sources of truth**: repository root and sub-directory `README.md`/`AGENTS.md`, plus `$HOME/AGENTS.md` if present.
 3. **Explore the codebase**: spawn read-only `mechanical-ai-tools` in parallel for broad discovery; use direct read/grep for pinpoint lookups.
-4. **Draft the plan**: base file + stage files (isolated, explicit paths with reasons, tests split by type, docs stage if behavior changes, Conventional Commit boundaries, sequential/parallel tags).
+4. **Draft the plan**: base file + stage files (isolated, explicit paths with reasons, tests split by type, docs stage if behavior changes, Conventional Commit boundaries, explicit stage order).
 5. **Save**: write base `dev/<slug>/0-<slug>.md` and stage `dev/<slug>/<n>-<slug>.md` files with empty Status/Agent cells, incrementally as they are drafted rather than only at the end — a planner that dies mid-run must leave its partial draft on disk for a successor to resume (*Truth on disk*).
 6. **Report**: the base plan path, the stage file paths, and at most five lines of summary — every other detail stays on disk. Anything still open is a numbered question to the user.
 
@@ -82,7 +82,8 @@ The ordinal is first on every file, base included, so a listing of `dev/<slug>/`
 ## Execution graph
 
 Dependency list; every stage appears exactly once.
-Example: 1 before 2 and 3 (parallel-safe); 4 after 2 and 3.
+Example: 1 before 2 and 3; 4 after 2 and 3.
+Stages run one at a time, in an order consistent with these dependencies.
 
 ## Stages
 
@@ -147,7 +148,6 @@ Suggested message: `feat: …` (or fix/chore/…)
 ## Dependencies
 
 - Requires stages: … (or none)
-- Parallel-safe with: …
 
 ## Implementation log
 

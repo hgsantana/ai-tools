@@ -52,3 +52,18 @@ Suggested message: `refactor(plan-ai-tools): drop parallel tags from the plan fo
 - Parallel-safe with: none — this plan makes execution serial
 
 ## Implementation log
+
+- Step 1: `skills/plan-ai-tools/SKILL.md` Workflow step 4 — replaced `sequential/parallel tags` with `explicit stage order`.
+- Step 2: base file template `## Execution graph` — removed `(parallel-safe)` from the example; added `Stages run one at a time, in an order consistent with these dependencies.`
+- Step 3: stage file template `## Dependencies` — removed the `- Parallel-safe with: …` line; `- Requires stages: … (or none)` unchanged.
+- Step 4: Workflow step 3 (parallel `mechanical-ai-tools` exploration) left unchanged, confirmed by grep below.
+- Evidence: `grep -niE "parallel|concurrent" skills/plan-ai-tools/SKILL.md` → only line 28, the read-only exploration step (`spawn read-only \`mechanical-ai-tools\` in parallel for broad discovery`).
+- Evidence: `./tools/lint.sh` → `done: 345 ok, 1 skipped, 0 warnings`, exit 0.
+
+## Dispatch log
+
+| Attempt | Status | Agent | Runner | Session ID | Outcome |
+|---------|--------|-------|--------|------------|---------|
+| 1 | W | implementer-ai-tools | sonnet | a3df5b6a-5c49-4618-bafd-2e3896e3a992 | V → accepted |
+
+Status: V
