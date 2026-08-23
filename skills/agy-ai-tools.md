@@ -1,18 +1,18 @@
 > Skill base, loaded by the wrapper at `skills/agy-ai-tools/SKILL.md`, which loads `skills/SKILL-CONTRACT.md` before it. This file is the source; edit it.
 
-Non-interactive runs of the Antigravity CLI (`agy`) on that harness's planner, implementer, or mechanical model. Dispatches `planner-ai-tools` to follow **Workflow**. Run `agy` only inside that dispatch.
+Non-interactive runs of the Antigravity CLI (`agy`) on that harness's planner, implementer, or mechanical model. Runs the `planner-ai-tools` role in the user's session. Run `agy` only once the planner gate passes.
 
 ## Agent
 
-Agent: `planner-ai-tools`, base `$HOME/.ai-tools/agents/planner-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`).
+Agent: `planner-ai-tools`, base `$HOME/.ai-tools/agents/planner-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`). This session carries that role behind the contract's planner gate.
 
 ## Stake
 
 Tell the user, in their language, before anything runs: this work runs the Antigravity CLI (`agy`), which can edit files, execute commands, and incur **model cost** in that harness. A work run — and `--dangerously-skip-permissions` — execute only after their explicit approval for that specific command.
 
-## Route A — dispatch
+## Route A — run here
 
-The agent discovers `agy` read-only, then returns every work run for approval, including the exact command, model, and agent.
+Discover `agy` read-only, then put every work run to the user as its own approval request, including the exact command, model, and agent.
 
 ## Report
 

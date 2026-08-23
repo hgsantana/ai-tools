@@ -1,20 +1,20 @@
 > Skill base, loaded by the wrapper at `skills/dev-ai-tools/SKILL.md`, which loads `skills/SKILL-CONTRACT.md` before it. This file is the source; edit it.
 
-Executing accepted plans under `dev/`, or an explicit ad-hoc brief, unattended. Dispatches `planner-ai-tools` to follow **Workflow**. That run spawns `implementer-ai-tools` and `mechanical-ai-tools`. Implement only inside that dispatch.
+Executing accepted plans under `dev/`, or an explicit ad-hoc brief, unattended. Runs the `planner-ai-tools` role in the user's session, spawning `implementer-ai-tools` and `mechanical-ai-tools` for the work it assigns. Implement only once the planner gate passes.
 
 ## Agent
 
-Agent: `planner-ai-tools`, base `$HOME/.ai-tools/agents/planner-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`).
+Agent: `planner-ai-tools`, base `$HOME/.ai-tools/agents/planner-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`). This session carries that role behind the contract's planner gate.
 
 ## Stake
 
 Tell the user, in their language, before anything runs: this work edits code, runs commands, and creates local commits **unattended** once started, on a dedicated branch. Offer it only for work they approved — an accepted plan, or an explicit ad-hoc brief; if there is no accepted plan and the work is non-trivial, offer the `plan-ai-tools` skill instead.
 
-## Route A — dispatch
+## Route A — run here
 
-Spawn `planner-ai-tools` with the plan or brief file paths.
+Run the **Workflow** against the plan or brief file paths.
 
-The agent returns approval requests instead of acting on them — cloud mutations, pushes, destructive or shared-state operations, and the archival question of a plan left with a failed stage.
+Approval requests are not acted on: they travel to the user with the final summary — cloud mutations, pushes, destructive or shared-state operations, and the archival question of a plan left with a failed stage.
 
 ## Report
 
@@ -22,7 +22,7 @@ Summarize the outcome in chat, in the user's language; reference logs, diffs, an
 
 ## Workflow
 
-You are running as `planner-ai-tools`. Execute the plans or the ad-hoc request you were given, then stop.
+You are carrying the `planner-ai-tools` role in this session. Execute the plans or the ad-hoc request you were given, then stop.
 
 ## Unattended by design
 
@@ -49,18 +49,18 @@ All implementation happens on a dedicated branch. Leave the default branch untou
 - Mode B: same rule per brief — create `plan/<slug>` before spawning `implementer-ai-tools`.
 - When a plan's stages all reach `F`/`E`, prepare its pull request to the default branch: draft the PR title and body from the accepted stages. Pushing the branch and opening the PR follow *Unattended by design* — they travel with the final summary as one approval request per plan (branch, target, drafted title/body, command) and execute only on that explicit approval.
 - **Local review fallback.** At branch creation, determine whether a PR is viable — a remote exists and its host supports pull requests (for GitHub, `gh auth status` plus a GitHub remote) — and record the plan's review mode. When it is not viable, the completed plan returns a **local review request** instead of a PR request: branch name, base, the `git diff --stat` summary, and the path of a review patch.
-- Generate the patch with `git diff <default>...<branch> --output=dev/tmp/<slug>-review.patch` — git writes the file directly. Verify it only via `--stat` or `wc -l`. Opening diffs in an editor is the relaying session's concern, not yours: you produce only universal artifacts (branch, patch, stat). Never produce the patch with a file-writing tool, and leave its content on disk.
+- Generate the patch with `git diff <default>...<branch> --output=dev/tmp/<slug>-review.patch` — git writes the file directly. Verify it only via `--stat` or `wc -l`. Opening diffs in an editor is the user's concern, not yours: you produce only universal artifacts (branch, patch, stat). Never produce the patch with a file-writing tool, and leave its content on disk.
 - Rationale: plans stay isolated and parallelizable, an unwanted plan is discarded by deleting its branch, and each plan is reviewed as a single PR — or as a branch plus patch when no PR host is available.
 
 ## Division of labor
 
 | Work | Agent |
 |------|----------|
-| Orchestrate stages, author briefs, review diffs, audit tests, commit, manage status (`W`/`R`/`T`/`E`/`F`) | `planner-ai-tools` (you) |
+| Orchestrate stages, author briefs, review diffs, audit tests, commit, manage status (`W`/`R`/`T`/`E`/`F`) | the `planner-ai-tools` role — this session (you) |
 | Implement assigned stage or brief (edit code/tests) | `implementer-ai-tools` |
 | Run builds/tests, return raw logs/diffs, draft mechanical text | `mechanical-ai-tools` |
 
-**Limit**: 1 initial attempt + up to 3 correction rounds per stage, then set `E`. Only `implementer-ai-tools` writes repository code. `mechanical-ai-tools` collects evidence — never edits production or test code in this workflow.
+**Limit**: 1 initial attempt + up to 3 correction rounds per stage, then set `E`. Only `implementer-ai-tools` writes repository code. `mechanical-ai-tools` collects evidence — never edits production or test code in this workflow. You are the only spawner: a worker returns the work it cannot carry as a dispatch request, and you dispatch it.
 
 ### Output discipline
 
@@ -90,11 +90,11 @@ The assigned stage/fix file is the only plan file an implementer opens. Keep par
 
 Durable state lives in files (*Truth on disk*): the assigned stage/fix/brief file is the only authoritative report channel. A subagent reports by (1) appending Implementation log entries and its final status line to that file, and (2) finishing its run — every harness returns a finished subagent's output to its spawner. Neither requires knowing an address, so this works in any harness.
 
-Detect completion by checking the file. If the harness exposes messaging or agent-addressing tools, subagents report through the assigned file and by finishing — they hold no reliable address for you, and a guessed name can route the report to the user's session or nowhere. Treat the plan file as the source of truth over any message.
+Detect completion by checking the file. If the harness exposes messaging or agent-addressing tools, subagents report through the assigned file and by finishing — they hold no reliable address for you, and a guessed name can route the report nowhere. Treat the plan file as the source of truth over any message.
 
 Every dispatch prompt and every correction round — whether a fresh spawn or a resume, since by then the original brief is deep in the subagent's context — must include, verbatim:
 
-> Report by appending to your assigned plan file, then finish your run — your final output reaches `planner-ai-tools` automatically. Messaging and agent-addressing tools have no reliable address for `planner-ai-tools` or the user; a guessed name misroutes the report.
+> Report by appending to your assigned plan file, then finish your run — your final output reaches whoever spawned you automatically. Messaging and agent-addressing tools have no reliable address for your spawner or the user; a guessed name misroutes the report.
 
 **One live writer per file.** A stage, fix, or brief file is owned by exactly one running subagent at a time. Ownership opens when its Dispatch log row is appended and closes when that row's Outcome is filled. Append the next row — and spawn against that file — only after the previous row's Outcome is filled: two writers appending to one file interleave their Implementation logs, produce two final status lines, and corrupt the ledger the final summary is built from. Parallel waves apply the same invariant across stages: concurrent batches each own a distinct stage file.
 

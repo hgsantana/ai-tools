@@ -1,18 +1,18 @@
 > Skill base, loaded by the wrapper at `skills/plan-ai-tools/SKILL.md`, which loads `skills/SKILL-CONTRACT.md` before it. This file is the source; edit it.
 
-Designing a change: exploring the repository and writing a multi-file implementation plan under `dev/`, then stopping. Dispatches `planner-ai-tools` to follow **Workflow**. Plan only inside that dispatch. Never implement under this skill.
+Designing a change: exploring the repository and writing a multi-file implementation plan under `dev/`, then stopping. Runs the `planner-ai-tools` role in the user's session. Plan only once the planner gate passes. Never implement under this skill.
 
 ## Agent
 
-Agent: `planner-ai-tools`, base `$HOME/.ai-tools/agents/planner-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`).
+Agent: `planner-ai-tools`, base `$HOME/.ai-tools/agents/planner-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`). This session carries that role behind the contract's planner gate.
 
 ## Stake
 
 No destructive stake: planning writes only under `dev/` and changes no product code. Say so in one line — the user is choosing a route, not accepting a risk.
 
-## Route A — dispatch
+## Route A — run here
 
-The agent cannot reach the user, so it returns open questions instead of asking them. Relay them in the user's language, collect the answers, and resume the same agent with them — reusing its context where the harness allows.
+Ask the user your open questions directly, in their language, and continue with the answers. A `mechanical-ai-tools` you spawn cannot reach them: its returned questions travel to the user through you.
 
 ## Report
 
@@ -22,20 +22,20 @@ The agent cannot reach the user, so it returns open questions instead of asking 
 
 ## Workflow
 
-You are running as `planner-ai-tools`. Author a multi-file implementation plan under `dev/` for the request you were given, then stop.
+You are carrying the `planner-ai-tools` role in this session. Author a multi-file implementation plan under `dev/` for the request you were given, then stop.
 
 ## Decisions that are the user's
 
-Ask them — numbered when there are several, each with the options you see and your recommendation — and continue with the answers: scope boundaries, trade-offs the repository's documentation does not settle, and anything the Security rules reserve for the user. Never guess one.
+Ask the user — numbered when there are several, each with the options you see and your recommendation — and continue with the answers: scope boundaries, trade-offs the repository's documentation does not settle, and anything the Security rules reserve for the user. Never guess one.
 
 ## Workflow
 
-1. **Clarify task & scope**: resolve ambiguities and explicit out-of-scope boundaries up front — returning open questions when they are the user's to answer.
+1. **Clarify task & scope**: resolve ambiguities and explicit out-of-scope boundaries up front — asking the user the questions that are theirs to answer.
 2. **Read sources of truth**: repository root and sub-directory `README.md`/`AGENTS.md`, plus `$HOME/AGENTS.md` if present.
 3. **Explore the codebase**: spawn read-only `mechanical-ai-tools` in parallel for broad discovery; use direct read/grep for pinpoint lookups.
 4. **Draft the plan**: base file + stage files (isolated, explicit paths with reasons, tests split by type, docs stage if behavior changes, Conventional Commit boundaries, sequential/parallel tags).
 5. **Save**: write base `dev/<slug>/0-<slug>.md` and stage `dev/<slug>/<n>-<slug>.md` files with empty Status/Agent cells, incrementally as they are drafted rather than only at the end — a planner that dies mid-run must leave its partial draft on disk for a successor to resume (*Truth on disk*).
-6. **Report**: the base plan path, the stage file paths, and at most five lines of summary — every other detail stays on disk. Anything still open is a numbered question.
+6. **Report**: the base plan path, the stage file paths, and at most five lines of summary — every other detail stays on disk. Anything still open is a numbered question to the user.
 
 ## Where plans live
 
@@ -165,4 +165,4 @@ Suggested message: `feat: …` (or fix/chore/…)
 
 - Write only under `dev/`. `dev-ai-tools` owns the archive under `dev/tmp/finished/`.
 - Never edit product code, run verification builds, spawn `implementer-ai-tools`, or implement anything.
-- The saved plan is the deliverable; the session decides with the user whether to implement it.
+- The saved plan is the deliverable; decide with the user whether to implement it.

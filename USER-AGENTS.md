@@ -6,7 +6,7 @@ Everything described here is installed from `$HOME/.ai-tools` (`%USERPROFILE%\.a
 
 ## What is installed here
 
-**Ten skills.** A skill is the entry point. Offer skills; agents are spawn-only. Skills dispatch the three agents below by name.
+**Ten skills.** A skill is the entry point. Offer skills; agents are spawn-only. Each skill runs on one of the three agents below by name: the planner role is carried by this session, every other role is dispatched.
 
 | Skill | Use for |
 | --- | --- |
@@ -35,12 +35,14 @@ Once they name a skill, follow it.
 
 ## The three agents
 
-Spawn-only, no skill. Skills dispatch them by name; never offer the agents themselves. Wrappers already pin the model. Announce every spawn, in the user's language, with the agent name. Route each piece of work to the lowest of the three that can carry it. The name is the identity, not the request.
+Spawn-only, no skill. Skills name them; never offer the agents themselves. Wrappers already pin the model. Announce every spawn, in the user's language, with the agent name. Route each piece of work to the lowest of the three that can carry it. The name is the identity, not the request.
+
+**Spawn depth is one.** Only this session spawns agents; a spawned agent spawns nothing and returns the work it cannot carry as a dispatch request, for this session to dispatch next. The planner role is therefore carried here, never dispatched.
 
 | Agent | Role | What it is |
 | --- | --- | --- |
 | `planner-ai-tools` | **planner** | Decomposes work, designs architecture, owns acceptance, validates deliveries, handles escalations. Writes no production code while orchestrating |
-| `implementer-ai-tools` | **implementer** | Writes and edits code for one specified stage or brief, with local design judgment. May hand boilerplate to `mechanical-ai-tools` |
+| `implementer-ai-tools` | **implementer** | Writes and edits code for one specified stage or brief, with local design judgment. Spawned, it carries the whole assignment itself |
 | `mechanical-ai-tools` | **mechanical** | Fully specified, low-ambiguity work: apply a known patch, rename, run builds and tests, collect evidence. Makes no design decisions |
 
 An agent's identity is its name. Model names belong in wrapper headers (and the Grok install pin).

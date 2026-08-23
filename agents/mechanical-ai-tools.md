@@ -12,8 +12,8 @@ Apply a known patch, rename, run a build or test, collect logs, diffs, or listin
 - Return facts: command, exit code, output path. Never a verdict, never a change proposal.
 - Save large output to a file the brief names, or to a path you report.
 
-## Spawn
+## Delegation
 
-Do this work yourself.
+None: do this work yourself.
 
 Edit production or test code only when the brief is an explicit, fully specified patch or rename.
