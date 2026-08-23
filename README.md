@@ -19,9 +19,7 @@ Clone it to `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows) and link it
 | [`agents/mechanical-ai-tools.md`](agents/mechanical-ai-tools.md) | `mechanical-ai-tools` — specified patches, renames, builds, tests, evidence; no design. Type rules only; the brief is the job |
 | [`agents/SUBAGENT-CONTRACT.md`](agents/SUBAGENT-CONTRACT.md) | Shared spawned-subagent contract: brief, channel to the user, report, model pin, spawn nothing, stay inside the type. Not installed; read by path |
 | [`agents/<harness>/`](agents/) | One wrapper per agent: header pin, contract pointer, base pointer |
-| [`skills/`](skills/) | Ten skills: installed `skills/<name>/SKILL.md` plus `skills/<name>.md` (the workflow). The three agents have no skill. Each names one agent: the planner role is carried by the session, every other role is dispatched (rule 8) |
-| [`skills/SKILL-CONTRACT.md`](skills/SKILL-CONTRACT.md) | Planner gate, route offer, and dispatch for agent-backed skills. Not installed; read by path |
-| [`skills/MAINTAINER.md`](skills/MAINTAINER.md) | Shared update/remove/reinstall workflow. Not installed |
+| [`skills/`](skills/) | Ten skills, each the installed `skills/<name>/SKILL.md` (the whole skill). The three agents have no skill. Planner-gated skills carry the planner role in the user's session after Continue?; maintainer skills run in session with no gate |
 | [`scripts/`](scripts/) | `install`, `remove`, `update`, `reinstall`, `verify` — bash ([Scripts](#scripts); rules 25–28). Windows: WSL or Git Bash |
 
 ### How to install, remove, update, or reinstall
@@ -55,8 +53,8 @@ Normative for every human and every AI maintaining this repository.
 
 5. Only three agents ship: `planner-ai-tools`, `implementer-ai-tools`, `mechanical-ai-tools`. Each has a harness-agnostic **base** at `agents/<name>.md` (type rules, request-agnostic) and one **wrapper** per harness at `agents/<harness-short-name>/<agent-name>.<ext>`. A base is **mode-agnostic**: it says to ask or to require approval, never how that reaches them — `agents/SUBAGENT-CONTRACT.md` owns the channel when spawned, and that type rules prevail if the brief conflicts. A base routes delegated work between the three roles; whether the run may spawn at all is the contract's (rule 8). Skills pass a complete brief (the **Workflow** plus the user's request).
 6. Wrapper header: harness syntax and the pin (`model:`; effort only when the map cell has one). Body, in this order: pointer to `$HOME/.ai-tools/agents/SUBAGENT-CONTRACT.md`; pointer to `$HOME/.ai-tools/agents/<name>.md` (prevails except on the channel to the user). Anything else is drift. Cap **1,000 characters**, frontmatter included. Canonical body: [wrapper authoring](#model-map-and-wrapper-authoring).
-7. Skills are harness-agnostic — no per-harness copies. Split: installed **wrapper** `skills/<name>/SKILL.md`; **base** `skills/<name>.md` (the workflow); agent-backed skills also load `skills/SKILL-CONTRACT.md` by path, never installed. Wrapper body, in this order: one-line scope; SKILL-CONTRACT pointer (agent-backed only); skill-base pointer (prevails over the contract). Anything else is drift. Cap **2,000 characters**, frontmatter included. No supported harness preloads skill bodies; the cap is concision (rule 15). Canonical body: [skill authoring](#model-map-and-wrapper-authoring).
-8. **Spawn depth is one**: only the user's session spawns agents, and a spawned agent spawns nothing — it returns the work it cannot carry as a dispatch request (`agents/SUBAGENT-CONTRACT.md`). Harnesses that do allow a deeper chain gain nothing from it; the design assumes the shallowest. A skill still runs on **any** session model and never refuses over one, and work that needs a pin is dispatched to a named agent, whose wrapper already pins the model. The **planner** role orchestrates, so it cannot be dispatched — a dispatched planner would have no way to spawn its workers. An agent-backed skill naming `planner-ai-tools` gates instead: stake, compare the session model with that harness's `planner` cell in `MODELS.md`, then **run it here** — this session carrying the role and spawning the workers — **change the session model**, or **stop**. Every other agent-backed skill dispatches: stake, then **dispatch the agent** or **stop**, and that agent carries its work alone.
+7. Skills are harness-agnostic — no per-harness copies. One file: `skills/<name>/SKILL.md` (frontmatter per rule 9, then the whole skill). No skill contract, no skill base, no `skills/<name>.md`, no `skills/SKILL-CONTRACT.md`, no `skills/MAINTAINER.md`. Duplicated gate or maintainer text is required, not drift. `description` at most 500 characters (rule 9). No character cap on the skill body; rule 15 still forbids fluff. Planner-gated skills (`vibe-ai-tools`, `plan-ai-tools`, `dev-ai-tools`, `az-ai-tools`, `gc-ai-tools`, `gh-ai-tools`, `agy-ai-tools`) open with **Continue?** (stake, planner match against this harness's `MODELS.md` planner cell, how to change the session model when they differ, then yes/no). The other three skills are the task, with no continue gate.
+8. **Spawn depth is one**: only the user's session spawns agents, and a spawned agent spawns nothing — it returns the work it cannot carry as a dispatch request (`agents/SUBAGENT-CONTRACT.md`). Harnesses that do allow a deeper chain gain nothing from it; the design assumes the shallowest. The **planner** role orchestrates, so it cannot be dispatched — a dispatched planner would have no way to spawn its workers. Dispatched work goes to `implementer-ai-tools` or `mechanical-ai-tools`, whose wrappers pin the model. A planner-gated skill (the seven names in rule 7) gates with **Continue?**: after yes, this session carries `planner-ai-tools` and follows that file's Workflow. The skill never refuses over the session model; proceeding on a non-planner is the user's call. Every other shipped skill has no gate: the file is the task, carried in this session.
 9. Skill frontmatter: only universally accepted keys (`name`, `description`) plus optional keys every supported harness tolerates (e.g. `argument-hint`). A key any supported harness rejects does not belong in a shared file. `description` is at most **500 characters**: harnesses budget the skill *list*, not the body — Codex caps it at 2% of the context window or 8,000 characters, Claude Code truncates a description at 1,536.
 10. Wrappers follow each harness's official documentation. Re-check vendor docs before adding a harness or editing a wrapper — formats change upstream.
 11. Vendor model names live in [`MODELS.md`](MODELS.md) and wrapper headers only. Dispatch uses the named agent's already-pinned wrapper. Grok install and `tools/lint.sh` read the map at install / authoring. [Supported harnesses](#supported-harnesses) may show accepted value *shapes*, never the choice. Bases cite **planner** / **implementer** / **mechanical** as roles (`USER-AGENTS.md` → *The three agents*). Spawn and skills use agent names.
@@ -127,21 +125,7 @@ Read it and follow it in full — it is the absolute rule set for this agent; th
 
 Codex carries the same text in `developer_instructions`, with Windows backslashes doubled for TOML.
 
-A skill wrapper carries frontmatter (rule 9), then exactly:
-
-```markdown
-# <Title>
-
-<One sentence: what this skill covers and who defines the work.>
-
-You are running an agent-backed skill: your shared contract is `$HOME/.ai-tools/skills/SKILL-CONTRACT.md`.
-Read it and follow it — it governs the planner gate, the route offer, and the dispatch.
-
-Your base file is `$HOME/.ai-tools/skills/<name>.md`.
-Read it and follow it in full — it is the absolute rule set for this skill; the contract above governs only the mechanics it names.
-```
-
-On Windows, `%USERPROFILE%` replaces `$HOME`. A skill that names no agent omits the contract paragraph.
+A skill carries frontmatter (rule 9), H1, one-sentence scope, then either **Continue?** + Stake + Workflow (planner-gated) or Stake-in-first-message + Workflow (maintainer). Point at `agents/<name>.md` only as the planner base the continue-yes loads, never as a skill base. On Windows, `%USERPROFILE%` replaces `$HOME`.
 
 ## Scripts
 
@@ -174,13 +158,12 @@ Check families:
 - **wrapper coverage** — every agent has exactly one wrapper per harness, no orphans (rule 5)
 - **naming** — agent bases, wrappers, skill directories, and frontmatter `name:` all end in `-ai-tools` (rule 14)
 - **skill frontmatter** — every `skills/*/SKILL.md` exists, keys a subset of `name`/`description`/`argument-hint`, and `name:` matches its directory (rule 9)
+- **skill layout** — no `skills/*.md` at the skills root; every `skills/*-ai-tools/SKILL.md` exists; the seven planner-gated files contain `## Continue?`; the three maintainer files do not; no `SKILL.md` mentions `SKILL-CONTRACT` or `MAINTAINER.md` (rule 7)
 - **wrapper body** — the body is reconstructed from this README's canonical text and compared exactly (rule 6)
-- **skill wrapper body** — every `skills/*/SKILL.md` matches this README's canonical skill wrapper body (rule 7)
-- **skill layout** — `skills/SKILL-CONTRACT.md` and `skills/MAINTAINER.md` exist; every skill has exactly one base at `skills/<name>.md`, with no orphans (rule 7)
 - **model parity and effort pinning** — every pinned model and effort resolves through `MODELS.md` (rules 11–12); Grok wrappers declare no model
 - **description parity** — an agent's `description` is identical across all six wrappers
 - **`MODELS.md` row coverage** — every harness directory has a row and vice versa (rule 12)
-- **size caps** — `USER-AGENTS.md` at most 8,000 characters (rule 3), every wrapper at most 1,000 (rule 6), every skill wrapper at most 2,000 characters and every skill `description` at most 500 (rules 7, 9)
+- **size caps** — `USER-AGENTS.md` at most 8,000 characters (rule 3), every wrapper at most 1,000 (rule 6), every skill `description` at most 500 (rule 9)
 - **encodings and endings** — line endings (`git ls-files --eol`), executable bits, no binaries in shipped paths (rule 28)
 - **version bump** — only with `--base <ref>`: a change under `agents/`, `skills/`, `scripts/`, or `USER-AGENTS.md` that lands on `master` requires the README version to change too (rule 4)
 
@@ -254,7 +237,7 @@ Every step is idempotent; conflicts are skipped and reported.
 5. **Agents** — link each wrapper from `agents/<harness>/` into that harness's agents root, per file, never per directory — those roots hold other agents, and a directory link would shadow them.
 6. **Skills** — link each `skills/*-ai-tools` directory into each scoped skills root; the same shared directory serves every harness (rules 7–9). Prefer these links over harness scan paths (Grok `[skills] paths`), which can clobber existing names.
 7. **Grok model pinning** — Grok ignores `model:` in frontmatter and reads `~/.grok/config.toml`. The script maintains a marker-delimited `[subagents.models]` block: names from the tree, models from [`MODELS.md`](MODELS.md) (unreadable map → skip and report, never guess). A pre-existing unmanaged block is skipped and reported, never edited. Without the pin, agents still load but inherit the session model — the strong-model guarantee is lost. The same fallback applies to any harness that ignores `model:`.
-8. **Verify** — instructions resolve into the clone, `USER-AGENTS.md` fits the 12,000-character cap (rule 3), `agents/SUBAGENT-CONTRACT.md`, `skills/SKILL-CONTRACT.md`, and every agent and skill base exist at the pinned path, and every installed agent and skill is a link or an unmodified copy. Skipped under `--dry-run`; re-run anytime with `verify`.
+8. **Verify** — instructions resolve into the clone, `USER-AGENTS.md` fits the 12,000-character cap (rule 3), `agents/SUBAGENT-CONTRACT.md` and every agent base exist at the pinned path, every shipped `skills/<name>/SKILL.md` exists, and every installed agent and skill is a link or an unmodified copy. Skipped under `--dry-run`; re-run anytime with `verify`.
 
 Then restart or reload any harness that caches agents or skills at startup. Confirm the three agents (`planner-ai-tools`, `implementer-ai-tools`, `mechanical-ai-tools`) and a slash command for every shipped skill.
 

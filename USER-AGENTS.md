@@ -6,7 +6,7 @@ Everything described here is installed from `$HOME/.ai-tools` (`%USERPROFILE%\.a
 
 ## What is installed here
 
-**Ten skills.** A skill is the entry point. Offer skills; agents are spawn-only. Each skill runs on one of the three agents below by name: the planner role is carried by this session, every other role is dispatched.
+**Ten skills.** A skill is the entry point. Offer skills; agents are spawn-only. The seven planner-gated skills carry `planner-ai-tools` in this session after Continue?. The three maintainer skills run the task here, with no gate. Every other role is dispatched.
 
 | Skill | Use for |
 | --- | --- |

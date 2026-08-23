@@ -102,13 +102,13 @@ Run `tools/lint.sh` (exit 0). Run `tools/test.sh` (exit 0). If `shellcheck` is a
 
 ## Acceptance criteria
 
-- [ ] Rules 7 and 8, inventory, authoring, verify, and the development-check list match the single-file layout
-- [ ] `USER-AGENTS.md` names the continue gate for the seven and no gate for maintainer skills, and stays under the cap
-- [ ] Lint enforces: no skill-root markdown, Continue? present/absent on the right skills, no pointers at the deleted files, no 2,000-character skill cap, description cap kept
-- [ ] `verify_install` does not require a skill contract or skill bases
-- [ ] Origin-commit fixture no longer adds a skill base
-- [ ] `tools/lint.sh` and `tools/test.sh` exit 0
-- [ ] README version line unchanged
+- [x] Rules 7 and 8, inventory, authoring, verify, and the development-check list match the single-file layout
+- [x] `USER-AGENTS.md` names the continue gate for the seven and no gate for maintainer skills, and stays under the cap
+- [x] Lint enforces: no skill-root markdown, Continue? present/absent on the right skills, no pointers at the deleted files, no 2,000-character skill cap, description cap kept
+- [x] `verify_install` does not require a skill contract or skill bases
+- [x] Origin-commit fixture no longer adds a skill base
+- [x] `tools/lint.sh` and `tools/test.sh` exit 0
+- [x] README version line unchanged
 
 ## Commit
 
@@ -119,6 +119,22 @@ Suggested message: `docs: drop skill contracts and bases from rules and checks`
 - Requires stages: 1
 - Parallel-safe with: none
 
+## Dispatch log
+
+| Attempt | Status | Agent | Runner | Session ID | Outcome |
+|---------|--------|-------|--------|------------|---------|
+| 1 | W | implementer-ai-tools | gemini-3.7-flash-high | 8cdbe729-7c2d-4e46-b370-b12a0c9d2e36 | V → accepted |
+
 ## Implementation log
 
-(Append-only log added by implementers and planner during execution.)
+- Updated `README.md`: skills inventory row, Rules 7 and 8, skill authoring section, development checks list, and Installation verify step (§8) to reflect the single-file layout (`skills/<name>/SKILL.md`).
+- Updated `USER-AGENTS.md`: stated that 7 planner-gated skills carry `planner-ai-tools` in-session after Continue? and 3 maintainer skills run without a gate; verified char count is 5,899 (<= 8,000 limit).
+- Updated `tools/lint.sh`: replaced canonical wrapper body/cap and skill base coverage checks with `check_skill_layout` enforcing: absent `SKILL-CONTRACT.md` and `MAINTAINER.md`, no `skills/*.md` files, existing `SKILL.md` in each skill directory, `## Continue?` present in 7 planner-gated skills, `## Continue?` absent in 3 maintainer skills, and no `SKILL.md` mentioning deleted files. Updated usage text and size-caps list.
+- Updated `scripts/shell/lib.sh`: `verify_install` checks `skills/*-ai-tools/SKILL.md` source and links without requiring `SKILL-CONTRACT.md` or skill bases.
+- Updated `tools/test/lib.sh`: `t_origin_commit` creates only `skills/<label>-ai-tools/SKILL.md` without a companion base.
+- Verification:
+  - `tools/lint.sh` exited 0 (337 ok, 1 skipped, 0 warnings).
+  - `tools/test.sh` exited 0 (247 ok, 0 skipped, 0 warnings).
+  - `shellcheck -x -P scripts/shell -P tools/test scripts/shell/*.sh tools/*.sh tools/test/*.sh` exited 0 clean.
+  - `README.md` version line (`Version 0.0.29-ALPHA`) unchanged.
+- Planner validation: re-ran `tools/lint.sh` (337 ok, 1 skipped, 0 warnings, exit 0) and `tools/test.sh` (247 ok, 0 skipped, 0 warnings, exit 0). Diff matches the assignment. Status `F`.
