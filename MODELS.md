@@ -8,7 +8,7 @@ Authoring and install lookup. Wrappers pin `model:` (and effort, when the cell h
 2. Columns (**planner**, **implementer**, **mechanical**) match `planner-ai-tools`, `implementer-ai-tools`, and `mechanical-ai-tools` in `USER-AGENTS.md` → *The three agents*.
 3. Put the backticked model token in the harness's own syntax. When the cell has `` · effort ``, that is the official effort — pin it if this harness's wrapper form accepts effort. When the cell has no effort, leave effort off the wrapper.
 
-The last column is how a human changes the *session* model in that harness. Spawned agents use the wrapper pin.
+The last column is how a human changes the *session* model in that harness. Spawned agents use the wrapper pin; a skill's planner gate compares the session model with this harness's **planner** cell.
 
 ## Map
 

@@ -1,8 +1,7 @@
 ---
 name: az-ai-tools
 description: >
-  Run the az-ai-tools work — query or manage Azure via the Azure CLI (az) — by dispatching
-  planner-ai-tools to follow this skill. Use for /az-ai-tools or whenever the user asks about Azure
+  Run the az-ai-tools work — query or manage Azure via the Azure CLI (az) — carried in this session under the planner-ai-tools role. Use for /az-ai-tools or whenever the user asks about Azure
   resources, subscriptions, costs, or infrastructure, or wants something created, modified, or
   removed in Azure.
 argument-hint: "[what to inspect or change in Azure]"
@@ -13,7 +12,7 @@ argument-hint: "[what to inspect or change in Azure]"
 Inventory, cost, and operations on Azure through the Azure CLI (`az`).
 
 You are running an agent-backed skill: your shared contract is `$HOME/.ai-tools/skills/SKILL-CONTRACT.md`.
-Read it and follow it — it governs the route offer and dispatch.
+Read it and follow it — it governs the planner gate, the route offer, and the dispatch.
 
 Your base file is `$HOME/.ai-tools/skills/az-ai-tools.md`.
 Read it and follow it in full — it is the absolute rule set for this skill; the contract above governs only the mechanics it names.

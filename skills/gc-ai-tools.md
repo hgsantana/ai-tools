@@ -1,18 +1,18 @@
 > Skill base, loaded by the wrapper at `skills/gc-ai-tools/SKILL.md`, which loads `skills/SKILL-CONTRACT.md` before it. This file is the source; edit it.
 
-Inventory, cost, and operations on Google Cloud through the `gcloud` CLI. Dispatches `planner-ai-tools` to follow **Workflow**. Run `gcloud` only inside that dispatch.
+Inventory, cost, and operations on Google Cloud through the `gcloud` CLI. Runs the `planner-ai-tools` role in the user's session. Run `gcloud` only once the planner gate passes.
 
 ## Agent
 
-Agent: `planner-ai-tools`, base `$HOME/.ai-tools/agents/planner-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`).
+Agent: `planner-ai-tools`, base `$HOME/.ai-tools/agents/planner-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`). This session carries that role behind the contract's planner gate.
 
 ## Stake
 
 Tell the user, in their language, before anything runs: this work touches Google Cloud, where actions can create **billable** resources and **remove** existing ones, and neither is easy to undo. A mutation runs only after their explicit approval for that specific action.
 
-## Route A — dispatch
+## Route A — run here
 
-The agent reads freely and returns every mutation for approval, including its cost impact.
+Read freely; put every mutation to the user as its own approval request, including its cost impact. Spawned workers reach the user through you.
 
 ## Report
 

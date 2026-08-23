@@ -1,18 +1,18 @@
 > Skill base, loaded by the wrapper at `skills/gh-ai-tools/SKILL.md`, which loads `skills/SKILL-CONTRACT.md` before it. This file is the source; edit it.
 
-Issues, pull requests, checks, releases, and repositories through the GitHub CLI (`gh`). Dispatches `planner-ai-tools` to follow **Workflow**. Run `gh` only inside that dispatch.
+Issues, pull requests, checks, releases, and repositories through the GitHub CLI (`gh`). Runs the `planner-ai-tools` role in the user's session. Run `gh` only once the planner gate passes.
 
 ## Agent
 
-Agent: `planner-ai-tools`, base `$HOME/.ai-tools/agents/planner-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`).
+Agent: `planner-ai-tools`, base `$HOME/.ai-tools/agents/planner-ai-tools.md` (Windows: `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`). This session carries that role behind the contract's planner gate.
 
 ## Stake
 
 Tell the user, in their language, before anything runs: this work touches GitHub, where actions can merge, close, comment, push, and delete — visible to other people immediately and often irreversible. A mutation runs only after their explicit approval for that specific action.
 
-## Route A — dispatch
+## Route A — run here
 
-The agent reads freely and returns every mutation for approval. Relay each request to the user in their language, including its blast impact; only on an explicit yes for that specific action resume the agent with the approval. Approval never carries over between actions. Relay open questions the same way, reusing the same agent and its context where the harness allows.
+Read freely; put every mutation to the user as its own approval request, in their language, including its blast impact. Only an explicit yes for that specific action runs it, and approval never carries over between actions. Open questions — yours or a spawned worker's — reach the user the same way.
 
 ## Report
 

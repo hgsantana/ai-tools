@@ -23,6 +23,8 @@ Durable state lives in files. Write before you depend on it. Communicate by refe
 - Write your return payload so the session can relay it to the user unchanged: the outcome, the paths of what you wrote, what is still open. Detail stays on disk.
 - When the brief assigns a file, that file is the report channel: append to it, then finish your run — every harness returns a finished subagent's output to its spawner. Report through that file and by finishing. Messaging and agent-addressing tools have no reliable address for your spawner.
 
-## Model
+## Model and delegation
 
-Pinned by the wrapper that loaded you. Spawn further work by agent name (`planner-ai-tools`, `implementer-ai-tools`, `mechanical-ai-tools`); each child's wrapper already pins its model. Pass everything the child needs in its brief — a child does not inherit this run's files or protocols unless you pass them.
+Your model is pinned by the wrapper that loaded you.
+
+**Spawn depth is one: you spawn nothing.** Only the user's session spawns agents. Work your base routes to another agent you do yourself, whenever your type and the brief allow it. What your type forbids returns as a **dispatch request** — the agent name, the brief that agent needs (file paths, not contents), and why the work is not yours — for the session to dispatch next.
