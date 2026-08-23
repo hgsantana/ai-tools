@@ -1,11 +1,11 @@
 # shellcheck shell=bash
-# update.sh — proves the update.sh half of rules 19-21 and 26: the reset
+# update.sh — proves the update.sh half of rules 20-22 and 27: the reset
 # guard refuses to discard local work until --discard-local is passed, stale
 # copies are refreshed while locally modified copies are kept, newly shipped
 # content is linked, and the clone's reset never reaches harness
 # configuration or $HOME/AGENTS.md.
 
-# --- Reset guard (rule 26) -----------------------------------------------------
+# --- Reset guard (rule 27) -----------------------------------------------------
 
 case_update_reset_guard_dirty() {
   local root home wrapper before
@@ -117,7 +117,7 @@ case_update_reset_confined() {
   t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code --discard-local
   # exit 2: verify_install warns that the foreign agent file and the
   # pre-filled CLAUDE.md differ from source — proof they were skipped, not
-  # overwritten. The reset itself (rule 26) still succeeded (exit 0 would
+  # overwritten. The reset itself (rule 27) still succeeded (exit 0 would
   # require the pre-existing foreign content to be gone, which it must not be).
   t_assert_exit 2
 
@@ -142,7 +142,7 @@ case_update_reset_confined() {
   t_cleanup "$root"
 }
 
-# --- Newly shipped content (rule 19) -------------------------------------------
+# --- Newly shipped content (rule 20) -------------------------------------------
 
 case_update_new_content_linked() {
   local root home marker
@@ -165,7 +165,7 @@ case_update_new_content_linked() {
   t_cleanup "$root"
 }
 
-# --- Copy refresh vs. preservation (rules 19-20) -------------------------------
+# --- Copy refresh vs. preservation (rules 20-21) -------------------------------
 
 case_update_stale_copy_refreshed() {
   local root home marker wrapper

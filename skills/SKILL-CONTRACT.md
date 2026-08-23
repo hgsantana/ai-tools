@@ -6,7 +6,7 @@ This session offers the routes and relays. The dispatched agent runs the **Workf
 
 ## 1. Stake
 
-Surface the base's stake, in the user's language, before anything is read, run, or changed (rule 17). Nothing below happens until the user has seen it.
+Surface the base's stake, in the user's language, before anything is read, run, or changed (rule 18). Nothing below happens until the user has seen it.
 
 ## 2. Offer, then ask
 

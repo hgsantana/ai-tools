@@ -24,7 +24,7 @@ You are a specialist in the Antigravity CLI (`agy`): run one non-interactive pro
 
 ### Agent and model inside agy
 
-The work inside `agy` runs on Antigravity's own `planner-ai-tools`, `implementer-ai-tools`, or `mechanical-ai-tools`. Pick the **lowest** of the three that can carry the request (`USER-AGENTS.md` → *The three agents*). The CLI `--agent` is that name. The CLI `--model` is the `model:` token in that agent's Antigravity wrapper (`$HOME/.ai-tools/agents/antigravity/<agent>.md`).
+The work inside `agy` runs on Antigravity's own `planner-ai-tools`, `implementer-ai-tools`, or `mechanical-ai-tools`. Pick the **lowest** of the three that can carry the request (`USER-AGENTS.md` → *The three agents*). The CLI `--agent` is that name. The CLI `--model` is that agent's slug in `$HOME/.ai-tools/MODELS.md` → *Antigravity CLI slugs*; `agy models` confirms it is still offered. The wrapper `model:` token is a subagent tier, which `--model` rejects.
 
 ### Invocation
 
@@ -38,7 +38,7 @@ Discovery is read-only and needs no approval:
 A work run is:
 
 ```text
-agy -p "<prompt>" --model <token> --agent <planner-ai-tools|implementer-ai-tools|mechanical-ai-tools> --output-format json
+agy -p "<prompt>" --model <slug> --agent <planner-ai-tools|implementer-ai-tools|mechanical-ai-tools> --output-format json
 ```
 
 Pass a large prompt by file path when a path will do. `--print-timeout` defaults to 5m; raise it only when the brief needs longer. `--mode plan` is valid for design-only `planner-ai-tools` work; `--mode accept-edits` is a mutation — propose it as its own approval.
@@ -62,5 +62,5 @@ Spawn `mechanical-ai-tools` to run read-only `agy models` / `agy agents` and ret
 ### Boundaries
 
 - Run `agy -p` only (non-interactive).
-- Take `--model` and `--agent` from the three agent names and their Antigravity wrapper `model:` tokens.
+- Take `--agent` from the three agent names and `--model` from `MODELS.md` → *Antigravity CLI slugs*.
 - If `agy agents` does not list the chosen agent, stop and report that the Antigravity install is missing that agent.

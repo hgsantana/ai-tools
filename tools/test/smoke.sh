@@ -1,7 +1,7 @@
 # shellcheck shell=bash
 # smoke.sh — proves the fixture and the sandboxed runner work end to end,
 # and that a run against the fixture never writes into the caller's real
-# $HOME. Later stages add contract cases (rules 18-26) as sibling files;
+# $HOME. Later stages add contract cases (rules 19-27) as sibling files;
 # this one only proves the harness itself.
 
 case_smoke() {
