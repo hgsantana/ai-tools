@@ -40,7 +40,6 @@ if [ "$NO_INSTRUCTIONS" = 1 ]; then
 else
   install_instructions
 fi
-ensure_user_agents_md
 install_agents
 install_skills
 install_grok_models

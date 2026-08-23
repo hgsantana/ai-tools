@@ -2,35 +2,48 @@
 
 Harness-agnostic, user-wide rules for AI coding tools. A repository's own `AGENTS.md` or `README.md` overrides these rules inside that repository.
 
-Everything described here is installed from `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows) — the only supported location; relocating that directory breaks all of it. This file ships from `$HOME/.ai-tools/USER-AGENTS.md`, and each harness loads it under its own instructions filename. Leave it as installed. **Do not edit it** — neither a harness copy (a link, or a stale duplicate) nor the repo file (a versioned artifact that updates reset to `origin/master`, discarding local edits). Put user-specific rules in `$HOME/AGENTS.md` instead (*User-specific overrides*, below): it overrides this file and survives updates. Installing, verifying, updating, and removing all of it is documented in `$HOME/.ai-tools/README.md`.
+Everything described here is installed from `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows) — the only supported location; relocating that directory breaks all of it. This file ships from `$HOME/.ai-tools/USER-AGENTS.md`, and each harness loads it under its own instructions filename. Leave it as installed. **Do not edit it** — neither a harness copy (a link, or a stale duplicate) nor the repo file (a versioned artifact that updates reset to `origin/master`, discarding local edits). Optional user-specific rules live in `$HOME/AGENTS.md` (*User-specific overrides*, below). Installing, verifying, updating, and removing all of it is documented in `$HOME/.ai-tools/README.md`.
 
 ## What is installed here
 
-**Nine skills.** A skill is the entry point. Offer skills; agents are spawn-only. The six planner-gated skills carry `planner-ai-tools` in this session after Continue?. The three maintainer skills run the task here, with no gate. Every other role is dispatched.
+**Nine skills.** A skill is the entry point. Offer skills; agents are spawn-only. Routing gates every `*-ai-tools` skill at its **Min. role**; naming one is the yes, and this session runs it. Every other role is dispatched.
 
-| Skill | Use for |
-| --- | --- |
-| `/vibe-ai-tools` | **The default for any non-trivial change.** Delivers a demand end to end — plan, decisions, implementation, pull request |
-| `/plan-ai-tools` | Designing a change: a multi-file plan under `dev/`, then stop |
-| `/dev-ai-tools` | Executing an already accepted plan, or an explicit ad-hoc brief, unattended |
-| `/az-ai-tools` | Azure resources via the Azure CLI (`az`) |
-| `/gc-ai-tools` | Google Cloud resources via the Google Cloud CLI (`gcloud`) |
-| `/gh-ai-tools` | GitHub resources via the GitHub CLI (`gh`) |
-| `/update-ai-tools`, `/remove-ai-tools`, `/reinstall-ai-tools` | Maintaining this installation itself. Use only on an existing install — never the first install |
+| Skill | Use for | Min. role |
+| --- | --- | --- |
+| `/vibe-ai-tools` | **The default for any non-trivial change.** Delivers a demand end to end — plan, decisions, implementation, pull request | planner |
+| `/plan-ai-tools` | Designing a change: a multi-file plan under `dev/`, then stop | planner |
+| `/dev-ai-tools` | Executing an already accepted plan, or an explicit ad-hoc brief, unattended | planner |
+| `/az-ai-tools` | Azure resources via the Azure CLI (`az`) | implementer |
+| `/gc-ai-tools` | Google Cloud resources via the Google Cloud CLI (`gcloud`) | implementer |
+| `/gh-ai-tools` | GitHub resources via the GitHub CLI (`gh`) | implementer |
+| `/update-ai-tools`, `/remove-ai-tools`, `/reinstall-ai-tools` | Maintaining this installation itself. Use only on an existing install — never the first install | mechanical |
 
 ## How to route a request
 
 1. **Simple, well specified, or documentation only** — a typo, a one-line constant, an exact rename, a question or explanation, a docs edit that changes no behaviour. Do it now, in this session, without asking.
-2. **Anything else** — multi-file work, a new module or component, changed behaviour, routing, data models, security-sensitive code, test changes, unclear impact, resuming partial work, or anything touching Azure, Google Cloud, or GitHub resources. Offer, in two steps. Do not start it:
-   1. One chat message, in the user's language, naming the options below.
-   2. Then one short question referring back to that message, with these answers:
-      - **`/vibe-ai-tools`** (recommended);
-      - **the skill that fits**, when one does;
-      - **run it here**, ignoring the ai-tools skills.
+2. **Anything else** — multi-file work, a new module or component, changed behaviour, routing, data models, security-sensitive code, test changes, unclear impact, resuming partial work, or anything touching Azure, Google Cloud, or GitHub resources. One gate. Do not start it. Send **one** short message in the user's language, then **one** short question referring back to it.
 
-Once they name a skill, follow it.
+The message names the options below. Before the question, for each named `*-ai-tools` skill:
+1. That skill's stake — its `description` `Impact:` — from memory. Do not open a file to retrieve it.
+2. This session's model against `$HOME/.ai-tools/MODELS.md` (Windows: `%USERPROFILE%\.ai-tools\MODELS.md`) for this harness. Columns are planner, implementer, mechanical (highest to lowest). That skill's **Min. role** is the floor: acceptable models are that cell's model token (the backticked name) and every cell to its left. Drop duplicate tokens. Tell this session it should be those models — *X*, or *Y*, or *Z*, as many as remain. Then:
+   - The session model is one of them — this session meets the minimum. Say so in one line.
+   - They differ, or the session model is undetermined — name the session model, or say it is undetermined, and name how to change it (`MODELS.md` last column).
 
-**When in doubt, treat it as case 2.** Wait for an explicit answer; never pick for the user, and never chain from a request straight into implementation.
+The question's answers (write in the user's language):
+- **`/vibe-ai-tools`** (recommended);
+- **the skill that fits**, when one does;
+- **run it here**, ignoring the ai-tools skills;
+- **stop**.
+
+Wait for an explicit answer. Never pick for the user, and never chain from a request straight into implementation.
+
+- A named `*-ai-tools` skill — follow it. This session operates at that skill's **Min. role** (or higher, if the session model already is). When the floor is planner, this session carries `planner-ai-tools` (base `$HOME/.ai-tools/agents/planner-ai-tools.md`; on Windows `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`). Announce every agent spawn in the user's language with the agent name. Spawn depth is one.
+- **Run it here** — do the work in this session.
+- **Stop** (or anything that is not one of the above) — stop. Nothing is read, run, or changed.
+
+**When in doubt, treat it as case 2.** Case 1 does not use this gate; **run it here** does not follow a skill. A skill whose workflow already passed this gate may follow another skill's Workflow without a second gate when it says so.
+
+Proceeding below the minimum is the user's call. Never refuse over the session model.
 
 ## The three agents
 
@@ -67,4 +80,4 @@ These instructions being written in English leaves the working repository's lang
 
 ## User-specific overrides
 
-Read `$HOME/AGENTS.md` (`%USERPROFILE%\AGENTS.md` on Windows) if present. It overrides this file, but yields to repository-level `AGENTS.md`/`README.md`. If missing, continue without creating it unless requested.
+Read `$HOME/AGENTS.md` (`%USERPROFILE%\AGENTS.md` on Windows) if present. It overrides this file, but yields to repository-level `AGENTS.md`/`README.md`. If missing, ignore it.

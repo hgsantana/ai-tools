@@ -1,8 +1,11 @@
 ---
 name: remove-ai-tools
 description: >
-  Run the ai-tools removal — unlink agents, skills, and (optionally) instructions from the harnesses,
-  per the README's Removal procedure. Use for /remove-ai-tools or whenever the user asks to remove or uninstall ai-tools.
+  Remove this installation: unlink agents, skills, and optionally
+  instructions from the harnesses, per the README Removal procedure. Use
+  for /remove-ai-tools. Impact: those tools stop being available in the
+  harnesses. Does not delete $HOME/.ai-tools unless the user separately
+  approves purge. Destructive steps need an explicit yes.
 argument-hint: "[optional: harnesses in scope, or extra instructions]"
 ---
 
@@ -10,13 +13,9 @@ argument-hint: "[optional: harnesses in scope, or extra instructions]"
 
 Removing the ai-tools installation, task `remove`.
 
-## Stake
-
-Tell the user, in their language, before anything runs: this unlinks ai-tools agents, skills, and optionally the instructions link from the harnesses' config directories — those tools stop being available there. Removal unlinks; it does not delete `$HOME/.ai-tools` itself unless the user explicitly asks, as a separate approval. Destructive steps run only after their explicit approval for that specific action. Surface this stake in the user's language in the same message as the first scope question.
-
 ## Scope and approvals
 
-Settle the scope with the user before touching anything, and put every destructive step to them as its own request — the flag, what it discards, and why the task needs it. Run only with the explicit answers; a declined flag is simply omitted. Approval never carries over between actions.
+The routing gate already surfaced Impact:. Settle the scope with the user before touching anything, and put every destructive step to them as its own request — the flag, what it discards, and why the task needs it. Run only with the explicit answers; a declined flag is simply omitted. Approval never carries over between actions.
 
 ## Source of truth
 

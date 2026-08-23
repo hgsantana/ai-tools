@@ -1,8 +1,11 @@
 ---
 name: update-ai-tools
 description: >
-  Run the ai-tools update — reset $HOME/.ai-tools to origin/master, refresh copies, and link anything
-  newly shipped, per the README's Update procedure. Use for /update-ai-tools or whenever the user asks to update ai-tools.
+  Update this installation: reset $HOME/.ai-tools to origin/master, refresh
+  copies, and link anything newly shipped, per the README Update procedure.
+  Use for /update-ai-tools on an existing install. Impact: discards local
+  commits and edits in that repo and refreshes harness config directories.
+  Destructive steps need an explicit yes.
 argument-hint: "[optional: harnesses in scope, or extra instructions]"
 ---
 
@@ -10,13 +13,9 @@ argument-hint: "[optional: harnesses in scope, or extra instructions]"
 
 Updating the ai-tools installation, task `update`.
 
-## Stake
-
-Tell the user, in their language, before anything runs: the update **resets `$HOME/.ai-tools` to `origin/master`, discarding local commits and edits in that repo**, and refreshes what is installed across harness config directories. Destructive steps run only after their explicit approval for that specific action. Surface this stake in the user's language in the same message as the first scope question.
-
 ## Scope and approvals
 
-Settle the scope with the user before touching anything, and put every destructive step to them as its own request — the flag, what it discards, and why the task needs it. Run only with the explicit answers; a declined flag is simply omitted. Approval never carries over between actions.
+The routing gate already surfaced Impact:. Settle the scope with the user before touching anything, and put every destructive step to them as its own request — the flag, what it discards, and why the task needs it. Run only with the explicit answers; a declined flag is simply omitted. Approval never carries over between actions.
 
 ## Source of truth
 

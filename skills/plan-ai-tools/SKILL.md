@@ -1,9 +1,11 @@
 ---
 name: plan-ai-tools
 description: >
-  Run the plan-ai-tools work — explore the repository and write a multi-file implementation plan
-  under dev/, then stop — carried in this session under the planner-ai-tools role.
-  Use for /plan-ai-tools or whenever a non-trivial change should be planned before implementation.
+  Explore the repository and write a multi-file implementation plan under
+  dev/, then stop — carried in this session under the planner-ai-tools role.
+  Use for /plan-ai-tools or whenever a non-trivial change should be planned
+  first. Impact: none destructive — writes only under dev/; no product code,
+  no commits, no push.
 argument-hint: "[description of the change, feature, or fix to plan]"
 ---
 
@@ -11,36 +13,9 @@ argument-hint: "[description of the change, feature, or fix to plan]"
 
 Designing a change: exploring the repository and writing a multi-file implementation plan under `dev/`, then stopping.
 
-## Continue?
-
-This skill expects this session to be the **planner** (`MODELS.md` planner cell for this harness).
-
-Before anything is read, run, or changed, send **one** short message in the user's language:
-
-1. The stake (**Stake** below).
-2. Whether this session is the planner: read this harness's `planner` cell in `$HOME/.ai-tools/MODELS.md` and compare it with the session model.
-   - They match — this session is the planner. Say so in one line.
-   - They differ, or the session model is undetermined — this session is not the planner. Name the session model, or say it is undetermined, and name how to change the session model in this harness (`MODELS.md` last column).
-3. Then ask: do you want to continue?
-   - a) yes
-   - b) no
-
-Wait for an explicit answer. Never pick for the user.
-
-- **No** (or anything that is not yes) — stop. Nothing is read, run, or changed.
-- **Yes** — this session carries `planner-ai-tools` (base `$HOME/.ai-tools/agents/planner-ai-tools.md`; on Windows `%USERPROFILE%\.ai-tools\agents\planner-ai-tools.md`) and follows **Workflow**. Announce every spawn in the user's language with the agent name. Spawn depth is one.
-
-Proceeding on a non-planner session is the user's call. This skill never refuses over the session model.
-
-Skip this whole section when another planner-gated skill that already passed Continue? tells you to skip this skill's gate and follow Workflow (today: vibe-ai-tools).
-
-## Stake
-
-No destructive stake: planning writes only under `dev/` and changes no product code. Say so in one line — the user is choosing a route, not accepting a risk.
-
 ## Workflow
 
-You are carrying the `planner-ai-tools` role in this session. Author a multi-file implementation plan under `dev/` for the request you were given, then stop. Plan only once Continue? has a yes. Never implement under this skill.
+You are carrying the `planner-ai-tools` role in this session. Author a multi-file implementation plan under `dev/` for the request you were given, then stop. Never implement under this skill.
 
 ## Decisions that are the user's
 
@@ -182,7 +157,7 @@ Suggested message: `feat: …` (or fix/chore/…)
 ## Report
 
 - Report in chat, in the user's language: a few lines on what the plan does plus the plan file paths.
-- Ask whether to implement. **Yes** — invoke the `dev-ai-tools` skill against those plans (that skill will present its own Continue? gate). **No** — stop; the saved plan is the deliverable.
+- Ask whether to implement. **Yes** — invoke the `dev-ai-tools` skill against those plans (`USER-AGENTS.md` gates that activation). **No** — stop; the saved plan is the deliverable.
 - The saved plan is the deliverable until the user accepts it. Never implement a plan they have not accepted.
 
 ## Boundaries

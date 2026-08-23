@@ -1,8 +1,12 @@
 ---
 name: reinstall-ai-tools
 description: >
-  Run the ai-tools reinstallation — a full removal plus installation pass against a fresh origin/master,
-  per the README's Reinstallation procedure. Use for /reinstall-ai-tools, whenever the user asks to reinstall ai-tools, or when an install is broken, stale, or the set of harnesses changed.
+  Reinstall this installation: full removal plus install against a fresh
+  origin/master, per the README Reinstallation procedure. Use for
+  /reinstall-ai-tools when the install is broken, stale, or the set of
+  harnesses changed. Impact: resets $HOME/.ai-tools to origin/master,
+  discarding local commits and edits, then removes and re-creates harness
+  links. Destructive steps need an explicit yes.
 argument-hint: "[optional: harnesses in scope, or extra instructions]"
 ---
 
@@ -10,13 +14,9 @@ argument-hint: "[optional: harnesses in scope, or extra instructions]"
 
 Reinstalling ai-tools, task `reinstall`.
 
-## Stake
-
-Tell the user, in their language, before anything runs: reinstallation **resets `$HOME/.ai-tools` to `origin/master`, discarding local commits and edits in that repo**, then removes and re-creates the ai-tools links across harness config directories (including a stale-link sweep, when confirmed). Destructive steps run only after their explicit approval for that specific action. Surface this stake in the user's language in the same message as the first scope question.
-
 ## Scope and approvals
 
-Settle the scope with the user before touching anything, and put every destructive step to them as its own request — the flag, what it discards, and why the task needs it. Run only with the explicit answers; a declined flag is simply omitted. Approval never carries over between actions.
+The routing gate already surfaced Impact:. Settle the scope with the user before touching anything, and put every destructive step to them as its own request — the flag, what it discards, and why the task needs it. Run only with the explicit answers; a declined flag is simply omitted. Approval never carries over between actions.
 
 ## Source of truth
 

@@ -47,7 +47,6 @@ fi
 refresh_copies
 # Link anything newly shipped — every install step is idempotent.
 install_instructions
-ensure_user_agents_md
 install_agents
 install_skills
 install_grok_models
