@@ -15,36 +15,12 @@ Designing a change: exploring the repository and writing a multi-file implementa
 
 ## Workflow
 
-You are carrying the `planner-ai-tools` role in this session. Author a multi-file implementation plan under `dev/` for the request you were given, then stop. Never implement under this skill.
+You carry the `planner-ai-tools` role in this session. Author a multi-file implementation plan under `dev/` for the request you were given, then stop. Never implement under this skill.
 
-## Decisions that are the user's
-
-Ask the user — numbered when there are several, each with the options you see and your recommendation — and continue with the answers: scope boundaries, trade-offs the repository's documentation does not settle, and anything the Security rules reserve for the user. Never guess one.
-
-## Workflow
-
-1. **Clarify task & scope**: resolve ambiguities and explicit out-of-scope boundaries up front — asking the user the questions that are theirs to answer.
-2. **Read sources of truth**: repository root and sub-directory `README.md`/`AGENTS.md`, plus `$HOME/AGENTS.md` if present.
-3. **Explore the codebase**: spawn read-only `mechanical-ai-tools` in parallel for broad discovery; use direct read/grep for pinpoint lookups.
-4. **Draft the plan**: base file + stage files (isolated, explicit paths with reasons, tests split by type, docs stage if behavior changes, Conventional Commit boundaries, explicit stage order).
-5. **Save**: write base `dev/<slug>/0-<slug>.md` and stage `dev/<slug>/<n>-<slug>.md` files with empty Status/Agent cells, incrementally as they are drafted rather than only at the end — a planner that dies mid-run must leave its partial draft on disk for a successor to resume (*Truth on disk*).
-6. **Report**: the base plan path, the stage file paths, and at most five lines of summary — every other detail stays on disk. Anything still open is a numbered question to the user.
-
-## Where plans live
-
-- `dev/` in the working repository holds every plan. Outside a git repository, write to `$HOME/.ai-tools-plans` (Windows: `%USERPROFILE%\.ai-tools-plans`) instead — the same per-plan directory layout applies there too.
-- In a git repository each plan is a versioned directory `dev/<slug>/`: keep it out of ignore rules and include it in path-scoped commits. Generated state is transient and lives under one ignored root, `dev/tmp/`; the whole ignore policy is the single rule `/dev/tmp/`.
-- `dev/tmp/` (ad-hoc briefs and feedback for `dev-ai-tools`, plus `dev/tmp/finished/` and `dev/tmp/vibe/`) stays out of the plan queue. Plan only as `dev/<slug>/0-<slug>.md`.
-- A plan is **working state, not a historical record**: it is versioned so an execution survives a lost session, a new machine, or a fresh clone. It earns its place in the repository only while it still has to be resumed — `dev-ai-tools` removes it from the tree when the work ships.
-- Plan files hold the detail — steps, validation notes, command output. Chat gets a short summary and file links.
-
-## Truth on disk
-
-Durable state — anything a later agent, a retry, or a recovery will depend on — lives in files. Context windows overflow and runs die mid-draft; a file survives both.
-
-- Write before you depend on it: it is on disk before the turn ends or the spawn happens.
-- Communicate by reference: pass file paths, not file contents.
-- On conflict, the file wins over any message or recollection.
+1. **Invoke host planning**: delegate the design by requesting that the host harness use the strongest planning capability, mode, or skill it possesses.
+2. **Draft the plan**: structure the delivery into isolated stages where each stage defines a commit boundary. Group tests by type, add a documentation stage if behavior changes, and set explicit stage dependencies.
+3. **Save**: write the base file `dev/<slug>/0-<slug>.md` and stage files `dev/<slug>/<n>-<slug>.md` with empty Status/Agent cells, incrementally as they are drafted rather than only at the end (*Truth on disk*).
+4. **Report**: state the base plan path, stage file paths, and at most five lines of summary in chat. Anything open remains a numbered question to the user. Ask whether to implement via `dev-ai-tools`.
 
 ## Plan file format
 
@@ -104,7 +80,7 @@ Optional: commit strategy, risks, out of scope.
 | `V` | Validating — ready for planner review | `implementer-ai-tools` |
 | `R1`, `R2`, `R3` | Retry 1, 2, 3 — rework after feedback | `planner-ai-tools` |
 | `T` | Testing — dedicated test pass | `planner-ai-tools` |
-| `TV` | Testing validation — test review | **testing agent** |
+| `TV` | Testing validation — test review | `mechanical-ai-tools` |
 | `E` | Error — correction limit exhausted | `planner-ai-tools` |
 | `F` | Finished — stage accepted | `planner-ai-tools` |
 
@@ -112,7 +88,7 @@ Optional: commit strategy, risks, out of scope.
 
 ### Stage file (`dev/<slug>/<n>-<slug>.md`)
 
-Self-contained: implementable from base Goal/Execution graph and this file alone.
+Self-contained: implementable from base Goal/Execution graph and this file alone. Each stage file defines a single Conventional Commit boundary.
 
 ```markdown
 # Stage <n>: <Title>

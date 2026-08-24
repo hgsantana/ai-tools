@@ -1,6 +1,6 @@
 # ai-tools
 
-> **Version 0.0.30-ALPHA** — under active development. Usable for testing; no guarantees, and no backward compatibility between alpha versions (rule 4).
+> **Version 0.0.31-ALPHA** — under active development. Usable for testing; no guarantees, and no backward compatibility between alpha versions (rule 4).
 
 ## What is this repository
 
@@ -85,6 +85,7 @@ Normative for every human and every AI maintaining this repository.
 ### Plan state
 
 29. Plans are versioned per directory `dev/<slug>/`. `dev/tmp/` is generated state and is never tracked: ignore rules do not untrack a path already in the index, so archiving a plan is `git mv` plus `git rm -r --cached`, leaving the files on disk and out of version control.
+30. `plan-ai-tools` delegates plan design by requesting that the host harness use the best planning capability or mode it possesses. The resulting plan is saved strictly following the repository's plan structure under `dev/<slug>/`: a base file (`0-<slug>.md`) and sequential stage files (`<n>-<slug>.md`), structuring the delivery into isolated stages where each stage corresponds to one commit boundary.
 
 ### Model map and wrapper authoring
 
