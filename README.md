@@ -1,6 +1,6 @@
 # ai-tools
 
-> **Version 0.0.31-ALPHA** — under active development. Usable for testing; no guarantees, and no backward compatibility between alpha versions (rule 4).
+> **Version 0.0.32-ALPHA** — under active development. Usable for testing; no guarantees, and no backward compatibility between alpha versions (rule 4).
 
 ## What is this repository
 
