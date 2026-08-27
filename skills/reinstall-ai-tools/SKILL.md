@@ -1,22 +1,21 @@
 ---
 name: reinstall-ai-tools
 description: >
-  Reinstall this installation: full removal plus install against a fresh
-  origin/master, per the README Reinstallation procedure. Use for
-  /reinstall-ai-tools when the install is broken, stale, or the set of
-  harnesses changed. Impact: resets $HOME/.ai-tools to origin/master,
-  discarding local commits and edits, then removes and re-creates harness
-  links. Destructive steps need an explicit yes.
+  Reinstall per the README with full removal and installation from a fresh
+  origin/master. Use for /reinstall-ai-tools when installation is broken or
+  stale, or the harness set changed. Impact: resets $HOME/.ai-tools, which can
+  discard local work, then re-creates harness links. Each destructive step
+  requires an explicit yes.
 argument-hint: "[optional: harnesses in scope, or extra instructions]"
 ---
 
 # Reinstallation
 
-Reinstalling ai-tools, task `reinstall`.
+Reinstall ai-tools with task `reinstall`.
 
 ## Scope and approvals
 
-The routing gate already surfaced Impact:. Settle the scope with the user before touching anything, and put every destructive step to them as its own request — the flag, what it discards, and why the task needs it. Run only with the explicit answers; a declined flag is simply omitted. Approval never carries over between actions.
+The routing gate already surfaced the impact. Settle scope before acting. Present every destructive step separately with its flag, what it discards, and why it is needed. Execute only explicitly approved steps; omit declined flags. Approval never carries over.
 
 ## Source of truth
 
@@ -28,14 +27,14 @@ The routing gate already surfaced Impact:. Settle the scope with the user before
 | `remove` | `scripts/shell/remove.sh` | `--instructions`, `--purge` (with `--yes` only inside that same approval) |
 | `reinstall` | `scripts/shell/reinstall.sh` | `--discard-local` |
 
-Use only agents, remotes, URLs, paths, and flags that are in the tree, the README, or the scripts' `--help`. When the tree and the README disagree with your recollection, they win.
+Use agents, remotes, URLs, paths, and flags defined by the tree, README, or scripts' `--help`; these sources prevail over recollection.
 
 ## Workflow
 
-1. **Scope** — ask which harnesses are in scope, plus the task's own questions (instructions too, stale-link sweep). Pass the answer as `--harnesses`; only an explicit "all" means every detected harness.
+1. **Scope** — ask which harnesses, instructions, and stale-link sweep options are in scope. Pass the answer as `--harnesses`; an explicit "all" selects every detected harness.
 2. **Dry run** — run `scripts/shell/reinstall.sh` with `--dry-run` and the scoped flags. Save its output to `$AI_TOOLS/dev/tmp/reinstall-dry-run.log` and hand over that path, together with each destructive flag the task needs as its own approval request — action, what it discards, and why.
-3. **Execute** — only with the explicit answers, run the script for real, adding exactly the approved flags; a declined flag is simply omitted.
-4. **Interpret** — exit 0: clean. Exit 2: report every `WARN` line with its reason. Exit 1: the script stopped on a precondition — report its output, fix only what the README's Troubleshooting names. Never work around a safety refusal (for example by resetting or deleting manually).
+3. **Execute** — run the script with exactly the approved flags.
+4. **Interpret** — exit 0: clean. Exit 2: report every `WARN` with its reason. Exit 1: report the failed precondition and use only the remedy named in README Troubleshooting. Never bypass a safety refusal by resetting or deleting manually.
 
 Read-only steps — discovery, `--dry-run`, `verify.sh` — run freely. Carry this task in this session.
 
@@ -43,10 +42,10 @@ Read-only steps — discovery, `--dry-run`, `verify.sh` — run freely. Carry th
 
 - Touch only `$AI_TOOLS` and the harness destinations the scripts name.
 - Leave `$HOME/AGENTS.md` untouched — user-owned, outside every procedure. **Never touch `$HOME/AGENTS.md`.**
-- A conflict the script skipped is the user's to resolve. Leave the scripts' `safe_*` semantics in place.
-- Every script is idempotent; re-running a partial task is safe and is the recovery path.
-- This task is install maintenance. Carry it yourself.
+- Return skipped conflicts to the user and preserve the scripts' `safe_*` semantics.
+- Scripts are idempotent; recover from a partial task by re-running it.
+- Carry this installation-maintenance task yourself.
 
 ## Report
 
-Write the run to `$AI_TOOLS/dev/tmp/reinstall-report.md`: the exact script invocations, each run's `done: … ok, … skipped, … warnings` line, every `SKIP`/`WARN` with its reason, and the resulting tree state (`HEAD`, clean or not). Chat gets that path — opened in the user's editor where the harness can — plus the outcome line, every request still awaiting approval, and the reminder to restart harnesses that cache agents or skills.
+Write `$AI_TOOLS/dev/tmp/reinstall-report.md` with exact invocations, each `done: … ok, … skipped, … warnings` line, every `SKIP`/`WARN` and its reason, and the resulting tree state (`HEAD` and cleanliness). Chat gets that path—opened where supported—plus the outcome, pending approvals, and a reminder to restart harnesses that cache agents or skills.

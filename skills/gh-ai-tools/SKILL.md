@@ -1,12 +1,11 @@
 ---
 name: gh-ai-tools
 description: >
-  Query or manage GitHub via the GitHub CLI (gh). Use for /gh-ai-tools or
-  GitHub
-  repositories, pull requests, issues, releases, or workflows. Impact:
-  mutations can merge, close, comment, push, and delete — visible to others
-  immediately and often irreversible. Reads run freely; each mutation needs
-  an explicit yes for that action.
+  Query or manage GitHub through the GitHub CLI (gh). Use for /gh-ai-tools or
+  repositories, pull requests, issues, releases, and workflows. Impact:
+  mutations can merge, close, comment, push, or delete; they are immediately
+  visible to others and often irreversible. Reads run freely; each mutation
+  requires an explicit yes.
 argument-hint: "[what to inspect or change on GitHub]"
 ---
 
@@ -16,14 +15,13 @@ Issues, pull requests, checks, releases, and repositories through the GitHub CLI
 
 ## Workflow
 
-Use the GitHub CLI (`gh`) for issues, pull requests, checks, releases, and repositories on the request you were given, then stop.
+Use `gh` for the requested issues, pull requests, checks, releases, or repository operation, then stop.
 
 ### Rules
 
-- Run **read-only / query** commands freely (list, view, status, checks, diff).
-- Put each proposed mutation to the user as its own request — command, target, reason, and blast impact — and run it only on an explicit yes for that action. Approval never carries over between actions. Never create, modify, close, merge, comment on, or remove a GitHub resource without that yes. Local commits run freely; pushing waits on that yes.
-- Every suggested action visible to others (opening/closing PRs, commenting, pushing, releases) states what will happen and the target audience.
-- Collected output — inventories, cost breakdowns, logs, listings — goes to a file under `dev/tmp/` and is handed over as a path. Chat carries the direct answer to what was asked; a result that genuinely fits in a line or two needs no file.
+- Run **read-only queries** freely: list, view, status, checks, and diff.
+- Present each mutation as a separate approval request with its command, target, reason, and blast impact. Execute it only after an explicit yes for that action; approval never carries over. Local commits run freely; pushing requires that yes.
+- For every action visible to others—opening or closing pull requests, commenting, pushing, or publishing releases—state the outcome and audience.
 
 ### Delegated exploration
 
@@ -37,8 +35,8 @@ Spawn `mechanical-ai-tools` for read-only `gh` discovery — commands, state, co
 - `gh api <endpoint>` — API for uncovered cases
 - `gh run list` / `gh run view` — CI runs
 
-Fetch facts via `gh` when given a GitHub URL instead of guessing.
+When given a GitHub URL, fetch its facts through `gh`.
 
 ## Report
 
-Write the findings to `dev/tmp/<topic>.md` and give the user its path — opened in their editor where the harness can. Chat carries, in the user's language, the direct answer to what was asked and any mutation still awaiting a yes.
+Write inventories, logs, diffs, and listings to `dev/tmp/<topic>.md`, then give the user its path—opened in their editor where supported. In the user's language, chat carries the direct answer and any mutation awaiting approval. A one- or two-line result may stay in chat alone.

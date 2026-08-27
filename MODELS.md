@@ -1,14 +1,14 @@
 # Model map
 
-Authoring and install lookup. Wrappers pin `model:` (and effort, when the cell has one) from this map; Grok's install writes `~/.grok/config.toml` from it; `tools/lint.sh` checks parity.
+Authoring and installation lookup. Wrappers take `model:` and, when present, effort from this map. Grok installation writes `~/.grok/config.toml` from it, and `tools/lint.sh` checks parity.
 
 ## How to write it
 
 1. Identify the harness — the wrapper folder under `agents/<key>/` is the row key.
 2. Columns (**planner**, **implementer**, **mechanical**) match `planner-ai-tools`, `implementer-ai-tools`, and `mechanical-ai-tools` in `USER-AGENTS.md` → *The three agents*.
-3. Put the backticked model token in the harness's own syntax. When the cell has `` · effort ``, that is the official effort — pin it if this harness's wrapper form accepts effort. When the cell has no effort, leave effort off the wrapper.
+3. Write the backticked model token in the harness's syntax. A following `` · effort `` is the official effort; include it when the wrapper supports effort.
 
-The last column is how a human changes the *session* model in that harness. Spawned agents use the wrapper pin; `USER-AGENTS.md` routing compares the session model with this harness's cells at the skill's **Min. role** and every higher-role cell to its left.
+The last column shows how a human changes the *session* model. Spawned agents use the wrapper pin; `USER-AGENTS.md` compares the session model with the cell at the skill's **Min. role** and every higher-role cell to its left.
 
 ## Map
 

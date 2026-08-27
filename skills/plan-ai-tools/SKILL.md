@@ -1,26 +1,25 @@
 ---
 name: plan-ai-tools
 description: >
-  Explore the repository and write a multi-file implementation plan under
-  dev/, then stop — carried in this session under the planner-ai-tools role.
-  Use for /plan-ai-tools or whenever a non-trivial change should be planned
-  first. Impact: none destructive — writes only under dev/; no product code,
-  no commits, no push.
+  Explore the repository and write a multi-file implementation plan under dev/
+  in the planner-ai-tools role. Use for /plan-ai-tools or when a non-trivial
+  change needs planning first. Impact: writes only planning files under dev/;
+  product code, commits, and remote state remain unchanged.
 argument-hint: "[description of the change, feature, or fix to plan]"
 ---
 
 # Planning
 
-Designing a change: exploring the repository and writing a multi-file implementation plan under `dev/`, then stopping.
+Explore a change and write its multi-file implementation plan under `dev/`.
 
 ## Workflow
 
-You carry the `planner-ai-tools` role in this session. Author a multi-file implementation plan under `dev/` for the request you were given, then stop. Implementation belongs to `dev-ai-tools`; a change small enough for a single commit belongs to its Task mode, so say so and stop rather than planning it.
+Carry the `planner-ai-tools` role and author a multi-file implementation plan under `dev/`, then stop. Route a change small enough for one commit to the `dev-ai-tools` Task mode and report that choice instead of planning it.
 
-1. **Invoke host planning**: delegate the design by requesting that the host harness use the strongest planning capability, mode, or skill it possesses.
+1. **Invoke host planning**: request the host harness's strongest planning capability, mode, or skill for the design.
 2. **Draft the plan**: structure the delivery into isolated stages where each stage defines a commit boundary. Group tests by type, add a documentation stage if behavior changes, and set explicit stage dependencies.
-3. **Save**: write the base file `dev/<slug>/0-<slug>.md` and the stage files `dev/<slug>/<n>-<slug>.md` incrementally, as each is drafted rather than all at the end — a plan on disk survives a lost session.
-4. **Report** — hand over paths, not prose (*Report*).
+3. **Save**: write `dev/<slug>/0-<slug>.md` and each `dev/<slug>/<n>-<slug>.md` as it is drafted, so the plan survives an interrupted session.
+4. **Report**: hand over paths as defined in *Report*.
 
 ## Plan file format
 
@@ -37,7 +36,7 @@ dev/
     finished/<slug>/  # local archive copy, made by `dev-ai-tools` once every stage is terminal
 ```
 
-The ordinal is first on every file, base included, so a listing of `dev/<slug>/` reads in order — digits sort before the `F` of a fix file.
+Every filename starts with its ordinal, including the base, so directory listings follow execution order and place numbered stages before `F` fix files.
 
 ### Base file (`dev/<slug>/0-<slug>.md`)
 
@@ -71,7 +70,7 @@ Stages run one at a time, in an order consistent with these dependencies.
 Optional: commit strategy, risks, out of scope.
 ```
 
-**Status** and **Agent** are left empty at creation: `dev-ai-tools` owns them, along with each stage file's Dispatch log.
+Leave **Status** and **Agent** empty at creation; `dev-ai-tools` owns them and each stage's Dispatch log.
 
 ### Stage file (`dev/<slug>/<n>-<slug>.md`)
 
@@ -119,10 +118,10 @@ Suggested message: `feat: …` (or fix/chore/…)
 
 ## Report
 
-The plan is the report: it is already on disk, so chat gets its base file path — opened in the user's editor where the harness can — rather than a retelling of it. With the path go one line on what the plan does, the numbered questions still open, and the ask: implement it? **Yes** invokes `dev-ai-tools` against those plans (`USER-AGENTS.md` gates that activation); **no** stops. All in the user's language.
+The plan itself is the report. In the user's language, chat gives its base path—opened where supported—a one-line outcome, numbered open questions, and “Implement it?”. **Yes** invokes `dev-ai-tools` against the plan through the `USER-AGENTS.md` gate; **no** stops.
 
 ## Boundaries
 
-- Write only under `dev/<slug>/`. `dev-ai-tools` owns the archive under `dev/tmp/finished/`.
-- Edit no product code, run no verification build, spawn no `implementer-ai-tools`, implement nothing.
-- The saved plan is the deliverable until the user accepts it; a plan they have not accepted is never implemented.
+- Write only under `dev/<slug>/`; `dev-ai-tools` owns `dev/tmp/finished/`.
+- Limit this workflow to planning: leave product code and builds unchanged, and leave implementation to `dev-ai-tools` and `implementer-ai-tools`.
+- Treat the saved plan as the deliverable until the user accepts it. Acceptance authorizes implementation through the routing gate.

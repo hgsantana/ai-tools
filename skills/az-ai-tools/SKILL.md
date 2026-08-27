@@ -1,11 +1,10 @@
 ---
 name: az-ai-tools
 description: >
-  Query or manage Azure via the Azure CLI (az). Use for /az-ai-tools or Azure
-  resources,
-  subscriptions, costs, or infrastructure. Impact: mutations can create
-  billable resources and remove existing ones; neither is easy to undo.
-  Reads run freely; each mutation needs an explicit yes for that action.
+  Query or manage Azure through the Azure CLI (az). Use for /az-ai-tools or
+  Azure resources, subscriptions, costs, and infrastructure. Impact: mutations
+  may create billable resources or remove existing ones and can be hard to
+  reverse. Reads run freely; each mutation requires an explicit yes.
 argument-hint: "[what to inspect or change in Azure]"
 ---
 
@@ -15,14 +14,13 @@ Inventory, cost, and operations on Azure through the Azure CLI (`az`).
 
 ## Workflow
 
-Use the Azure CLI (`az`) for inventory, cost, and operations on the request you were given, then stop.
+Use `az` for the requested inventory, cost analysis, or operation, then stop.
 
 ### Rules
 
-- Run **read-only / query** commands freely (list, show, describe, costs).
-- Put each proposed mutation to the user as its own request — command, target, reason, and cost or blast impact — and run it only on an explicit yes for that action. Approval never carries over between actions. Never create, modify, or remove a resource without that yes.
-- Every suggested mutation states its **cost impact**: SKU, ongoing cost, billable status.
-- Collected output — inventories, cost breakdowns, logs, listings — goes to a file under `dev/tmp/` and is handed over as a path. Chat carries the direct answer to what was asked; a result that genuinely fits in a line or two needs no file.
+- Run **read-only queries** freely: list, show, describe, and costs.
+- Present each mutation as a separate approval request with its command, target, reason, and cost or blast impact. Execute it only after an explicit yes for that action; approval never carries over.
+- State each proposed mutation's **cost impact**: SKU, ongoing cost, and billable status.
 
 ### Delegated exploration
 
@@ -40,4 +38,4 @@ Prefer `--output table` or `--query` (JMESPath) for concise output.
 
 ## Report
 
-Write the findings to `dev/tmp/<topic>.md` and give the user its path — opened in their editor where the harness can. Chat carries, in the user's language, the direct answer to what was asked and any mutation still awaiting a yes.
+Write inventories, cost breakdowns, logs, and listings to `dev/tmp/<topic>.md`, then give the user its path—opened in their editor where supported. In the user's language, chat carries the direct answer and any mutation awaiting approval. A one- or two-line result may stay in chat alone.

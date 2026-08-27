@@ -1,10 +1,10 @@
 # Roadmap
 
-Documentation only — **not a source of truth**. The README owns the rules and processes; this file only parks ideas.
+This file parks ideas; the README remains the source of truth for rules and processes.
 
-Each entry is one story, summarized in a single paragraph, written so it can be pasted as-is into `/vibe-ai-tools` (refine + deliver) or `/plan-ai-tools` (plan only). Order is the suggested sequence, not a commitment: later stories mostly assume the safety net of the earlier ones. A story leaves this file when it ships — what survives is the commit, the rule, and the documentation it produced.
+Each entry is a single-paragraph story ready for `/vibe-ai-tools` (refine and deliver) or `/plan-ai-tools` (plan only). The order is advisory; later stories generally build on earlier ones. When a story ships, remove it—the commit, rule, and resulting documentation become its record.
 
-Status: `idea` (not refined) · `next` (agreed, ready to refine) · `doing` (a plan exists under `dev/`) · `done` (shipped; delete the entry).
+Status: `idea` (awaiting refinement) · `next` (agreed and ready) · `doing` (planned under `dev/`) · `done` (shipped; remove the entry).
 
 | # | Story | Status |
 |---|---|---|
@@ -22,40 +22,40 @@ Status: `idea` (not refined) · `next` (agreed, ready to refine) · `doing` (a p
 
 ### 4. Health-check entry point
 
-`verify` is a first-class read-only process with a script, but it is the only one without a slash command: the user can update, remove, and reinstall by name, yet has to remember a path to check whether their installation is intact. Add a `verify-ai-tools` skill dispatching `implementer-ai-tools` to run `verify`, and — this is the point — maps each finding onto the matching entry in the README's Troubleshooting section: dangling links to Reinstallation, stale copies to Update, an agent on the wrong model to the Grok pin or the wrapper comparison. Route: `/vibe-ai-tools`.
+`verify` is a first-class read-only process with a script, while update, removal, and reinstallation also have slash commands. Add a `verify-ai-tools` skill that dispatches `implementer-ai-tools` to run `verify` and maps each finding to the matching README Troubleshooting entry: dangling links to Reinstallation, stale copies to Update, and a wrong agent model to the Grok pin or wrapper comparison. Route: `/vibe-ai-tools`.
 
 ### 6. Changelog for alpha testers
 
-Rule 4 waives backward compatibility and migration notes, and the README deliberately describes only the current state — which leaves someone who installed `0.0.18` with no way to learn what changed by `0.0.22` beyond reading commit messages. Add a `CHANGELOG.md` with one short entry per version (what changed in shipped content, what breaks, whether a reinstall is required instead of an update), and have the linter from story 1 require an entry whenever the version bumps. Route: `/vibe-ai-tools`.
+Rule 4 lets the README describe only the current alpha state. Give testers a concise history by adding `CHANGELOG.md` with one entry per version: shipped changes, breaking effects, and whether reinstallation replaces update. Have the linter require an entry whenever the version changes. Route: `/vibe-ai-tools`.
 
 ## Capability
 
 ### 7. Repeatable model-map refresh
 
-The model selection method in the README is genuinely reproducible research — list names from official docs, join Artificial Analysis measurements, filter by category thresholds, rank by `(Intelligence Index / cost per task) / time per task` — but running it is a fully manual pass across six harnesses, so the map decays silently with every model release and nothing signals that it is stale. Ship a `models-ai-tools` skill that walks the method end to end, records source URLs and retrieval dates, presents the resulting table as a diff against the current `MODELS.md`, and, on approval, updates the map and every affected wrapper header in one commit as rule 12 requires. Route: `/vibe-ai-tools`.
+The README defines a reproducible model-selection method—list official names, join Artificial Analysis measurements, apply category thresholds, and rank by `(Intelligence Index / cost per task) / time per task`—but applying it manually across six harnesses makes freshness hard to see. Ship a `models-ai-tools` skill that runs the method end to end, records source URLs and retrieval dates, presents a diff against `MODELS.md`, and, after approval, updates the map and affected wrapper headers in one commit as rule 12 requires. Route: `/vibe-ai-tools`.
 
 ### 8. Decisions that outlive the plan
 
-The vibe workflow answers the planner's open questions on the user's behalf and logs each one with its trade-offs, but that file lives under `dev/tmp/vibe/`, which is gitignored, and a plan is deliberately deleted when it is archived — so the reasoning behind a shipped change disappears the moment the pull request merges, leaving only the diff. Define a small versioned decision record (a `docs/decisions/` entry, one file per accepted decision) that the vibe workflow promotes from its decisions file before opening the pull request, so the "why" is reviewed alongside the change and survives the archival. Route: `/vibe-ai-tools`.
+The vibe workflow answers planner questions on the user's behalf and logs those decisions and trade-offs under gitignored `dev/tmp/vibe/`, while archival removes the plan. Preserve the reasoning behind shipped changes by defining a small versioned decision record under `docs/decisions/`, one file per accepted decision, promoted from the vibe decisions file before the pull request opens. This lets reviewers assess the rationale with the change and retains it after archival. Route: `/vibe-ai-tools`.
 
 ### 9. Resuming an interrupted delivery
 
-`dev-ai-tools` has a detailed recovery story for a dead subagent — the dispatch ledger, snapshot-based liveness, orphaned `W` stages re-audited at intake — but the vibe workflow above it has none: if the session running it dies after the gate, the story and decisions files are on disk in an ignored directory, the plan branch exists half-implemented, and nothing documents how to pick it up. Define the resume path — how a new session detects an interrupted delivery, which files authorize it to continue without a second gate, and what it must re-verify first — and write it into the vibe skill. Route: `/plan-ai-tools`.
+`dev-ai-tools` defines recovery for an interrupted subagent through its dispatch ledger, snapshot-based liveness, and intake audit of orphaned `W` stages. Extend that recovery to the vibe workflow: define how a new session detects an interrupted delivery, which files authorize continuation through the existing gate, and what it verifies before resuming a partially implemented plan branch. Route: `/plan-ai-tools`.
 
 ### 10. Execution outside a git repository
 
-Planning outside a git repository is defined (plans go to `$HOME/.ai-tools-plans`), but execution is not: `dev-ai-tools` opens Mode A by requiring a git root, and its whole model — a branch per plan, path-scoped commits, diff-based validation, a pull request or a review patch — assumes version control exists. Decide and document the behaviour: either a reduced no-git mode with explicit limits, or an early, explicit refusal that tells the user what to do instead. Route: `/plan-ai-tools`.
+Planning outside a Git repository stores plans in `$HOME/.ai-tools-plans`, while execution assumes a Git root, a branch per plan, path-scoped commits, diff-based validation, and a pull request or review patch. Define the execution contract: either a reduced non-Git mode with explicit limits or an early stop with actionable guidance. Route: `/plan-ai-tools`.
 
 ## Hardening
 
 ### 11. Untrusted input handling
 
-The security rules say to treat external input as untrusted in a single line, yet several shipped agents routinely read exactly that: `gh-ai-tools` reads issue and pull request bodies, the cloud agents read resource metadata and tags, and any of them may read a fetched page — all channels through which someone else's text can arrive shaped like an instruction. Write concrete handling into the bases: what is data and never instruction, how to quote it in a report, and the rule that an approval request must never be authored from fetched content. Route: `/plan-ai-tools`.
+Several agents consume untrusted input: `gh-ai-tools` reads issue and pull request bodies, cloud agents read metadata and tags, and any agent may read a fetched page. Expand the one-line security rule into concrete handling: classify external text as data, quote it safely in reports, and require approval requests to originate from trusted instructions rather than fetched content. Route: `/plan-ai-tools`.
 
 ### 12. Adding a harness, by checklist
 
-Adding a harness today means editing at least six places in one commit — a wrapper folder with one file per agent, a `MODELS.md` row researched by the full selection method, the Supported harnesses table, the installation steps, script discovery, and any constraint tighter than Antigravity's 12,000-character cap — and that list exists only as rules scattered across the README. Extract it into one ordered checklist section that a contributor or an agent can follow start to finish, with the linter from story 1 verifying that a new wrapper folder has a map row and a Supported harnesses entry. Route: `/vibe-ai-tools`.
+Adding a harness requires coordinated edits: one wrapper per agent, a researched `MODELS.md` row, the Supported harnesses table, installation steps, script discovery, and any newly tighter constraint. Consolidate these requirements into an ordered checklist, and have the linter verify that every wrapper folder has both a model-map row and a Supported harnesses entry. Route: `/vibe-ai-tools`.
 
 ### 13. Cost visibility in the dispatch ledger
 
-The dispatch ledger records the concrete model behind every attempt, which is the hard part, but it stops short of what the user actually feels: a plan can silently spend three correction rounds on a flagship model with nothing in the final summary quantifying it. Extend the ledger and the final summary with whatever the harness can report per attempt (tokens, duration, or an estimate derived from the `MODELS.md` cost figures), so a run's cost is visible where its outcome already is, and never fabricate a number the harness does not expose. Route: `/plan-ai-tools`.
+The dispatch ledger records the model behind every attempt. Extend it and the final summary with the usage data each harness exposes per attempt—tokens, duration, or an estimate derived from `MODELS.md` cost figures—so outcomes and cost appear together. Mark unavailable values explicitly and base every number on reported evidence. Route: `/plan-ai-tools`.
