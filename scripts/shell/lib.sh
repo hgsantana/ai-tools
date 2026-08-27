@@ -133,17 +133,17 @@ report_discovery() {
 }
 
 set_scope() {
-  # usage: set_scope "<comma/space list>"; empty selects every detected harness
+  # usage: set_scope "<comma/space list|all>"; empty or all selects every detected harness
   local requested="${1:-}" h k valid
-  if [ -z "$requested" ]; then
+  if [ -z "$requested" ] || [ "$requested" = "all" ]; then
     SCOPE=$(detect_harnesses)
-    [ -n "${SCOPE// /}" ] || fatal "no supported harness detected; pass --harnesses (valid: $ALL_HARNESSES)"
+    [ -n "${SCOPE// /}" ] || fatal "no supported harness detected; pass --harnesses (valid: all $ALL_HARNESSES)"
   else
     SCOPE=""
     for h in $(echo "$requested" | tr ',' ' '); do
       valid=0
       for k in $ALL_HARNESSES; do [ "$h" = "$k" ] && valid=1; done
-      [ "$valid" = 1 ] || fatal "unknown harness: $h (valid: $ALL_HARNESSES)"
+      [ "$valid" = 1 ] || fatal "unknown harness: $h (valid: all $ALL_HARNESSES)"
       SCOPE="$SCOPE $h"
     done
   fi

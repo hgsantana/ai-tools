@@ -9,7 +9,8 @@ usage() {
   cat <<'EOF'
 usage: update.sh [--harnesses <list>] [--discard-local] [--no-reset] [--dry-run]
 
-  --harnesses <list>   comma-separated harnesses in scope; default: every detected harness
+  --harnesses <list>   comma-separated harnesses in scope; "all" or the default
+                       selects every detected harness
   --discard-local      allow the reset to origin/master to discard local commits
                        and uncommitted edits inside $HOME/.ai-tools (shown first)
   --no-reset           skip the reset; only re-synchronize from the current tree

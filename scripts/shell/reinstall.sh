@@ -11,7 +11,8 @@ usage() {
 usage: reinstall.sh [--harnesses <list>] [--discard-local] [--no-instructions]
                     [--no-sweep] [--dry-run]
 
-  --harnesses <list>   comma-separated harnesses in scope; default: every detected harness
+  --harnesses <list>   comma-separated harnesses in scope; "all" or the default
+                       selects every detected harness
   --discard-local      allow the reset to origin/master to discard local commits
                        and uncommitted edits inside $HOME/.ai-tools (shown first)
   --no-instructions    do not refresh the global instructions links

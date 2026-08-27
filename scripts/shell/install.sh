@@ -10,7 +10,7 @@ usage: install.sh [--harnesses <list>] [--no-instructions] [--dry-run]
 
   --harnesses <list>   comma-separated harnesses to install into
                        (claude-code,grok,codex,copilot,cursor,antigravity);
-                       default: every detected harness
+                       "all" or the default selects every detected harness
   --no-instructions    skip linking USER-AGENTS.md as global instructions
   --dry-run            report what would be done without changing anything
 

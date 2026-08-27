@@ -10,7 +10,8 @@ usage() {
 usage: remove.sh [--harnesses <list>] [--instructions] [--no-sweep]
                  [--purge [--yes]] [--dry-run]
 
-  --harnesses <list>   comma-separated harnesses in scope; default: every detected harness
+  --harnesses <list>   comma-separated harnesses in scope; "all" or the default
+                       selects every detected harness
   --instructions       also unlink the global instructions (USER-AGENTS.md links);
                        never touches $HOME/AGENTS.md
   --no-sweep           skip the stale-link sweep (links from older alpha layouts)

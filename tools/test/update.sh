@@ -257,6 +257,20 @@ case_update_up_to_date_copy() {
 
 # --- --no-reset / --dry-run ----------------------------------------------------
 
+case_update_all_harnesses_alias() {
+  local root home
+
+  t_fixture
+  root="$T_ROOT"
+  home="$root/home"
+
+  t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses all --no-reset --dry-run
+  t_assert_exit 0
+  t_assert_line "info: scope: claude-code grok codex copilot cursor antigravity"
+
+  t_cleanup "$root"
+}
+
 case_update_no_reset() {
   local root home before_head after_head
 

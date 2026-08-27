@@ -1,6 +1,6 @@
 # ai-tools
 
-> **Version 0.0.34-ALPHA** — under active development. Suitable for testing; alpha versions provide neither guarantees nor backward compatibility (rule 4).
+> **Version 0.0.35-ALPHA** — under active development. Suitable for testing; alpha versions provide neither guarantees nor backward compatibility (rule 4).
 
 ## Overview
 
@@ -146,7 +146,7 @@ Processes: `install`, `remove`, `update`, `reinstall`, and read-only `verify`. `
 
 On top of rules 25–27:
 
-- **Scope** — `--harnesses <list>` (comma-separated folder names under `agents/`); default is every detected harness. An AI running a mutating script asks for scope first and passes the flag.
+- **Scope** — `--harnesses <list>` accepts comma-separated folder names under `agents/`, while `--harnesses all` and the omitted flag select every detected harness. An AI running a mutating script asks for scope first and passes the explicit answer.
 - **Dry run** — `--dry-run` reports every proposed action while preserving state; it supplies the findings and approval report for unattended runs.
 - **Destructive flags** — `--discard-local` (reset discarding local work in the clone), `--instructions` (unlink global instructions on removal), `--purge` (delete the clone). Without the flag the script refuses or skips; it never guesses.
 - **Symlink fallback** — when the OS cannot create symlinks, agents and skills install as copies and report `copied (will not track updates)`. Global instructions use an include pointer instead of a copy, preserving this repository as the source of truth.

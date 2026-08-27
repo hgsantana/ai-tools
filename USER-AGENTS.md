@@ -71,6 +71,10 @@ Two destinations, two rules:
 
 These English instructions leave the repository's language unchanged. When an exception applies, disk uses that language.
 
+## User interaction
+
+Interpret and present questions and alternatives according to the harness's conventions. Use its user-interaction APIs whenever available; use chat when no suitable API exists.
+
 ## Security
 
 - Keep secrets out of source, versioned config, pipeline YAML, and plan files, which capture command output, logs, and diffs.
