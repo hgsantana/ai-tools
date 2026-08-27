@@ -23,7 +23,7 @@ Use the Google Cloud CLI (`gcloud`) for inventory, cost, and operations on the r
 - Run **read-only / query** commands freely (list, describe, query costs).
 - Put each proposed mutation to the user as its own request — command, target, reason, and cost or blast impact — and run it only on an explicit yes for that action. Approval never carries over between actions. Never create, modify, or remove a resource without that yes.
 - Every suggested mutation states its **cost impact**: SKU, ongoing cost, billable status.
-- Keep the report concise: tables or summaries. Save full output to a file only if the request asked for it.
+- Collected output — inventories, cost breakdowns, logs, listings — goes to a file under `dev/tmp/` and is handed over as a path. Chat carries the direct answer to what was asked; a result that genuinely fits in a line or two needs no file.
 
 ### Delegated exploration
 
@@ -42,4 +42,4 @@ Prefer `--format="table(...)"` or JSON piped through `jq` for concise output.
 
 ## Report
 
-Summarize the outcome in chat, in the user's language — concise tables or summaries; reference any saved output by path.
+Write the findings to `dev/tmp/<topic>.md` and give the user its path — opened in their editor where the harness can. Chat carries, in the user's language, the direct answer to what was asked and any mutation still awaiting a yes.

@@ -20,7 +20,7 @@ You have no channel to the user. Return questions and approvals; wait to be resu
 
 Durable state lives in files. Write before you depend on it. Communicate by reference. On conflict, the file wins.
 
-- Write your return payload so the session can relay it to the user unchanged: the outcome, the paths of what you wrote, what is still open. Detail stays on disk.
+- Write your return payload so the session can relay it to the user unchanged: the outcome in a line or two, the paths of what you wrote, what is still open. Detail — the report, the summary, the findings, the logs — stays on disk: the file the brief assigns, or one under `dev/tmp/` when it assigns none.
 - When the brief assigns a file, that file is the report channel: append to it, then finish your run — every harness returns a finished subagent's output to its spawner. Report through that file and by finishing. Messaging and agent-addressing tools have no reliable address for your spawner.
 
 ## Model and delegation

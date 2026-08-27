@@ -1,6 +1,6 @@
 # ai-tools
 
-> **Version 0.0.32-ALPHA** — under active development. Usable for testing; no guarantees, and no backward compatibility between alpha versions (rule 4).
+> **Version 0.0.33-ALPHA** — under active development. Usable for testing; no guarantees, and no backward compatibility between alpha versions (rule 4).
 
 ## What is this repository
 
@@ -63,7 +63,7 @@ Normative for every human and every AI maintaining this repository.
 14. Everything installed from this repo — agent name, skill directory, slash command, frontmatter `name:`, file basename — ends in `-ai-tools`. Never install a bare name (`planner`, `az`).
 15. Extreme conciseness: no ambiguity or redundancy, and no omitted instruction, rule, or intention in exchange for brevity.
 16. Skills, agent bases, contracts, and `USER-AGENTS.md` state what to do. A negative (`never`, `do not`) is used only when it reinforces an essential positive, or when the positive phrasing would lose force or not make sense.
-17. Disk in this repository is concise English. Chat is in the user's language.
+17. Disk in this repository is concise English. Chat is in the user's language. What belongs to each is rule 32.
 18. A skill that can be **destructive** or **generate cost** names that in its `description` `Impact:` (rule 9) — the one home; the body has no Stake section. `USER-AGENTS.md` routing surfaces it **before** anything runs. An agent base that opens with a stake disclaimer is surfaced by whoever dispatched it (`agents/SUBAGENT-CONTRACT.md`), before it runs.
 
 ### Installation contract
@@ -82,10 +82,12 @@ Normative for every human and every AI maintaining this repository.
 27. Scripts run to completion: per-item conflicts skip and report. Destructive steps need explicit flags (`--discard-local`, `--instructions`, `--purge`) and default to refuse. Every mutating script supports `--dry-run`. Exit: `0` clean, `1` aborted on a precondition, `2` finished with warnings.
 28. Shell scripts are committed executable; `.gitattributes` pins them to LF.
 
-### Plan state
+### Work state and reporting
 
-29. Plans are versioned per directory `dev/<slug>/`. `dev/tmp/` is generated state and is never tracked: ignore rules do not untrack a path already in the index, so archiving a plan is `git mv` plus `git rm -r --cached`, leaving the files on disk and out of version control.
-30. `plan-ai-tools` delegates plan design by requesting that the host harness use the best planning capability or mode it possesses. The resulting plan is saved strictly following the repository's plan structure under `dev/<slug>/`: a base file (`0-<slug>.md`) and sequential stage files (`<n>-<slug>.md`), structuring the delivery into isolated stages where each stage corresponds to one commit boundary.
+29. Work under `dev/` is versioned in one of two forms: a plan as the directory `dev/<slug>/`, a single task as the file `dev/<slug>.md`. Both are working state, not a record — they earn their place only while something is still left to resume. `dev/tmp/` is generated state and is never tracked: ignore rules do not untrack a path already in the index, so archiving is a copy into `dev/tmp/finished/` followed by `git rm` of the tracked original, leaving the copy on disk and out of version control.
+30. `plan-ai-tools` delegates plan design by requesting that the host harness use the best planning capability or mode it possesses. The resulting plan is saved strictly following the repository's plan structure under `dev/<slug>/`: a base file (`0-<slug>.md`) and sequential stage files (`<n>-<slug>.md`), structuring the delivery into isolated stages where each stage corresponds to one commit boundary. A change small enough for a single commit is not planned: it belongs to `dev-ai-tools` Task mode.
+31. `dev-ai-tools` runs both forms through one sequence: read the working repository's documentation, fix the unit of work on disk, implement in short steps with one commit each, write and run behaviour tests before closing a step, update the documentation that step made stale, archive by copy-then-remove, and commit the archival last. Task mode iterates with the user before writing `dev/<slug>.md`; from there both modes run unattended, interrupting only for a blocker, a decision the implementation itself uncovered, or an approval the Security rules reserve. The branch history is symmetric: the first commit introduces the plan or task file, the last removes it.
+32. **Substance is written to disk; the session carries questions and pointers.** Plans and tasks go where rule 29 puts them; every report, summary, finding, log, and other transient artifact goes under `dev/tmp/` — created if absent, and `$HOME/.ai-tools-plans/tmp/` outside a git repository. `dev/tmp/` is generated state and stays untracked wherever it is created (rule 29): add the ignore rule when the repository lacks it. What reaches the user is the question that needs an answer, the approval that needs a yes, a one-line outcome, and the paths of what was written. Where the harness can open a file in the user's editor, open it rather than pasting its content. Restating on screen what already sits on disk spends the user's context twice and creates a second, diverging copy of the truth. This binds every skill, every agent base, and `USER-AGENTS.md`.
 
 ### Model map and wrapper authoring
 

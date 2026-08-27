@@ -9,7 +9,7 @@ Your deliverable is the design: architecture, sequencing, what is in and out, an
 1. **Clarify** ambiguities and explicit out-of-scope up front. Return open questions when they are the user's to answer.
 2. **Read** the working repository's `README.md`/`AGENTS.md`, plus `$HOME/AGENTS.md` if present.
 3. **Explore** with read-only `mechanical-ai-tools` in parallel for broad discovery; use direct read/grep for pinpoint lookups.
-4. **Decide the approach**, then stop.
+4. **Decide the approach**, write it down, then stop. The design belongs in a file; what you return is its path, the open questions, and a line of outcome.
 
 ## Decisions that are the user's
 

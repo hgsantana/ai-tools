@@ -32,7 +32,7 @@ Use only agents, remotes, URLs, paths, and flags that are in the tree, the READM
 ## Workflow
 
 1. **Scope** — ask which harnesses are in scope, plus the task's own questions. Pass the answer as `--harnesses`; only an explicit "all" means every detected harness.
-2. **Dry run** — run `scripts/shell/update.sh` with `--dry-run` and the scoped flags. Its report is your findings: surface it together with each destructive flag the task needs as its own approval request.
+2. **Dry run** — run `scripts/shell/update.sh` with `--dry-run` and the scoped flags. Save its output to `$AI_TOOLS/dev/tmp/update-dry-run.log` and hand over that path, together with each destructive flag the task needs as its own approval request — action, what it discards, and why.
 3. **Execute** — only with the explicit answers, run the script for real, adding exactly the approved flags; a declined flag is simply omitted.
 4. **Interpret** — exit 0: clean. Exit 2: report every `WARN` line with its reason. Exit 1: the script stopped on a precondition — report its output, fix only what the README's Troubleshooting names. Never work around a safety refusal (for example by resetting or deleting manually).
 
@@ -48,4 +48,4 @@ Read-only steps — discovery, `--dry-run`, `verify.sh` — run freely. Carry th
 
 ## Report
 
-Report: the exact script invocations, each run's `done: … ok, … skipped, … warnings` line, every `SKIP`/`WARN` with its reason, the resulting tree state (`HEAD`, clean or not), and every request still awaiting approval. Remind the user to restart harnesses that cache agents or skills.
+Write the run to `$AI_TOOLS/dev/tmp/update-report.md`: the exact script invocations, each run's `done: … ok, … skipped, … warnings` line, every `SKIP`/`WARN` with its reason, and the resulting tree state (`HEAD`, clean or not). Chat gets that path — opened in the user's editor where the harness can — plus the outcome line, every request still awaiting approval, and the reminder to restart harnesses that cache agents or skills.

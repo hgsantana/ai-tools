@@ -27,25 +27,17 @@ Derive a kebab-case `<slug>` from the demand.
 3. **User relay**: act as a relay between `planner-ai-tools` and the user:
    - Relay questions, ambiguities, or design choices raised by `planner-ai-tools` to the user in chat (in the user's language).
    - Resume or re-dispatch `planner-ai-tools` with the user's answers.
-4. **Plan approval**: when `planner-ai-tools` finishes drafting the plan files under `dev/<slug>/`, present the base plan path, stage file paths, and summary in chat (in the user's language). Ask the user for explicit approval to execute the plan. Do not proceed to execution until the user explicitly accepts the plan.
+4. **Plan approval**: when `planner-ai-tools` finishes drafting the plan files under `dev/<slug>/`, give the user the base plan path — opened in their editor where the harness can — with one line on what it does, and ask for explicit approval to execute it. Execution waits on that yes.
 
 ### 2. Execute (full delivery)
 
-Once the user approves the plan:
+Once the user approves the plan, follow the `dev-ai-tools` skill in Plan mode against `dev/<slug>/`, to the end of delivery: branch, sequential stages, validation, archival, push, and pull request. Its rules govern the run, including the ones that stop it — a blocker, a decision the implementation uncovered, or an approval the Security rules reserve.
 
-1. **Full intake**: read the accepted plan in its entirety — the base plan (`dev/<slug>/0-<slug>.md`) and all stage files (`dev/<slug>/<n>-<slug>.md`) — along with the repository `README.md`, instructions and official repository documentation (`docs/`, `CONTRIBUTING`, etc.).
-2. **Execute as `dev-ai-tools`**: follow the `dev-ai-tools` skill completely to the end of delivery:
-   - Create and switch to the dedicated branch `plan/<slug>`, committing the initial plan files.
-   - Execute stages sequentially according to the execution graph, maintaining context isolation and dispatch ledgers.
-   - Dispatch `implementer-ai-tools` (and `mechanical-ai-tools` for tests/evidence) with self-contained stage briefs.
-   - Inspect diffs, audit tests, and validate against acceptance criteria before committing each stage.
-   - On completion of all stages, archive the plan set to `dev/tmp/finished/<slug>`, commit the plan removal as `chore(dev): archive <slug>`, and push `plan/<slug>` to open the pull request unattended.
-   - If any stage terminates in `E`, stop archival and return the approval items to the user.
-   - Cloud mutations and destructive operations always stop for explicit user approval.
+The one deviation: this gate already promised no further checkpoints, so a plan ending with a failed stage does not return the archival choice — decide it, and record the choice and its reasoning in the decisions file.
 
 ## Report
 
-Summarize the delivery in chat, in the user's language: the plan slug, commits created, validation results, local archive path (`dev/tmp/finished/<slug>`), and the opened pull request URL (or local review patch path).
+`dev-ai-tools` already wrote the delivery report to `dev/tmp/<slug>-report.md`. Chat gets that path — opened in the user's editor where the harness can — plus one line of outcome and the pull request URL (or the local review patch path), in the user's language. The relayed planning questions and the final approval are the only other things this skill puts on screen.
 
 ## Boundaries
 

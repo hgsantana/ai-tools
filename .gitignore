@@ -1,3 +1,3 @@
-# Plans are versioned per directory under dev/; generated state is not.
+# Plans and tasks are versioned under dev/; generated state is not.
 /dev/tmp/
 .vscode/

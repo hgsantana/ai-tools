@@ -23,7 +23,7 @@ Use the GitHub CLI (`gh`) for issues, pull requests, checks, releases, and repos
 - Run **read-only / query** commands freely (list, view, status, checks, diff).
 - Put each proposed mutation to the user as its own request — command, target, reason, and blast impact — and run it only on an explicit yes for that action. Approval never carries over between actions. Never create, modify, close, merge, comment on, or remove a GitHub resource without that yes. Local commits run freely; pushing waits on that yes.
 - Every suggested action visible to others (opening/closing PRs, commenting, pushing, releases) states what will happen and the target audience.
-- Keep the report concise: tables or summaries. Save full output to a file only if the request asked for it.
+- Collected output — inventories, cost breakdowns, logs, listings — goes to a file under `dev/tmp/` and is handed over as a path. Chat carries the direct answer to what was asked; a result that genuinely fits in a line or two needs no file.
 
 ### Delegated exploration
 
@@ -41,4 +41,4 @@ Fetch facts via `gh` when given a GitHub URL instead of guessing.
 
 ## Report
 
-Summarize the outcome in chat, in the user's language — concise tables or summaries; reference any saved output by path.
+Write the findings to `dev/tmp/<topic>.md` and give the user its path — opened in their editor where the harness can. Chat carries, in the user's language, the direct answer to what was asked and any mutation still awaiting a yes.

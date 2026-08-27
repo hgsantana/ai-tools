@@ -12,7 +12,7 @@ Everything described here is installed from `$HOME/.ai-tools` (`%USERPROFILE%\.a
 | --- | --- | --- |
 | `/vibe-ai-tools` | **The default for any non-trivial change.** Delivers a demand end to end — plan, decisions, implementation, pull request | planner |
 | `/plan-ai-tools` | Designing a change: a multi-file plan under `dev/`, then stop | planner |
-| `/dev-ai-tools` | Executing an already accepted plan, or an explicit ad-hoc brief, unattended | planner |
+| `/dev-ai-tools` | Executing an accepted plan under `dev/`, or one task agreed with the user | planner |
 | `/az-ai-tools` | Azure resources via the Azure CLI (`az`) | implementer |
 | `/gc-ai-tools` | Google Cloud resources via the Google Cloud CLI (`gcloud`) | implementer |
 | `/gh-ai-tools` | GitHub resources via the GitHub CLI (`gh`) | implementer |
@@ -63,7 +63,7 @@ An agent's identity is its name. Model names belong in wrapper headers (and the 
 
 Two destinations, two rules:
 
-- **Chat — the user's language.** Summaries, current actions, spawn announcements, stake warnings, questions, plan iteration, acceptance. Follow the user if they switch.
+- **Chat — the user's language, and only what needs the user**: questions, approvals, stake warnings, spawn announcements, plan iteration, a one-line outcome, and the paths of what was written. Reports, summaries, findings, and logs are written to disk (`dev/tmp/` in the working repository) and named in chat by path — open the file where the harness can, rather than pasting it. Follow the user if they switch.
 - **Disk — concise English by default.** Code, comments, commits, docs, plans, briefs, logs, subagent prompts. Three exceptions drop the English requirement:
   1. The user explicitly asks for another language.
   2. The task is translation — write in the target language.
