@@ -6,12 +6,16 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 
 usage() {
   cat <<'EOF'
-usage: install.sh [--harnesses <list>] [--no-instructions] [--dry-run]
+usage: install.sh [--harnesses <list>] [--overwrite] [--no-instructions]
+                  [--dry-run]
 
   --harnesses <list>   comma-separated harnesses to install into
                        (claude-code,grok,codex,copilot,cursor,antigravity);
-                       "all" or the default selects every detected harness
-  --no-instructions    skip linking USER-AGENTS.md as global instructions
+                       omitted selects detected harnesses; "all" selects every
+                       supported harness, whether detected or not
+  --overwrite          replace conflicting or locally modified installed copies
+                       in the selected harnesses; never touches $HOME/AGENTS.md
+  --no-instructions    skip copying USER-AGENTS.md as global instructions
   --dry-run            report what would be done without changing anything
 
 Exit codes: 0 clean, 1 aborted on a precondition, 2 finished with warnings.
@@ -23,6 +27,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --harnesses)   HARNESSES="${2:-}"; [ -n "$HARNESSES" ] || fatal "--harnesses needs a value"; shift ;;
     --harnesses=*) HARNESSES="${1#*=}" ;;
+    --overwrite)   OVERWRITE=1 ;;
     --no-instructions) NO_INSTRUCTIONS=1 ;;
     --dry-run)     DRY_RUN=1 ;;
     -h|--help)     usage; exit 0 ;;

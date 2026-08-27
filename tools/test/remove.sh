@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 # remove.sh — proves README rules 20-22, 24, 27 against scripts/shell/remove.sh:
-# unlink only what ai-tools created, keep locally modified copies, never touch
+# remove only what ai-tools created, keep locally modified copies, never touch
 # a foreign file or a symlink pointing elsewhere, gate --instructions and
 # --purge, sweep stale links without crossing outside $AI_TOOLS, and never
 # touch $HOME/AGENTS.md.
@@ -17,20 +17,7 @@
 # is recorded in the stage's Implementation log rather than treated as a
 # scripts/shell defect.
 #
-# Note on --external-symlink: t_fixture's sandbox root is named
-# "ai-tools-test.XXXXXX" (tools/test/lib.sh), so any path under it —
-# including the one --external-symlink stages — contains the literal
-# substring "ai-tools". safe_unlink()'s first, coarse check is a `case`
-# glob on that substring, so the fixture's own external file is
-# misidentified as an ai-tools destination and gets removed instead of
-# skipped. This is a fixture-naming collision, not a scripts/shell defect,
-# and tools/test/lib.sh is out of scope for this stage (stage 1, frozen; see
-# stage plan). Worked around here by staging an equivalent external symlink
-# by hand, target outside the sandbox naming scheme, so the real contract
-# (a symlink to something else is never removed) is exercised. Recorded in
-# the Implementation log.
-
-case_remove_unlinks_what_install_linked() {
+case_remove_removes_installed_copies() {
   local root
   t_fixture
   root="$T_ROOT"
@@ -39,7 +26,7 @@ case_remove_unlinks_what_install_linked() {
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code
   t_assert_exit 0
-  t_assert_line "removed link:"
+  t_assert_line "removed copy:"
   t_assert_absent "$root/home/.claude/agents/planner-ai-tools.md"
   t_assert_absent "$root/home/.claude/skills/plan-ai-tools"
   if [ -e "$root/home/.claude/CLAUDE.md" ] || [ -L "$root/home/.claude/CLAUDE.md" ]; then
@@ -72,7 +59,7 @@ case_remove_modified_copy_kept() {
   t_fixture --modified-copy
   root="$T_ROOT"
 
-  t_run_no_symlink "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code
   t_assert_exit 0
@@ -109,26 +96,19 @@ case_remove_foreign_file_kept() {
 }
 
 case_remove_external_symlink_kept() {
-  # Manual fixture (see file header): --external-symlink's target collides
-  # with the "*ai-tools*" substring check via the sandbox root's own name.
-  local root dest extdir
-  t_fixture
+  # A foreign target remains foreign even when its parent path contains the
+  # text "ai-tools" (the fixture root itself does).
+  local root before_target
+  t_fixture --external-symlink
   root="$T_ROOT"
+  before_target=$(readlink "$T_EXTERNAL_SYMLINK_PATH")
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
-
-  extdir=$(mktemp -d "${TMPDIR:-/tmp}/t-remove-external-XXXXXX") || fatal "$T_CASE: mktemp -d failed"
-  printf 'outside ai-tools\n' > "$extdir/external-file.md"
-  dest="$root/home/.claude/agents/implementer-ai-tools.md"
-  rm -f "$dest"
-  ln -s "$extdir/external-file.md" "$dest" || fatal "$T_CASE: cannot stage external symlink"
-
   t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code
   t_assert_exit 0
-  t_assert_line "SKIP: symlink not to ai-tools: $dest -> $extdir/external-file.md"
-  t_assert_symlink "$dest" "$extdir"
+  t_assert_line "SKIP: symlink not to ai-tools: $T_EXTERNAL_SYMLINK_PATH -> $before_target"
+  t_assert_symlink "$T_EXTERNAL_SYMLINK_PATH" "$root"
 
-  rm -rf "$extdir"
   t_cleanup "$root"
 }
 
@@ -167,7 +147,7 @@ case_remove_instructions_gate() {
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code
-  t_assert_symlink "$root/home/.claude/CLAUDE.md" "$root/home/.ai-tools"
+  t_assert_regular_file "$root/home/.claude/CLAUDE.md"
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code --instructions
@@ -183,7 +163,7 @@ case_remove_antigravity_instructions() {
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses antigravity
 
-  t_assert_symlink "$root/home/.gemini/GEMINI.md" "$root/home/.ai-tools"
+  t_assert_regular_file "$root/home/.gemini/GEMINI.md"
   t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses antigravity --instructions
   t_assert_absent "$root/home/.gemini/GEMINI.md"
 
@@ -327,7 +307,26 @@ case_remove_without_a_clone() {
   t_run "$root" "$saved/shell/remove.sh" --harnesses claude-code
   t_assert_exit 2
   t_assert_line "WARN: $root/home/.ai-tools missing — copies cannot be verified; removing links only (sweep)"
-  t_assert_absent "$root/home/.claude/agents/planner-ai-tools.md"
+  t_assert_regular_file "$root/home/.claude/agents/planner-ai-tools.md"
+
+  t_cleanup "$root"
+}
+
+case_remove_all_harnesses() {
+  local root home
+  t_fixture
+  root="$T_ROOT"
+  home="$root/home"
+
+  t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses all
+  t_run "$root" "$home/.ai-tools/scripts/shell/remove.sh" --harnesses all
+  t_assert_exit 0
+  t_assert_absent "$home/.claude/agents/planner-ai-tools.md"
+  t_assert_absent "$home/.grok/agents/planner-ai-tools.md"
+  t_assert_absent "$home/.codex/agents/planner-ai-tools.toml"
+  t_assert_absent "$home/.copilot/agents/planner-ai-tools.agent.md"
+  t_assert_absent "$home/.cursor/agents/planner-ai-tools.md"
+  t_assert_absent "$home/.gemini/config/agents/planner-ai-tools.md"
 
   t_cleanup "$root"
 }

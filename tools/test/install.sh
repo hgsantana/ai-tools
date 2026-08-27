@@ -11,7 +11,7 @@ t_install() {
 }
 
 case_install_fresh() {
-  # Rule 17: fresh install links every wrapper, skill and the instructions.
+  # Rule 19: fresh install physically copies every wrapper, skill, and instructions.
   local root f base
   t_fixture
   root="$T_ROOT"
@@ -22,17 +22,20 @@ case_install_fresh() {
   for f in "$root/home/.ai-tools/agents/claude-code"/*-ai-tools*; do
     [ -f "$f" ] || continue
     base=$(basename "$f")
-    t_assert_symlink "$root/home/.claude/agents/$base" "$root/home/.ai-tools"
+    t_assert_regular_file "$root/home/.claude/agents/$base"
+    t_assert_same_content "$root/home/.claude/agents/$base" "$f"
   done
 
   for f in "$root/home/.ai-tools/skills"/*-ai-tools; do
     [ -d "$f" ] || continue
     base=$(basename "$f")
-    t_assert_symlink "$root/home/.claude/skills/$base" "$root/home/.ai-tools"
+    t_assert_regular_directory "$root/home/.claude/skills/$base"
+    t_assert_same_content "$root/home/.claude/skills/$base" "$f"
   done
 
-  t_assert_symlink "$root/home/.claude/CLAUDE.md" "$root/home/.ai-tools"
-  t_assert_line "linked:"
+  t_assert_regular_file "$root/home/.claude/CLAUDE.md"
+  t_assert_same_content "$root/home/.claude/CLAUDE.md" "$root/home/.ai-tools/USER-AGENTS.md"
+  t_assert_line "copied:"
   t_assert_no_line "WARN:"
 
   t_cleanup "$root"
@@ -50,7 +53,7 @@ case_install_idempotent() {
   before=$(t_snapshot "$root/home/.claude")
   t_install "$root" --harnesses claude-code
   t_assert_exit 0
-  t_assert_line "already linked:"
+  t_assert_line "copy up to date:"
   t_assert_no_line "SKIP:"
   t_assert_no_line "WARN:"
   t_assert_unchanged "$root/home/.claude" "$before"
@@ -71,7 +74,7 @@ case_install_foreign_file_skipped() {
   t_assert_line "SKIP: exists, not overwriting: $T_FOREIGN_AGENT_PATH"
   t_assert_regular_file "$T_FOREIGN_AGENT_PATH"
   t_assert_content "$T_FOREIGN_AGENT_PATH" "not an ai-tools file"
-  t_assert_symlink "$root/home/.claude/agents/implementer-ai-tools.md" "$root/home/.ai-tools"
+  t_assert_regular_file "$root/home/.claude/agents/implementer-ai-tools.md"
 
   t_cleanup "$root"
 }
@@ -83,17 +86,38 @@ case_install_symlink_elsewhere_skipped() {
   root="$T_ROOT"
   before_target=$(readlink "$T_EXTERNAL_SYMLINK_PATH")
 
-  # verify_install's link check only tests -L, not target resolution (see
-  # Implementation log): a stray symlink is SKIPped by install_agents but
-  # never WARNed by the trailing verify pass, so the run exits 0, not 2.
   t_install "$root" --harnesses claude-code
-  t_assert_exit 0
-  t_assert_line "SKIP: symlink points elsewhere: $T_EXTERNAL_SYMLINK_PATH"
+  t_assert_exit 2
   if [ "$(readlink "$T_EXTERNAL_SYMLINK_PATH")" = "$before_target" ]; then
     ok "$T_CASE: symlink target unchanged: $T_EXTERNAL_SYMLINK_PATH"
   else
     warn "$T_CASE: symlink target changed: $T_EXTERNAL_SYMLINK_PATH"
   fi
+
+  t_cleanup "$root"
+}
+
+case_install_overwrite_conflicts() {
+  # Rule 20: --overwrite replaces only selected-harness artifact conflicts.
+  local root external_target
+  t_fixture --foreign-agent --foreign-instructions
+  root="$T_ROOT"
+
+  external_target="$root/external-file.md"
+  printf 'external target stays intact\n' > "$external_target"
+  rm -f "$root/home/.claude/agents/implementer-ai-tools.md"
+  ln -s "$external_target" "$root/home/.claude/agents/implementer-ai-tools.md" \
+    || fatal "$T_CASE: cannot stage foreign symlink"
+
+  t_install "$root" --harnesses claude-code --overwrite
+  t_assert_exit 0
+  t_assert_regular_file "$T_FOREIGN_AGENT_PATH"
+  t_assert_same_content "$T_FOREIGN_AGENT_PATH" "$root/home/.ai-tools/agents/claude-code/planner-ai-tools.md"
+  t_assert_regular_file "$root/home/.claude/agents/implementer-ai-tools.md"
+  t_assert_same_content "$root/home/.claude/agents/implementer-ai-tools.md" "$root/home/.ai-tools/agents/claude-code/implementer-ai-tools.md"
+  t_assert_regular_file "$T_FOREIGN_INSTRUCTIONS_PATH"
+  t_assert_same_content "$T_FOREIGN_INSTRUCTIONS_PATH" "$root/home/.ai-tools/USER-AGENTS.md"
+  t_assert_content "$external_target" "external target stays intact"
 
   t_cleanup "$root"
 }
@@ -139,7 +163,7 @@ case_install_dry_run() {
   before=$(t_snapshot "$root/home")
   t_install "$root" --harnesses claude-code --dry-run
   t_assert_exit 0
-  t_assert_line "would link:"
+  t_assert_line "would copy:"
   t_assert_line "(dry-run: nothing was changed)"
   t_assert_line "info: dry-run: verification skipped"
   t_assert_unchanged "$root/home" "$before"
@@ -148,25 +172,26 @@ case_install_dry_run() {
   t_cleanup "$root"
 }
 
-case_install_no_symlink_fallback() {
-  # Rule 17: symlink-to-copy fallback when the OS/fs refuses symlinks; the
-  # single instructions destination is never copied (single source of truth).
-  local root f base
+case_install_legacy_symlinks_migrated() {
+  # Rule 19: legacy links into ai-tools migrate to physical copies without --overwrite.
+  local root source_agent source_skill
   t_fixture
   root="$T_ROOT"
 
-  t_run_no_symlink "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
-  t_assert_exit 2
-  t_assert_line "ok: copied (will not track updates):"
+  source_agent="$root/home/.ai-tools/agents/claude-code/planner-ai-tools.md"
+  source_skill="$root/home/.ai-tools/skills/plan-ai-tools"
+  ln -s "$source_agent" "$root/home/.claude/agents/planner-ai-tools.md"
+  ln -s "$source_skill" "$root/home/.claude/skills/plan-ai-tools"
+  ln -s "$root/home/.ai-tools/USER-AGENTS.md" "$root/home/.claude/CLAUDE.md"
 
-  for f in "$root/home/.ai-tools/agents/claude-code"/*-ai-tools*; do
-    [ -f "$f" ] || continue
-    base=$(basename "$f")
-    t_assert_regular_file "$root/home/.claude/agents/$base"
-  done
-
-  t_assert_absent "$root/home/.claude/CLAUDE.md"
-  t_assert_line "WARN: symlink refused for $root/home/.claude/CLAUDE.md — add a one-line include pointer"
+  t_install "$root" --harnesses claude-code
+  t_assert_exit 0
+  t_assert_regular_file "$root/home/.claude/agents/planner-ai-tools.md"
+  t_assert_same_content "$root/home/.claude/agents/planner-ai-tools.md" "$source_agent"
+  t_assert_regular_directory "$root/home/.claude/skills/plan-ai-tools"
+  t_assert_same_content "$root/home/.claude/skills/plan-ai-tools" "$source_skill"
+  t_assert_regular_file "$root/home/.claude/CLAUDE.md"
+  t_assert_same_content "$root/home/.claude/CLAUDE.md" "$root/home/.ai-tools/USER-AGENTS.md"
 
   t_cleanup "$root"
 }
@@ -252,10 +277,10 @@ case_install_antigravity_instructions() {
 
   t_install "$root" --harnesses antigravity
   t_assert_exit 0
-  t_assert_symlink "$root/home/.gemini/GEMINI.md" "$root/home/.ai-tools"
-  t_assert_symlink "$root/home/.gemini/config/agents/planner-ai-tools.md" "$root/home/.ai-tools"
-  t_assert_symlink "$root/home/.gemini/config/skills/plan-ai-tools" "$root/home/.ai-tools"
-  t_assert_symlink "$root/home/.gemini/config/skills/az-ai-tools" "$root/home/.ai-tools"
+  t_assert_regular_file "$root/home/.gemini/GEMINI.md"
+  t_assert_regular_file "$root/home/.gemini/config/agents/planner-ai-tools.md"
+  t_assert_regular_directory "$root/home/.gemini/config/skills/plan-ai-tools"
+  t_assert_regular_directory "$root/home/.gemini/config/skills/az-ai-tools"
   t_assert_absent "$root/home/.gemini/agents/planner-ai-tools.md"
   t_assert_absent "$root/home/.gemini/skills/plan-ai-tools"
   t_assert_absent "$root/home/.gemini/skills/planner-ai-tools"
@@ -273,6 +298,26 @@ case_install_no_instructions() {
   t_assert_exit 0
   t_assert_absent "$root/home/.claude/CLAUDE.md"
   t_assert_no_line "WARN:"
+
+  t_cleanup "$root"
+}
+
+case_install_all_includes_undetected_harnesses() {
+  # Explicit all selects every supported harness, even when none is detected.
+  local root home
+  t_fixture
+  root="$T_ROOT"
+  home="$root/home"
+  rm -rf "$home/.claude" "$home/.grok" "$home/.codex" "$home/.copilot" "$home/.cursor" "$home/.gemini"
+
+  t_install "$root" --harnesses all
+  t_assert_exit 0
+  t_assert_regular_file "$home/.claude/agents/planner-ai-tools.md"
+  t_assert_regular_file "$home/.grok/agents/planner-ai-tools.md"
+  t_assert_regular_file "$home/.codex/agents/planner-ai-tools.toml"
+  t_assert_regular_file "$home/.copilot/agents/planner-ai-tools.agent.md"
+  t_assert_regular_file "$home/.cursor/agents/planner-ai-tools.md"
+  t_assert_regular_file "$home/.gemini/config/agents/planner-ai-tools.md"
 
   t_cleanup "$root"
 }

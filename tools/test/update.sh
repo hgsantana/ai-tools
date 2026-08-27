@@ -2,7 +2,7 @@
 # update.sh — proves the update.sh half of rules 20-22 and 27: the reset
 # guard refuses to discard local work until --discard-local is passed, stale
 # copies are refreshed while locally modified copies are kept, newly shipped
-# content is linked, and the clone's reset never reaches harness
+# content is copied, and the clone's reset never reaches harness
 # configuration or $HOME/AGENTS.md.
 
 # --- Reset guard (rule 27) -----------------------------------------------------
@@ -144,13 +144,13 @@ case_update_reset_confined() {
 
 # --- Newly shipped content (rule 20) -------------------------------------------
 
-case_update_new_content_linked() {
+case_update_new_content_copied() {
   local root home marker
 
   t_fixture
   root="$T_ROOT"
   home="$root/home"
-  marker="linktest"
+  marker="copytest"
 
   t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
@@ -159,8 +159,9 @@ case_update_new_content_linked() {
 
   t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
   t_assert_exit 0
-  t_assert_symlink "$home/.claude/skills/$marker-ai-tools" "$home/.ai-tools/skills/$marker-ai-tools"
-  t_assert_line "already linked:"
+  t_assert_regular_directory "$home/.claude/skills/$marker-ai-tools"
+  t_assert_same_content "$home/.claude/skills/$marker-ai-tools" "$home/.ai-tools/skills/$marker-ai-tools"
+  t_assert_line "copy up to date:"
 
   t_cleanup "$root"
 }
@@ -168,32 +169,30 @@ case_update_new_content_linked() {
 # --- Copy refresh vs. preservation (rules 20-21) -------------------------------
 
 case_update_stale_copy_refreshed() {
-  local root home marker wrapper
+  local root home marker wrapper instructions skill
 
   t_fixture
   root="$T_ROOT"
   home="$root/home"
   marker="stalecopy"
   wrapper="$home/.claude/agents/implementer-ai-tools.md"
+  instructions="$home/.claude/CLAUDE.md"
+  skill="$home/.claude/skills/plan-ai-tools"
 
-  t_run_no_symlink "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
-  # exit 2: the shimmed `ln` also blocks the instructions symlink (which has
-  # no copy fallback), so verify_install warns "instructions missing" —
-  # unrelated to the agent/skill copy fallback under test here.
-  t_assert_exit 2
+  t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
+  t_assert_exit 0
   t_assert_regular_file "$wrapper"
+  t_assert_regular_file "$instructions"
+  t_assert_regular_directory "$skill"
 
   t_origin_commit "$marker"
 
-  t_run_no_symlink "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
-  t_assert_exit 2
+  t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
+  t_assert_exit 0
   t_assert_line "copy refreshed:"
-
-  if cmp -s "$wrapper" "$home/.ai-tools/agents/claude-code/implementer-ai-tools.md"; then
-    ok "$T_CASE: copy matches refreshed source"
-  else
-    warn "$T_CASE: copy does not match refreshed source"
-  fi
+  t_assert_same_content "$wrapper" "$home/.ai-tools/agents/claude-code/implementer-ai-tools.md"
+  t_assert_same_content "$instructions" "$home/.ai-tools/USER-AGENTS.md"
+  t_assert_same_content "$skill" "$home/.ai-tools/skills/plan-ai-tools"
 
   t_cleanup "$root"
 }
@@ -207,17 +206,15 @@ case_update_modified_copy_kept() {
   marker="modcopy"
   wrapper="$home/.claude/agents/implementer-ai-tools.md"
 
-  t_run_no_symlink "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
-  # exit 2: the shimmed `ln` also blocks the instructions symlink (no copy
-  # fallback there), unrelated to the copy-preservation behavior under test.
-  t_assert_exit 2
+  t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
+  t_assert_exit 0
 
   printf '\nlocal edit that matches no revision\n' >> "$wrapper"
   before=$(cat "$wrapper")
 
   t_origin_commit "$marker"
 
-  t_run_no_symlink "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
+  t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
   t_assert_exit 2
   t_assert_line "SKIP: copy modified locally (or predates"
 
@@ -239,18 +236,39 @@ case_update_up_to_date_copy() {
   marker="uptodate"
   wrapper="$home/.claude/agents/planner-ai-tools.md"
 
-  t_run_no_symlink "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
-  # exit 2: the shimmed `ln` also blocks the instructions symlink (no copy
-  # fallback there), unrelated to the up-to-date-copy behavior under test.
-  t_assert_exit 2
+  t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
+  t_assert_exit 0
 
   # t_origin_commit only touches implementer-ai-tools.md; planner-ai-tools.md's
   # copy stays equal to its (unchanged) source across the reset.
   t_origin_commit "$marker"
 
-  t_run_no_symlink "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
-  t_assert_exit 2
+  t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
+  t_assert_exit 0
   t_assert_line "copy up to date: $wrapper"
+
+  t_cleanup "$root"
+}
+
+case_update_overwrite_modified_copy() {
+  local root home wrapper
+
+  t_fixture
+  root="$T_ROOT"
+  home="$root/home"
+  wrapper="$home/.claude/agents/implementer-ai-tools.md"
+
+  t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
+  printf '\nlocal edit that should be replaced\n' >> "$wrapper"
+
+  t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code --no-reset --overwrite
+  t_assert_exit 0
+  t_assert_same_content "$wrapper" "$home/.ai-tools/agents/claude-code/implementer-ai-tools.md"
+  if grep -qF 'local edit that should be replaced' "$wrapper"; then
+    warn "$T_CASE: --overwrite preserved the modified copy"
+  else
+    ok "$T_CASE: --overwrite replaced the modified copy"
+  fi
 
   t_cleanup "$root"
 }

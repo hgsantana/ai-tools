@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ai-tools removal — README "Removal" as an executable procedure.
-# Removal means "unlink from harnesses", not "delete the config repo".
+# Removal means "remove installed artifacts", not "delete the config repo".
 set -u
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 . "$SCRIPT_DIR/lib.sh"
@@ -10,12 +10,12 @@ usage() {
 usage: remove.sh [--harnesses <list>] [--instructions] [--no-sweep]
                  [--purge [--yes]] [--dry-run]
 
-  --harnesses <list>   comma-separated harnesses in scope; "all" or the default
-                       selects every detected harness
-  --instructions       also unlink the global instructions (USER-AGENTS.md links);
+  --harnesses <list>   comma-separated harnesses in scope; omitted selects
+                       detected harnesses; "all" selects every supported harness
+  --instructions       also remove the global USER-AGENTS.md copies or legacy links;
                        never touches $HOME/AGENTS.md
   --no-sweep           skip the stale-link sweep (links from older alpha layouts)
-  --purge              delete $HOME/.ai-tools itself after unlinking (asks for
+  --purge              delete $HOME/.ai-tools itself after removal (asks for
                        confirmation; --yes skips the prompt)
   --dry-run            report what would be done without changing anything
 

@@ -8,8 +8,8 @@ usage() {
   cat <<'EOF'
 usage: verify.sh [--harnesses <list>]
 
-  --harnesses <list>   comma-separated harnesses in scope; "all" or the default
-                       selects every detected harness
+  --harnesses <list>   comma-separated harnesses in scope; omitted selects
+                       detected harnesses; "all" selects every supported harness
 
 Read-only. Exit codes: 0 clean, 1 aborted on a precondition, 2 warnings found.
 EOF

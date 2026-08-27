@@ -71,6 +71,44 @@ case_verify_agent_differs() {
   t_cleanup "$root"
 }
 
+case_verify_rejects_legacy_symlinks() {
+  local root before home
+  t_fixture
+  root="$T_ROOT"
+  home="$root/home"
+
+  ln -s "$home/.ai-tools/agents/claude-code/planner-ai-tools.md" "$home/.claude/agents/planner-ai-tools.md"
+  ln -s "$home/.ai-tools/skills/plan-ai-tools" "$home/.claude/skills/plan-ai-tools"
+  ln -s "$home/.ai-tools/USER-AGENTS.md" "$home/.claude/CLAUDE.md"
+
+  before=$(t_snapshot "$home")
+  t_verify "$root" --harnesses claude-code
+  t_assert_exit 2
+  t_assert_line "WARN:"
+  t_assert_unchanged "$home" "$before"
+  rm -f "$before"
+
+  t_cleanup "$root"
+}
+
+case_verify_all_harnesses() {
+  local root before home
+  t_fixture
+  root="$T_ROOT"
+  home="$root/home"
+
+  t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses all
+  t_assert_exit 0
+  before=$(t_snapshot "$home")
+  t_verify "$root" --harnesses all
+  t_assert_exit 0
+  t_assert_no_line "WARN:"
+  t_assert_unchanged "$home" "$before"
+  rm -f "$before"
+
+  t_cleanup "$root"
+}
+
 case_verify_no_clone() {
   local root before
   t_fixture

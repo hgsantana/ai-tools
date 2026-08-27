@@ -7,10 +7,13 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 
 usage() {
   cat <<'EOF'
-usage: update.sh [--harnesses <list>] [--discard-local] [--no-reset] [--dry-run]
+usage: update.sh [--harnesses <list>] [--overwrite] [--discard-local]
+                 [--no-reset] [--dry-run]
 
-  --harnesses <list>   comma-separated harnesses in scope; "all" or the default
-                       selects every detected harness
+  --harnesses <list>   comma-separated harnesses in scope; omitted selects
+                       detected harnesses; "all" selects every supported harness
+  --overwrite          replace conflicting or locally modified installed copies
+                       in the selected harnesses; never touches $HOME/AGENTS.md
   --discard-local      allow the reset to origin/master to discard local commits
                        and uncommitted edits inside $HOME/.ai-tools (shown first)
   --no-reset           skip the reset; only re-synchronize from the current tree
@@ -27,6 +30,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --harnesses)   HARNESSES="${2:-}"; [ -n "$HARNESSES" ] || fatal "--harnesses needs a value"; shift ;;
     --harnesses=*) HARNESSES="${1#*=}" ;;
+    --overwrite)   OVERWRITE=1 ;;
     --discard-local) DISCARD_LOCAL=1 ;;
     --no-reset)    NO_RESET=1 ;;
     --dry-run)     DRY_RUN=1 ;;
@@ -46,7 +50,7 @@ else
 fi
 
 refresh_copies
-# Link anything newly shipped — every install step is idempotent.
+# Copy anything newly shipped — every install step is idempotent.
 install_instructions
 install_agents
 install_skills

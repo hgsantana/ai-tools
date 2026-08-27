@@ -11,6 +11,7 @@ ALL_HARNESSES="claude-code grok codex copilot cursor antigravity"
 EXT_ROOTS="$HOME/.vscode/extensions $HOME/.vscode-server/extensions $HOME/.vscode-insiders/extensions $HOME/.vscode-server-insiders/extensions $HOME/.vscodium/extensions"
 
 DRY_RUN=0
+OVERWRITE=0
 SCOPE=""
 FRESH_CLONE=0
 PREV=""
@@ -133,18 +134,24 @@ report_discovery() {
 }
 
 set_scope() {
-  # usage: set_scope "<comma/space list|all>"; empty or all selects every detected harness
+  # usage: set_scope "<comma/space list|all>"
+  # Empty selects detected harnesses; literal "all" selects every supported one.
   local requested="${1:-}" h k valid
-  if [ -z "$requested" ] || [ "$requested" = "all" ]; then
+  if [ -z "$requested" ]; then
     SCOPE=$(detect_harnesses)
     [ -n "${SCOPE// /}" ] || fatal "no supported harness detected; pass --harnesses (valid: all $ALL_HARNESSES)"
+  elif [ "$requested" = "all" ]; then
+    SCOPE=" $ALL_HARNESSES"
   else
     SCOPE=""
     for h in $(echo "$requested" | tr ',' ' '); do
       valid=0
       for k in $ALL_HARNESSES; do [ "$h" = "$k" ] && valid=1; done
       [ "$valid" = 1 ] || fatal "unknown harness: $h (valid: all $ALL_HARNESSES)"
-      SCOPE="$SCOPE $h"
+      case " $SCOPE " in
+        *" $h "*) ;; # deduplicate while preserving the requested order
+        *) SCOPE="$SCOPE $h" ;;
+      esac
     done
   fi
   info "scope:$SCOPE"
@@ -162,7 +169,8 @@ scoped_roots() {
 
 # --- Filesystem safety primitives (README "Safety rules") --------------------
 # Never overwrite or delete anything that is not an ai-tools link or an
-# unmodified ai-tools copy; on conflict, skip and report; idempotent.
+# unmodified ai-tools copy unless the caller explicitly selected --overwrite;
+# on conflict, skip and report; idempotent.
 
 same_content() {
   # files or directories
@@ -172,57 +180,93 @@ same_content() {
   fi
 }
 
-safe_link() {
-  # usage: safe_link <target-in-ai-tools> <destination-path>
-  # returns 0 done/already, 1 occupied (reported), 2 symlink refused by OS/fs
-  local target="$1" dest="$2" cur want
+is_ai_tools_link() {
+  # usage: is_ai_tools_link <symlink>
+  # Old installers created absolute links. Resolution also covers relative
+  # links and a moved but still existing clone without trusting name fragments.
+  local dest="$1" target resolved root_resolved
+  [ -L "$dest" ] || return 1
+  target=$(readlink "$dest")
+  case "$target" in
+    "$AI_TOOLS"|"$AI_TOOLS"/*) return 0 ;;
+  esac
+  resolved=$(readlink -f "$dest" 2>/dev/null || true)
+  root_resolved=$(readlink -f "$AI_TOOLS" 2>/dev/null || printf '%s' "$AI_TOOLS")
+  case "$resolved" in
+    "$AI_TOOLS"|"$AI_TOOLS"/*|"$root_resolved"|"$root_resolved"/*) return 0 ;;
+  esac
+  return 1
+}
+
+copy_artifact() {
+  # usage: copy_artifact <source> <destination> <install|migrate|overwrite|refresh>
+  # The destination is one explicit harness artifact, never a harness root.
+  local src="$1" dest="$2" action="$3" dry_message done_message
+  case "$action" in
+    install)   dry_message="would copy"; done_message="copied" ;;
+    migrate)   dry_message="would migrate legacy link to copy"; done_message="migrated legacy link to copy" ;;
+    overwrite) dry_message="would overwrite copy"; done_message="copy overwritten" ;;
+    refresh)   dry_message="would refresh copy"; done_message="copy refreshed" ;;
+    *)         warn "unknown copy action: $action"; return 1 ;;
+  esac
+  if [ "$DRY_RUN" = 1 ]; then
+    ok "$dry_message: $dest <- $src"
+    return 0
+  fi
+  mkdir -p "$(dirname "$dest")" 2>/dev/null \
+    || { warn "cannot create parent of: $dest"; return 1; }
+  if [ -L "$dest" ] || [ -f "$dest" ]; then
+    rm -f "$dest" || { warn "cannot replace: $dest"; return 1; }
+  elif [ -d "$dest" ]; then
+    rm -rf "$dest" || { warn "cannot replace: $dest"; return 1; }
+  elif [ -e "$dest" ]; then
+    rm -f "$dest" || { warn "cannot replace: $dest"; return 1; }
+  fi
+  if [ -d "$src" ]; then
+    cp -R "$src" "$dest" || { warn "copy failed: $dest <- $src"; return 1; }
+  else
+    cp "$src" "$dest" || { warn "copy failed: $dest <- $src"; return 1; }
+  fi
+  ok "$done_message: $dest <- $src"
+  return 0
+}
+
+safe_copy() {
+  # usage: safe_copy <source-in-ai-tools> <destination-path>
+  # All installs are physical copies. Legacy ai-tools links migrate safely;
+  # foreign links and differing artifacts require explicit --overwrite.
+  local src="$1" dest="$2"
   if [ -L "$dest" ]; then
-    cur=$(readlink -f "$dest" 2>/dev/null || readlink "$dest")
-    want=$(readlink -f "$target" 2>/dev/null || echo "$target")
-    if [ "$cur" = "$want" ] || [ "$(readlink "$dest")" = "$target" ]; then
-      ok "already linked: $dest"
-      return 0
+    if is_ai_tools_link "$dest"; then
+      copy_artifact "$src" "$dest" migrate
+      return $?
     fi
-    skip "symlink points elsewhere: $dest -> $(readlink "$dest")"
+    if [ "$OVERWRITE" = 1 ]; then
+      copy_artifact "$src" "$dest" overwrite
+      return $?
+    fi
+    skip "symlink points elsewhere, not overwriting: $dest -> $(readlink "$dest")"
     return 1
   fi
   if [ -e "$dest" ]; then
+    if same_content "$dest" "$src"; then
+      ok "copy up to date: $dest"
+      return 0
+    fi
+    if [ "$OVERWRITE" = 1 ]; then
+      copy_artifact "$src" "$dest" overwrite
+      return $?
+    fi
     skip "exists, not overwriting: $dest"
     return 1
   fi
-  if [ "$DRY_RUN" = 1 ]; then
-    ok "would link: $dest -> $target"
-    return 0
-  fi
-  mkdir -p "$(dirname "$dest")" 2>/dev/null || { warn "cannot create parent of: $dest"; return 1; }
-  if ln -s "$target" "$dest" 2>/dev/null; then
-    ok "linked: $dest -> $target"
-    return 0
-  fi
-  return 2
-}
-
-link_or_copy() {
-  # usage: link_or_copy <target-in-ai-tools> <destination-path>
-  # Symlink when the OS/filesystem allows it; copy otherwise. Never overwrites.
-  local target="$1" dest="$2" rc
-  safe_link "$target" "$dest"
-  rc=$?
-  [ "$rc" != 2 ] && return "$rc"
-  if [ -d "$target" ]; then cp -R "$target" "$dest" 2>/dev/null; else cp "$target" "$dest" 2>/dev/null; fi
-  rc=$?
-  if [ "$rc" -eq 0 ]; then
-    ok "copied (will not track updates): $dest <- $target"
-  else
-    warn "neither link nor copy possible: $dest"
-    return 1
-  fi
+  copy_artifact "$src" "$dest" install
 }
 
 safe_unlink() {
   # usage: safe_unlink <destination-path>
   # Removes only symlinks resolving into ai-tools.
-  local dest="$1" t resolved
+  local dest="$1" t
   if [ ! -e "$dest" ] && [ ! -L "$dest" ]; then
     ok "absent: $dest"
     return 0
@@ -232,16 +276,8 @@ safe_unlink() {
     return 1
   fi
   t=$(readlink "$dest")
-  case "$t" in
-    *ai-tools*|"$AI_TOOLS"/*) ;;
-    *)
-      resolved=$(readlink -f "$dest" 2>/dev/null || true)
-      case "$resolved" in
-        "$AI_TOOLS"/*) ;;
-        *) skip "symlink not to ai-tools: $dest -> $t"; return 1 ;;
-      esac
-      ;;
-  esac
+  is_ai_tools_link "$dest" \
+    || { skip "symlink not to ai-tools: $dest -> $t"; return 1; }
   if [ "$DRY_RUN" = 1 ]; then ok "would remove link: $dest (-> $t)"; return 0; fi
   rm "$dest" && ok "removed link: $dest (was -> $t)"
 }
@@ -307,7 +343,7 @@ update_source() {
 # --- Install steps -----------------------------------------------------------
 
 install_instructions() {
-  local h dest rc
+  local h dest
   for h in $SCOPE; do
     dest=$(instructions_dest "$h")
     [ -n "$dest" ] || { info "no global instructions destination: $h"; continue; }
@@ -315,9 +351,7 @@ install_instructions() {
       # shellcheck disable=SC2088 # literal "~" in user-facing prose, not a path to expand
       info "~/.codex/AGENTS.override.md exists and takes precedence while present (never touched)"
     fi
-    safe_link "$AI_TOOLS/USER-AGENTS.md" "$dest"
-    rc=$?
-    [ "$rc" = 2 ] && warn "symlink refused for $dest — add a one-line include pointer to $AI_TOOLS/USER-AGENTS.md instead of a copy"
+    safe_copy "$AI_TOOLS/USER-AGENTS.md" "$dest" || true
   done
   return 0
 }
@@ -331,7 +365,7 @@ install_agents() {
     [ -d "$src" ] || { skip "no wrapper folder: $src"; continue; }
     for f in "$src"/*-ai-tools*; do
       [ -f "$f" ] || continue
-      link_or_copy "$f" "$root/$(basename "$f")" || true
+      safe_copy "$f" "$root/$(basename "$f")" || true
     done
   done
 }
@@ -342,7 +376,7 @@ install_skills() {
     root=$(skills_root "$h")
     for p in "$AI_TOOLS/skills"/*-ai-tools; do
       [ -d "$p" ] || continue
-      link_or_copy "$p" "$root/$(basename "$p")" || true
+      safe_copy "$p" "$root/$(basename "$p")" || true
     done
   done
 }
@@ -480,7 +514,7 @@ report_links() {
     [ -d "$root" ] || continue
     find "$root" -maxdepth 1 -type l 2>/dev/null | while IFS= read -r p; do
       t=$(readlink "$p")
-      case "$t" in *ai-tools*|"$AI_TOOLS"/*) info "linked: $p -> $t" ;; esac
+      is_ai_tools_link "$p" && info "linked: $p -> $t"
     done
     find "$root" -mindepth 1 -maxdepth 1 \( -type f -o -type d \) -name '*-ai-tools*' 2>/dev/null \
       | while IFS= read -r p; do info "possible copy: $p"; done
@@ -534,13 +568,12 @@ remove_skills() {
 sweep_stale_links() {
   # Alpha carries no backward compatibility: remove anything in the scoped roots
   # still resolving into ai-tools, whatever its name or era.
-  local root p t
+  local root p
   for root in $(scoped_roots); do
     [ -d "$root" ] || continue
     while IFS= read -r p; do
       [ -n "$p" ] || continue
-      t=$(readlink "$p")
-      case "$t" in *ai-tools*|"$AI_TOOLS"/*) safe_unlink "$p" || true ;; esac
+      is_ai_tools_link "$p" && safe_unlink "$p" || true
     done < <(find "$root" -maxdepth 1 -type l 2>/dev/null)
   done
   # Whole-directory links from an older alpha install (no-op on real directories)
@@ -553,20 +586,25 @@ sweep_stale_links() {
     [ -d "$root" ] || continue
     while IFS= read -r p; do
       [ -n "$p" ] || continue
-      t=$(readlink "$p")
-      case "$t" in *ai-tools*|"$AI_TOOLS"/*) safe_unlink "$p" || true ;; esac
+      is_ai_tools_link "$p" && safe_unlink "$p" || true
     done < <(find "$root" -maxdepth 1 -type l 2>/dev/null)
   done
   return 0
 }
 
 remove_instructions() {
-  # Only harness destinations that are links into ai-tools. Never $HOME/AGENTS.md.
+  # Remove legacy ai-tools links or exact physical copies. Never $HOME/AGENTS.md.
   local h dest
   for h in $SCOPE; do
     dest=$(instructions_dest "$h")
     [ -n "$dest" ] || continue
-    safe_unlink "$dest" || true
+    if [ -L "$dest" ]; then
+      safe_unlink "$dest" || true
+    elif [ -e "$dest" ]; then
+      safe_uninstall_copy "$dest" "$AI_TOOLS/USER-AGENTS.md" || true
+    else
+      ok "absent: $dest"
+    fi
   done
 }
 
@@ -585,10 +623,56 @@ purge_clone() {
 
 # --- Update steps ------------------------------------------------------------
 
+same_as_revision() {
+  # usage: same_as_revision <physical-destination> <repo-relative-path> <revision>
+  # Supports both files and directories without relying on GNU-only options.
+  local dest="$1" rel="$2" rev="$3" tmp archive rc=1
+  [ -n "$rev" ] || return 1
+  if [ -f "$dest" ]; then
+    git -C "$AI_TOOLS" cat-file -e "$rev:$rel" 2>/dev/null || return 1
+    git -C "$AI_TOOLS" show "$rev:$rel" 2>/dev/null | cmp -s "$dest" -
+    return $?
+  fi
+  [ -d "$dest" ] || return 1
+  tmp=$(mktemp -d "${TMPDIR:-/tmp}/ai-tools-prev.XXXXXX") || return 1
+  archive="$tmp/previous.tar"
+  if git -C "$AI_TOOLS" archive --format=tar -o "$archive" "$rev" -- "$rel" 2>/dev/null \
+    && tar -xf "$archive" -C "$tmp" 2>/dev/null \
+    && [ -d "$tmp/$rel" ] \
+    && same_content "$dest" "$tmp/$rel"; then
+    rc=0
+  fi
+  rm -rf "$tmp"
+  return "$rc"
+}
+
+refresh_one_copy() {
+  # usage: refresh_one_copy <new-source> <destination> <repo-relative-path>
+  local src="$1" dest="$2" rel="$3"
+  { [ -e "$dest" ] && [ ! -L "$dest" ]; } || return 0
+  if same_content "$dest" "$src"; then
+    ok "copy up to date: $dest"
+  elif [ -n "$PREV" ] && same_as_revision "$dest" "$rel" "$PREV"; then
+    copy_artifact "$src" "$dest" refresh
+  elif [ "$OVERWRITE" = 1 ]; then
+    copy_artifact "$src" "$dest" overwrite
+  else
+    skip "copy modified locally (or predates $PREV): $dest — see README Troubleshooting"
+  fi
+}
+
 refresh_copies() {
-  # Copies do not track git; refresh those matching the previous revision ($PREV).
-  # A copy matching neither revision is user work: skip and report.
-  local h src root f base dest
+  # usage: refresh_copies [include-instructions 0|1]
+  # Refresh every physical copy matching the previous revision ($PREV).
+  # A copy matching neither revision is user work unless --overwrite was given.
+  local include_instructions="${1:-1}" h src root f base dest p name
+  if [ "$include_instructions" = 1 ]; then
+    for h in $SCOPE; do
+      dest=$(instructions_dest "$h")
+      [ -n "$dest" ] || continue
+      refresh_one_copy "$AI_TOOLS/USER-AGENTS.md" "$dest" "USER-AGENTS.md"
+    done
+  fi
   for h in $SCOPE; do
     src="$AI_TOOLS/agents/$h"
     root=$(agents_root "$h")
@@ -597,14 +681,13 @@ refresh_copies() {
       [ -f "$f" ] || continue
       base=$(basename "$f")
       dest="$root/$base"
-      { [ -f "$dest" ] && [ ! -L "$dest" ]; } || continue   # links track automatically
-      if cmp -s "$dest" "$f"; then
-        ok "copy up to date: $dest"
-      elif [ -n "$PREV" ] && git -C "$AI_TOOLS" show "$PREV:agents/$h/$base" 2>/dev/null | cmp -s "$dest" -; then
-        if [ "$DRY_RUN" = 1 ]; then ok "would refresh copy: $dest"; else cp "$f" "$dest" && ok "copy refreshed: $dest"; fi
-      else
-        skip "copy modified locally (or predates $PREV): $dest — see README Troubleshooting"
-      fi
+      refresh_one_copy "$f" "$dest" "agents/$h/$base"
+    done
+    root=$(skills_root "$h")
+    for p in "$AI_TOOLS/skills"/*-ai-tools; do
+      [ -d "$p" ] || continue
+      name=$(basename "$p")
+      refresh_one_copy "$p" "$root/$name" "skills/$name"
     done
   done
 }
@@ -613,7 +696,7 @@ refresh_copies() {
 
 verify_install() {
   # VERIFY_INSTRUCTIONS=0 skips the instructions checks (install --no-instructions).
-  local check_instr="${VERIFY_INSTRUCTIONS:-1}" h dest size base root p name f resolved
+  local check_instr="${VERIFY_INSTRUCTIONS:-1}" h dest size base root p name f
   if [ "$DRY_RUN" = 1 ]; then info "dry-run: verification skipped"; return 0; fi
 
   size=$(wc -c < "$AI_TOOLS/USER-AGENTS.md")
@@ -642,11 +725,7 @@ verify_install() {
       dest=$(instructions_dest "$h")
       [ -n "$dest" ] || continue
       if [ -L "$dest" ]; then
-        resolved=$(readlink -f "$dest" 2>/dev/null || readlink "$dest")
-        case "$resolved" in
-          "$AI_TOOLS"/*) ok "instructions linked: $dest" ;;
-          *) warn "instructions link points elsewhere: $dest -> $resolved" ;;
-        esac
+        warn "instructions must be a physical copy, not a symlink: $dest -> $(readlink "$dest")"
       elif [ -f "$dest" ] && cmp -s "$dest" "$AI_TOOLS/USER-AGENTS.md"; then
         ok "instructions copy: $dest"
       elif [ -e "$dest" ]; then
@@ -662,7 +741,7 @@ verify_install() {
     for f in "$AI_TOOLS/agents/$h"/*-ai-tools*; do
       [ -f "$f" ] || continue
       base=$(basename "$f")
-      if [ -L "$root/$base" ]; then ok "agent link: $root/$base"
+      if [ -L "$root/$base" ]; then warn "agent must be a physical copy, not a symlink: $root/$base -> $(readlink "$root/$base")"
       elif cmp -s "$root/$base" "$f" 2>/dev/null; then ok "agent copy: $root/$base"
       elif [ -e "$root/$base" ]; then warn "agent differs from source: $root/$base"
       else warn "agent absent: $root/$base"
@@ -672,8 +751,15 @@ verify_install() {
     for p in "$AI_TOOLS/skills"/*-ai-tools; do
       [ -d "$p" ] || continue
       name=$(basename "$p")
-      if [ -f "$root/$name/SKILL.md" ]; then ok "skill: $root/$name"
-      else warn "skill not installed or broken: $root/$name"; fi
+      if [ -L "$root/$name" ]; then
+        warn "skill must be a physical copy, not a symlink: $root/$name -> $(readlink "$root/$name")"
+      elif same_content "$root/$name" "$p"; then
+        ok "skill copy: $root/$name"
+      elif [ -e "$root/$name" ]; then
+        warn "skill differs from source: $root/$name"
+      else
+        warn "skill absent: $root/$name"
+      fi
     done
   done
   return 0
@@ -687,7 +773,10 @@ verify_removal() {
     while IFS= read -r p; do
       [ -n "$p" ] || continue
       t=$(readlink "$p")
-      case "$t" in *ai-tools*|"$AI_TOOLS"/*) warn "still linked: $p -> $t"; remaining=1 ;; esac
+      if is_ai_tools_link "$p"; then
+        warn "still linked: $p -> $t"
+        remaining=1
+      fi
     done < <(find "$root" -maxdepth 1 -type l 2>/dev/null)
   done
   [ "$remaining" = 0 ] && ok "no ai-tools links remain in the scoped roots"

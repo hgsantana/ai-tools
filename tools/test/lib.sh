@@ -3,7 +3,7 @@
 # scripts/shell/lib.sh, and in scope for every case file under tools/test/.
 #
 # Every helper here is t_-prefixed so nothing shadows a name already owned
-# by scripts/shell/lib.sh (same_content, safe_link, ok, warn, fatal, ...).
+# by scripts/shell/lib.sh (same_content, safe_copy, ok, warn, fatal, ...).
 #
 # Sandbox safety is this file's first requirement: t_run and its siblings
 # refuse to execute anything unless the sandbox root is non-empty, is not
@@ -240,39 +240,6 @@ t_run_stdin() {
   rm -f "$out"
 }
 
-t_run_no_symlink() {
-  # usage: t_run_no_symlink <root> <script> [args...]
-  # Same as t_run, with a shim directory prepended to PATH containing an
-  # `ln` that always fails, forcing safe_link to return 2 and link_or_copy
-  # to fall back to a copy.
-  local root="$1" script="$2" home ai_tools out shim
-  shift 2
-  home="$root/home"
-  ai_tools="$root/home/.ai-tools"
-  t_sandbox_guard "$root" "$home" "$ai_tools"
-  shim="$root/.shim"
-  mkdir -p "$shim" || fatal "t_run_no_symlink: cannot create shim dir: $shim"
-  cat > "$shim/ln" <<'EOF'
-#!/bin/sh
-exit 1
-EOF
-  chmod +x "$shim/ln" || fatal "t_run_no_symlink: cannot chmod shim ln"
-  out=$(mktemp "${TMPDIR:-/tmp}/ai-tools-test-out.XXXXXX") || fatal "t_run_no_symlink: mktemp failed"
-  env -i \
-    PATH="$shim:$PATH" \
-    HOME="$home" \
-    USERPROFILE="$home" \
-    AI_TOOLS="$ai_tools" \
-    GIT_TERMINAL_PROMPT=0 \
-    GIT_CONFIG_NOSYSTEM=1 \
-    TERM="${TERM:-dumb}" \
-    LANG="${LANG:-C}" \
-    "$script" "$@" >"$out" 2>&1
-  T_LAST_EXIT=$?
-  T_LAST_OUTPUT=$(cat "$out")
-  rm -f "$out"
-}
-
 # --- Assertions ----------------------------------------------------------------
 # Each reports through ok/warn with the case name and the offending value;
 # none aborts the suite.
@@ -323,6 +290,24 @@ t_assert_regular_file() {
     ok "$T_CASE: regular file: $path"
   else
     warn "$T_CASE: not a regular file: $path"
+  fi
+}
+
+t_assert_regular_directory() {
+  local path="$1"
+  if [ -d "$path" ] && [ ! -L "$path" ]; then
+    ok "$T_CASE: regular directory: $path"
+  else
+    warn "$T_CASE: not a regular directory: $path"
+  fi
+}
+
+t_assert_same_content() {
+  local actual="$1" expected="$2"
+  if same_content "$actual" "$expected"; then
+    ok "$T_CASE: content matches source: $actual"
+  else
+    warn "$T_CASE: content differs from source: $actual (source: $expected)"
   fi
 }
 
@@ -383,8 +368,9 @@ t_assert_unchanged() {
 t_origin_commit() {
   # usage: t_origin_commit <label>
   # Clones the fixture's bare origin (T_ROOT/origin.git) into a scratch dir,
-  # makes one deterministic change — appends a marker line to
-  # agents/claude-code/implementer-ai-tools.md and adds a new
+  # makes deterministic changes — appends marker lines to USER-AGENTS.md,
+  # agents/claude-code/implementer-ai-tools.md, and the existing
+  # skills/plan-ai-tools/SKILL.md directory, then adds a new
   # skills/<label>-ai-tools/SKILL.md directory (the single-file layout the
   # repo ships) — commits, and pushes to master, giving the fixture's clone
   # something new to update to. Returns nothing; the caller already knows the
@@ -404,6 +390,14 @@ t_origin_commit() {
   printf '\n<!-- t_origin_commit marker: %s -->\n' "$label" \
     >> "$scratch/agents/claude-code/implementer-ai-tools.md" \
     || fatal "t_origin_commit: cannot append marker to wrapper"
+
+  printf '\n<!-- t_origin_commit marker: %s -->\n' "$label" \
+    >> "$scratch/USER-AGENTS.md" \
+    || fatal "t_origin_commit: cannot append marker to instructions"
+
+  printf '\n<!-- t_origin_commit marker: %s -->\n' "$label" \
+    >> "$scratch/skills/plan-ai-tools/SKILL.md" \
+    || fatal "t_origin_commit: cannot append marker to existing skill"
 
   mkdir -p "$scratch/skills/$label-ai-tools" \
     || fatal "t_origin_commit: cannot create skill dir"
