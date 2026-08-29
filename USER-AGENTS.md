@@ -10,7 +10,7 @@ Everything here is installed from the only supported location: `$HOME/.ai-tools`
 
 | Skill | Use for | Min. role |
 | --- | --- | --- |
-| `/vibe-ai-tools` | **The default for any non-trivial change.** Delivers a demand end to end — plan, decisions, implementation, pull request | planner |
+| `/vibe-ai-tools` | Larger changes end to end — planning, decisions, implementation, pull request | planner |
 | `/plan-ai-tools` | Designing a change: a multi-file plan under `dev/`, then stop | planner |
 | `/dev-ai-tools` | Executing an accepted plan under `dev/`, or one task agreed with the user | planner |
 | `/az-ai-tools` | Azure resources via the Azure CLI (`az`) | implementer |
@@ -20,20 +20,21 @@ Everything here is installed from the only supported location: `$HOME/.ai-tools`
 
 ## How to route a request
 
-1. **Simple, well specified, or documentation only** — a typo, a one-line constant, an exact rename, a question or explanation, a docs edit that changes no behaviour. Do it now, in this session, without asking.
-2. **Anything else** — multi-file work, a new module or component, changed behaviour, routing, data models, security-sensitive code, test changes, unclear impact, resuming partial work, or anything touching Azure, Google Cloud, or GitHub resources. Use one gate before starting: send **one** short message in the user's language, then **one** short question referring back to it.
+1. **Leading shipped `*-ai-tools` skill** — skip scope recommendations; gate it directly.
+2. **Simple, well specified, or documentation only** — a typo, a one-line constant, an exact rename, a question or explanation, a docs edit that changes no behaviour. Do it now, in this session, without asking.
+3. **One-commit scope** — any other non-trivial request that fits one implementation commit. Offer `/dev-ai-tools`.
+4. **Larger scope** — work needing multiple implementation commits. Offer `/plan-ai-tools` (recommended) to design and stop, or `/vibe-ai-tools` to plan and deliver.
 
-The message names the options below. Before the question, for each named `*-ai-tools` skill:
-1. That skill's stake — its `description` `Impact:` — from memory, without opening the file.
-2. This session's model against `$HOME/.ai-tools/MODELS.md` (Windows: `%USERPROFILE%\.ai-tools\MODELS.md`) for this harness. Columns are planner, implementer, mechanical (highest to lowest). That skill's **Min. role** is the floor: acceptable models are that cell's model token (the backticked name) and every cell to its left. Drop duplicate tokens. Tell this session it should be those models — *X*, or *Y*, or *Z*, as many as remain. Then:
+Cases 1, 3, and 4 use one gate, in this order:
+
+1. **Chat message** — in the user's language, name the options and clearly explain every offered skill's stake from its `description` `Impact:`, from memory without opening the file; then report its model check below.
+2. **Question** — only after that message, ask one short question referring to the explained stakes so the user can choose. Use the harness's native interaction API when available; otherwise use chat. Always offer **run it here**, ignoring ai-tools skills and agents, and **stop**.
+
+For every offered skill, compare this session's model with `$HOME/.ai-tools/MODELS.md` (Windows: `%USERPROFILE%\.ai-tools\MODELS.md`) for this harness. Columns are planner, implementer, mechanical (highest to lowest). That skill's **Min. role** is the floor: acceptable models are that cell's model token (the backticked name) and every cell to its left. Drop duplicate tokens. Tell this session it should be those models — *X*, or *Y*, or *Z*, as many as remain. Then:
    - The session model is one of them — this session meets the minimum. Say so in one line.
    - They differ, or the session model is undetermined — name the session model or its undetermined state, then give the change method from the last `MODELS.md` column.
 
-The question's answers (write in the user's language):
-- **`/vibe-ai-tools`** (recommended);
-- **the skill that fits**, when one does;
-- **run it here**, ignoring the ai-tools skills;
-- **stop**.
+Skill choices: case 1 — **the leading skill** only; case 3 — **`/dev-ai-tools`**; case 4 — **`/plan-ai-tools`** (recommended), or **`/vibe-ai-tools`** (plan + dev).
 
 Wait for an explicit answer; the user chooses whether implementation begins.
 
@@ -41,7 +42,7 @@ Wait for an explicit answer; the user chooses whether implementation begins.
 - **Run it here** — do the work in this session.
 - **Stop** (or any unrecognized answer) — stop without reading, running, or changing anything.
 
-**When in doubt, use case 2.** Case 1 bypasses the gate; **run it here** bypasses the skills. A gated skill may follow another skill's Workflow without a second gate when that workflow says so.
+**When in doubt, use case 4.** Case 2 bypasses the gate; **run it here** bypasses the skills and agents. A gated skill may follow another skill's Workflow without a second gate when that workflow says so.
 
 The user may choose to proceed below the minimum; model mismatch alone does not block the work.
 
