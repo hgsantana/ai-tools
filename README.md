@@ -1,6 +1,6 @@
 # ai-tools
 
-> **Version 0.0.37-ALPHA** — under active development. Suitable for testing; alpha versions provide neither guarantees nor backward compatibility (rule 4).
+> **Version 0.0.38-ALPHA** — under active development. Suitable for testing; alpha versions provide neither guarantees nor backward compatibility (rule 4).
 
 ## Overview
 
@@ -14,12 +14,13 @@ Clone it to `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows), then copy 
 |---|---|
 | [`USER-AGENTS.md`](USER-AGENTS.md) | Install artifact: user-wide harness instructions — routing (the one `*-ai-tools` gate), the three agents' roles, language, security. Workflows live in skill and agent bases, not here |
 | [`MODELS.md`](MODELS.md) | Authoring and installation map: model per agent and harness. Vendor names live here and in wrapper headers (rules 11–12); updates reset local edits |
+| [`docs/USAGE.md`](docs/USAGE.md) | Harness-agnostic invocation guide for every shipped skill and the three spawn-only agents |
 | [`agents/planner-ai-tools.md`](agents/planner-ai-tools.md) | `planner-ai-tools` — decomposes, designs, owns acceptance, and delegates production code. Contains type rules; the brief defines the job |
 | [`agents/implementer-ai-tools.md`](agents/implementer-ai-tools.md) | `implementer-ai-tools` — writes and edits code for one assignment. Type rules only; the brief is the job |
 | [`agents/mechanical-ai-tools.md`](agents/mechanical-ai-tools.md) | `mechanical-ai-tools` — executes specified patches, renames, builds, tests, and evidence collection. Contains type rules; the brief defines the job |
 | [`agents/SUBAGENT-CONTRACT.md`](agents/SUBAGENT-CONTRACT.md) | Shared spawned-subagent contract: brief, user channel, report, model pin, spawning, and type boundaries. Not installed; read by path |
 | [`agents/<harness>/`](agents/) | One wrapper per agent: header pin, contract pointer, base pointer |
-| [`skills/`](skills/) | Nine skills, each the installed `skills/<name>/SKILL.md` (the whole skill). The three agents have no skill. `USER-AGENTS.md` routing gates every skill at its **Min. role**; naming a skill is the yes, then planner-min skills carry the planner role in the user's session |
+| [`skills/`](skills/) | Ten skills, each the installed `skills/<name>/SKILL.md` (the whole skill). The three agents have no skill. `USER-AGENTS.md` routing gates every skill at its **Min. role**; naming a skill is the yes, then planner-min skills carry the planner role in the user's session |
 | [`scripts/`](scripts/) | `install`, `remove`, `update`, `reinstall`, `verify` — bash ([Scripts](#scripts); rules 25–28). Windows: WSL or Git Bash |
 
 ### Quick start
@@ -38,6 +39,8 @@ Replace `install` with `remove`, `update`, `reinstall`, or `verify`. Every scrip
 
 The AI follows the matching process section below and runs that same script.
 
+After installation, see the harness-agnostic [usage guide](docs/USAGE.md) for skill prompts and agent roles.
+
 ## Repository rules
 
 Normative for every human and every AI maintaining this repository.
@@ -51,7 +54,7 @@ Normative for every human and every AI maintaining this repository.
 
 ### Structure and authoring
 
-5. Three agents ship: `planner-ai-tools`, `implementer-ai-tools`, and `mechanical-ai-tools`. Each has a request-agnostic, harness-agnostic **base** at `agents/<name>.md` and one **wrapper** per harness at `agents/<harness-short-name>/<agent-name>.<ext>`. Bases are **mode-agnostic**: they identify required questions or approvals, while `agents/SUBAGENT-CONTRACT.md` defines the spawned user channel. Type rules prevail over a conflicting brief. Bases route delegated work; the contract governs further spawning (rule 8). Skills pass the complete **Workflow** and user request as the brief.
+5. Three agents ship: `planner-ai-tools`, `implementer-ai-tools`, and `mechanical-ai-tools`. Each has a request-agnostic, harness-agnostic **base** at `agents/<name>.md` and one **wrapper** per harness at `agents/<harness-short-name>/<agent-name>.<ext>`. Bases are **mode-agnostic**: they identify required questions or approvals, while `agents/SUBAGENT-CONTRACT.md` defines the spawned user channel. Type rules prevail over a conflicting brief. Bases route delegated work; the contract governs further spawning (rule 8). Skills make the complete **Workflow** and user request available in each brief, inline or by durable path.
 6. A wrapper consists of a harness-specific header and model pin (`model:`, plus effort when present in the map), followed by pointers to `$HOME/.ai-tools/agents/SUBAGENT-CONTRACT.md` and `$HOME/.ai-tools/agents/<name>.md`, in that order. The base prevails except for the contract's user channel. Additional body text is drift. The **1,000-character** cap includes frontmatter. See the canonical body in [wrapper authoring](#model-map-and-wrapper-authoring).
 7. Skills are harness-agnostic and live entirely in `skills/<name>/SKILL.md`, with rule 9 frontmatter. They use no per-harness copies, separate skill contracts or bases, root-level `skills/<name>.md`, `SKILL-CONTRACT.md`, or `MAINTAINER.md`; required maintainer text is duplicated. Descriptions have two parts and at most 500 characters (rule 9); bodies have no character cap but follow rule 15. Skills contain neither **Stake** nor **Continue?** headings. `USER-AGENTS.md` provides the sole activation gate: surface the named skill's `description` `Impact:` from memory; compare its **Min. role** cell and every higher-role cell to its left in this harness's `$HOME/.ai-tools/MODELS.md` row; then ask one question offering a skill, **run it here**, or **stop**. The gate applies only to shipped `*-ai-tools` skill activation.
 8. **Spawning is open**: every session, skill, and agent may spawn the named agent that owns the work; spawned agents may do the same (`agents/SUBAGENT-CONTRACT.md`). If spawning fails, the run carries work allowed by its type or returns a dispatch request. Code-writing agents run concurrently on separate files; read-only discovery, builds, and tests may always run in parallel. Wrappers pin models for `planner-ai-tools`, `implementer-ai-tools`, and `mechanical-ai-tools`. `USER-AGENTS.md` gates every shipped skill: naming one authorizes its Workflow at the **Min. role**; planner-min skills carry `planner-ai-tools`. The user may proceed below the model minimum.
@@ -84,7 +87,7 @@ Normative for every human and every AI maintaining this repository.
 
 ### Work state and reporting
 
-29. Version work under `dev/` as either a plan directory `dev/<slug>/` or a single-task file `dev/<slug>.md`. Both are temporary working state and remain only while work is resumable. Generated state lives untracked under `dev/tmp/`. Because ignore rules do not untrack indexed paths, archive by copying into `dev/tmp/finished/` and then applying `git rm` to the tracked original, leaving a local untracked copy.
+29. Version work under `dev/` as either a plan directory `dev/<slug>/` or a single-task file `dev/<slug>.md`. Both are temporary working state and remain only while work is resumable. Generated state lives untracked under `dev/tmp/`; `improve-ai-tools` keeps its local campaign state under `dev/tmp/improve/<campaign>/`, while its functional commits preserve completed work. Because ignore rules do not untrack indexed paths, archive plans and tasks by copying into `dev/tmp/finished/` and then applying `git rm` to the tracked original, leaving a local untracked copy.
 30. `plan-ai-tools` delegates plan design by requesting that the host harness use the best planning capability or mode it possesses. The resulting plan is saved strictly following the repository's plan structure under `dev/<slug>/`: a base file (`0-<slug>.md`) and sequential stage files (`<n>-<slug>.md`), structuring the delivery into isolated stages where each stage corresponds to one commit boundary. A change small enough for a single commit is not planned: it belongs to `dev-ai-tools` Task mode.
 31. `dev-ai-tools` runs both forms through one sequence: read the working repository's documentation, fix the unit of work on disk, implement in short steps with one commit each, write and run behaviour tests before closing a step, update the documentation that step made stale, archive by copy-then-remove, and commit the archival last. Task mode iterates with the user before writing `dev/<slug>.md`; from there both modes run unattended, interrupting only for a blocker, a decision the implementation itself uncovered, or an approval the Security rules reserve. The branch history is symmetric: the first commit introduces the plan or task file, the last removes it.
 32. **Substance is written to disk; the session carries questions and pointers.** Plans and tasks go where rule 29 puts them; every report, summary, finding, log, and other transient artifact goes under `dev/tmp/` — created if absent, and `$HOME/.ai-tools-plans/tmp/` outside a git repository. `dev/tmp/` is generated state and stays untracked wherever it is created (rule 29): add the ignore rule when the repository lacks it. What reaches the user is the question that needs an answer, the approval that needs a yes, a one-line outcome, and the paths of what was written. Where the harness can open a file in the user's editor, open it rather than pasting its content. Restating on screen what already sits on disk spends the user's context twice and creates a second, diverging copy of the truth. This binds every skill, every agent base, and `USER-AGENTS.md`.
