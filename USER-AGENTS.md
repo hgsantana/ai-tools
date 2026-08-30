@@ -13,11 +13,13 @@ Everything here is installed from the only supported location: `$HOME/.ai-tools`
 | `/vibe-ai-tools` | Larger changes end to end: plan, implement, open a pull request | planner |
 | `/plan-ai-tools` | Design a multi-commit change under `dev/`, then stop | planner |
 | `/dev-ai-tools` | Run an accepted `dev/` plan or one agreed task | planner |
-| `/improve-ai-tools` | Autonomous local campaign of tested, one-commit improvements | planner |
+| `/improve-ai-tools` | Autonomous local campaign of relevant, multi-stage improvements | planner |
 | `/az-ai-tools` | Azure resources via the Azure CLI (`az`) | implementer |
 | `/gc-ai-tools` | Google Cloud resources via the Google Cloud CLI (`gcloud`) | implementer |
-| `/gh-ai-tools` | GitHub resources via the GitHub CLI (`gh`) | implementer |
+| `/gh-ai-tools` | GitHub-hosted administration via `gh` | implementer |
 | `/update-ai-tools`, `/remove-ai-tools`, `/reinstall-ai-tools` | Maintain an installation; first installation follows the README | mechanical |
+
+Commits, branches, rebases, merges, pushes, and pull-request delivery run directly and bypass `/gh-ai-tools`; this overrides the routing below.
 
 ## How to route a request
 

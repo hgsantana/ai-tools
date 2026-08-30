@@ -19,10 +19,10 @@ A shipped skill passes one routing gate before it starts. The gate shows the ski
 | `/vibe-ai-tools` | Plan a larger change with user relay, then implement the approved plan and deliver a pull request | `/vibe-ai-tools add resumable uploads` |
 | `/plan-ai-tools` | Explore a multi-commit change and save a staged plan under `dev/`, then stop | `/plan-ai-tools redesign cache invalidation` |
 | `/dev-ai-tools` | Execute an accepted `dev/` plan, or agree and deliver one single-commit task | `/dev-ai-tools dev/cache-invalidation/` |
-| `/improve-ai-tools` | Run an autonomous local campaign of independent, tested, one-commit improvements | `/improve-ai-tools repository-hardening` |
+| `/improve-ai-tools` | Repeatedly plan and deliver relevant, multi-stage improvements in an autonomous local campaign | `/improve-ai-tools repository-hardening` |
 | `/az-ai-tools` | Inspect or manage Azure resources, subscriptions, infrastructure, and costs with `az` | `/az-ai-tools list costly idle resources` |
 | `/gc-ai-tools` | Inspect or manage Google Cloud projects, infrastructure, and costs with `gcloud` | `/gc-ai-tools show resources in project-x` |
-| `/gh-ai-tools` | Inspect or manage GitHub repositories, issues, pull requests, releases, and workflows with `gh` | `/gh-ai-tools show failing checks on PR 42` |
+| `/gh-ai-tools` | Inspect or manage GitHub accounts, repository administration, environments, Actions/builds, issues, and releases | `/gh-ai-tools show failing Actions runs` |
 | `/update-ai-tools` | Update an existing installation and refresh installed copies | `/update-ai-tools all detected harnesses` |
 | `/remove-ai-tools` | Remove installed ai-tools artifacts from selected harnesses | `/remove-ai-tools claude-code and cursor` |
 | `/reinstall-ai-tools` | Repair a broken, stale, or differently scoped installation from a fresh source tree | `/reinstall-ai-tools all harnesses` |
@@ -47,7 +47,7 @@ Recommended prompt:
 Campaign: repository-hardening
 Objective: autonomously identify and implement useful repository improvements.
 Prioritize correctness, reliability, tests, maintainability, and stale documentation.
-Each improvement must be functional, tested, and delivered in exactly one commit.
+Each iteration must address one relevant, cohesive improvement or correction, planned in as many tested stages and commits as needed.
 Continue until the available budget ends or a blocker occurs.
 ```
 
@@ -57,27 +57,28 @@ The short form uses the skill's default priorities:
 /improve-ai-tools repository-hardening
 ```
 
-The campaign creates or resumes local branch `improve/repository-hardening`, based on existing `develop` or otherwise `main`. Each iteration uses fresh agents:
+The campaign creates or resumes local branch `improve/repository-hardening`, using the repository's base-branch rules. Each iteration chains the two planning workflows through fresh, zero-context agents:
 
-1. A planner finds and specifies one independent commit.
-2. An implementer changes code, tests, and affected documentation without committing.
-3. A mechanical agent runs the required tests and records evidence.
-4. A different planner judges the plan, diff, and test evidence.
-5. A mechanical delivery agent creates the single local commit only after acceptance.
+1. A `planner-ai-tools` agent evaluates the current campaign branch and runs `plan-ai-tools`, saving one relevant multi-stage plan under `dev/`. The initial gate pre-authorizes it to resolve and accept its own recommendations.
+2. The root session receives the plan path and spawns a different `planner-ai-tools` agent to run `dev-ai-tools` against that accepted plan.
+3. The execution planner dispatches implementers and mechanical testers, judges their diffs and evidence, commits every accepted stage, archives the plan, and reports the result.
+4. The root session starts the cycle again with another new planning agent. No planner instance or conversation history is reused between passes.
 
-The root session only dispatches agents and routes their short statuses. A separate planner adjudicates every question; the user is not interrupted after the initial gate. Work needing remote mutation, an external write, or an unversioned destructive action blocks instead of expanding the authorization.
+The root session only dispatches the planning and execution agents and routes their short statuses. Those planners decide in-scope questions under the initial gate; the user is not interrupted after it. Work needing remote mutation, an external write, or an unversioned destructive action blocks instead of expanding the authorization. Campaign delivery remains local: `dev-ai-tools` uses the campaign branch instead of `plan/<slug>` and does not push or open pull requests.
 
-If execution ends mid-iteration, the last `HEAD` remains the latest functional improvement and the campaign branch may have a dirty worktree. Resume with the same campaign name:
+If execution ends mid-plan, the last accepted stage remains committed and the campaign branch may have resumable plan files or a dirty worktree. Resume with the same campaign name:
 
 ```text
 /improve-ai-tools resume repository-hardening
 ```
 
-To request a clean stop while it is running, say `Stop after the current commit.` An immediate interruption may leave the current iteration dirty without affecting earlier commits.
+To request a clean stop while it is running, say `Stop after the current plan.` An immediate interruption may leave the current stage dirty without affecting earlier commits.
 
-### Cloud and GitHub
+### Cloud and GitHub platform
 
-`/az-ai-tools`, `/gc-ai-tools`, and `/gh-ai-tools` run read-only queries freely. Every mutation is presented separately with its target, reason, and cost or blast impact, and requires an explicit approval for that action. GitHub pushes and any action visible to others count as mutations.
+`/az-ai-tools`, `/gc-ai-tools`, and `/gh-ai-tools` run read-only queries freely. Every mutation is presented separately with its target, reason, and cost or blast impact, and requires an explicit approval for that action.
+
+`/gh-ai-tools` is for GitHub-hosted state and administration: accounts, organizations, repository settings and access, environments, secrets and variables, Actions, builds, artifacts, issues, and releases. Repository code work—commits, branches, tags, cherry-picks, rebases, merges, fetches, pulls, pushes, code review, and pull-request creation, updates, review, or merge—runs directly in the session without this skill. Platform policy such as rulesets, required checks, and pull-request settings remains in scope for the skill.
 
 ### Installation maintenance
 
