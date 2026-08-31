@@ -31,9 +31,9 @@ A shipped skill passes one routing gate before it starts. The gate shows the ski
 
 `/vibe-ai-tools` is the end-to-end choice for a larger demand. It delegates planning, relays design questions, asks the user to approve the saved plan, then follows `/dev-ai-tools` through implementation, validation, commits, push, and pull request.
 
-`/plan-ai-tools` designs only. Its output is a base plan plus one file per commit-sized stage under `dev/<slug>/`. A one-commit request is redirected to `/dev-ai-tools` Task mode.
+`/plan-ai-tools` designs only. Its output is a base plan plus one file per commit-sized stage under `dev/<slug>/`; the base plan records the branch used for analysis. A one-commit request is redirected to `/dev-ai-tools` Task mode.
 
-`/dev-ai-tools` executes accepted work unattended after task or plan agreement. It uses a dedicated `plan/<slug>` branch, delegates edits and tests, commits every accepted stage, archives the temporary work files, and opens a pull request or writes a local review patch when no host is available.
+`/dev-ai-tools` executes accepted work unattended after task or plan agreement. It creates the dedicated `plan/<slug>` branch from the recorded base and targets the pull request to that same branch: the analysis branch for a saved plan, or the branch current when a standalone task was requested. It delegates edits and tests, commits every accepted stage, archives the temporary work files, and opens a pull request or writes a local review patch when no host is available.
 
 ### Continuous improvement campaign
 

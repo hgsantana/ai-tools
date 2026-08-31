@@ -40,6 +40,7 @@ Both modes run these steps, in order:
 
 Before writing files or code, refine the request with the user in their language until it is complete:
 
+- Resolve the named branch currently checked out and keep it checked out throughout task agreement. This is `<base>`; if `HEAD` is detached, ask the user to choose and check out a branch before continuing.
 - Name what is ambiguous, propose the improvements you see, and state the impact of the change and of each alternative.
 - Size it: one task equals one implementation commit. For larger work, recommend `plan-ai-tools` and proceed with the scope the user accepts.
 - Derive a kebab-case `<slug>`. When an existing plan already covers the request, run that plan instead.
@@ -54,6 +55,10 @@ Status:
 ## Goal
 
 What changes and why.
+
+## Base branch
+
+`<base>` — the branch current when the user requested the task; create the work branch from it and target the pull request to it.
 
 ## Scope
 
@@ -95,7 +100,9 @@ Send each as a separate request with action, target, reason, and impact. Execute
 
 ## Branch and delivery
 
-Every change lands on `plan/<slug>`, created from the default branch (`git symbolic-ref --short refs/remotes/origin/HEAD`, then `main`/`master`, then the current branch when no remote exists). Preserve the default branch, use one branch per plan or task, and reuse it on reentry. First verify the repository root with `git rev-parse --show-toplevel`; note a dirty tree in the report.
+First verify the repository root with `git rev-parse --show-toplevel` and resolve `<base>` before creating the work branch. In Plan mode, `<base>` is exactly the **Base branch** recorded in `dev/<slug>/0-<slug>.md`: the branch `plan-ai-tools` analyzed. In Task mode, it is exactly the **Base branch** recorded in `dev/<slug>.md`: the branch current when the user requested the task. Require that named branch to exist; a missing, detached, or unresolvable value is a blocker, never a reason to substitute another branch.
+
+Every change lands on `plan/<slug>`, created from `<base>`. Preserve `<base>`, use one branch per plan or task, and reuse it on reentry. Note a dirty tree in the report.
 
 The history on that branch is symmetric:
 
@@ -103,9 +110,9 @@ The history on that branch is symmetric:
 2. **One commit per step**, Conventional Commits, once that step validates. Stage path by path; check for secrets and binaries.
 3. **Last commit** removes it: `chore(dev): archive <slug>` (*Archival*).
 
-Then push `plan/<slug>` and open the pull request against the default branch (`gh pr create --base <default> --head plan/<slug> …`), drafting title and body from the accepted steps. The reviewer sees the plan or task introduced, implemented, and removed alongside the changes it produced, and an unwanted run is discarded by deleting its branch.
+Then push `plan/<slug>` and open the pull request against the same `<base>` from which the work branch was created (`gh pr create --base <base> --head plan/<slug> …`), drafting title and body from the accepted steps. The reviewer sees the plan or task introduced, implemented, and removed alongside the changes it produced, and an unwanted run is discarded by deleting its branch.
 
-**When no pull-request host is available**—determined at branch creation from a compatible remote; for GitHub, `gh auth status` plus a GitHub remote—return a **local review request**: branch, base, `git diff --stat`, and a patch from `git diff <default>...<branch> --output=dev/tmp/<slug>-review.patch`. Let Git write the patch, verify it with `--stat` or `wc -l`, and leave its content on disk.
+**When no pull-request host is available**—determined at branch creation from a compatible remote; for GitHub, `gh auth status` plus a GitHub remote—return a **local review request**: branch, base, `git diff --stat`, and a patch from `git diff <base>...<branch> --output=dev/tmp/<slug>-review.patch`. Let Git write the patch, verify it with `--stat` or `wc -l`, and leave its content on disk.
 
 **A step left in `E`** stops the delivery: archive nothing, push nothing. Report how many steps failed and why, and return the choice as an approval request—retry them, deliver and archive anyway, or deliver and leave the work under `dev/`. An unattended `vibe-ai-tools` delivery, whose gate promised no further checkpoints, decides for itself and records the choice and reasoning in `dev/tmp/vibe/<slug>-decisions.md`.
 

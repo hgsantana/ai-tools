@@ -16,10 +16,11 @@ Explore a change and write its multi-file implementation plan under `dev/`.
 
 Carry the `planner-ai-tools` role and author a multi-file implementation plan under `dev/`, then stop. Route a change small enough for one commit to the `dev-ai-tools` Task mode and report that choice instead of planning it.
 
-1. **Invoke host planning**: request the host harness's strongest planning capability, mode, or skill for the design.
-2. **Draft the plan**: structure the delivery into isolated stages where each stage defines a commit boundary. Group tests by type, add a documentation stage if behavior changes, and set explicit stage dependencies.
-3. **Save**: write `dev/<slug>/0-<slug>.md` and each `dev/<slug>/<n>-<slug>.md` as it is drafted, so the plan survives an interrupted session.
-4. **Report**: hand over paths as defined in *Report*.
+1. **Fix the base branch**: verify the repository root, resolve the named branch currently checked out, and keep it checked out throughout analysis. This analysis branch is `<base>`; if `HEAD` is detached, ask the user to choose and check out a branch before continuing.
+2. **Invoke host planning**: request the host harness's strongest planning capability, mode, or skill for the design.
+3. **Draft the plan**: structure the delivery into isolated stages where each stage defines a commit boundary. Group tests by type, add a documentation stage if behavior changes, and set explicit stage dependencies.
+4. **Save**: write `<base>` into the base plan, then write `dev/<slug>/0-<slug>.md` and each `dev/<slug>/<n>-<slug>.md` as it is drafted, so the plan survives an interrupted session.
+5. **Report**: hand over paths as defined in *Report*.
 
 ## Plan file format
 
@@ -53,6 +54,10 @@ Every filename starts with its ordinal, including the base, so directory listing
 ## Goal
 
 1–3 sentences: what changes and why.
+
+## Base branch
+
+`<base>` — the branch analyzed by `plan-ai-tools`; `dev-ai-tools` creates the work branch from it and targets the pull request to it.
 
 ## Execution graph
 
