@@ -1,17 +1,17 @@
 ---
 name: dev-ai-tools
 description: >
-  Execute an accepted plan under dev/ or one task agreed with the user. Use
-  for /dev-ai-tools or after plan acceptance.
-  Impact: edits code, runs commands, commits each step on a dedicated branch,
-  archives the plan or task, pushes, and opens a pull request unattended once
-  all steps finish. Agent: planner-ai-tools.
+  Execute a specified plan under dev/, or list pending plans, propose an
+  order, and run them; or agree one task with the user. Use for /dev-ai-tools
+  or after plan acceptance. Impact: edits code, runs commands, commits each
+  step on a dedicated branch, archives the plan or task, pushes, and opens a
+  pull request unattended once all steps finish. Agent: planner-ai-tools.
 argument-hint: "[plan paths, or the task to implement]"
 ---
 
 # Execution
 
-Execute an accepted plan under `dev/<slug>/` or one task agreed with the user.
+Execute a specified plan under `dev/<slug>/`, a queue of pending plans, or one task agreed with the user.
 
 ## Workflow
 
@@ -21,17 +21,24 @@ Select the mode, run the sequence, then stop.
 
 | Input | Mode |
 |---|---|
-| Empty, `dev`, `dev/<slug>/`, `dev/<slug>.md`, or an archived slug | **Plan** — run what is already decided |
+| `dev/<slug>/`, `dev/<slug>.md`, or an archived slug | **Specified** — run that unit |
+| Empty or `dev` | **Queue** — list pending plans, propose an order, then run |
 | Anything else | **Task** — agree one task with the user, then run it |
 
-Empty input processes every unfinished base plan (`dev/*/0-*.md`) and task (`dev/*.md`) from oldest to newest, one at a time. Excluding `dev/tmp/**` prevents spontaneous re-execution. Preserve the ignore policy: work under `dev/` is trackable, while generated archives, reports, and patches share the ignored `dev/tmp/` root; add that ignore rule when absent. Outside a Git repository, plans live in `$HOME/.ai-tools-plans` (`%USERPROFILE%\.ai-tools-plans` on Windows).
+Excluding `dev/tmp/**` prevents spontaneous re-execution. Preserve the ignore policy: work under `dev/` is trackable, while generated archives, reports, and patches share the ignored `dev/tmp/` root; add that ignore rule when absent. Outside a Git repository, plans live in `$HOME/.ai-tools-plans` (`%USERPROFILE%\.ai-tools-plans` on Windows).
+
+### Queue (pending plans)
+
+When no unit is specified, find unfinished base plans `dev/*/0-*.md` or `dev/0-*.md` (exclude `dev/tmp/**`). A plan is unfinished while any stage is not terminal (`F` or `E`). If none exist, report that and stop.
+
+Propose an order (default: oldest base file first). In the user's language, list the paths and the proposed order, then ask whether to follow it or re-specify (subset, different order, or a single slug). Run the accepted list one plan at a time. Do not start until the user answers.
 
 ### The sequence
 
-Both modes run these steps, in order:
+Specified, Queue, and Task modes run these steps, in order:
 
 1. **Read the repository's documentation** — `README.md`, `AGENTS.md`, `docs/`, `CONTRIBUTING` — and hold to its rules, style, and language in everything you write.
-2. **Load the unit of work from disk.** In Plan mode, read `dev/<slug>/` once before the first dispatch: the base, stage, and fix files. Leave unrelated plans and `dev/tmp/**` unread. In Task mode, agree the task first (*Agreeing the task*).
+2. **Load the unit of work from disk.** For a plan, read `dev/<slug>/` once before the first dispatch: the base, stage, and fix files. Leave unrelated plans and `dev/tmp/**` unread. In Task mode, agree the task first (*Agreeing the task*).
 3. **Implement in short steps**, one commit each (*Dispatching*, *Branch and delivery*), with logs, diffs, and output stored in files.
 4. **Test before closing a step.** Write and run behaviour or feature tests for the delivered change, iterating until they pass; a build alone is insufficient.
 5. **Update the documentation** wherever the step changed behaviour or expectations.
@@ -88,7 +95,7 @@ Which documentation this change makes stale.
 (Append-only, added during execution.)
 ````
 
-After agreement, the run continues unattended like Plan mode.
+After agreement, the run continues unattended like Specified mode.
 
 ## Unattended
 

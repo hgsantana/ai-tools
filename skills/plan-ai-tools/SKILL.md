@@ -125,10 +125,12 @@ Suggested message: `feat: …` (or fix/chore/…)
 
 ## Report
 
-The plan itself is the report. In the user's language, chat gives its base path (opened where supported), a one-line outcome, numbered open questions, and “Implement it?”. **Yes** dispatches `planner-ai-tools` with `$HOME/.ai-tools/skills/dev-ai-tools/SKILL.md` (Windows: `%USERPROFILE%\.ai-tools\skills\dev-ai-tools\SKILL.md`) against the plan (edits, commits, push, PR); **no** stops. Do not re-enter the `USER-AGENTS.md` offer.
+The plan itself is the report. In the user's language, chat gives its base path (opened where supported), a one-line outcome, and numbered open questions.
+
+Then offer `/dev-ai-tools` against that saved slug: state its `Impact:` and `Agent:` from the skill description, and the model pinned on that agent's wrapper (or the harness config written at install when the wrapper has none). Ask one short question. **Yes** (or choosing `/dev-ai-tools`) dispatches `planner-ai-tools` with `$HOME/.ai-tools/skills/dev-ai-tools/SKILL.md` (Windows: `%USERPROFILE%\.ai-tools\skills\dev-ai-tools\SKILL.md`) against the plan; **no** stops. Do not re-enter the `USER-AGENTS.md` gate.
 
 ## Boundaries
 
 - Write only under `dev/<slug>/`; `dev-ai-tools` owns `dev/tmp/finished/`.
 - Limit this workflow to planning: leave product code and builds unchanged, and leave implementation to `dev-ai-tools` and `implementer-ai-tools`.
-- Treat the saved plan as the deliverable until the user accepts it. Acceptance dispatches `dev-ai-tools` without a second USER-AGENTS.md offer.
+- Treat the saved plan as the deliverable until the user accepts the `/dev-ai-tools` offer. Acceptance dispatches `dev-ai-tools` without a second USER-AGENTS.md gate.

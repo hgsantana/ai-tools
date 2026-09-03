@@ -16,9 +16,9 @@ The skill offer is the only `USER-AGENTS.md` gate. It names each option's impact
 
 | Skill | Use it for | Example |
 |---|---|---|
-| `/vibe-ai-tools` | Plan a larger change with user relay, then implement the approved plan and deliver a pull request | `/vibe-ai-tools add resumable uploads` |
-| `/plan-ai-tools` | Explore a multi-commit change and save a staged plan under `dev/`, then stop | `/plan-ai-tools redesign cache invalidation` |
-| `/dev-ai-tools` | Execute an accepted `dev/` plan, or agree and deliver one single-commit task | `/dev-ai-tools dev/cache-invalidation/` |
+| `/vibe-ai-tools` | Plan under `dev/`, then execute that plan and deliver a pull request | `/vibe-ai-tools add resumable uploads` |
+| `/plan-ai-tools` | Explore a multi-commit change, save a staged plan under `dev/`, then offer `/dev-ai-tools` | `/plan-ai-tools redesign cache invalidation` |
+| `/dev-ai-tools` | Execute a specified `dev/` plan, a queue of pending plans, or one single-commit task | `/dev-ai-tools dev/cache-invalidation/` |
 | `/improve-ai-tools` | Repeatedly plan and deliver relevant, multi-stage improvements in an autonomous local campaign | `/improve-ai-tools repository-hardening` |
 | `/az-ai-tools` | Inspect or manage Azure resources, subscriptions, infrastructure, and costs with `az` | `/az-ai-tools list costly idle resources` |
 | `/gc-ai-tools` | Inspect or manage Google Cloud projects, infrastructure, and costs with `gcloud` | `/gc-ai-tools show resources in project-x` |
@@ -29,11 +29,11 @@ The skill offer is the only `USER-AGENTS.md` gate. It names each option's impact
 
 ### Delivery workflows
 
-`/vibe-ai-tools` is the end-to-end choice for a larger change. It delegates planning, relays design questions, asks the user to approve the saved plan, then follows `/dev-ai-tools` through implementation, validation, commits, pushing, and opening a pull request.
+`/vibe-ai-tools` is the end-to-end choice for a larger change. It follows `/plan-ai-tools` in the same run until the plan is on disk, then reads `/dev-ai-tools` and executes that plan, deciding in-scope implementation questions itself.
 
-`/plan-ai-tools` designs only. Its output is a base plan plus one file per commit-sized stage under `dev/<slug>/`; the base plan records the branch used for analysis. A one-commit request is redirected to `/dev-ai-tools` Task mode.
+`/plan-ai-tools` designs only. Its output is a base plan plus one file per commit-sized stage under `dev/<slug>/`; the base plan records the branch used for analysis. After the plan is on disk it offers `/dev-ai-tools`. A one-commit request is redirected to `/dev-ai-tools` Task mode.
 
-`/dev-ai-tools` executes accepted work unattended after task or plan agreement. It creates the dedicated `plan/<slug>` branch from the recorded base and targets the pull request to that same branch: the analysis branch for a saved plan, or the branch current when a standalone task was requested. It delegates edits and tests, commits every accepted stage, archives the temporary work files, and opens a pull request or writes a local review patch when no host is available.
+`/dev-ai-tools` executes a specified `dev/<slug>/` plan, or lists pending plans, proposes an order, and runs the accepted queue; or agrees one single-commit task. It creates the dedicated `plan/<slug>` branch from the recorded base and targets the pull request to that same branch. It delegates edits and tests, commits every accepted stage, archives the temporary work files, and opens a pull request or writes a local review patch when no host is available.
 
 ### Continuous improvement campaign
 
