@@ -32,20 +32,20 @@ Checks:
                     subset of name, description, argument-hint (rule 9)
   skill name match  skills/<x>/SKILL.md declares name: <x>
   skill description every skill description is at most 500 characters,
-                    folded block included, and states what the skill does
-                    then Impact: plus the Stake (rule 9)
+                    folded block included, and states what the skill does,
+                    then Impact:, then Min. role: (rule 9)
   skill layout      no skill-root markdown, every skill directory has
                     SKILL.md, no SKILL.md contains Continue? or Stake,
                     USER-AGENTS.md has How to route a request and Min. role, and no
                     mentions of deleted files (rule 7)
   wrapper body      every wrapper body is exactly the canonical text
                     reconstructed from the agent name (rule 6)
-  model parity      every wrapper's pinned model matches MODELS.md via
+  model parity      every wrapper's pinned model matches USER-AGENTS.md via
                     model_for; Grok wrappers declare no model: (rules 11-12)
-  effort pinning    the wrapper pins the MODELS.md cell's effort where its
+  effort pinning    the wrapper pins the USER-AGENTS.md cell's effort where its
                     form can hold one, in the vendor's spelling
   description parity same agent's description is identical across wrappers
-  MODELS.md coverage every agents/<key>/ has a MODELS.md row and vice versa
+  model row coverage every agents/<key>/ has a USER-AGENTS.md row and vice versa
   instructions cap  USER-AGENTS.md is at most 8000 characters (rule 3)
   wrapper cap       every agents/<harness>/* file is at most 1000 characters,
                     frontmatter included (rule 6)
@@ -297,7 +297,7 @@ check_skill_name_match() {
   done
 }
 
-# --- Check: skill layout and description cap (rules 7, 9) --------------------
+# --- Check: skill layout and description (rules 7, 9) ------------------------
 
 check_skill_layout() {
   local f d name
@@ -411,27 +411,30 @@ check_skill_description_cap() {
 }
 
 check_skill_description_content() {
-  # rule 9: description states (1) what the skill does, then (2) Impact: plus the Stake
-  local d f val before after
+  # rule 9: description states what it does, then Impact:, then Min. role:
+  local d f val before impact role
   for d in "$AI_TOOLS"/skills/*-ai-tools/; do
     [ -d "$d" ] || continue
     f="${d}SKILL.md"
     [ -f "$f" ] || continue
     val=$(yaml_frontmatter_folded_value "$f" description)
     case "$val" in
-      *"Impact:"*)
+      *"Impact:"*"Min. role:"*)
         before=$(printf '%s\n' "$val" | awk '{ sub(/Impact:.*/, ""); gsub(/^[ \t]+|[ \t]+$/, ""); print }')
-        after=$(printf '%s\n' "$val" | awk '{ sub(/.*Impact:/, ""); gsub(/^[ \t]+|[ \t]+$/, ""); print }')
+        impact=$(printf '%s\n' "$val" | awk '{ sub(/.*Impact:/, ""); sub(/Min\. role:.*/, ""); gsub(/^[ \t]+|[ \t]+$/, ""); print }')
+        role=$(printf '%s\n' "$val" | awk '{ sub(/.*Min\. role:/, ""); gsub(/[.[:space:]]/, ""); print }')
         if [ -z "$before" ]; then
           warn "skill description has no what-it-does before Impact: $f"
-        elif [ -z "$after" ]; then
+        elif [ -z "$impact" ]; then
           warn "skill description Impact has no stake text: $f"
+        elif ! in_list "$role" "planner implementer mechanical"; then
+          warn "skill description has invalid Min. role: $f ('$role')"
         else
-          ok "skill description has what + Impact: $f"
+          ok "skill description has what + Impact + Min. role: $f"
         fi
         ;;
       *)
-        warn "skill description missing Impact: (rule 9): $f"
+        warn "skill description missing ordered Impact: or Min. role: (rule 9): $f"
         ;;
     esac
   done
@@ -439,13 +442,13 @@ check_skill_description_content() {
 
 # --- Check: wrapper body and model parity (rules 6, 11-12) --------------------
 # Never hard-code a vendor model name here — every expected model is resolved
-# through model_for, reading MODELS.md in place.
+# through model_for, reading USER-AGENTS.md in place.
 
 canonical_body() {
   # usage: canonical_body <agent-name>
-  # Reconstructs the exact wrapper body text (README, "Model map and wrapper
+  # Reconstructs the exact wrapper body text (README, "Model selection and wrapper
   # authoring"). A regex would accept the drift this check exists to reject.
-  # The pin lives in the header; the body never names MODELS.md or a harness row.
+  # The pin lives in the header; the body never names a model table or harness row.
   local a="$1"
   # shellcheck disable=SC2016 # $HOME/%USERPROFILE% must stay literal — expanding them is the bug this check catches
   printf 'On Windows, %%USERPROFILE%% replaces $HOME.\n\n'
@@ -502,7 +505,7 @@ check_wrapper_body() {
 
 model_effort_for() {
   # usage: model_effort_for <harness-key> <planner|implementer|mechanical>
-  # Prints the MODELS.md cell's " · effort" word, or nothing when absent.
+  # Prints the USER-AGENTS.md cell's " · effort" word, or nothing when absent.
   local key="$1" col
   case "$2" in
     planner)     col=4 ;;
@@ -510,7 +513,7 @@ model_effort_for() {
     mechanical)  col=6 ;;
     *)           return 1 ;;
   esac
-  [ -f "$MODELS_MAP" ] || return 1
+  [ -f "$MODEL_TABLE" ] || return 1
   awk -F'|' -v key="$key" -v col="$col" '
     $2 ~ /`[a-z0-9-]+`/ {
       k = $2; gsub(/[`[:space:]]/, "", k)
@@ -524,7 +527,7 @@ model_effort_for() {
         exit
       }
     }
-  ' "$MODELS_MAP"
+  ' "$MODEL_TABLE"
 }
 
 check_model_parity() {
@@ -535,7 +538,7 @@ check_model_parity() {
       f=$(wrapper_path "$h" "$a")
       [ -f "$f" ] || continue
       cat=$(category_for "$a")
-      expected=$(model_for "$h" "$cat") || { warn "no usable MODELS.md row for $h/$cat: $f"; continue; }
+      expected=$(model_for "$h" "$cat") || { warn "no usable USER-AGENTS.md model row for $h/$cat: $f"; continue; }
       case "$h" in
         grok)
           if in_list model "$(yaml_frontmatter_keys "$f" | tr '\n' ' ')"; then
@@ -621,19 +624,19 @@ check_description_parity() {
 
 check_models_row_coverage() {
   local h k rows
-  rows=$(awk -F'|' '$2 ~ /`[a-z0-9-]+`/ { k = $2; gsub(/[`[:space:]]/, "", k); print k }' "$MODELS_MAP" 2>/dev/null)
+  rows=$(awk -F'|' 'NF >= 8 && $2 ~ /`[a-z0-9-]+`/ { k = $2; gsub(/[`[:space:]]/, "", k); print k }' "$MODEL_TABLE" 2>/dev/null)
   for h in $(harnesses); do
     if in_list "$h" "$(echo "$rows" | tr '\n' ' ')"; then
-      ok "MODELS.md row present: $h"
+      ok "USER-AGENTS.md model row present: $h"
     else
-      warn "agents/$h/ has no MODELS.md row"
+      warn "agents/$h/ has no USER-AGENTS.md model row"
     fi
   done
   for k in $rows; do
     if [ -d "$AI_TOOLS/agents/$k" ]; then
-      ok "MODELS.md row has a wrapper directory: $k"
+      ok "USER-AGENTS.md model row has a wrapper directory: $k"
     else
-      warn "MODELS.md row without agents/ directory: $k"
+      warn "USER-AGENTS.md model row without agents/ directory: $k"
     fi
   done
 }

@@ -7,7 +7,7 @@ description: >
   branches, rebases, merges, pushes, pull requests, or other repository code
   work; handle those directly. Impact: remote mutations can change access,
   settings, automation, or hosted data. Reads run freely; each mutation
-  requires an explicit yes.
+  requires an explicit yes. Min. role: implementer.
 argument-hint: "[GitHub platform resource to inspect or manage]"
 ---
 

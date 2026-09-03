@@ -7,7 +7,7 @@ description: >
   budget. Impact: creates or resumes a local campaign branch, repeatedly edits
   or removes files, runs commands and tests, and makes multiple local commits
   until budget exhaustion or a blocker. It never pushes or writes outside the
-  repository.
+  repository. Min. role: planner.
 argument-hint: "[campaign name and optional priorities or exclusions]"
 ---
 

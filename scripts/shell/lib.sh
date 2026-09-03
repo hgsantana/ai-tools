@@ -385,7 +385,7 @@ install_skills() {
 # Grok ignores model: in agent frontmatter; models live in ~/.grok/config.toml.
 # Only the marker-delimited block below is ever written or removed.
 
-MODELS_MAP="$AI_TOOLS/MODELS.md"
+MODEL_TABLE="$AI_TOOLS/USER-AGENTS.md"
 GROK_TOML="$HOME/.grok/config.toml"
 GROK_BEGIN="# >>> ai-tools managed subagent models — do not edit inside this block"
 GROK_END="# <<< ai-tools managed subagent models"
@@ -393,7 +393,7 @@ GROK_END="# <<< ai-tools managed subagent models"
 category_for() {
   # usage: category_for <agent-name>
   # Role the base claims via "You are the **<planner|implementer|mechanical>**".
-  # Used at install/lint to pin wrappers from MODELS.md — never at dispatch.
+  # Used at install/lint to pin wrappers from USER-AGENTS.md — never at dispatch.
   # Falls back to planner when the base cites none.
   local f="$AI_TOOLS/agents/$1.md" cat
   [ -f "$f" ] || return 1
@@ -412,7 +412,7 @@ category_for() {
 
 model_for() {
   # usage: model_for <harness key> <planner|implementer|mechanical>
-  # Reads MODELS.md, the single source of model names (README rules 11-12).
+  # Reads USER-AGENTS.md, the single source of model names (README rules 11-12).
   local key="$1" col
   case "$2" in
     planner)     col=4 ;;
@@ -420,7 +420,7 @@ model_for() {
     mechanical)  col=6 ;;
     *)           return 1 ;;
   esac
-  [ -f "$MODELS_MAP" ] || return 1
+  [ -f "$MODEL_TABLE" ] || return 1
   awk -F'|' -v key="$key" -v col="$col" '
     /^[[:space:]]*\|/ {
       k = $2; gsub(/[`[:space:]]/, "", k)
@@ -433,11 +433,11 @@ model_for() {
       }
     }
     END { exit !found }
-  ' "$MODELS_MAP"
+  ' "$MODEL_TABLE"
 }
 
 grok_models_toml() {
-  # Names from the tree; models from MODELS.md, row `grok`, via the
+  # Names from the tree; models from USER-AGENTS.md, row `grok`, via the
   # category each base claims (category_for).
   local f name cat model
   echo "[subagents.models]"
@@ -454,7 +454,7 @@ install_grok_models() {
   in_scope grok || return 0
   local desired current tmp models
   models=$(grok_models_toml) || {
-    skip "grok model pinning: no usable \`grok\` row in $MODELS_MAP — block left untouched"
+    skip "grok model pinning: no usable \`grok\` row in $MODEL_TABLE — block left untouched"
     return 0
   }
   desired=$(printf '%s\n%s\n%s\n' "$GROK_BEGIN" "$models" "$GROK_END")
@@ -703,8 +703,8 @@ verify_install() {
   if [ "$size" -le 12000 ]; then ok "instructions size: $size chars"
   else warn "USER-AGENTS.md exceeds 12000 chars (Antigravity limit): $size"; fi
 
-  if [ -f "$MODELS_MAP" ]; then ok "model map: $MODELS_MAP"
-  else warn "missing model map: $MODELS_MAP — agents and skills cannot resolve category models"; fi
+  if [ -f "$MODEL_TABLE" ]; then ok "model table: $MODEL_TABLE"
+  else warn "missing model table: $MODEL_TABLE — agents and skills cannot resolve role models"; fi
 
   if [ -f "$AI_TOOLS/agents/SUBAGENT-CONTRACT.md" ]; then ok "subagent contract: $AI_TOOLS/agents/SUBAGENT-CONTRACT.md"
   else warn "missing subagent contract: $AI_TOOLS/agents/SUBAGENT-CONTRACT.md — wrappers point at it before their base"; fi

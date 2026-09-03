@@ -5,6 +5,7 @@ description: >
   Google Cloud resources, projects, costs, and infrastructure. Impact:
   mutations may create billable resources or remove existing ones and can be
   hard to reverse. Reads run freely; each mutation requires an explicit yes.
+  Min. role: implementer.
 argument-hint: "[what to inspect or change in Google Cloud]"
 ---
 

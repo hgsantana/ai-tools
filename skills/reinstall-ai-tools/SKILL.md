@@ -5,7 +5,7 @@ description: >
   origin/master. Use for /reinstall-ai-tools when installation is broken or
   stale, or the harness set changed. Impact: resets $HOME/.ai-tools, which can
   discard local work, then re-creates harness links. Each destructive step
-  requires an explicit yes.
+  requires an explicit yes. Min. role: mechanical.
 argument-hint: "[optional: harnesses in scope, or extra instructions]"
 ---
 

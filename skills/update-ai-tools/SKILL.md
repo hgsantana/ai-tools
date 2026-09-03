@@ -4,7 +4,8 @@ description: >
   Update an existing installation per the README: reset $HOME/.ai-tools to
   origin/master, refresh copies, and link newly shipped content. Use for
   /update-ai-tools. Impact: can discard local commits and edits, and refreshes
-  harness configuration. Each destructive step requires an explicit yes.
+  harness configuration. Each destructive step requires an explicit yes. Min.
+  role: mechanical.
 argument-hint: "[optional: harnesses in scope, or extra instructions]"
 ---
 

@@ -4,7 +4,7 @@ description: >
   Explore the repository and write a multi-file implementation plan under dev/
   in the planner-ai-tools role. Use for /plan-ai-tools or when a non-trivial
   change needs planning first. Impact: writes only planning files under dev/;
-  product code, commits, and remote state remain unchanged.
+  product code, commits, and remote state remain unchanged. Min. role: planner.
 argument-hint: "[description of the change, feature, or fix to plan]"
 ---
 

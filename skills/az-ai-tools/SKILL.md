@@ -4,7 +4,8 @@ description: >
   Query or manage Azure through the Azure CLI (az). Use for /az-ai-tools or
   Azure resources, subscriptions, costs, and infrastructure. Impact: mutations
   may create billable resources or remove existing ones and can be hard to
-  reverse. Reads run freely; each mutation requires an explicit yes.
+  reverse. Reads run freely; each mutation requires an explicit yes. Min. role:
+  implementer.
 argument-hint: "[what to inspect or change in Azure]"
 ---
 

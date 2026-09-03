@@ -5,7 +5,7 @@ description: >
   planner-ai-tools role. Use for /dev-ai-tools or after plan acceptance.
   Impact: edits code, runs commands, commits each step on a dedicated branch,
   archives the plan or task, pushes, and opens a pull request unattended once
-  all steps finish.
+  all steps finish. Min. role: planner.
 argument-hint: "[plan paths, or the task to implement]"
 ---
 

@@ -198,21 +198,21 @@ case_install_legacy_symlinks_migrated() {
 
 case_install_grok_models() {
   # Grok model pinning: names from the tree, models from the fixture's own
-  # MODELS.md, resolved through the shipped model_for (never a hard-coded
+  # USER-AGENTS.md, resolved through the shipped model_for (never a hard-coded
   # vendor name here).
-  local root saved_map planner_model implementer_model mechanical_model
+  local root saved_table planner_model implementer_model mechanical_model
   t_fixture
   root="$T_ROOT"
 
-  saved_map="$MODELS_MAP"
-  MODELS_MAP="$root/home/.ai-tools/MODELS.md"
+  saved_table="$MODEL_TABLE"
+  MODEL_TABLE="$root/home/.ai-tools/USER-AGENTS.md"
   planner_model=$(model_for grok planner)
   implementer_model=$(model_for grok implementer)
   mechanical_model=$(model_for grok mechanical)
-  MODELS_MAP="$saved_map"
+  MODEL_TABLE="$saved_table"
 
   if [ -z "$planner_model" ] || [ -z "$implementer_model" ] || [ -z "$mechanical_model" ]; then
-    warn "$T_CASE: could not resolve grok models from fixture MODELS.md"
+    warn "$T_CASE: could not resolve grok models from fixture USER-AGENTS.md"
     t_cleanup "$root"
     return 0
   fi
@@ -248,14 +248,14 @@ case_install_grok_unmanaged_block() {
 }
 
 case_install_grok_no_model_row() {
-  # No usable `grok` row in MODELS.md: pinning is skipped, config untouched.
+  # No usable `grok` row in USER-AGENTS.md: pinning is skipped, config untouched.
   local root before
   t_fixture
   root="$T_ROOT"
   # shellcheck disable=SC2016 # single quotes are deliberate, nothing here should expand
-  sed -i.bak '/^| `grok`/d' "$root/home/.ai-tools/MODELS.md" \
-    || fatal "$T_CASE: cannot strip grok row from fixture MODELS.md"
-  rm -f "$root/home/.ai-tools/MODELS.md.bak"
+  sed -i.bak '/^| `grok`/d' "$root/home/.ai-tools/USER-AGENTS.md" \
+    || fatal "$T_CASE: cannot strip grok row from fixture USER-AGENTS.md"
+  rm -f "$root/home/.ai-tools/USER-AGENTS.md.bak"
 
   before=$(t_snapshot "$root/home/.grok/config.toml")
   t_install "$root" --harnesses grok

@@ -4,7 +4,8 @@ description: >
   Remove this installation per the README: unlink agents, skills, and
   optionally instructions from harnesses. Use for /remove-ai-tools. Impact:
   those tools become unavailable; the clone remains unless the user separately
-  approves a purge. Each destructive step requires an explicit yes.
+  approves a purge. Each destructive step requires an explicit yes. Min. role:
+  mechanical.
 argument-hint: "[optional: harnesses in scope, or extra instructions]"
 ---
 

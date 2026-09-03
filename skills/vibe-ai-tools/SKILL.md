@@ -6,7 +6,7 @@ description: >
   changes; use for /vibe-ai-tools. Impact: after review, works unattended on a
   dedicated branch, commits, pushes, and opens a PR; edits and removals can be
   hard to undo. Pre-existing history stays intact. Cloud and destructive
-  operations still require a separate yes.
+  operations still require a separate yes. Min. role: planner.
 argument-hint: "[the demand to deliver]"
 ---
 

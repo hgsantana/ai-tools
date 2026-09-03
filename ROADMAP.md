@@ -32,7 +32,7 @@ Rule 4 lets the README describe only the current alpha state. Give testers a con
 
 ### 7. Repeatable model-map refresh
 
-The README defines a reproducible model-selection method—list official names, join Artificial Analysis measurements, apply category thresholds, and rank by `(Intelligence Index / cost per task) / time per task`—but applying it manually across six harnesses makes freshness hard to see. Ship a `models-ai-tools` skill that runs the method end to end, records source URLs and retrieval dates, presents a diff against `MODELS.md`, and, after approval, updates the map and affected wrapper headers in one commit as rule 12 requires. Route: `/vibe-ai-tools`.
+The README defines a reproducible model-selection method—list official names, join Artificial Analysis measurements, apply category thresholds, and rank by `(Intelligence Index / cost per task) / time per task`—but applying it manually across six harnesses makes freshness hard to see. Ship a `models-ai-tools` skill that runs the method end to end, records source URLs and retrieval dates, presents a diff against the `USER-AGENTS.md` model table, and, after approval, updates that table and affected wrapper headers in one commit as rule 12 requires. Route: `/vibe-ai-tools`.
 
 ### 8. Decisions that outlive the plan
 
@@ -54,8 +54,8 @@ Several agents consume untrusted input: `gh-ai-tools` reads issue and pull reque
 
 ### 12. Adding a harness, by checklist
 
-Adding a harness requires coordinated edits: one wrapper per agent, a researched `MODELS.md` row, the Supported harnesses table, installation steps, script discovery, and any newly tighter constraint. Consolidate these requirements into an ordered checklist, and have the linter verify that every wrapper folder has both a model-map row and a Supported harnesses entry. Route: `/vibe-ai-tools`.
+Adding a harness requires coordinated edits: one wrapper per agent, a researched `USER-AGENTS.md` model row, the Supported harnesses table, installation steps, script discovery, and any newly tighter constraint. Consolidate these requirements into an ordered checklist, and have the linter verify that every wrapper folder has both a model-table row and a Supported harnesses entry. Route: `/vibe-ai-tools`.
 
 ### 13. Cost visibility in the dispatch ledger
 
-The dispatch ledger records the model behind every attempt. Extend it and the final summary with the usage data each harness exposes per attempt—tokens, duration, or an estimate derived from `MODELS.md` cost figures—so outcomes and cost appear together. Mark unavailable values explicitly and base every number on reported evidence. Route: `/plan-ai-tools`.
+The dispatch ledger records the model behind every attempt. Extend it and the final summary with the usage data each harness exposes per attempt—tokens, duration, or a documented estimate—so outcomes and cost appear together. Mark unavailable values explicitly and base every number on reported evidence. Route: `/plan-ai-tools`.

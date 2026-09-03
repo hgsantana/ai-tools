@@ -10,7 +10,7 @@ Invoke a skill by leading with its slash name and optional request:
 /plan-ai-tools add resumable uploads
 ```
 
-A shipped skill passes one routing gate before it starts. The gate shows the skill's impact and model fit, then offers that skill, **run it here**, and **stop**. Choosing the skill authorizes its workflow; later approvals still follow that skill's own rules.
+Scope-based recommendations explain each option's impact and offer the relevant skill, **run it here**, and **something else**. The last choice lets the user name another skill, revise the request, or propose a different approach; a native **Other** field serves the same purpose. Directly naming or choosing a skill authorizes it; the activation gate reports that skill's impact and model fit and starts without asking again. Later approvals still follow the skill's own rules.
 
 ## Skills
 
