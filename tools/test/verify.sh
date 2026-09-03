@@ -122,7 +122,7 @@ case_verify_instructions_cap() {
   before=$(t_snapshot "$root/home")
   t_verify "$root" --harnesses claude-code
   t_assert_exit 2
-  t_assert_line "WARN: USER-AGENTS.md exceeds 8000 chars (repository limit):"
+  t_assert_line "WARN: USER-AGENTS.md exceeds 6000 chars (repository limit):"
   t_assert_unchanged "$root/home" "$before"
   rm -f "$before"
 

@@ -40,13 +40,13 @@ Checks:
                     and no references to deleted files (rule 7)
   wrapper body      every wrapper body is exactly the canonical text
                     reconstructed from the agent name (rule 6)
-  model parity      every wrapper's pinned model matches MODELS.md via
+  model parity      every wrapper's pinned model matches MODELS.csv via
                     model_for; Grok wrappers declare no model: (rules 11-12)
-  effort pinning    the wrapper pins the MODELS.md cell's effort where its
+  effort pinning    the wrapper pins the MODELS.csv effort cell where its
                     form can hold one, in the vendor's spelling
   description parity same agent's description is identical across wrappers
-  model row coverage each agents/<key>/ has a MODELS.md row and vice versa
-  instructions cap  USER-AGENTS.md is at most 8000 characters (rule 3)
+  model row coverage each agents/<key>/ has a MODELS.csv row and vice versa
+  instructions cap  USER-AGENTS.md is at most 6000 characters (rule 3)
   wrapper cap       every agents/<harness>/* file is at most 1000 characters,
                     frontmatter included (rule 6)
   line endings      git ls-files --eol matches the declared eol= attribute:
@@ -56,7 +56,7 @@ Checks:
   no binaries       every tracked file under agents/, skills/, scripts/, and
                     tools/ is text
   version bump      CI-only, needs --base <ref> (skipped without it): when
-                    agents/, skills/, scripts/, USER-AGENTS.md, or MODELS.md changed
+                    agents/, skills/, scripts/, USER-AGENTS.md, or MODELS.csv changed
                     since <ref>, the README version line must have changed
                     too (rule 4)
   dev/tmp untracked git ls-files dev/tmp returns nothing (rule 29)
@@ -442,7 +442,7 @@ check_skill_description_content() {
 
 # --- Check: wrapper body and model parity (rules 6, 11-12) --------------------
 # Never hard-code a vendor model name here — every expected model is resolved
-# through model_for, reading MODELS.md in place.
+# through model_for, reading MODELS.csv in place.
 
 canonical_body() {
   # usage: canonical_body <agent-name>
@@ -503,32 +503,7 @@ check_wrapper_body() {
   done
 }
 
-model_effort_for() {
-  # usage: model_effort_for <harness-key> <planner|implementer|mechanical>
-  # Prints the MODELS.md cell's " · effort" word, or nothing when absent.
-  local key="$1" col
-  case "$2" in
-    planner)     col=4 ;;
-    implementer) col=5 ;;
-    mechanical)  col=6 ;;
-    *)           return 1 ;;
-  esac
-  [ -f "$MODEL_TABLE" ] || return 1
-  awk -F'|' -v key="$key" -v col="$col" '
-    $2 ~ /`[a-z0-9-]+`/ {
-      k = $2; gsub(/[`[:space:]]/, "", k)
-      if (k == key) {
-        v = $col
-        if (match(v, /·[[:space:]]*[A-Za-z0-9]+/)) {
-          e = substr(v, RSTART, RLENGTH)
-          sub(/^·[[:space:]]*/, "", e)
-          print e
-        }
-        exit
-      }
-    }
-  ' "$MODEL_TABLE"
-}
+# model_effort_for lives in scripts/shell/lib.sh next to model_for.
 
 check_model_parity() {
   # category_for lives in scripts/shell/lib.sh — the category the base claims.
@@ -538,7 +513,7 @@ check_model_parity() {
       f=$(wrapper_path "$h" "$a")
       [ -f "$f" ] || continue
       cat=$(category_for "$a")
-      expected=$(model_for "$h" "$cat") || { warn "no usable MODELS.md model row for $h/$cat: $f"; continue; }
+      expected=$(model_for "$h" "$cat") || { warn "no usable MODELS.csv model row for $h/$cat: $f"; continue; }
       case "$h" in
         grok)
           if in_list model "$(yaml_frontmatter_keys "$f" | tr '\n' ' ')"; then
@@ -624,19 +599,27 @@ check_description_parity() {
 
 check_models_row_coverage() {
   local h k rows
-  rows=$(awk -F'|' 'NF >= 8 && $2 ~ /`[a-z0-9-]+`/ { k = $2; gsub(/[`[:space:]]/, "", k); print k }' "$MODEL_TABLE" 2>/dev/null)
+  rows=$(awk -F',' '
+    $1 == "harness" { next }
+    /^[[:space:]]*$/ { next }
+    {
+      k = $1
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", k)
+      if (k ~ /^[a-z0-9-]+$/) print k
+    }
+  ' "$MODEL_TABLE" 2>/dev/null)
   for h in $(harnesses); do
     if in_list "$h" "$(echo "$rows" | tr '\n' ' ')"; then
-      ok "MODELS.md model row present: $h"
+      ok "MODELS.csv model row present: $h"
     else
-      warn "agents/$h/ has no MODELS.md model row"
+      warn "agents/$h/ has no MODELS.csv model row"
     fi
   done
   for k in $rows; do
     if [ -d "$AI_TOOLS/agents/$k" ]; then
-      ok "MODELS.md model row has a wrapper directory: $k"
+      ok "MODELS.csv model row has a wrapper directory: $k"
     else
-      warn "MODELS.md model row without agents/ directory: $k"
+      warn "MODELS.csv model row without agents/ directory: $k"
     fi
   done
 }
@@ -667,7 +650,7 @@ char_count() {
 }
 
 check_instructions_cap() {
-  local f count cap=8000
+  local f count cap=6000
   f="$AI_TOOLS/USER-AGENTS.md"
   if [ ! -f "$f" ]; then warn "missing: $f"; return; fi
   count=$(char_count "$f")
@@ -777,7 +760,7 @@ check_version_bump() {
     skip "version bump check needs --base <ref> (the lint workflow supplies it)"
     return
   fi
-  changed=$(git -C "$AI_TOOLS" diff --name-only "$base...HEAD" -- agents skills scripts USER-AGENTS.md MODELS.md 2>/dev/null)
+  changed=$(git -C "$AI_TOOLS" diff --name-only "$base...HEAD" -- agents skills scripts USER-AGENTS.md MODELS.csv 2>/dev/null)
   if [ -z "$changed" ]; then
     ok "no shipped content changed since $base: version bump not required"
     return

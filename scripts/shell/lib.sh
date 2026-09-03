@@ -306,12 +306,12 @@ ensure_clone() {
     # shellcheck disable=SC2034 # read by scripts/shell/reinstall.sh, a separate sourcing script
     FRESH_CLONE=1
   fi
-  { [ -f "$AI_TOOLS/USER-AGENTS.md" ] && [ -f "$AI_TOOLS/MODELS.md" ] && [ -d "$AI_TOOLS/agents" ]; } \
+  { [ -f "$AI_TOOLS/USER-AGENTS.md" ] && [ -f "$AI_TOOLS/MODELS.csv" ] && [ -d "$AI_TOOLS/agents" ]; } \
     || fatal "$AI_TOOLS is not an ai-tools clone (move any existing clone here — the only supported location)"
 }
 
 require_clone() {
-  { [ -d "$AI_TOOLS/.git" ] && [ -f "$AI_TOOLS/USER-AGENTS.md" ] && [ -f "$AI_TOOLS/MODELS.md" ]; } \
+  { [ -d "$AI_TOOLS/.git" ] && [ -f "$AI_TOOLS/USER-AGENTS.md" ] && [ -f "$AI_TOOLS/MODELS.csv" ]; } \
     || fatal "$AI_TOOLS is missing or not a clone — run scripts/shell/install.sh first"
 }
 
@@ -385,7 +385,7 @@ install_skills() {
 # Grok ignores model: in agent frontmatter; models live in ~/.grok/config.toml.
 # Only the marker-delimited block below is ever written or removed.
 
-MODEL_TABLE="$AI_TOOLS/MODELS.md"
+MODEL_TABLE="$AI_TOOLS/MODELS.csv"
 GROK_TOML="$HOME/.grok/config.toml"
 GROK_BEGIN="# >>> ai-tools managed subagent models — do not edit inside this block"
 GROK_END="# <<< ai-tools managed subagent models"
@@ -393,7 +393,7 @@ GROK_END="# <<< ai-tools managed subagent models"
 category_for() {
   # usage: category_for <agent-name>
   # Role the base claims via "You are the **<planner|implementer|mechanical>**".
-  # Used at install/lint to pin wrappers from MODELS.md — never at dispatch.
+  # Used at install/lint to pin wrappers from the MODELS.csv — never at dispatch.
   # Falls back to planner when the base cites none.
   local f="$AI_TOOLS/agents/$1.md" cat
   [ -f "$f" ] || return 1
@@ -410,25 +410,26 @@ category_for() {
   printf '%s\n' "$cat"
 }
 
-model_for() {
-  # usage: model_for <harness key> <planner|implementer|mechanical>
-  # Reads MODELS.md, the single source of model names (README rules 11-12).
-  local key="$1" col
-  case "$2" in
-    planner)     col=4 ;;
-    implementer) col=5 ;;
-    mechanical)  col=6 ;;
-    *)           return 1 ;;
-  esac
+models_csv_field() {
+  # usage: models_csv_field <harness key> <1-based column>
+  # MODELS.csv columns: harness,planner,planner_effort,implementer,
+  # implementer_effort,mechanical,mechanical_effort (README rules 11-12).
+  # Prints the trimmed field when the harness row exists; empty cells print
+  # nothing and still succeed. Values contain no commas.
+  local key="$1" col="$2"
   [ -f "$MODEL_TABLE" ] || return 1
-  awk -F'|' -v key="$key" -v col="$col" '
-    /^[[:space:]]*\|/ {
-      k = $2; gsub(/[`[:space:]]/, "", k)
+  awk -F',' -v key="$key" -v col="$col" '
+    $1 == "harness" { next }
+    /^[[:space:]]*$/ { next }
+    {
+      k = $1
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", k)
       if (k == key) {
+        if (col > NF) exit 1
         v = $col
-        if (match(v, /`[^`]+`/)) v = substr(v, RSTART + 1, RLENGTH - 2)
-        else { gsub(/`/, "", v); gsub(/^[[:space:]]+|[[:space:]]+$/, "", v) }
-        if (v != "") { print v; found = 1 }
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "", v)
+        print v
+        found = 1
         exit
       }
     }
@@ -436,8 +437,36 @@ model_for() {
   ' "$MODEL_TABLE"
 }
 
+model_for() {
+  # usage: model_for <harness key> <planner|implementer|mechanical>
+  # Reads MODELS.csv, the single source of model names (README rules 11-12).
+  local col v
+  case "$2" in
+    planner)     col=2 ;;
+    implementer) col=4 ;;
+    mechanical)  col=6 ;;
+    *)           return 1 ;;
+  esac
+  v=$(models_csv_field "$1" "$col") || return 1
+  [ -n "$v" ] || return 1
+  printf '%s\n' "$v"
+}
+
+model_effort_for() {
+  # usage: model_effort_for <harness key> <planner|implementer|mechanical>
+  # Prints the CSV effort cell, or nothing when it is empty.
+  local col
+  case "$2" in
+    planner)     col=3 ;;
+    implementer) col=5 ;;
+    mechanical)  col=7 ;;
+    *)           return 1 ;;
+  esac
+  models_csv_field "$1" "$col"
+}
+
 grok_models_toml() {
-  # Names from the tree; models from MODELS.md, row `grok`, via the
+  # Names from the tree; models from the MODELS.csv, row grok, via the
   # category each base claims (category_for).
   local f name cat model
   echo "[subagents.models]"
@@ -700,8 +729,8 @@ verify_install() {
   if [ "$DRY_RUN" = 1 ]; then info "dry-run: verification skipped"; return 0; fi
 
   size=$(wc -c < "$AI_TOOLS/USER-AGENTS.md")
-  if [ "$size" -le 8000 ]; then ok "instructions size: $size chars"
-  else warn "USER-AGENTS.md exceeds 8000 chars (repository limit): $size"; fi
+  if [ "$size" -le 6000 ]; then ok "instructions size: $size chars"
+  else warn "USER-AGENTS.md exceeds 6000 chars (repository limit): $size"; fi
 
   if [ -f "$MODEL_TABLE" ]; then ok "model table: $MODEL_TABLE"
   else warn "missing model table: $MODEL_TABLE — install and lint cannot resolve agent-role models"; fi
