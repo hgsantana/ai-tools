@@ -1,6 +1,6 @@
 ---
 name: mechanical-ai-tools
-description: Mechanical-category worker: applies a known patch, renames, runs builds and tests, collects evidence. Makes no design decisions. Spawned for mechanical-model work.
+description: Mechanical worker: applies known patches and renames, runs builds and tests, and collects evidence without making design decisions. Spawned for work requiring the mechanical model.
 model: gpt-5.6-luna
 readonly: false
 is_background: false

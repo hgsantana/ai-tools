@@ -332,7 +332,7 @@ t_assert_content() {
 t_snapshot() {
   # usage: t_snapshot <dir> -- echoes the path to a manifest file: a sorted
   # find listing plus each file's content, concatenated. cmp -s between two
-  # snapshots is a cheap "did anything change" checksum without depending
+  # snapshots provides a cheap "did anything change" check without depending
   # on md5sum/sha1sum/cksum (not in this suite's dependency list).
   local dir="$1" snap
   snap=$(mktemp "${TMPDIR:-/tmp}/ai-tools-test-snap.XXXXXX") || fatal "t_snapshot: mktemp failed"
@@ -370,9 +370,9 @@ t_origin_commit() {
   # Clones the fixture's bare origin (T_ROOT/origin.git) into a scratch dir,
   # makes deterministic changes — appends marker lines to USER-AGENTS.md,
   # agents/claude-code/implementer-ai-tools.md, and the existing
-  # skills/plan-ai-tools/SKILL.md directory, then adds a new
-  # skills/<label>-ai-tools/SKILL.md directory (the single-file layout the
-  # repo ships) — commits, and pushes to master, giving the fixture's clone
+  # skills/plan-ai-tools/SKILL.md file, then adds a new
+  # skills/<label>-ai-tools/ directory containing SKILL.md (the single-file
+  # layout the repository ships) — commits and pushes to master, giving the fixture's clone
   # something new to update to. Returns nothing; the caller already knows the
   # paths it named via <label>.
   local label="$1" origin scratch
@@ -404,7 +404,7 @@ t_origin_commit() {
   cat > "$scratch/skills/$label-ai-tools/SKILL.md" <<EOF
 ---
 name: $label-ai-tools
-description: test-only skill added by t_origin_commit for marker $label.
+description: Test-only skill added by t_origin_commit for marker $label. Impact: none. Min. role: mechanical.
 ---
 
 # $label

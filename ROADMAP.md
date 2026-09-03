@@ -1,8 +1,8 @@
 # Roadmap
 
-This file parks ideas; the README remains the source of truth for rules and processes.
+This file records ideas; the README remains the source of truth for rules and processes.
 
-Each entry is a single-paragraph story ready for `/vibe-ai-tools` (refine and deliver) or `/plan-ai-tools` (plan only). The order is advisory; later stories generally build on earlier ones. When a story ships, remove it—the commit, rule, and resulting documentation become its record.
+Each entry is a single-paragraph story ready for `/vibe-ai-tools` (refine and deliver) or `/plan-ai-tools` (plan only). The order is advisory; later stories generally build on earlier ones. When a story ships, remove it — the commit, rule, and resulting documentation become its record.
 
 Status: `idea` (awaiting refinement) · `next` (agreed and ready) · `doing` (planned under `dev/`) · `done` (shipped; remove the entry).
 
@@ -10,7 +10,7 @@ Status: `idea` (awaiting refinement) · `next` (agreed and ready) · `doing` (pl
 |---|---|---|
 | 4 | [Health-check entry point](#4-health-check-entry-point) | idea |
 | 6 | [Changelog for alpha testers](#6-changelog-for-alpha-testers) | idea |
-| 7 | [Repeatable model-map refresh](#7-repeatable-model-map-refresh) | idea |
+| 7 | [Repeatable model-table refresh](#7-repeatable-model-table-refresh) | idea |
 | 8 | [Decisions that outlive the plan](#8-decisions-that-outlive-the-plan) | idea |
 | 9 | [Resuming an interrupted delivery](#9-resuming-an-interrupted-delivery) | idea |
 | 10 | [Execution outside a git repository](#10-execution-outside-a-git-repository) | idea |
@@ -30,7 +30,7 @@ Rule 4 lets the README describe only the current alpha state. Give testers a con
 
 ## Capability
 
-### 7. Repeatable model-map refresh
+### 7. Repeatable model-table refresh
 
 The README defines a reproducible model-selection method—list official names, join Artificial Analysis measurements, apply category thresholds, and rank by `(Intelligence Index / cost per task) / time per task`—but applying it manually across six harnesses makes freshness hard to see. Ship a `models-ai-tools` skill that runs the method end to end, records source URLs and retrieval dates, presents a diff against the `USER-AGENTS.md` model table, and, after approval, updates that table and affected wrapper headers in one commit as rule 12 requires. Route: `/vibe-ai-tools`.
 

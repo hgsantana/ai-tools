@@ -1,7 +1,7 @@
 ---
 name: dev-ai-tools
 description: >
-  Execute an accepted plan under dev/ or one user-agreed task in the
+  Execute an accepted plan under dev/ or one task agreed with the user in the
   planner-ai-tools role. Use for /dev-ai-tools or after plan acceptance.
   Impact: edits code, runs commands, commits each step on a dedicated branch,
   archives the plan or task, pushes, and opens a pull request unattended once
@@ -40,7 +40,7 @@ Both modes run these steps, in order:
 
 Before writing files or code, refine the request with the user in their language until it is complete:
 
-- Resolve the named branch currently checked out and keep it checked out throughout task agreement. This is `<base>`; if `HEAD` is detached, ask the user to choose and check out a branch before continuing.
+- Record the currently checked-out branch by name and keep it checked out throughout task agreement. This is `<base>`; if `HEAD` is detached, ask the user to choose and check out a branch before continuing.
 - Name what is ambiguous, propose the improvements you see, and state the impact of the change and of each alternative.
 - Size it: one task equals one implementation commit. For larger work, recommend `plan-ai-tools` and proceed with the scope the user accepts.
 - Derive a kebab-case `<slug>`. When an existing plan already covers the request, run that plan instead.
@@ -96,7 +96,7 @@ Once the unit of work is on disk, run it to completion without checkpoints. Cont
 - a decision the implementation itself uncovered that the plan or the agreed task does not settle;
 - anything the Security rules reserve for the user — a cloud mutation, a destructive or shared-state operation.
 
-Send each as a separate request with action, target, reason, and impact. Execute it only after an explicit yes for that action; approval never carries over. Continue independent work while waiting. Pushing the branch and opening the pull request are pre-authorized once every step reads `F`.
+Send each as a separate request with action, target, reason, and impact. Execute it only after an explicit yes for that action; approval never carries over. Continue independent work while waiting. Pushing the branch and opening the pull request are pre-authorized once every step has status `F`.
 
 ## Branch and delivery
 
@@ -132,7 +132,7 @@ Spawn the agent that owns each piece; workers may spawn their own helpers. If sp
 
 Every dispatch and every correction round carries, verbatim:
 
-> Report by appending to your assigned file, then finish your run — your final output reaches whoever spawned you automatically. Messaging and agent-addressing tools have no reliable address for your spawner; a guessed name misroutes the report.
+> Append your report to the assigned file, then finish your run — your final output reaches whoever spawned you automatically. Messaging and agent-addressing tools have no reliable address for your spawner; a guessed name misroutes the report.
 
 **One live writer per file.** Ownership starts when a Dispatch log row is appended and ends when its Outcome is filled. Keep a single writer so logs remain ordered and the report ledger stays valid.
 
@@ -142,7 +142,7 @@ Every dispatch and every correction round carries, verbatim:
 2. Implement only that file's step.
 3. Append factual **Implementation log** entries — actions and evidence, not claims.
 4. Set status `V` on completion. Leave `W`, `R*`, `T`, `E`, and `F` to the planner.
-5. Report through the assigned file and by finishing the run.
+5. Append the report to the assigned file, then finish the run.
 
 ### Dispatch ledger
 
@@ -194,7 +194,7 @@ A subagent can die without reporting. Detection uses only the filesystem and git
 - **Diagnose from the ledger**: no session ID in the open row means the run never started, so a retry is safe; a session ID with no final status means it died mid-run.
 - **Declare and re-dispatch in two acts.** Write `lost — <evidence>` into the open row, then re-read the file and snapshot. If either changed, clear the Outcome and resume waiting. An unchanged re-read authorizes the next row and spawn.
 - **Audit before re-dispatching**: a mid-run death leaves partial edits. Inspect the working tree restricted to that step's files and record in the file what is already done, so the replacement continues instead of colliding. Reverting those files is destructive to a writer that turns out to be alive — reserve it for a run the two-act check confirmed dead.
-- **Reconcile a returning ghost**: its edits are in the diff and its log is in the file. Validate from the diff and repair the ledger — one row per attempt, truthful Outcome, duplicated attempts out of the count.
+- **Reconcile a returning ghost**: its edits are in the diff and its log is in the file. Validate from the diff and repair the ledger — one row per attempt, a truthful Outcome, and duplicate attempts excluded from the count.
 - **Account for it.** One re-dispatch of a lost run spends no correction round: the work was never reviewed. A second consecutive loss on the same step is structural — decompose into smaller fix files, or set `E` with the evidence.
 - **Orphans at intake**: a step already in `W`, `R*`, or `T` when you load the work is an orphan from a previous run. Treat it as lost.
 
@@ -213,7 +213,7 @@ Before committing, confirm `git ls-files dev/tmp` prints nothing and `git status
 
 ## Report
 
-Write the report, then point at it. Every detail of the run already lives in the plan or task file — steps, logs, diffs, outputs — and the closing report goes to `dev/tmp/<slug>-report.md`. Chat gets that path, a one-line outcome, and anything that needs the user; where the harness can open a file in their editor, open it rather than pasting it.
+Write the report, then point at it. Every detail of the run already lives in the plan or task file — steps, logs, diffs, outputs — and the closing report goes to `dev/tmp/<slug>-report.md`. Chat gets that path, a one-line outcome, and anything that needs the user. Where the harness can open a file in the user's editor, open it rather than pasting it.
 
 The report file holds, per step and in execution order: what was delivered, in a line or two drawn from the accepted diff; the attempts, with the fix-file count when corrections were decomposed; and the runner — agent and model — per attempt, noting explicitly when attempts used different runners.
 

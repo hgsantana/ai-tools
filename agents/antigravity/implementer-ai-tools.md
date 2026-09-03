@@ -1,6 +1,6 @@
 ---
 name: implementer-ai-tools
-description: Implementer-category worker: writes and edits code for one specified stage or brief, with local design judgment. Spawned for implementer-model work.
+description: Implementer worker: writes and edits code for one stage or brief, using local design judgment. Spawned for work requiring the implementer model.
 model: flash
 ---
 

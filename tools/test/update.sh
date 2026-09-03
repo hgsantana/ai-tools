@@ -1,5 +1,5 @@
 # shellcheck shell=bash
-# update.sh — proves the update.sh half of rules 20-22 and 27: the reset
+# update.sh — proves the update behaviour required by rules 20-22 and 27: the reset
 # guard refuses to discard local work until --discard-local is passed, stale
 # copies are refreshed while locally modified copies are kept, newly shipped
 # content is copied, and the clone's reset never reaches harness
@@ -115,7 +115,7 @@ case_update_reset_confined() {
     commit -q -m "local work"
 
   t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code --discard-local
-  # exit 2: verify_install warns that the foreign agent file and the
+  # Exit 2: verify_install warns that the foreign agent file and the
   # pre-filled CLAUDE.md differ from source — proof they were skipped, not
   # overwritten. The reset itself (rule 27) still succeeded (exit 0 would
   # require the pre-existing foreign content to be gone, which it must not be).
@@ -363,7 +363,7 @@ case_update_missing_clone() {
   home="$root/home"
   rm -rf "$home/.ai-tools"
 
-  # home/.ai-tools no longer exists to execute; run the real repo's script
+  # home/.ai-tools no longer exists to execute; run the real repository's script
   # binary instead — t_run still confines HOME/AI_TOOLS to the sandbox, and
   # require_clone reads the sandboxed $AI_TOOLS env var, which is what
   # matters here.

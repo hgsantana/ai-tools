@@ -103,7 +103,7 @@ report_discovery() {
   for h in $ALL_HARNESSES; do
     harness_detected "$h" && info "found: $h"
   done
-  [ -d "$HOME/.agents" ] && info "found: $HOME/.agents (shared discovery root — never linked)"
+  [ -d "$HOME/.agents" ] && info "found: $HOME/.agents (shared discovery root — left untouched)"
   # Informational-only: possible AI extensions with no confirmed config convention.
   local jb_roots=""
   for jb in "$HOME"/.local/share/JetBrains/*/plugins; do
@@ -139,7 +139,7 @@ set_scope() {
   local requested="${1:-}" h k valid
   if [ -z "$requested" ]; then
     SCOPE=$(detect_harnesses)
-    [ -n "${SCOPE// /}" ] || fatal "no supported harness detected; pass --harnesses (valid: all $ALL_HARNESSES)"
+    [ -n "${SCOPE// /}" ] || fatal "no supported harness detected; pass --harnesses <list> (valid: all $ALL_HARNESSES)"
   elif [ "$requested" = "all" ]; then
     SCOPE=" $ALL_HARNESSES"
   else
@@ -169,8 +169,8 @@ scoped_roots() {
 
 # --- Filesystem safety primitives (README "Safety rules") --------------------
 # Never overwrite or delete anything that is not an ai-tools link or an
-# unmodified ai-tools copy unless the caller explicitly selected --overwrite;
-# on conflict, skip and report; idempotent.
+# unmodified ai-tools copy unless the caller explicitly selected --overwrite.
+# On conflict, skip and report; keep every operation idempotent.
 
 same_content() {
   # files or directories
@@ -284,14 +284,14 @@ safe_unlink() {
 
 safe_uninstall_copy() {
   # usage: safe_uninstall_copy <destination-path> <source-in-ai-tools>
-  # Removes a copy ONLY while its contents still match the ai-tools source.
+  # Removes a copy only while its contents still match the ai-tools source.
   local dest="$1" src="$2"
   { [ -e "$dest" ] && [ ! -L "$dest" ]; } || return 1
   if same_content "$dest" "$src"; then
     if [ "$DRY_RUN" = 1 ]; then ok "would remove copy: $dest"; return 0; fi
     rm -r "$dest" && ok "removed copy: $dest"
   else
-    skip "copy was modified locally, user work kept: $dest"
+    skip "copy was modified locally, user work preserved: $dest"
     return 1
   fi
 }
@@ -700,11 +700,11 @@ verify_install() {
   if [ "$DRY_RUN" = 1 ]; then info "dry-run: verification skipped"; return 0; fi
 
   size=$(wc -c < "$AI_TOOLS/USER-AGENTS.md")
-  if [ "$size" -le 12000 ]; then ok "instructions size: $size chars"
-  else warn "USER-AGENTS.md exceeds 12000 chars (Antigravity limit): $size"; fi
+  if [ "$size" -le 8000 ]; then ok "instructions size: $size chars"
+  else warn "USER-AGENTS.md exceeds 8000 chars (repository limit): $size"; fi
 
   if [ -f "$MODEL_TABLE" ]; then ok "model table: $MODEL_TABLE"
-  else warn "missing model table: $MODEL_TABLE — agents and skills cannot resolve role models"; fi
+  else warn "missing model table: $MODEL_TABLE — agents and skills cannot resolve agent-role models"; fi
 
   if [ -f "$AI_TOOLS/agents/SUBAGENT-CONTRACT.md" ]; then ok "subagent contract: $AI_TOOLS/agents/SUBAGENT-CONTRACT.md"
   else warn "missing subagent contract: $AI_TOOLS/agents/SUBAGENT-CONTRACT.md — wrappers point at it before their base"; fi

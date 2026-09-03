@@ -21,7 +21,7 @@ usage: lint.sh [--help] [--base <ref>]
 
 Development check: enforces this repository's mechanically verifiable rules
 against the tree lint.sh runs in. Not an installation process (README rules
-24-26); introduces no new dependency beyond git, grep, awk, sed, wc, tr.
+25-27); introduces no new dependency beyond git, grep, awk, sed, wc, and tr.
 
 Checks:
   wrapper coverage  every agent has exactly one wrapper per harness, with
@@ -36,8 +36,8 @@ Checks:
                     then Impact:, then Min. role: (rule 9)
   skill layout      no skill-root markdown, every skill directory has
                     SKILL.md, no SKILL.md contains Continue? or Stake,
-                    USER-AGENTS.md has How to route a request and Min. role, and no
-                    mentions of deleted files (rule 7)
+                    USER-AGENTS.md has How to route a request and Min. role,
+                    and no references to deleted files (rule 7)
   wrapper body      every wrapper body is exactly the canonical text
                     reconstructed from the agent name (rule 6)
   model parity      every wrapper's pinned model matches USER-AGENTS.md via
@@ -45,7 +45,7 @@ Checks:
   effort pinning    the wrapper pins the USER-AGENTS.md cell's effort where its
                     form can hold one, in the vendor's spelling
   description parity same agent's description is identical across wrappers
-  model row coverage every agents/<key>/ has a USER-AGENTS.md row and vice versa
+  model row coverage each agents/<key>/ has a USER-AGENTS.md row and vice versa
   instructions cap  USER-AGENTS.md is at most 8000 characters (rule 3)
   wrapper cap       every agents/<harness>/* file is at most 1000 characters,
                     frontmatter included (rule 6)
@@ -63,7 +63,7 @@ Checks:
 
 --base <ref>  commit-ish to diff shipped content against for the version
               bump check. Without it, that check is skipped. The lint
-              workflow (.github/workflows/lint.yml) supplies it.
+              workflow (.github/workflows/ci.yml) supplies it.
 
 Exit codes: 0 clean, 1 aborted on a precondition, 2 finished with warnings.
 EOF
@@ -708,7 +708,7 @@ check_line_endings() {
     if [ "$attr" != "eol=$expected" ]; then
       warn "line-ending attribute unexpected: $path (attr: ${attr:-none}, expected: eol=$expected)"
     elif [ "$idx" != "i/lf" ]; then
-      warn "index side not lf: $path ($idx)"
+      warn "index side is not LF: $path ($idx)"
     elif [ "$work" != "w/$expected" ]; then
       warn "working-tree line endings mismatch: $path ($work, wants eol=$expected)"
     else

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ai-tools reinstallation — README "Reinstallation" as an executable procedure:
-# a full removal + installation pass against a fresh origin/master.
+# a full removal and installation pass against a fresh origin/master.
 # Physical artifacts are removed and re-created from the refreshed source.
 set -u
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)

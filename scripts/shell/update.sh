@@ -21,7 +21,7 @@ usage: update.sh [--harnesses <list>] [--overwrite] [--discard-local]
 
 Exit codes: 0 clean, 1 aborted on a precondition, 2 finished with warnings.
 Use reinstall.sh instead when the install is broken, comes from an older
-alpha layout, or the set of harnesses changed.
+alpha layout, or the set of harnesses has changed.
 EOF
 }
 

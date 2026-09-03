@@ -1,13 +1,11 @@
 ---
 name: improve-ai-tools
 description: >
-  Repeatedly have fresh planner agents plan and deliver relevant, multi-stage
-  repository improvements by chaining plan-ai-tools and dev-ai-tools. Use for
-  /improve-ai-tools when an autonomous campaign should consume the available
-  budget. Impact: creates or resumes a local campaign branch, repeatedly edits
-  or removes files, runs commands and tests, and makes multiple local commits
-  until budget exhaustion or a blocker. It never pushes or writes outside the
-  repository. Min. role: planner.
+  Run an autonomous local campaign in which fresh planner agents repeatedly
+  plan and deliver relevant, multi-stage repository improvements. Use for
+  /improve-ai-tools. Impact: creates or resumes a campaign branch, edits or
+  removes files, runs commands and tests, and makes multiple local commits. It
+  never pushes or writes outside the repository. Min. role: planner.
 argument-hint: "[campaign name and optional priorities or exclusions]"
 ---
 
@@ -17,7 +15,7 @@ Run an autonomous, local campaign that repeatedly plans and delivers relevant re
 
 ## Workflow
 
-Carry the planner category only as a dispatcher. The root session announces spawns, supplies paths, routes status envelopes, and starts the next pass. It does not explore, plan, edit, run commands, test, inspect diffs, judge, stage, or commit. Every pass uses a new `planner-ai-tools` instance with no conversation history; in harnesses that support it, spawn with an empty context such as Codex `fork_turns: none`. If spawning fails, stop rather than carrying its work.
+Carry the planner role only as a dispatcher. The root session announces spawns, supplies paths, routes status envelopes, and starts the next pass. It does not explore, plan, edit, run commands, test, inspect diffs, judge, stage, or commit. Every pass uses a new `planner-ai-tools` instance with no conversation history; in harnesses that support it, spawn with an empty context such as Codex `fork_turns: none`. If spawning fails, stop rather than carrying its work.
 
 The `USER-AGENTS.md` routing question is the campaign's sole gate. Once the user chooses `/improve-ai-tools`, the planners may accept their own recommendations and decide every in-scope question. The gate authorizes local campaign-branch creation, versioned edits and removals, commands, tests, and commits through campaign termination. Do not ask the user to approve a plan or another campaign decision; block when completion needs authority outside *Boundaries*.
 
@@ -35,7 +33,7 @@ Announce and spawn a fresh, zero-context `planner-ai-tools`. Assign it to initia
 6. Otherwise inspect the current campaign `HEAD` and choose one cohesive, relevant improvement or correction supported by repository evidence. Prefer correctness, reliability, tests, maintainability, security, performance, and stale behavior documentation over cosmetic churn. Reject artificially small or speculative work; the objective must justify `plan-ai-tools` Plan mode and may span as many stages and commits as needed.
 7. Run the `plan-ai-tools` Workflow and write its canonical plan under `dev/<slug>/`. Resolve open design choices yourself from evidence and campaign priorities. The improve gate replaces `plan-ai-tools`' user approval: return `PLAN <base-plan-path>` without asking “Implement it?”.
 
-Return `PLAN`, `RESUME`, `NONE`, or `BLOCKED`. Two consecutive `NONE` results from independent fresh planners end the campaign. Give the confirmation planner the campaign scope and current repository, but not the first planner's conclusion or reasoning.
+Return `PLAN`, `RESUME`, `NONE`, or `BLOCKED`. Two consecutive `NONE` results from independent fresh planners end the campaign. Give the confirmation planner the campaign scope and current repository state, but not the first planner's conclusion or reasoning.
 
 ### 2. Execution pass
 
@@ -55,7 +53,7 @@ Return `DELIVERED <report-path>` or `BLOCKED <report-path>`. On `DELIVERED`, the
 
 ## Termination and report
 
-Continue until the host budget or execution ends, two independent planners find no qualifying improvement, a spawn or command fails irrecoverably, or an execution pass returns `BLOCKED`.
+Continue until the host budget is exhausted, the host ends the run, two independent planners find no qualifying improvement, a spawn or command fails irrecoverably, or an execution pass returns `BLOCKED`.
 
 At a controlled stop, chat gives one line with the campaign branch, last committed `HEAD`, clean/dirty state reported by an agent, and `dev/tmp/improve/<campaign>/campaign.md`. A hard host cutoff needs no closing report. Resume by invoking `/improve-ai-tools` with the same campaign name.
 

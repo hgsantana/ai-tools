@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Fetch each harness's official individual-plan pricing/models *markdown*
 # and write a CSV of table (and Codex ModelDetails) rows.
-# Deterministic given the same markdown: one GET per URL, python3 stdlib only.
+# Deterministic given the same Markdown: one GET per URL. Uses only the
+# Python 3 standard library.
 # HTML SPAs are not a source — they omit the tables. Not an installation
 # process (README rules 25-27).
 #
@@ -15,10 +16,10 @@ usage() {
   cat <<'EOF'
 usage: harness-models.sh [--help] [--dry-run] [--output-dir DIR] [--input-dir DIR]
 
-Writes dev/tmp/harness-models.csv. One GET of each harness's official
+Writes dev/tmp/harness-models.csv. Sends one GET request to each harness's official
 markdown pricing/models page (not the JS HTML). --input-dir uses recorded
 files named <harness>.md and does not hit the network.
-Requires python3. Live run also requires curl.
+Requires Python 3. A live run also requires curl.
 A harness that yields zero rows is skipped (exit 2).
 EOF
 }

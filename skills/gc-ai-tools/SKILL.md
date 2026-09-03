@@ -1,11 +1,10 @@
 ---
 name: gc-ai-tools
 description: >
-  Query or manage Google Cloud through the gcloud CLI. Use for /gc-ai-tools or
-  Google Cloud resources, projects, costs, and infrastructure. Impact:
-  mutations may create billable resources or remove existing ones and can be
-  hard to reverse. Reads run freely; each mutation requires an explicit yes.
-  Min. role: implementer.
+  Query or manage Google Cloud resources, projects, costs, and infrastructure
+  through the gcloud CLI. Use for /gc-ai-tools. Impact: mutations may create
+  billable resources or remove resources and can be hard to reverse. Reads run
+  freely; each mutation requires explicit approval. Min. role: implementer.
 argument-hint: "[what to inspect or change in Google Cloud]"
 ---
 
@@ -19,13 +18,13 @@ Use `gcloud` for the requested inventory, cost analysis, or operation, then stop
 
 ### Rules
 
-- Run **read-only queries** freely: list, describe, and costs.
+- Run **read-only queries** freely: list, describe, and cost queries.
 - Present each mutation as a separate approval request with its command, target, reason, and cost or blast impact. Execute it only after an explicit yes for that action; approval never carries over.
 - State each proposed mutation's **cost impact**: SKU, ongoing cost, and billable status.
 
 ### Delegated exploration
 
-Spawn `mechanical-ai-tools` for read-only `gcloud` discovery — commands, state, collected output. They return facts: command, exit code, output path.
+Spawn `mechanical-ai-tools` for read-only `gcloud` discovery — commands, state, and collected output. It returns facts: command, exit code, and output path.
 
 ### Useful commands
 
@@ -34,7 +33,7 @@ Spawn `mechanical-ai-tools` for read-only `gcloud` discovery — commands, state
 - `gcloud <service> list` / `gcloud <service> describe` — resource inspection
 - `gcloud billing accounts list` / `gcloud billing projects describe` — billing
 - `gcloud logging read` / `gcloud monitoring` — logs and metrics
-- `gcloud asset search-all-resources` — inventory across project/org
+- `gcloud asset search-all-resources` — inventory across projects or organizations
 
 Prefer `--format="table(...)"` or JSON piped through `jq` for concise output.
 

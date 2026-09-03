@@ -63,14 +63,14 @@ case_remove_modified_copy_kept() {
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code
   t_assert_exit 0
-  t_assert_line "SKIP: copy was modified locally, user work kept: $T_MODIFIED_COPY_PATH"
+  t_assert_line "SKIP: copy was modified locally, user work preserved: $T_MODIFIED_COPY_PATH"
   t_assert_regular_file "$T_MODIFIED_COPY_PATH"
   if grep -qF 'local edit that matches no revision' "$T_MODIFIED_COPY_PATH"; then
     ok "$T_CASE: modified copy survived byte-for-byte: $T_MODIFIED_COPY_PATH"
   else
     warn "$T_CASE: modified copy lost its local edit: $T_MODIFIED_COPY_PATH"
   fi
-  # every unmodified copy from the same install must be gone
+  # Every unmodified copy from the same installation must be gone.
   t_assert_absent "$root/home/.claude/agents/planner-ai-tools.md"
 
   t_cleanup "$root"
@@ -85,10 +85,10 @@ case_remove_foreign_file_kept() {
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code
   t_assert_exit 0
-  # the code path this foreign file takes: it is a regular file occupying a
+  # This foreign file is a regular file occupying a
   # wrapper's destination, so safe_uninstall_copy compares content and finds
-  # it does not match the ai-tools source -> "modified locally" skip.
-  t_assert_line "SKIP: copy was modified locally, user work kept: $T_FOREIGN_AGENT_PATH"
+  # it does not match the ai-tools source, producing a "modified locally" skip.
+  t_assert_line "SKIP: copy was modified locally, user work preserved: $T_FOREIGN_AGENT_PATH"
   t_assert_regular_file "$T_FOREIGN_AGENT_PATH"
   t_assert_content "$T_FOREIGN_AGENT_PATH" "not an ai-tools file"
 
@@ -213,7 +213,7 @@ case_remove_stale_link_sweep() {
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
 
-  # a real directory named like a wrapper must survive the sweep
+  # A real directory named like a wrapper must survive the sweep.
   real_dir="$root/home/.claude/agents/some-real-ai-tools-dir"
   mkdir -p "$real_dir" || fatal "$T_CASE: cannot create $real_dir"
   printf 'not a link\n' > "$real_dir/f"

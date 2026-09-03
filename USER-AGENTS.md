@@ -2,11 +2,11 @@
 
 Harness-agnostic, user-wide rules for AI coding tools. A repository's own `AGENTS.md` or `README.md` overrides these rules inside that repository.
 
-Everything here is installed from the only supported location: `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Each harness loads `USER-AGENTS.md` under its own instructions filename. Keep the installed and repository copies unchanged because updates to `ai-tools` reset its repository to `origin/master`. `$HOME/.ai-tools/README.md` documents installation and maintenance.
+ai-tools is installed from the only supported location: `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Each configured harness that supports global instructions loads `USER-AGENTS.md` under its own instructions filename. Keep the installed and repository copies unchanged because ai-tools updates reset the repository to `origin/master`. `$HOME/.ai-tools/README.md` documents installation and maintenance.
 
 ## What is installed here
 
-**Ten skills.** Skills are entry points; agents are spawn-only. Each skill's frontmatter says what it does, its `Impact:`, and its `Min. role:`. Directly naming a skill or choosing one after a suggestion authorizes its workflow and dispatches.
+**Ten skills.** Skills are entry points; agents are spawn-only. Each skill's frontmatter describes its purpose, `Impact:`, and `Min. role:`. Directly naming a skill or choosing one after a suggestion authorizes its workflow and required dispatches.
 
 Commits, branches, rebases, merges, pushes, and pull-request delivery run directly and bypass `/gh-ai-tools`; this overrides the routing below.
 
@@ -18,7 +18,7 @@ Commits, branches, rebases, merges, pushes, and pull-request delivery run direct
 
 Case 3 recommendation:
 
-1. **Chat message** — before the interaction, in the user's language, name the options and clearly explain every offered skill's `Impact:` from its `description` and `Min. role:` with instructions to change model if necessary - all in one chat message.
+1. **Chat message** — before the interaction, in the user's language, name the options and clearly explain every offered skill's `Impact:` from its `description`, all in one chat message. Do not check or discuss roles or models before the user selects a skill.
 2. **Question** — after the chat message, also in the user's language, ask one short question referring to those impacts. Use your native interaction/question API when available; otherwise use chat. Number the options if using chat. Offer **run it here**, ignoring ai-tools skills and agents, and **something else**, where the user may name another skill or revise the request. If the API adds **Other** automatically, use it for this purpose instead of adding a duplicate option.
 
 Handle the answer:
@@ -56,8 +56,8 @@ These agents are spawn-only and have no skills. Skills name them; offer skills t
 | Agent | Role | What it is |
 | --- | --- | --- |
 | `planner-ai-tools` | **planner** | Decomposes work, designs architecture, owns acceptance, validates deliveries, handles escalations, and delegates production code |
-| `implementer-ai-tools` | **implementer** | Writes and edits code for one specified stage or brief, with local design judgment. Spawns its own helpers for parts of another role |
-| `mechanical-ai-tools` | **mechanical** | Executes fully specified, low-ambiguity work: known patches, renames, builds, tests, and evidence collection |
+| `implementer-ai-tools` | **implementer** | Writes and edits code for one specified stage or brief, with local design judgment. Spawns helpers for work owned by another role |
+| `mechanical-ai-tools` | **mechanical** | Applies known patches and renames, runs builds and tests, and collects evidence |
 
 An agent's identity is its name. Model names belong in wrapper headers (and the Grok install pin).
 

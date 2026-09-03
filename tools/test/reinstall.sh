@@ -1,7 +1,7 @@
 # shellcheck shell=bash
 # reinstall.sh — proves README rules 20-22, 27 against scripts/shell/reinstall.sh:
-# a full removal + installation pass ends in the same state a fresh install
-# produces, sweeps stale links, keeps a locally modified copy, refuses to
+# a full removal and installation pass produces the same state as a fresh
+# installation, sweeps stale links, keeps a locally modified copy, refuses to
 # discard local clone work without --discard-local, runs the fresh-clone
 # path offline through the fixture's insteadOf rewrite, and obeys
 # --no-instructions and --dry-run.
@@ -68,7 +68,7 @@ case_reinstall_modified_copy_kept() {
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/reinstall.sh" --harnesses claude-code
   t_assert_exit 2
-  t_assert_line "SKIP: copy was modified locally, user work kept: $T_MODIFIED_COPY_PATH"
+  t_assert_line "SKIP: copy was modified locally, user work preserved: $T_MODIFIED_COPY_PATH"
   if grep -qF 'local edit that matches no revision' "$T_MODIFIED_COPY_PATH"; then
     ok "$T_CASE: modified copy survived the reinstall"
   else

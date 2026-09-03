@@ -1,17 +1,17 @@
 ---
 name: reinstall-ai-tools
 description: >
-  Reinstall per the README with full removal and installation from a fresh
+  Reinstall ai-tools per the README with full removal and installation from a fresh
   origin/master. Use for /reinstall-ai-tools when installation is broken or
-  stale, or the harness set changed. Impact: resets $HOME/.ai-tools, which can
-  discard local work, then re-creates harness links. Each destructive step
-  requires an explicit yes. Min. role: mechanical.
+  stale, or the set of harnesses has changed. Impact: resets $HOME/.ai-tools,
+  which can discard local work, then re-creates installed harness artifacts.
+  Each destructive step requires explicit approval. Min. role: mechanical.
 argument-hint: "[optional: harnesses in scope, or extra instructions]"
 ---
 
 # Reinstallation
 
-Reinstall ai-tools with task `reinstall`.
+Run task `reinstall` for an ai-tools installation.
 
 ## Scope and approvals
 
@@ -19,7 +19,7 @@ The routing gate already surfaced the impact. Settle scope before acting. Presen
 
 ## Source of truth
 
-`$HOME/.ai-tools/README.md` defines the processes and their Safety rules; the scripts are their executable form — run them. Shell scripts on Linux, macOS, WSL, and Git Bash.
+`$HOME/.ai-tools/README.md` defines the processes and their Safety rules; the scripts are their executable form — run them. Use the shell scripts on Linux, macOS, WSL, and Git Bash.
 
 | Task | Script | Flags needing explicit user approval |
 |---|---|---|
@@ -31,7 +31,7 @@ Use agents, remotes, URLs, paths, and flags defined by the tree, README, or scri
 
 ## Workflow
 
-1. **Scope** — ask which harnesses, instructions, and stale-link sweep options are in scope. Pass the answer as `--harnesses`; an explicit "all" selects every detected harness.
+1. **Scope** — ask which harnesses, instructions, and stale-link sweep options are in scope. Pass the answer as `--harnesses`; an explicit "all" selects every supported harness.
 2. **Dry run** — run `scripts/shell/reinstall.sh` with `--dry-run` and the scoped flags. Save its output to `$AI_TOOLS/dev/tmp/reinstall-dry-run.log` and hand over that path, together with each destructive flag the task needs as its own approval request — action, what it discards, and why.
 3. **Execute** — run the script with exactly the approved flags.
 4. **Interpret** — exit 0: clean. Exit 2: report every `WARN` with its reason. Exit 1: report the failed precondition and use only the remedy named in README Troubleshooting. Never bypass a safety refusal by resetting or deleting manually.
@@ -42,7 +42,7 @@ Read-only steps — discovery, `--dry-run`, `verify.sh` — run freely. Carry th
 
 - Touch only `$AI_TOOLS` and the harness destinations the scripts name.
 - Leave `$HOME/AGENTS.md` untouched — user-owned, outside every procedure. **Never touch `$HOME/AGENTS.md`.**
-- Return skipped conflicts to the user and preserve the scripts' `safe_*` semantics.
+- Report skipped conflicts to the user and preserve the scripts' `safe_*` semantics.
 - Scripts are idempotent; recover from a partial task by re-running it.
 - Carry this installation-maintenance task yourself.
 

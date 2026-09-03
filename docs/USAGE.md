@@ -29,7 +29,7 @@ Scope-based recommendations explain each option's impact and offer the relevant 
 
 ### Delivery workflows
 
-`/vibe-ai-tools` is the end-to-end choice for a larger demand. It delegates planning, relays design questions, asks the user to approve the saved plan, then follows `/dev-ai-tools` through implementation, validation, commits, push, and pull request.
+`/vibe-ai-tools` is the end-to-end choice for a larger change. It delegates planning, relays design questions, asks the user to approve the saved plan, then follows `/dev-ai-tools` through implementation, validation, commits, pushing, and opening a pull request.
 
 `/plan-ai-tools` designs only. Its output is a base plan plus one file per commit-sized stage under `dev/<slug>/`; the base plan records the branch used for analysis. A one-commit request is redirected to `/dev-ai-tools` Task mode.
 
@@ -57,7 +57,7 @@ The short form uses the skill's default priorities:
 /improve-ai-tools repository-hardening
 ```
 
-The campaign creates or resumes local branch `improve/repository-hardening`, using the repository's base-branch rules. Each iteration chains the two planning workflows through fresh, zero-context agents:
+The campaign creates or resumes local branch `improve/repository-hardening`, using the repository's base-branch rules. Each iteration chains the planning and execution workflows through fresh, zero-context agents:
 
 1. A `planner-ai-tools` agent evaluates the current campaign branch and runs `plan-ai-tools`, saving one relevant multi-stage plan under `dev/`. The initial gate pre-authorizes it to resolve and accept its own recommendations.
 2. The root session receives the plan path and spawns a different `planner-ai-tools` agent to run `dev-ai-tools` against that accepted plan.
@@ -76,7 +76,7 @@ To request a clean stop while it is running, say `Stop after the current plan.` 
 
 ### Cloud and GitHub platform
 
-`/az-ai-tools`, `/gc-ai-tools`, and `/gh-ai-tools` run read-only queries freely. Every mutation is presented separately with its target, reason, and cost or blast impact, and requires an explicit approval for that action.
+`/az-ai-tools`, `/gc-ai-tools`, and `/gh-ai-tools` run read-only queries freely. Every mutation is presented separately with its target, reason, and cost or blast-radius impact, and requires explicit approval for that action.
 
 `/gh-ai-tools` is for GitHub-hosted state and administration: accounts, organizations, repository settings and access, environments, secrets and variables, Actions, builds, artifacts, issues, and releases. Repository code work—commits, branches, tags, cherry-picks, rebases, merges, fetches, pulls, pushes, code review, and pull-request creation, updates, review, or merge—runs directly in the session without this skill. Platform policy such as rulesets, required checks, and pull-request settings remains in scope for the skill.
 
@@ -96,4 +96,4 @@ Agents are not user-facing skills. Do not offer or invoke them as alternatives t
 | `implementer-ai-tools` | implementer | Writes code and tests for one assigned stage or brief, matching repository conventions |
 | `mechanical-ai-tools` | mechanical | Applies fully specified changes, runs commands and tests, and collects factual evidence |
 
-Every spawn is announced in the user's language. Agents write durable substance to their assigned file or `dev/tmp/` and return short paths and outcomes to the orchestrating session. Their wrappers select the configured model for the role.
+Every spawn is announced in the user's language. Agents write durable substance to their assigned file or `dev/tmp/` and return concise paths and outcomes to the orchestrating session. Their wrappers select the configured model for the role.

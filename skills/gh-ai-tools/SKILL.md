@@ -1,13 +1,11 @@
 ---
 name: gh-ai-tools
 description: >
-  Query or manage GitHub platform resources through the GitHub CLI (gh). Use
-  for /gh-ai-tools or account, organization, repository administration,
-  environments, Actions, builds, issues, and releases. Do not use for commits,
-  branches, rebases, merges, pushes, pull requests, or other repository code
-  work; handle those directly. Impact: remote mutations can change access,
-  settings, automation, or hosted data. Reads run freely; each mutation
-  requires an explicit yes. Min. role: implementer.
+  Query or manage GitHub accounts, administration, environments, Actions,
+  issues, and releases through the GitHub CLI (gh). Use for /gh-ai-tools;
+  handle repository code work directly. Impact: remote mutations can change
+  access, settings, automation, or hosted data. Reads run freely; each mutation
+  requires explicit approval. Min. role: implementer.
 argument-hint: "[GitHub platform resource to inspect or manage]"
 ---
 
@@ -48,7 +46,7 @@ Spawn `mechanical-ai-tools` for read-only `gh` discovery—commands, state, and 
 - `gh api orgs/<org>` / `gh api teams/<team>` — organizations, teams, and access
 - `gh secret` / `gh variable` / `gh api .../environments` — configuration and environments
 - `gh workflow` / `gh run` / `gh cache` — Actions, builds, artifacts, and caches
-- `gh issue` / `gh release` / `gh api <endpoint>` — hosted records and uncovered platform resources
+- `gh issue` / `gh release` / `gh api <endpoint>` — hosted records and other platform resources
 
 When given a GitHub URL for an in-scope platform resource, fetch its facts through `gh`.
 

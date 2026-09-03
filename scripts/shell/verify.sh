@@ -11,7 +11,7 @@ usage: verify.sh [--harnesses <list>]
   --harnesses <list>   comma-separated harnesses in scope; omitted selects
                        detected harnesses; "all" selects every supported harness
 
-Read-only. Exit codes: 0 clean, 1 aborted on a precondition, 2 warnings found.
+Read-only. Exit codes: 0 clean, 1 aborted on a precondition, 2 finished with warnings.
 EOF
 }
 

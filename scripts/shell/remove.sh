@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ai-tools removal — README "Removal" as an executable procedure.
-# Removal means "remove installed artifacts", not "delete the config repo".
+# Removal means "remove installed artifacts," not "delete the source repository."
 set -u
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 . "$SCRIPT_DIR/lib.sh"

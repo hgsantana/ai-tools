@@ -1,18 +1,18 @@
 ---
 name: vibe-ai-tools
 description: >
-  Deliver a demand end to end: plan through planner-ai-tools with user relay,
-  then execute the approved plan through dev-ai-tools. Default for non-trivial
-  changes; use for /vibe-ai-tools. Impact: after review, works unattended on a
-  dedicated branch, commits, pushes, and opens a PR; edits and removals can be
-  hard to undo. Pre-existing history stays intact. Cloud and destructive
-  operations still require a separate yes. Min. role: planner.
-argument-hint: "[the demand to deliver]"
+  Plan and deliver a non-trivial change end to end through planner-ai-tools and
+  dev-ai-tools, relaying planning questions to the user. Use for /vibe-ai-tools.
+  Impact: after plan approval, edits on a dedicated branch, commits, pushes,
+  and opens a pull request unattended; edits and removals can be hard to undo.
+  Pre-existing history remains intact. Cloud and destructive operations require
+  separate approval. Min. role: planner.
+argument-hint: "[the change to deliver]"
 ---
 
 # Vibe Coding
 
-Plan a demand with the user through `planner-ai-tools`, then deliver the approved plan through `dev-ai-tools`.
+Plan a change with the user through `planner-ai-tools`, then deliver the approved plan through `dev-ai-tools`.
 
 ## Workflow
 
@@ -20,7 +20,7 @@ Carry the `planner-ai-tools` role and run these two steps in order, then stop.
 
 ### 1. Plan (planner relay)
 
-Derive a kebab-case `<slug>` from the demand.
+Derive a kebab-case `<slug>` from the change.
 
 1. **Spawn planner**: announce the spawn in the user's language, then spawn `planner-ai-tools`.
 2. **Brief**: pass the user's request and instruct `planner-ai-tools` to follow the complete `plan-ai-tools` skill, including its workflow, multi-file format, disk-based source of truth, and boundaries.
@@ -41,7 +41,7 @@ One deviation applies: because this gate promised an unattended run, decide how 
 
 ## Boundaries
 
-- Operate in the planner category for this run.
+- Operate in the planner role for this run.
 - Spawn the agent that owns each piece of work; carry allowed work here when spawning fails.
 - Stay inside the working repository. The sole exception is a file a harness requires outside the repository by design.
 - Preserve all history that predates this work: never force-push, rewrite pre-existing commits, or delete another branch. The plan's own branch may be deleted.

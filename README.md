@@ -1,6 +1,6 @@
 # ai-tools
 
-> **Version 0.0.41-ALPHA** — under active development. Suitable for testing; alpha versions provide neither guarantees nor backward compatibility (rule 4).
+> **Version 0.0.42-ALPHA** — under active development. Suitable for testing; alpha versions provide neither guarantees nor backward compatibility (rule 4).
 
 ## Overview
 
@@ -16,7 +16,7 @@ Clone it to `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows), then copy 
 | [`docs/USAGE.md`](docs/USAGE.md) | Harness-agnostic invocation guide for every shipped skill and the three spawn-only agents |
 | [`agents/planner-ai-tools.md`](agents/planner-ai-tools.md) | `planner-ai-tools` — decomposes, designs, owns acceptance, and delegates production code. Contains type rules; the brief defines the job |
 | [`agents/implementer-ai-tools.md`](agents/implementer-ai-tools.md) | `implementer-ai-tools` — writes and edits code for one assignment. Type rules only; the brief is the job |
-| [`agents/mechanical-ai-tools.md`](agents/mechanical-ai-tools.md) | `mechanical-ai-tools` — executes specified patches, renames, builds, tests, and evidence collection. Contains type rules; the brief defines the job |
+| [`agents/mechanical-ai-tools.md`](agents/mechanical-ai-tools.md) | `mechanical-ai-tools` — executes specified patches and renames, runs builds and tests, and collects evidence. Contains type rules; the brief defines the job |
 | [`agents/SUBAGENT-CONTRACT.md`](agents/SUBAGENT-CONTRACT.md) | Shared spawned-subagent contract: brief, user channel, report, model pin, spawning, and type boundaries. Not installed; read by path |
 | [`agents/<harness>/`](agents/) | One wrapper per agent: header pin, contract pointer, base pointer |
 | [`skills/`](skills/) | Ten skills, each the installed `skills/<name>/SKILL.md` (the whole skill). Each in-memory description carries its use, impact, and minimum role. The three agents have no skill |
@@ -55,18 +55,18 @@ Normative for every human and every AI maintaining this repository.
 
 5. Three agents ship: `planner-ai-tools`, `implementer-ai-tools`, and `mechanical-ai-tools`. Each has a request-agnostic, harness-agnostic **base** at `agents/<name>.md` and one **wrapper** per harness at `agents/<harness-short-name>/<agent-name>.<ext>`. Bases are **mode-agnostic**: they identify required questions or approvals, while `agents/SUBAGENT-CONTRACT.md` defines the spawned user channel. Type rules prevail over a conflicting brief. Bases route delegated work; the contract governs further spawning (rule 8). Skills make the complete **Workflow** and user request available in each brief, inline or by durable path.
 6. A wrapper consists of a harness-specific header and model pin (`model:`, plus effort when present in the table), followed by pointers to `$HOME/.ai-tools/agents/SUBAGENT-CONTRACT.md` and `$HOME/.ai-tools/agents/<name>.md`, in that order. The base prevails except for the contract's user channel. Additional body text is drift. The **1,000-character** cap includes frontmatter. See the canonical body in [wrapper authoring](#model-selection-and-wrapper-authoring).
-7. Skills are harness-agnostic and live entirely in `skills/<name>/SKILL.md`, with rule 9 frontmatter. They use no per-harness copies, separate skill contracts or bases, root-level `skills/<name>.md`, `SKILL-CONTRACT.md`, or `MAINTAINER.md`; required maintainer text is duplicated. Descriptions have three parts and at most 500 characters (rule 9); bodies have no character cap but follow rule 15. Skills contain neither **Stake** nor **Continue?** headings. `USER-AGENTS.md` recommends by scope without checking models. Its activation gate runs only after the user directly names a shipped `*-ai-tools` skill or chooses one after a recommendation: surface the in-memory `Impact:`, compare its in-memory `Min. role:` against the embedded model table, report fit, and start without a second confirmation. `gh-ai-tools` covers GitHub-hosted resources and administration; repository code work such as commits, branches, rebases, merges, pushes, code review, and pull-request delivery bypasses it and runs directly.
+7. Skills are harness-agnostic and live entirely in `skills/<name>/SKILL.md`, with frontmatter defined by rule 9. They use no per-harness copies, separate skill contracts or bases, root-level `skills/<name>.md`, `SKILL-CONTRACT.md`, or `MAINTAINER.md`; required maintainer text is duplicated. Descriptions contain three parts and at most 500 characters (rule 9); bodies have no character cap but follow rule 15. Skills contain neither **Stake** nor **Continue?** headings. `USER-AGENTS.md` recommends by scope without checking models. Its activation gate runs only after the user directly names a shipped `*-ai-tools` skill or chooses one after a recommendation: surface the in-memory `Impact:`, compare its in-memory `Min. role:` against the embedded model table, report fit, and start without a second confirmation. `gh-ai-tools` covers GitHub-hosted resources and administration; repository code work such as commits, branches, rebases, merges, pushes, code review, and pull-request delivery bypasses it and runs directly.
 8. **Spawning is open**: every session, skill, and agent may spawn the named agent that owns the work; spawned agents may do the same (`agents/SUBAGENT-CONTRACT.md`). If spawning fails, the run carries work allowed by its type or returns a dispatch request. Code-writing agents run concurrently on separate files; read-only discovery, builds, and tests may always run in parallel. Wrappers pin models for `planner-ai-tools`, `implementer-ai-tools`, and `mechanical-ai-tools`. `USER-AGENTS.md` gates every shipped skill: naming one authorizes its Workflow at the **Min. role**; planner-min skills carry `planner-ai-tools`. The user may proceed below the model minimum.
 9. Skill frontmatter uses universally accepted `name` and `description`, plus optional keys supported by every harness, such as `argument-hint`. The `description`, which harnesses retain without loading the body, states in order: (1) what the skill does and when to use it, including `/name`; (2) `Impact:` plus what can be billed, deleted, committed, pushed, or otherwise changed—or that impact is absent; (3) `Min. role:` with `planner`, `implementer`, or `mechanical`. Keep it within **500 characters** because harnesses budget the skill list: Codex caps it at 2% of context or 8,000 characters, and Claude Code truncates it at 1,536.
 10. Wrappers follow each harness's official documentation. Re-check vendor docs before adding a harness or editing a wrapper — formats change upstream.
-11. Vendor model names live in the `USER-AGENTS.md` table and wrapper headers only. Dispatch uses the named agent's already-pinned wrapper. Grok install and `tools/lint.sh` read the table at install / authoring. [Supported harnesses](#supported-harnesses) may show accepted value *shapes*, never the choice. Bases cite **planner** / **implementer** / **mechanical** as roles (`USER-AGENTS.md` → *The three agents*). Spawn and skills use agent names.
+11. Vendor model names live in the `USER-AGENTS.md` table and wrapper headers only. Dispatch uses the named agent's already-pinned wrapper. Grok installation reads the table during installation; `tools/lint.sh` reads it during authoring. [Supported harnesses](#supported-harnesses) may show accepted value *shapes*, never the choice. Bases cite **planner** / **implementer** / **mechanical** as roles (`USER-AGENTS.md` → *The three agents*). Spawn calls and skills use agent names.
 12. The `USER-AGENTS.md` model table and wrapper **headers** match in the same commit (new agent, new harness, or model change). Wrapper bodies name neither a row nor a model. Fill each cell by the [selection method](#choosing-the-models) — never memory or unsourced claims.
-13. Antigravity's wrapper `model:` is a **subagent tier** (`inherit`/`flash`/`pro`), not a model family name — pin the map cell. Accepted shapes live in [Supported harnesses](#supported-harnesses).
+13. Antigravity's wrapper `model:` is a **subagent tier** (`inherit`/`flash`/`pro`), not a model family name — pin the table cell. Accepted shapes live in [Supported harnesses](#supported-harnesses).
 14. Every installed agent name, skill directory, slash command, frontmatter `name:`, and file basename ends in `-ai-tools`; bare names such as `planner` and `az` remain uninstalled.
 15. Use extreme concision: remove ambiguity and redundancy while preserving every instruction, rule, and intention.
 16. Skills, agent bases, contracts, and `USER-AGENTS.md` state what to do. A negative (`never`, `do not`) is used only when it reinforces an essential positive, or when the positive phrasing would lose force or not make sense.
 17. Repository files use concise English; chat uses the user's language. Rule 32 assigns content between them.
-18. A skill that can be **destructive** or **generate cost** states that once in its `description` `Impact:` (rule 9), rather than in a body Stake section. `USER-AGENTS.md` surfaces it **before** execution. Whoever dispatches an agent also surfaces any opening stake disclaimer from its base (`agents/SUBAGENT-CONTRACT.md`).
+18. A skill that can be **destructive** or **generate cost** states that impact once in its `description` `Impact:` (rule 9), rather than in a body Stake section. `USER-AGENTS.md` surfaces it **before** execution. Whoever dispatches an agent also surfaces any opening stake disclaimer from its base (`agents/SUBAGENT-CONTRACT.md`).
 
 ### Installation contract
 
@@ -75,31 +75,31 @@ Normative for every human and every AI maintaining this repository.
 21. Never remove anything ai-tools did not create. Removal drops only legacy ai-tools links and copies that still match their source.
 22. Every install/remove/update/reinstall step is idempotent; on conflict, skip and report unless the user passed the process's explicit replacement flag.
 23. `$HOME/.ai-tools` is the only supported clone location — user-level, never inside a project. Wrappers hardcode it; any other path breaks them.
-24. `$HOME/AGENTS.md` (`%USERPROFILE%\AGENTS.md` on Windows) is user-owned: if present, follow it; if missing, ignore it. Never created, edited, overwritten, truncated, symlinked, or removed.
+24. `$HOME/AGENTS.md` (`%USERPROFILE%\AGENTS.md` on Windows) is user-owned: if present, follow it; if missing, ignore it. It is never created, edited, overwritten, truncated, symlinked, or removed.
 
 ### Script contract
 
 25. Each process—install, remove, update, reinstall, and verify—is `scripts/shell/<process>.sh` for Linux, macOS, WSL, and Git Bash, using bash 3.2+ and BSD/GNU tools. Shared logic lives once in `lib.sh`. Windows uses WSL or Git Bash rather than PowerShell or CMD mirrors.
 26. `scripts/shell` is canonical. A behaviour change lands there and in the process sections below, in the same commit.
-27. Scripts run to completion: per-item conflicts skip and report. Destructive steps need explicit flags (`--overwrite`, `--discard-local`, `--instructions`, `--purge`) and default to refuse. Every mutating script supports `--dry-run`. Exit: `0` clean, `1` aborted on a precondition, `2` finished with warnings.
+27. Scripts run to completion: per-item conflicts skip and report. Destructive steps are refused by default and require explicit flags (`--overwrite`, `--discard-local`, `--instructions`, `--purge`). Every mutating script supports `--dry-run`. Exit: `0` clean, `1` aborted on a precondition, `2` finished with warnings.
 28. Shell scripts are committed executable; `.gitattributes` pins them to LF.
 
 ### Work state and reporting
 
 29. Version work under `dev/` as either a plan directory `dev/<slug>/` or a single-task file `dev/<slug>.md`. Both are temporary working state and remain only while work is resumable. Generated state lives untracked under `dev/tmp/`; `improve-ai-tools` keeps its local campaign state under `dev/tmp/improve/<campaign>/` while successive plans preserve completed work through their functional commits. Because ignore rules do not untrack indexed paths, archive plans and tasks by copying into `dev/tmp/finished/` and then applying `git rm` to the tracked original, leaving a local untracked copy.
-30. `plan-ai-tools` records the named branch it analyzes as the plan's base, then delegates plan design by requesting that the host harness use the best planning capability or mode it possesses. The resulting plan is saved strictly following the repository's plan structure under `dev/<slug>/`: a base file (`0-<slug>.md`) and sequential stage files (`<n>-<slug>.md`), structuring the delivery into isolated stages where each stage corresponds to one commit boundary. A change small enough for a single commit is not planned: it belongs to `dev-ai-tools` Task mode.
-31. `dev-ai-tools` runs both forms through one sequence: read the working repository's documentation, fix the unit of work on disk, implement in short steps with one commit each, write and run behaviour tests before closing a step, update the documentation that step made stale, archive by copy-then-remove, and commit the archival last. Task mode records the branch current when the user requests the task, then iterates with the user before writing `dev/<slug>.md`; from there both modes run unattended, interrupting only for a blocker, a decision the implementation itself uncovered, or an approval the Security rules reserve. The dedicated work branch starts from the recorded base branch and the pull request targets that same branch: the analysis branch in Plan mode, or the request-time branch in Task mode. The branch history is symmetric: the first commit introduces the plan or task file, the last removes it. `improve-ai-tools` repeatedly invokes this sequence in campaign mode: a fresh planner writes each relevant multi-stage plan, a different fresh planner executes and judges it, and accepted commits accumulate locally on `improve/<campaign>` without push or pull request.
-32. **Substance is written to disk; the session carries questions and pointers.** Plans and tasks go where rule 29 puts them; every report, summary, finding, log, and other transient artifact goes under `dev/tmp/` — created if absent, and `$HOME/.ai-tools-plans/tmp/` outside a git repository. `dev/tmp/` is generated state and stays untracked wherever it is created (rule 29): add the ignore rule when the repository lacks it. What reaches the user is the question that needs an answer, the approval that needs a yes, a one-line outcome, and the paths of what was written. Where the harness can open a file in the user's editor, open it rather than pasting its content. Restating on screen what already sits on disk spends the user's context twice and creates a second, diverging copy of the truth. This binds every skill, every agent base, and `USER-AGENTS.md`.
+30. `plan-ai-tools` records the named branch it analyzes as the plan's base, then delegates plan design by requesting the host harness's best planning capability or mode. It saves the result under `dev/<slug>/` in the repository's plan structure: a base file (`0-<slug>.md`) and sequential stage files (`<n>-<slug>.md`). Each stage is isolated and corresponds to one commit boundary. A change small enough for a single commit is not planned: it belongs to `dev-ai-tools` Task mode.
+31. `dev-ai-tools` runs both forms through one sequence: read the working repository's documentation, record the unit of work on disk, implement in short steps with one commit each, write and run behaviour tests before closing a step, update any documentation the step made stale, archive by copy-then-remove, and commit the archival last. Task mode records the current branch when the user requests the task, then iterates with the user before writing `dev/<slug>.md`; from there both modes run unattended, interrupting only for a blocker, a decision uncovered by implementation, or an approval reserved by the Security rules. The dedicated work branch starts from the recorded base branch, and the pull request targets that same branch: the analysis branch in Plan mode or the request-time branch in Task mode. The branch history is symmetric: the first commit introduces the plan or task file, and the last removes it. `improve-ai-tools` repeatedly invokes this sequence in campaign mode: a fresh planner writes each relevant multi-stage plan, a different fresh planner executes and judges it, and accepted commits accumulate locally on `improve/<campaign>` without a push or pull request.
+32. **Substance is written to disk; the session carries questions and pointers.** Plans and tasks go where rule 29 puts them. Every report, summary, finding, log, and other transient artifact goes under `dev/tmp/`, created if absent; outside a Git repository, use `$HOME/.ai-tools-plans/tmp/`. `dev/tmp/` is generated state and stays untracked wherever it is created (rule 29): add the ignore rule when the repository lacks it. What reaches the user is the question that needs an answer, the approval that needs a yes, a one-line outcome, and the paths of what was written. Where the harness can open a file in the user's editor, open it rather than pasting its content. Restating on screen what already sits on disk spends the user's context twice and creates a second, diverging copy of the truth. This binds every skill, every agent base, and `USER-AGENTS.md`.
 
 ### Model selection and wrapper authoring
 
 The model table in [`USER-AGENTS.md`](USER-AGENTS.md) is the runtime, authoring, and installation lookup: one row per harness, one column per agent role, and the session-model change method. Family, version, and any official effort come from the harness's official **pricing/models** table for individual plans on that agent surface. Measurements come from [Artificial Analysis (AA)](https://artificialanalysis.ai/) **model** pages: Intelligence Index, Cost per Task, and Time per Task for the model itself. Cost always means AA Cost per Task. Fetch inputs with [`tools/harness-models.sh`](tools/harness-models.sh) and [`tools/aa-metrics.sh`](tools/aa-metrics.sh), which write CSVs under `dev/tmp/`. The table evaluates model potential rather than a frozen stack.
 
-Wrappers pin the model token always, and pin effort only when the cell has an official effort **and** the wrapper form can hold it (`effort:` Claude Code, `model_reasoning_effort` Codex, `[effort=…]` Cursor).
+Wrappers always pin the model token and pin effort only when the cell has an official effort **and** the wrapper form can hold it (`effort:` Claude Code, `model_reasoning_effort` Codex, `[effort=…]` Cursor).
 
 #### Choosing the models
 
-A map row is reproducible research. Re-run the method for every model release and record source URLs, retrieval date, and benchmark versions.
+A table row is reproducible research. Re-run the method for every model release and record source URLs, retrieval date, and benchmark versions.
 
 **Terms**
 
@@ -118,7 +118,7 @@ A map row is reproducible research. Re-run the method for every model release an
    - **implementer** — keep Intelligence Index ≥ that harness's best − `10`. Drop any survivor whose family + version is the planner's. Keep Cost per Task **strictly less** than the planner's. Then rank.
    - **mechanical** — keep Cost per Task between that harness's minimum and `3 ×` that minimum. Drop any survivor whose family + version is the planner's or the implementer's. Keep Cost per Task **strictly less** than the implementer's (and thus than the planner's). Then rank. An empty band after those cuts is a fallback — do not reopen the planner or implementer family.
 4. **Fallback—when measurement cannot decide** because step 3 yields an empty band, no complete candidate, or a final Cost per Task and Time per Task tie. Use the harness's official task guidance: deep reasoning, architecture, and ambiguity for **planner**; agentic software development, implementation, and tool use for **implementer**; simple, repetitive, routine, fast, or cost-sensitive work for **mechanical**. Cite it and label `documented fallback`. If guidance names **one** model, use that token and any effort it also names. Otherwise—including Auto/routing or multiple names without a winner—**repeat the previous category's cell**: implementer copies planner; mechanical copies implementer. Never invent a quantitative winner.
-5. **Write.** Put each winner in the map as the accepted model token. Append ` · effort` only when the family is effort-comparable **and** official docs list a token that matches the selected row (or the documented-fallback effort the guidance named), in the vendor's spelling. Otherwise the model token alone. A measured winner may not be `N/A`. Same commit (rule 12): update every affected wrapper — model token always; effort **only** if the cell has ` · effort` **and** the wrapper form can pin it. Map shape: one row per harness; column 1 is the backticked key matching `agents/<harness>/`; scripts take the first backtick-quoted token as the model. A new harness adds that row, its wrapper folder, and [Supported harnesses](#supported-harnesses) in the same commit.
+5. **Write.** Put each winner in the table as the accepted model token. Append ` · effort` only when the family is effort-comparable **and** official docs list a token that matches the selected row (or the documented-fallback effort the guidance named), in the vendor's spelling. Otherwise use the model token alone. A measured winner may not be `N/A`. In the same commit (rule 12), update every affected wrapper: always pin the model token; pin effort **only** if the cell has ` · effort` **and** the wrapper form can hold it. Table shape: one row per harness; column 1 is the backticked key matching `agents/<harness>/`; scripts take the first backtick-quoted token as the model. A new harness adds that row, its wrapper folder, and [Supported harnesses](#supported-harnesses) in the same commit.
 
 Pin the role the base names (`You are the **planner** / **implementer** / **mechanical**`) from the `USER-AGENTS.md` table in the header. Body (rule 6):
 
@@ -182,7 +182,7 @@ Exit codes: `0` clean, `1` aborted on a precondition (unknown flag, `--base` wit
 
 When a rule in this README becomes mechanically verifiable, add its check to `tools/lint.sh` and its rule number to the list above in the same commit — the two caps above (rules 3, 6) are stated here as rules; the linter only enforces them, and this README is the number a reader trusts.
 
-`tools/test.sh` is a development check too, and outside rules 25–27 the same way: it runs `install`, `remove`, `update`, `reinstall`, and `verify` against a disposable fake `HOME`, never the real one, and asserts the installation and script contract (rules 19–27). Run it from anywhere:
+`tools/test.sh` is likewise a development check outside rules 25–27: it runs `install`, `remove`, `update`, `reinstall`, and `verify` against a disposable fake `HOME`, never the real one, and asserts the installation and script contract (rules 19–27). Run it from anywhere:
 
 ```bash
 "$HOME/.ai-tools/tools/test.sh"                    # run every case
@@ -204,12 +204,12 @@ The fixture stages, before any script runs: a pre-populated harness layout for a
 These bind the scripts and any human or AI intervening manually in [Installation](#installation), [Removal](#removal), [Update](#update), and [Reinstallation](#reinstallation), on top of rules 19–24:
 
 - **Never replace by default** an existing regular file or a symlink pointing outside `$AI_TOOLS`: **skip, report, continue** (rules 20, 22). `--overwrite` is the only authorization to replace those exact artifact destinations in selected harnesses. A matching copy is left alone.
-- **Never** recursively remove a harness agents or skills root; replace or remove individual artifact paths only.
+- **Never** recursively remove a harness's agents or skills root; replace or remove individual artifact paths only.
 - Remove a destination only when it is a symlink resolving under `$AI_TOOLS`, or a copy whose contents still match their `$AI_TOOLS` source. A locally modified copy is user work: skip it, do not delete it (rule 21).
 - Never touch vendor bundles (`~/.grok/bundled/`), unrelated user agents or skills, a repository's own `AGENTS.md` (that application's architecture), or `$HOME/AGENTS.md` (rule 24).
 - An AI operating the scripts asks which harnesses are in scope and reports discovery before a mutating run; the scripts themselves default to every detected harness.
 
-Implemented once — the safe copy, legacy-link removal, and exact-copy removal primitives in [`scripts/shell/lib.sh`](scripts/shell/lib.sh). Scripts refuse the unsafe path; manual intervention must honour the same rules.
+The safe-copy, legacy-link-removal, and exact-copy-removal primitives are implemented once in [`scripts/shell/lib.sh`](scripts/shell/lib.sh). Scripts refuse unsafe paths; manual intervention must honour the same rules.
 
 ## Supported harnesses
 
@@ -228,7 +228,7 @@ Notes:
 
 - **Antigravity lives under `$HOME/.gemini`**: instructions at `GEMINI.md`, skills and agents at `config/skills/` and `config/agents/`. Do not install into `$HOME/.gemini/skills/` or `$HOME/.gemini/agents/` (retired Gemini CLI roots). The stale-link sweep unlinks leftover ai-tools links there without touching `config/`.
 - **Antigravity limits rules files to 12,000 characters.** The repository's stricter self-imposed 8,000-character cap governs `USER-AGENTS.md` (rule 3); Antigravity truncates or rejects files above its own limit.
-- **Codex** reads `~/.codex/AGENTS.override.md` first if it exists, else `~/.codex/AGENTS.md`. Never create, edit, or remove an existing `AGENTS.override.md` — user-authored, out of scope.
+- **Codex** reads `~/.codex/AGENTS.override.md` first if it exists; otherwise, it reads `~/.codex/AGENTS.md`. Never create, edit, or remove an existing `AGENTS.override.md` — it is user-authored and out of scope.
 - **Never install into `$HOME/.agents/`.** Several harnesses discover it; copying there as well as into each harness root would double-register every agent.
 
 ## Installation
@@ -263,8 +263,8 @@ Remove installed artifacts from harnesses while retaining the clone. Keeping `$H
 2. **Agents and skills** — remove copies only while their contents still match their source; also unlink legacy links resolving into ai-tools. A locally modified copy is user work: skip and keep (rule 21).
 3. **Grok** — delete only the marker-delimited ai-tools block in `~/.grok/config.toml`. Preserve unmanaged `[subagents.models]` content and the file itself.
 4. **Stale-link sweep** — remove anything in the scoped roots that still resolves into the clone, whatever its name or era. Alpha keeps no backward compatibility (rule 4); the sweep cleans older layouts. `--no-sweep` skips it.
-5. **Instructions** — only with `--instructions`; remove an exact source copy or a legacy ai-tools link, and preserve a modified or foreign destination. **Never `$HOME/AGENTS.md`** (rule 24).
-6. **Verify** — report any known ai-tools artifact or legacy link still in the scoped roots; expected none except preserved modified or foreign paths.
+5. **Instructions** — only with `--instructions`; remove an exact source copy or a legacy ai-tools link, and preserve a modified or foreign destination. Never remove `$HOME/AGENTS.md` (rule 24).
+6. **Verify** — report any known ai-tools artifact or legacy link still in the scoped roots; expect none except preserved modified or foreign paths.
 7. **Purge** — with `--purge` only (prompt; `--yes` skips), delete `$HOME/.ai-tools` while always preserving `$HOME/AGENTS.md`.
 
 If `$AI_TOOLS/skills` was added to a harness scan path (Grok `[skills] paths`), remove only that entry, by hand — never wipe the config file. Restart the harness: agents leave its list, skill slash commands leave its menu.
@@ -283,11 +283,11 @@ Bring the clone to `origin/master` and re-synchronize the installed physical cop
 4. **Copy anything newly shipped** — re-run the idempotent install steps for the scoped harnesses: matching installs remain untouched and new artifacts are added.
 5. **Verify** — the Installation checks.
 
-Use [Reinstallation](#reinstallation) when the install is broken, comes from an older alpha layout, or the set of harnesses changed. If the default branch is renamed (e.g. `main`), the scripts follow only after the user or remote confirms it — never a guessed branch.
+Use [Reinstallation](#reinstallation) when the install is broken, comes from an older alpha layout, or the set of harnesses has changed. If the default branch is renamed (e.g. `main`), the scripts follow only after the user or remote confirms it — never a guessed branch.
 
 ## Reinstallation
 
-Full removal + installation against a fresh `origin/master`, when [Update](#update) is not enough: broken or partial install, stale names or layouts from an older alpha, legacy links, or a change in which harnesses are wired.
+A full removal and installation against a fresh `origin/master` when [Update](#update) is not enough: a broken or partial install, stale names or layouts from an older alpha, legacy links, or a change in the set of configured harnesses.
 
 ```bash
 "$HOME/.ai-tools/scripts/shell/reinstall.sh"
@@ -315,7 +315,7 @@ Then restart or reload the harness and confirm the three agents and a slash comm
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE). Use, modify, fork, redistribute, and sell freely, including in closed-source work; the only condition is carrying the copyright and permission notice with copies or substantial portions. The `AS IS` disclaimer covers what these tools do by design: scripts that unlink and delete harness configuration, dispatched work that can create billable cloud resources, and unattended code execution.
+MIT — see [`LICENSE`](LICENSE). Use, modify, fork, redistribute, and sell freely, including in closed-source work; the only condition is retaining the copyright and permission notice with copies or substantial portions. The `AS IS` disclaimer covers what these tools do by design: scripts that unlink and delete harness configuration, dispatched work that can create billable cloud resources, and unattended code execution.
 
 Maintenance consequences:
 

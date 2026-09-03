@@ -63,7 +63,7 @@ case_install_idempotent() {
 }
 
 case_install_foreign_file_skipped() {
-  # Rules 18, 20, 25: a foreign regular file on a destination is skipped, not
+  # Rules 20, 22, 25: a foreign regular file on a destination is skipped, not
   # overwritten, and the run still finishes the rest of the wrappers.
   local root
   t_fixture --foreign-agent
@@ -155,7 +155,7 @@ case_install_agents_md_present() {
 }
 
 case_install_dry_run() {
-  # Rule 25: --dry-run reports without changing anything.
+  # Rule 27: --dry-run reports without changing anything.
   local root before
   t_fixture
   root="$T_ROOT"
@@ -232,7 +232,7 @@ case_install_grok_models() {
 }
 
 case_install_grok_unmanaged_block() {
-  # An unmanaged [subagents.models] block is left untouched, not merged into.
+  # An unmanaged [subagents.models] block is left untouched, not merged.
   local root before
   t_fixture --unmanaged-grok-block
   root="$T_ROOT"
@@ -248,7 +248,7 @@ case_install_grok_unmanaged_block() {
 }
 
 case_install_grok_no_model_row() {
-  # No usable `grok` row in USER-AGENTS.md: pinning is skipped, config untouched.
+  # No usable `grok` row in USER-AGENTS.md: pinning is skipped, and the config remains untouched.
   local root before
   t_fixture
   root="$T_ROOT"

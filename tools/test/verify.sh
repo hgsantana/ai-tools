@@ -109,6 +109,26 @@ case_verify_all_harnesses() {
   t_cleanup "$root"
 }
 
+case_verify_instructions_cap() {
+  local root before instructions
+  t_fixture
+  root="$T_ROOT"
+  instructions="$root/home/.ai-tools/USER-AGENTS.md"
+
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
+  t_assert_exit 0
+
+  printf '%02048d\n' 0 >> "$instructions"
+  before=$(t_snapshot "$root/home")
+  t_verify "$root" --harnesses claude-code
+  t_assert_exit 2
+  t_assert_line "WARN: USER-AGENTS.md exceeds 8000 chars (repository limit):"
+  t_assert_unchanged "$root/home" "$before"
+  rm -f "$before"
+
+  t_cleanup "$root"
+}
+
 case_verify_no_clone() {
   local root before
   t_fixture

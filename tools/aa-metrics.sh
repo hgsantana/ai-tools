@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Fetch Artificial Analysis model pages and write Intelligence Index, Cost per
 # Task, and Time per Task from JSON-LD Datasets. Deterministic given the same
-# HTML. python3 stdlib only. Not an installation process (README rules 25-27).
+# HTML. Uses only the Python 3 standard library. Not an installation process
+# (README rules 25-27).
 #
 # usage: aa-metrics.sh [--help] [--dry-run] [--output-dir DIR] [--input-dir DIR]
 set -u
@@ -16,9 +17,9 @@ usage: aa-metrics.sh [--help] [--dry-run] [--output-dir DIR] [--input-dir DIR]
 Writes dev/tmp/aa-metrics.csv. Unions JSON-LD datasets named
 "Artificial Analysis Intelligence Index", "Cost per Task", and
 "Time per Intelligence Index Task" from each fetched page.
-A live run GETs English /models/<slug> locs from sitemap.xml, then each page.
+A live run fetches English `/models/<slug>` locations from `sitemap.xml`, then each page.
 --input-dir reads recorded HTML (*.html) and does not hit the network.
-Requires python3. Live run also requires curl.
+Requires Python 3. A live run also requires curl.
 EOF
 }
 
