@@ -23,9 +23,8 @@ The skill offer is the only `USER-AGENTS.md` gate. It names each option's impact
 | `/az-ai-tools` | Inspect or manage Azure resources, subscriptions, infrastructure, and costs with `az` | `/az-ai-tools list costly idle resources` |
 | `/gc-ai-tools` | Inspect or manage Google Cloud projects, infrastructure, and costs with `gcloud` | `/gc-ai-tools show resources in project-x` |
 | `/gh-ai-tools` | Inspect or manage GitHub accounts, repository administration, environments, Actions/builds, issues, and releases | `/gh-ai-tools show failing Actions runs` |
-| `/update-ai-tools` | Update an existing installation and refresh installed copies | `/update-ai-tools all detected harnesses` |
+| `/update-ai-tools` | Remove current-version artifacts, reset the clone, and install from origin/master | `/update-ai-tools all detected harnesses` |
 | `/remove-ai-tools` | Remove installed ai-tools artifacts from selected harnesses | `/remove-ai-tools claude-code and cursor` |
-| `/reinstall-ai-tools` | Repair a broken, stale, or differently scoped installation from a fresh source tree | `/reinstall-ai-tools all harnesses` |
 
 ### Delivery workflows
 
@@ -82,7 +81,7 @@ To request a clean stop while it is running, say `Stop after the current plan.` 
 
 ### Installation maintenance
 
-`/update-ai-tools`, `/remove-ai-tools`, and `/reinstall-ai-tools` first settle harness scope, run the matching script with `--dry-run`, and save its output. Destructive flags are presented separately and run only when explicitly approved. The scripts preserve conflicts by default and leave the user-owned `$HOME/AGENTS.md` untouched.
+`/update-ai-tools` runs `update.sh`. `/remove-ai-tools` runs `remove.sh`. First settle harness scope, run the matching script with `--dry-run`, and save its output. Destructive flags are presented separately and run only when explicitly approved. The scripts preserve conflicts by default and leave the user-owned `$HOME/AGENTS.md` untouched.
 
 First installation is not a skill: follow the root `README.md` installation process.
 

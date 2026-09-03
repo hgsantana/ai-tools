@@ -302,7 +302,7 @@ check_skill_name_match() {
 check_skill_layout() {
   local f d name
   local gated="vibe-ai-tools plan-ai-tools dev-ai-tools improve-ai-tools az-ai-tools gc-ai-tools gh-ai-tools"
-  local maintainer="update-ai-tools remove-ai-tools reinstall-ai-tools"
+  local maintainer="update-ai-tools remove-ai-tools"
 
   f="$AI_TOOLS/skills/SKILL-CONTRACT.md"
   if [ ! -e "$f" ]; then ok "skill contract absent: $f"; else warn "skill contract must not exist: $f"; fi

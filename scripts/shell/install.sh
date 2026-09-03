@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # ai-tools installation — README "Installation" as an executable procedure.
+# First clone: scripts/shell/install-bash.sh | bash (or install-zsh.sh | zsh).
 set -u
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 . "$SCRIPT_DIR/lib.sh"

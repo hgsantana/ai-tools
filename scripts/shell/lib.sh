@@ -303,7 +303,7 @@ ensure_clone() {
   if [ ! -d "$AI_TOOLS" ]; then
     [ "$DRY_RUN" = 1 ] && fatal "$AI_TOOLS missing — clone it first: git clone $REPO_URL \"$AI_TOOLS\""
     git clone "$REPO_URL" "$AI_TOOLS" || fatal "clone failed: $REPO_URL -> $AI_TOOLS"
-    # shellcheck disable=SC2034 # read by scripts/shell/reinstall.sh, a separate sourcing script
+    # shellcheck disable=SC2034 # read by install.sh after a bootstrap clone
     FRESH_CLONE=1
   fi
   { [ -f "$AI_TOOLS/USER-AGENTS.md" ] && [ -f "$AI_TOOLS/MODELS.csv" ] && [ -d "$AI_TOOLS/agents" ]; } \
@@ -312,12 +312,14 @@ ensure_clone() {
 
 require_clone() {
   { [ -d "$AI_TOOLS/.git" ] && [ -f "$AI_TOOLS/USER-AGENTS.md" ] && [ -f "$AI_TOOLS/MODELS.csv" ]; } \
-    || fatal "$AI_TOOLS is missing or not a clone — run scripts/shell/install.sh first"
+    || fatal "$AI_TOOLS is missing or not a clone — run scripts/shell/install-bash.sh (or install-zsh.sh) to clone"
 }
 
-update_source() {
-  # usage: update_source <discard_local 0|1>
-  # Resets $AI_TOOLS to origin/master. Sets PREV to the pre-reset revision.
+prepare_reset() {
+  # usage: prepare_reset <discard_local 0|1>
+  # Fetches origin/master and refuses a discarding reset unless --discard-local.
+  # Sets PREV. Does not check out or reset. Call before removing harness artifacts
+  # so a refused reset cannot leave the install stripped.
   local discard="${1:-0}" dirty ahead
   git -C "$AI_TOOLS" fetch origin || fatal "fetch failed — fix the remote or auth and retry"
   git -C "$AI_TOOLS" show-ref --verify --quiet refs/remotes/origin/master \
@@ -331,6 +333,13 @@ update_source() {
     [ "$discard" = 1 ] \
       || fatal "the reset would discard the local work above — stash/branch it, or re-run with --discard-local"
   fi
+}
+
+update_source() {
+  # usage: update_source <discard_local 0|1>
+  # Resets $AI_TOOLS to origin/master. Calls prepare_reset when PREV is empty.
+  local discard="${1:-0}"
+  [ -n "$PREV" ] || prepare_reset "$discard"
   if [ "$DRY_RUN" = 1 ]; then
     ok "would reset $AI_TOOLS to origin/master ($(git -C "$AI_TOOLS" rev-parse --short origin/master))"
     return 0

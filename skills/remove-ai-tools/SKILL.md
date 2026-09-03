@@ -25,7 +25,6 @@ The routing gate already surfaced the impact. Settle scope before acting. Presen
 |---|---|---|
 | `update` | `scripts/shell/update.sh` | `--discard-local` |
 | `remove` | `scripts/shell/remove.sh` | `--instructions`, `--purge` (with `--yes` only inside that same approval) |
-| `reinstall` | `scripts/shell/reinstall.sh` | `--discard-local` |
 
 Use agents, remotes, URLs, paths, and flags defined by the tree, README, or scripts' `--help`; these sources prevail over recollection.
 

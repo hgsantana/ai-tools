@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ai-tools sandboxed test suite — a development check, not an installation
 # process (outside the contract of README rules 25-27), with the same standing
-# as tools/lint.sh. Proves the install/remove/update/reinstall/verify contract
+# as tools/lint.sh. Proves the install/remove/update/verify contract
 # mechanically, against a disposable fake $HOME, never against the real one.
 #
 # Usage: tools/test.sh [--help] [--case <name>]... [--keep]

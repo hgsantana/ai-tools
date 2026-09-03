@@ -1,5 +1,5 @@
 # shellcheck shell=bash
-# reinstall.sh — proves README rules 20-22, 27 against scripts/shell/reinstall.sh:
+# Extra update.sh coverage — proves README rules 20-22, 27 against scripts/shell/update.sh:
 # a full removal and installation pass produces the same state as a fresh
 # installation, sweeps stale links, keeps a locally modified copy, refuses to
 # discard local clone work without --discard-local, runs the fresh-clone
@@ -25,7 +25,7 @@ case_reinstall_clean_matches_fresh_install() {
 
   t_fixture
   root_b="$T_ROOT"
-  t_run "$root_b" "$root_b/home/.ai-tools/scripts/shell/reinstall.sh" --harnesses claude-code
+  t_run "$root_b" "$root_b/home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
   t_assert_exit 0
   snap_b=$(t_snapshot "$root_b/home/.claude")
 
@@ -51,7 +51,7 @@ case_reinstall_stale_link_removed() {
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
 
-  t_run "$root" "$root/home/.ai-tools/scripts/shell/reinstall.sh" --harnesses claude-code
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
   t_assert_exit 0
   t_assert_absent "$T_STALE_LINK_PATH"
   t_assert_regular_file "$root/home/.claude/agents/planner-ai-tools.md"
@@ -66,7 +66,7 @@ case_reinstall_modified_copy_kept() {
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
 
-  t_run "$root" "$root/home/.ai-tools/scripts/shell/reinstall.sh" --harnesses claude-code
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
   t_assert_exit 2
   t_assert_line "SKIP: copy was modified locally, user work preserved: $T_MODIFIED_COPY_PATH"
   if grep -qF 'local edit that matches no revision' "$T_MODIFIED_COPY_PATH"; then
@@ -84,10 +84,9 @@ case_reinstall_fresh_clone_offline() {
   root="$T_ROOT"
   rm -rf "$root/home/.ai-tools"
 
-  t_run "$root" "$AI_TOOLS/scripts/shell/reinstall.sh" --harnesses claude-code
-  t_assert_exit 0
-  t_assert_line "info: fresh clone — already at origin/master, reset skipped"
-  t_assert_regular_file "$root/home/.claude/agents/planner-ai-tools.md"
+  t_run "$root" "$AI_TOOLS/scripts/shell/update.sh" --harnesses claude-code
+  t_assert_exit 1
+  t_assert_line "is missing or not a clone — run scripts/shell/install-bash.sh"
 
   t_cleanup "$root"
 }
@@ -101,7 +100,7 @@ case_reinstall_uncommitted_no_discard() {
   printf 'uncommitted local edit\n' >> "$root/home/.ai-tools/README.md"
   snap=$(t_snapshot "$root/home/.claude")
 
-  t_run "$root" "$root/home/.ai-tools/scripts/shell/reinstall.sh" --harnesses claude-code
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
   t_assert_exit 1
   t_assert_line "the reset would discard the local work above"
   t_assert_unchanged "$root/home/.claude" "$snap"
@@ -118,7 +117,7 @@ case_reinstall_no_instructions() {
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
 
-  t_run "$root" "$root/home/.ai-tools/scripts/shell/reinstall.sh" --harnesses claude-code --no-instructions
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code --no-instructions
   t_assert_exit 0
   t_assert_regular_file "$root/home/.claude/CLAUDE.md"
 
@@ -133,7 +132,7 @@ case_reinstall_dry_run_changes_nothing() {
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   snap=$(t_snapshot "$root/home/.claude")
 
-  t_run "$root" "$root/home/.ai-tools/scripts/shell/reinstall.sh" --harnesses claude-code --dry-run
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code --dry-run
   t_assert_exit 0
   t_assert_unchanged "$root/home/.claude" "$snap"
 
@@ -146,7 +145,7 @@ case_reinstall_overwrite_modified_copy() {
   t_fixture --modified-copy
   root="$T_ROOT"
 
-  t_run "$root" "$root/home/.ai-tools/scripts/shell/reinstall.sh" --harnesses claude-code --overwrite
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code --overwrite
   t_assert_exit 0
   t_assert_regular_file "$T_MODIFIED_COPY_PATH"
   t_assert_same_content "$T_MODIFIED_COPY_PATH" "$root/home/.ai-tools/agents/claude-code/implementer-ai-tools.md"
@@ -165,7 +164,7 @@ case_reinstall_all_harnesses() {
   root="$T_ROOT"
   home="$root/home"
 
-  t_run "$root" "$home/.ai-tools/scripts/shell/reinstall.sh" --harnesses all
+  t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses all
   t_assert_exit 0
   t_assert_regular_file "$home/.claude/agents/planner-ai-tools.md"
   t_assert_regular_file "$home/.grok/agents/planner-ai-tools.md"

@@ -22,11 +22,11 @@ Status: `idea` (awaiting refinement) · `next` (agreed and ready) · `doing` (pl
 
 ### 4. Health-check entry point
 
-`verify` is a first-class read-only process with a script, while update, removal, and reinstallation also have slash commands. Add a `verify-ai-tools` skill that dispatches `implementer-ai-tools` to run `verify` and maps each finding to the matching README Troubleshooting entry: dangling links to Reinstallation, stale copies to Update, and a wrong agent model to the Grok pin or wrapper comparison. Route: `/vibe-ai-tools`.
+`verify` is a first-class read-only process with a script, while update and removal also have slash commands. Add a `verify-ai-tools` skill that dispatches `implementer-ai-tools` to run `verify` and maps each finding to the matching README Troubleshooting entry: dangling links and stale copies to Update, and a wrong agent model to the Grok pin or wrapper comparison. Route: `/vibe-ai-tools`.
 
 ### 6. Changelog for alpha testers
 
-Rule 4 lets the README describe only the current alpha state. Give testers a concise history by adding `CHANGELOG.md` with one entry per version: shipped changes, breaking effects, and whether reinstallation replaces update. Have the linter require an entry whenever the version changes. Route: `/vibe-ai-tools`.
+Rule 4 lets the README describe only the current alpha state. Give testers a concise history by adding `CHANGELOG.md` with one entry per version: shipped changes and breaking effects. Have the linter require an entry whenever the version changes. Route: `/vibe-ai-tools`.
 
 ## Capability
 

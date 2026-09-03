@@ -374,3 +374,46 @@ case_install_not_a_clone() {
 
   t_cleanup "$root"
 }
+
+case_bootstrap_already_cloned() {
+  local root home
+  t_fixture
+  root="$T_ROOT"
+  home="$root/home"
+
+  t_run "$root" "$AI_TOOLS/scripts/shell/install-bash.sh"
+  t_assert_exit 0
+  t_assert_line "ai-tools is already cloned at"
+  t_assert_line "scripts/shell/update.sh"
+
+  t_cleanup "$root"
+}
+
+case_bootstrap_clones_then_installs() {
+  local root home
+  t_fixture
+  root="$T_ROOT"
+  home="$root/home"
+  rm -rf "$home/.ai-tools"
+
+  t_run "$root" "$AI_TOOLS/scripts/shell/install-bash.sh" --harnesses claude-code
+  t_assert_exit 0
+  t_assert_regular_file "$home/.ai-tools/scripts/shell/install.sh"
+  t_assert_regular_file "$home/.claude/agents/planner-ai-tools.md"
+
+  t_cleanup "$root"
+}
+
+case_bootstrap_rejects_non_clone() {
+  local root
+  t_fixture
+  root="$T_ROOT"
+  rm -rf "$root/home/.ai-tools"
+  mkdir -p "$root/home/.ai-tools" || fatal "$T_CASE: cannot create non-clone dir"
+
+  t_run "$root" "$AI_TOOLS/scripts/shell/install-bash.sh"
+  t_assert_exit 1
+  t_assert_line "exists but is not an ai-tools clone"
+
+  t_cleanup "$root"
+}

@@ -161,7 +161,7 @@ case_update_new_content_copied() {
   t_assert_exit 0
   t_assert_regular_directory "$home/.claude/skills/$marker-ai-tools"
   t_assert_same_content "$home/.claude/skills/$marker-ai-tools" "$home/.ai-tools/skills/$marker-ai-tools"
-  t_assert_line "copy up to date:"
+  t_assert_line "copied:"
 
   t_cleanup "$root"
 }
@@ -189,7 +189,7 @@ case_update_stale_copy_refreshed() {
 
   t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
   t_assert_exit 0
-  t_assert_line "copy refreshed:"
+  t_assert_line "copied:"
   t_assert_same_content "$wrapper" "$home/.ai-tools/agents/claude-code/implementer-ai-tools.md"
   t_assert_same_content "$instructions" "$home/.ai-tools/USER-AGENTS.md"
   t_assert_same_content "$skill" "$home/.ai-tools/skills/plan-ai-tools"
@@ -216,7 +216,7 @@ case_update_modified_copy_kept() {
 
   t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
   t_assert_exit 2
-  t_assert_line "SKIP: copy modified locally (or predates"
+  t_assert_line "SKIP: copy was modified locally, user work preserved:"
 
   if [ "$(cat "$wrapper")" = "$before" ]; then
     ok "$T_CASE: modified copy preserved"
@@ -245,7 +245,7 @@ case_update_up_to_date_copy() {
 
   t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
   t_assert_exit 0
-  t_assert_line "copy up to date: $wrapper"
+  t_assert_line "copied: $wrapper"
 
   t_cleanup "$root"
 }
@@ -261,7 +261,7 @@ case_update_overwrite_modified_copy() {
   t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   printf '\nlocal edit that should be replaced\n' >> "$wrapper"
 
-  t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code --no-reset --overwrite
+  t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code --overwrite
   t_assert_exit 0
   t_assert_same_content "$wrapper" "$home/.ai-tools/agents/claude-code/implementer-ai-tools.md"
   if grep -qF 'local edit that should be replaced' "$wrapper"; then
@@ -273,7 +273,7 @@ case_update_overwrite_modified_copy() {
   t_cleanup "$root"
 }
 
-# --- --no-reset / --dry-run ----------------------------------------------------
+# --- --dry-run ----------------------------------------------------
 
 case_update_all_harnesses_alias() {
   local root home
@@ -282,43 +282,9 @@ case_update_all_harnesses_alias() {
   root="$T_ROOT"
   home="$root/home"
 
-  t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses all --no-reset --dry-run
+  t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses all --dry-run
   t_assert_exit 0
   t_assert_line "info: scope: claude-code grok codex copilot cursor antigravity"
-
-  t_cleanup "$root"
-}
-
-case_update_no_reset() {
-  local root home before_head after_head
-
-  t_fixture
-  root="$T_ROOT"
-  home="$root/home"
-
-  printf '\nlocal edit\n' >> "$home/.ai-tools/README.md"
-  before_head=$(git -C "$home/.ai-tools" rev-parse HEAD)
-
-  t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code --no-reset
-
-  case "$T_LAST_EXIT" in
-    0|2) ok "$T_CASE: exit $T_LAST_EXIT (0 or 2 acceptable per the run's own findings)" ;;
-    *) warn "$T_CASE: unexpected exit $T_LAST_EXIT" ;;
-  esac
-  t_assert_line "info: reset skipped (--no-reset)"
-
-  after_head=$(git -C "$home/.ai-tools" rev-parse HEAD)
-  if [ "$after_head" = "$before_head" ]; then
-    ok "$T_CASE: HEAD unchanged"
-  else
-    warn "$T_CASE: HEAD moved: $before_head -> $after_head"
-  fi
-
-  if grep -qF 'local edit' "$home/.ai-tools/README.md"; then
-    ok "$T_CASE: local edit intact"
-  else
-    warn "$T_CASE: local edit lost"
-  fi
 
   t_cleanup "$root"
 }
@@ -369,7 +335,7 @@ case_update_missing_clone() {
   # matters here.
   t_run "$root" "$AI_TOOLS/scripts/shell/update.sh" --harnesses claude-code
   t_assert_exit 1
-  t_assert_line "is missing or not a clone — run scripts/shell/install.sh first"
+  t_assert_line "is missing or not a clone — run scripts/shell/install-bash.sh"
 
   if [ -e "$home/.ai-tools" ]; then
     warn "$T_CASE: unexpectedly created: $home/.ai-tools"

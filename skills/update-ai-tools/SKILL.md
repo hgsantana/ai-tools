@@ -1,11 +1,11 @@
 ---
 name: update-ai-tools
 description: >
-  Update an existing installation per the README: reset $HOME/.ai-tools to
-  origin/master, refresh copies, and install newly shipped content. Use for
-  /update-ai-tools. Impact: can discard local commits and edits, and refreshes
-  harness configuration. Each destructive step requires explicit approval.
-  Agent: mechanical-ai-tools.
+  Update an existing installation per the README: remove current-version
+  artifacts, reset $HOME/.ai-tools to origin/master, and install from the
+  fresh tree. Use for /update-ai-tools. Impact: can discard local commits
+  and edits, and refreshes harness configuration. Each destructive step
+  requires explicit approval. Agent: mechanical-ai-tools.
 argument-hint: "[optional: harnesses in scope, or extra instructions]"
 ---
 
@@ -25,7 +25,6 @@ The routing gate already surfaced the impact. Settle scope before acting. Presen
 |---|---|---|
 | `update` | `scripts/shell/update.sh` | `--discard-local` |
 | `remove` | `scripts/shell/remove.sh` | `--instructions`, `--purge` (with `--yes` only inside that same approval) |
-| `reinstall` | `scripts/shell/reinstall.sh` | `--discard-local` |
 
 Use agents, remotes, URLs, paths, and flags defined by the tree, README, or scripts' `--help`; these sources prevail over recollection.
 
