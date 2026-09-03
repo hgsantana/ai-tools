@@ -1,77 +1,58 @@
 # User-wide agent instructions
 
-Harness-agnostic, user-wide rules for AI coding tools. A repository's own `AGENTS.md` or `README.md` overrides these rules inside that repository.
+Harness-agnostic rules for AI coding tools after ai-tools is installed. A repository's own `AGENTS.md` or `README.md` overrides these rules inside that repository.
 
-ai-tools is installed from the only supported location: `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Each configured harness that supports global instructions loads `USER-AGENTS.md` under its own instructions filename. Keep the installed and repository copies unchanged because ai-tools updates reset the repository to `origin/master`. `$HOME/.ai-tools/README.md` documents installation and maintenance.
+ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skills, agent wrappers, and this file are installed from there. `$HOME/.ai-tools/README.md` documents installation and maintenance. Leave the clone and these copies unchanged; updates reset them to `origin/master`.
 
-## What is installed here
+## What is installed
 
-**Ten skills.** Skills are entry points; agents are spawn-only. Each skill's frontmatter describes its purpose, `Impact:`, and `Min. role:`. Directly naming a skill or choosing one after a suggestion authorizes its workflow and required dispatches.
+**Ten skills** are the user entry points. Each description states purpose, `Impact:`, and `Agent:`. The skill file is the dispatched agent's brief: it states the work, not an identity.
 
-Commits, branches, rebases, merges, pushes, and pull-request delivery run directly and bypass `/gh-ai-tools`; this overrides the routing below.
+Commits, branches, rebases, merges, pushes, and pull-request delivery run directly and bypass `/gh-ai-tools`.
 
 ## How to route a request
 
-1. **Leading shipped `*-ai-tools` skill** — skip scope recommendations; activate it directly.
+The **gate** is the skill offer. Run it first.
+
+1. **Leading shipped `*-ai-tools` skill** — run the skill offer below: confirm that skill's `Impact:`, and offer other shipped skills that also fit, if any.
 2. **Simple, well specified, or documentation only** — a typo, a one-line constant, an exact rename, a question or explanation, a docs edit that changes no behaviour. Do it now, in this session, without asking.
-3. **Any other non-trivial request** — offer an `ai-tools` skill that fits its scope when possible. Ask the user to choose a skill, **run it here** to work in this session, or specify **something else**: another skill, revised instructions, or a different approach.
+3. **Any other non-trivial request** — run the skill offer below with every `ai-tools` skill that fits its scope.
 
-Case 3 recommendation:
+### Skill offer (the gate)
 
-1. **Chat message** — before the interaction, in the user's language, name the options and clearly explain every offered skill's `Impact:` from its `description`, all in one chat message. Do not check or discuss roles or models before the user selects a skill.
-2. **Question** — after the chat message, also in the user's language, ask one short question referring to those impacts. Use your native interaction/question API when available; otherwise use chat. Number the options if using chat. Offer **run it here**, ignoring ai-tools skills and agents, and **something else**, where the user may name another skill or revise the request. If the API adds **Other** automatically, use it for this purpose instead of adding a duplicate option.
+In the user's language, before the interaction, name every offered skill in one chat message. For each, state its `Impact:` from the `description`; that choosing it dispatches the agent named in `Agent:`; and the model pinned on that agent's wrapper, or in the harness config written at install when the wrapper has none, or the session model when inheriting.
+
+Then ask one short question referring to those impacts. Use the native interaction API when available; otherwise chat, numbered. Offer **run it here**, ignoring ai-tools skills and agents, and **something else**, where the user may name another skill or revise the request. If the API adds **Other** automatically, use it instead of a duplicate option.
 
 Handle the answer:
 
-- A named skill — activate it.
-- **Run it here** — do the work in this session.
+- A named skill — dispatch it.
+- **Run it here** — do the work in this session; ignore ai-tools skills and agents.
 - **Something else**, **Other**, or any different answer — treat its text as a new or revised request and route it again.
 - An explicit request to stop — stop without taking action.
 
-### Skill activation gate
+This offer is the only USER-AGENTS.md gate. After dispatch, a workflow that invokes another skill does not re-enter it. **When in doubt, use case 3.** Case 2 and **run it here** bypass skills and agents.
 
-Run this gate only after the user directly names a shipped `*-ai-tools` skill or chooses one after a recommendation:
+### Dispatch
 
-1. Surface its `Impact:` unless it was just explained in the recommendation.
-2. Take its `Min. role:` from the description. In this harness's row below, acceptable session models are that role's token and every token to its left; drop duplicates. Name them, then say either that the session meets the minimum or name its current/undetermined model and the row's change method.
-3. Start the authorized workflow. A model mismatch never blocks it. This session operates at the minimum role or higher and announces every agent spawn in the user's language with the agent name.
+Announce the spawn in the user's language with the agent name. Spawn that agent with a brief to follow the Workflow in `$HOME/.ai-tools/skills/<name>/SKILL.md` and the user request. Do not run the skill in this session. If spawning fails, carry the work yourself.
 
-Direct naming and selection are the gate's explicit answer; do not ask again. A skill may invoke another skill without another gate when its workflow says so. **When in doubt, use case 3.** Case 2 and **run it here** bypass skills and agents.
+## Agents
 
-| Harness key | Harness | planner | implementer | mechanical | Change the session model |
-|---|---|---|---|---|---|
-| `claude-code` | Claude Code | `opus` · high | `sonnet` | `haiku` | `/model` in the session |
-| `grok` | Grok Build | `grok-4.6` | `grok-4.5` | `grok-4.5` | `/model` in the session; `[models] default` in `~/.grok/config.toml` |
-| `codex` | OpenAI Codex | `gpt-5.6-sol` · xhigh | `gpt-5.6-luna` · max | `gpt-5.6-luna` · low | `/model` in the session; `--model` at launch |
-| `copilot` | GitHub Copilot | `Grok 4.6` | `Gemini 3.7 Flash` | `GPT-5.6 Luna` | `/model` in the session |
-| `antigravity` | Google Antigravity | `flash` | `flash` | `flash` | model selector in the Agent panel |
-| `cursor` | Cursor | `grok-4.6` | `gemini-3.7-flash` | `gpt-5.6-luna` | model picker under the chat input |
+Agents are spawn-only and have no skills. Offer skills to the user, not agents. Wrappers pin their models; Grok uses the install pin. Announce every spawn with the agent name.
 
-## The three agents
+**Spawning is open.** Any session, skill, or agent may spawn the agent that owns the work; spawned agents may do the same. If spawning fails, carry the work yourself. Code-writing agents run in parallel on separate files; read-only exploration, builds, and tests may always run concurrently.
 
-These agents are spawn-only and have no skills. Skills name them; offer skills to the user, not agents. Wrappers pin their models. Announce every spawn in the user's language with the agent name, and route each piece of work to the lowest capable role. The name identifies the agent rather than the request.
-
-**Spawning is open.** Any session, skill, or agent may spawn the agent that owns the work; spawned agents may do the same. **When work needs an agent, spawn it; if spawning fails, carry the work yourself.** Code-writing agents run in parallel on separate files; read-only exploration, builds, and tests may always run concurrently.
-
-| Agent | Role | What it is |
-| --- | --- | --- |
-| `planner-ai-tools` | **planner** | Decomposes work, designs architecture, owns acceptance, validates deliveries, handles escalations, and delegates production code |
-| `implementer-ai-tools` | **implementer** | Writes and edits code for one specified stage or brief, with local design judgment. Spawns helpers for work owned by another role |
-| `mechanical-ai-tools` | **mechanical** | Applies known patches and renames, runs builds and tests, and collects evidence |
-
-An agent's identity is its name. Model names belong in wrapper headers (and the Grok install pin).
+- `planner-ai-tools` — decomposes work, designs, owns acceptance, and delegates production code
+- `implementer-ai-tools` — writes and edits code for one assignment
+- `mechanical-ai-tools` — applies specified patches and renames, runs builds and tests, collects evidence
 
 ## Language
 
 Two destinations, two rules:
 
-- **Chat — the user's language, and only what needs the user**: questions, approvals, stake warnings, spawn announcements, plan iteration, a one-line outcome, and links to what was written. Reports, summaries, findings, and logs are written to disk (`dev/tmp/` in the working repository) rather than pasted into chat. Follow the user if they switch.
-- **Disk — concise English by default.** This covers code, comments, commits, docs, plans, briefs, logs, and subagent prompts. Use another language when:
-  1. The user explicitly asks for another language.
-  2. The task is translation — write in the target language.
-  3. The loaded repository context already uses another language; stay English if mixed or unclear.
-
-These English instructions leave the repository's language unchanged. When an exception applies, disk uses that language.
+- **Chat — the user's language, and only what needs the user**: questions, approvals, stake warnings, spawn announcements, plan iteration, a one-line outcome, and links to what was written. Reports, summaries, findings, and logs go to disk (`dev/tmp/` in the working repository). Follow the user if they switch.
+- **Disk — concise English by default.** Code, comments, commits, docs, plans, briefs, logs, and subagent prompts. Use another language when the user asks, the task is translation, or the loaded repository already uses another language; stay English if mixed or unclear.
 
 ## User interaction
 

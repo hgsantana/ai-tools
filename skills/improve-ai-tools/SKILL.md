@@ -5,7 +5,7 @@ description: >
   plan and deliver relevant, multi-stage repository improvements. Use for
   /improve-ai-tools. Impact: creates or resumes a campaign branch, edits or
   removes files, runs commands and tests, and makes multiple local commits. It
-  never pushes or writes outside the repository. Min. role: planner.
+  never pushes or writes outside the repository. Agent: planner-ai-tools.
 argument-hint: "[campaign name and optional priorities or exclusions]"
 ---
 
@@ -15,7 +15,9 @@ Run an autonomous, local campaign that repeatedly plans and delivers relevant re
 
 ## Workflow
 
-Carry the planner role only as a dispatcher. The root session announces spawns, supplies paths, routes status envelopes, and starts the next pass. It does not explore, plan, edit, run commands, test, inspect diffs, judge, stage, or commit. Every pass uses a new `planner-ai-tools` instance with no conversation history; in harnesses that support it, spawn with an empty context such as Codex `fork_turns: none`. If spawning fails, stop rather than carrying its work.
+This file is the brief for the dispatched agent. Execute the Workflow.
+
+Dispatch each pass. Announce spawns, supply paths, route status envelopes, and start the next pass. Do not explore, plan, edit, run commands, test, inspect diffs, judge, stage, or commit in this run. Every pass uses a new `planner-ai-tools` instance with no conversation history; in harnesses that support it, spawn with an empty context such as Codex `fork_turns: none`. If spawning fails, stop rather than carrying its work.
 
 The `USER-AGENTS.md` routing question is the campaign's sole gate. Once the user chooses `/improve-ai-tools`, the planners may accept their own recommendations and decide every in-scope question. The gate authorizes local campaign-branch creation, versioned edits and removals, commands, tests, and commits through campaign termination. Do not ask the user to approve a plan or another campaign decision; block when completion needs authority outside *Boundaries*.
 
@@ -39,7 +41,7 @@ Return `PLAN`, `RESUME`, `NONE`, or `BLOCKED`. Two consecutive `NONE` results fr
 
 On `PLAN` or `RESUME`, announce and spawn a different fresh, zero-context `planner-ai-tools`. Give it only this Workflow, `campaign.md`, the exact plan path, and the complete `dev-ai-tools` Workflow at `$HOME/.ai-tools/skills/dev-ai-tools/SKILL.md` (Windows: `%USERPROFILE%\.ai-tools\skills\dev-ai-tools\SKILL.md`). Assign it to execute and judge the accepted plan in `dev-ai-tools` Plan mode.
 
-The execution planner owns the entire `dev-ai-tools` sequence. It loads the plan, dispatches `implementer-ai-tools` for production and test edits, dispatches `mechanical-ai-tools` for builds, tests, and evidence, inspects the real diffs, audits acceptance criteria and tests, orders corrections, commits accepted stages, archives the completed plan, and writes the final report. It may spawn its own helpers according to `dev-ai-tools`; the root session does not orchestrate those workers or duplicate the judgment.
+The execution planner owns the entire `dev-ai-tools` sequence. It loads the plan, dispatches `implementer-ai-tools` for production and test edits, dispatches `mechanical-ai-tools` for builds, tests, and evidence, inspects the real diffs, audits acceptance criteria and tests, orders corrections, commits accepted stages, archives the completed plan, and writes the final report. It may spawn its own helpers according to `dev-ai-tools`; do not orchestrate those workers or duplicate the judgment.
 
 Apply these campaign overrides to `dev-ai-tools`:
 
@@ -49,7 +51,7 @@ Apply these campaign overrides to `dev-ai-tools`:
 - Keep delivery local. Replace push, pull-request creation, and local review-patch delivery with an update to `campaign.md` and an iteration summary containing the plan path, report path, commit list, final `HEAD`, and clean/dirty state.
 - A terminal execution failure is `BLOCKED`; leave resumable state untouched instead of asking the user to relax acceptance or deliver failed stages.
 
-Return `DELIVERED <report-path>` or `BLOCKED <report-path>`. On `DELIVERED`, the root session immediately starts another *Planning pass* with a new zero-context planner. Do not reuse either planner from the completed iteration.
+Return `DELIVERED <report-path>` or `BLOCKED <report-path>`. On `DELIVERED`, start another *Planning pass* with a new zero-context planner. Do not reuse either planner from the completed iteration.
 
 ## Termination and report
 

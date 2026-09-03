@@ -306,12 +306,12 @@ ensure_clone() {
     # shellcheck disable=SC2034 # read by scripts/shell/reinstall.sh, a separate sourcing script
     FRESH_CLONE=1
   fi
-  { [ -f "$AI_TOOLS/USER-AGENTS.md" ] && [ -d "$AI_TOOLS/agents" ]; } \
+  { [ -f "$AI_TOOLS/USER-AGENTS.md" ] && [ -f "$AI_TOOLS/MODELS.md" ] && [ -d "$AI_TOOLS/agents" ]; } \
     || fatal "$AI_TOOLS is not an ai-tools clone (move any existing clone here — the only supported location)"
 }
 
 require_clone() {
-  { [ -d "$AI_TOOLS/.git" ] && [ -f "$AI_TOOLS/USER-AGENTS.md" ]; } \
+  { [ -d "$AI_TOOLS/.git" ] && [ -f "$AI_TOOLS/USER-AGENTS.md" ] && [ -f "$AI_TOOLS/MODELS.md" ]; } \
     || fatal "$AI_TOOLS is missing or not a clone — run scripts/shell/install.sh first"
 }
 
@@ -385,7 +385,7 @@ install_skills() {
 # Grok ignores model: in agent frontmatter; models live in ~/.grok/config.toml.
 # Only the marker-delimited block below is ever written or removed.
 
-MODEL_TABLE="$AI_TOOLS/USER-AGENTS.md"
+MODEL_TABLE="$AI_TOOLS/MODELS.md"
 GROK_TOML="$HOME/.grok/config.toml"
 GROK_BEGIN="# >>> ai-tools managed subagent models — do not edit inside this block"
 GROK_END="# <<< ai-tools managed subagent models"
@@ -393,7 +393,7 @@ GROK_END="# <<< ai-tools managed subagent models"
 category_for() {
   # usage: category_for <agent-name>
   # Role the base claims via "You are the **<planner|implementer|mechanical>**".
-  # Used at install/lint to pin wrappers from USER-AGENTS.md — never at dispatch.
+  # Used at install/lint to pin wrappers from MODELS.md — never at dispatch.
   # Falls back to planner when the base cites none.
   local f="$AI_TOOLS/agents/$1.md" cat
   [ -f "$f" ] || return 1
@@ -412,7 +412,7 @@ category_for() {
 
 model_for() {
   # usage: model_for <harness key> <planner|implementer|mechanical>
-  # Reads USER-AGENTS.md, the single source of model names (README rules 11-12).
+  # Reads MODELS.md, the single source of model names (README rules 11-12).
   local key="$1" col
   case "$2" in
     planner)     col=4 ;;
@@ -437,7 +437,7 @@ model_for() {
 }
 
 grok_models_toml() {
-  # Names from the tree; models from USER-AGENTS.md, row `grok`, via the
+  # Names from the tree; models from MODELS.md, row `grok`, via the
   # category each base claims (category_for).
   local f name cat model
   echo "[subagents.models]"
@@ -704,7 +704,7 @@ verify_install() {
   else warn "USER-AGENTS.md exceeds 8000 chars (repository limit): $size"; fi
 
   if [ -f "$MODEL_TABLE" ]; then ok "model table: $MODEL_TABLE"
-  else warn "missing model table: $MODEL_TABLE — agents and skills cannot resolve agent-role models"; fi
+  else warn "missing model table: $MODEL_TABLE — install and lint cannot resolve agent-role models"; fi
 
   if [ -f "$AI_TOOLS/agents/SUBAGENT-CONTRACT.md" ]; then ok "subagent contract: $AI_TOOLS/agents/SUBAGENT-CONTRACT.md"
   else warn "missing subagent contract: $AI_TOOLS/agents/SUBAGENT-CONTRACT.md — wrappers point at it before their base"; fi

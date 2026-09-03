@@ -10,7 +10,7 @@ Invoke a skill by leading with its slash name and optional request:
 /plan-ai-tools add resumable uploads
 ```
 
-Scope-based recommendations explain each option's impact and offer the relevant skill, **run it here**, and **something else**. The last choice lets the user name another skill, revise the request, or propose a different approach; a native **Other** field serves the same purpose. Directly naming or choosing a skill authorizes it; the activation gate reports that skill's impact and model fit and starts without asking again. Later approvals still follow the skill's own rules.
+The skill offer is the only `USER-AGENTS.md` gate. It names each option's impact, that choosing it dispatches the agent named in `Agent:`, and the model pinned on that agent's wrapper (or in the harness config written at install when the wrapper has none), then offers the relevant skill, **run it here**, and **something else**. The last choice lets the user name another skill, revise the request, or propose a different approach; a native **Other** field serves the same purpose. A leading `/name` confirms that skill's stake, offers other fitting skills, and proceeds after the answer. Choosing a skill spawns the matching agent with that skill file as the brief; the host session does not run it. The Workflow states the work, not an identity. A workflow that later invokes another skill does not re-enter this gate. Later approvals still follow the skill's own rules.
 
 ## Skills
 
@@ -60,11 +60,11 @@ The short form uses the skill's default priorities:
 The campaign creates or resumes local branch `improve/repository-hardening`, using the repository's base-branch rules. Each iteration chains the planning and execution workflows through fresh, zero-context agents:
 
 1. A `planner-ai-tools` agent evaluates the current campaign branch and runs `plan-ai-tools`, saving one relevant multi-stage plan under `dev/`. The initial gate pre-authorizes it to resolve and accept its own recommendations.
-2. The root session receives the plan path and spawns a different `planner-ai-tools` agent to run `dev-ai-tools` against that accepted plan.
+2. The dispatched agent receives the plan path and spawns a different `planner-ai-tools` agent to run `dev-ai-tools` against that accepted plan.
 3. The execution planner dispatches implementers and mechanical testers, judges their diffs and evidence, commits every accepted stage, archives the plan, and reports the result.
-4. The root session starts the cycle again with another new planning agent. No planner instance or conversation history is reused between passes.
+4. The dispatched agent starts the cycle again with another new planning agent. No planner instance or conversation history is reused between passes.
 
-The root session only dispatches the planning and execution agents and routes their short statuses. Those planners decide in-scope questions under the initial gate; the user is not interrupted after it. Work needing remote mutation, an external write, or an unversioned destructive action blocks instead of expanding the authorization. Campaign delivery remains local: `dev-ai-tools` uses the campaign branch instead of `plan/<slug>` and does not push or open pull requests.
+The dispatched agent only dispatches the planning and execution agents and routes their short statuses. Those planners decide in-scope questions under the initial gate; the user is not interrupted after it. Work needing remote mutation, an external write, or an unversioned destructive action blocks instead of expanding the authorization. Campaign delivery remains local: `dev-ai-tools` uses the campaign branch instead of `plan/<slug>` and does not push or open pull requests.
 
 If execution ends mid-plan, the last accepted stage remains committed and the campaign branch may have resumable plan files or a dirty worktree. Resume with the same campaign name:
 
@@ -88,12 +88,12 @@ First installation is not a skill: follow the root `README.md` installation proc
 
 ## Agents
 
-Agents are not user-facing skills. Do not offer or invoke them as alternatives to a slash skill; the selected workflow spawns the lowest capable role with a bounded brief.
+Agents are not user-facing skills. Do not offer or invoke them as alternatives to a slash skill; the selected workflow spawns the agent named in `Agent:` with the skill file as the brief.
 
-| Agent | Role | Responsibility |
-|---|---|---|
-| `planner-ai-tools` | planner | Clarifies scope, explores, designs, adjudicates decisions, owns acceptance, and delegates implementation |
-| `implementer-ai-tools` | implementer | Writes code and tests for one assigned stage or brief, matching repository conventions |
-| `mechanical-ai-tools` | mechanical | Applies fully specified changes, runs commands and tests, and collects factual evidence |
+| Agent | Responsibility |
+|---|---|
+| `planner-ai-tools` | Clarifies scope, explores, designs, owns acceptance, and delegates implementation |
+| `implementer-ai-tools` | Writes code and tests for one assigned stage or brief, matching repository conventions |
+| `mechanical-ai-tools` | Applies fully specified changes, runs commands and tests, and collects factual evidence |
 
-Every spawn is announced in the user's language. Agents write durable substance to their assigned file or `dev/tmp/` and return concise paths and outcomes to the orchestrating session. Their wrappers select the configured model for the role.
+Every spawn is announced in the user's language. Agents write durable substance to their assigned file or `dev/tmp/` and return concise paths and outcomes to the orchestrating session. Their wrappers select the configured model.

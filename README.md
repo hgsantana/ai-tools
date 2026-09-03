@@ -1,25 +1,26 @@
 # ai-tools
 
-> **Version 0.0.42-ALPHA** — under active development. Suitable for testing; alpha versions provide neither guarantees nor backward compatibility (rule 4).
+> **Version 0.0.43-ALPHA** — under active development. Suitable for testing; alpha versions provide neither guarantees nor backward compatibility (rule 4).
 
 ## Overview
 
 A shared toolkit of **skills**, **three agents**, and **instructions** for Grok Build, Claude Code, OpenAI Codex, GitHub Copilot, Google Antigravity, and Cursor.
 
-Clone it to `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows), then copy its installed artifacts into each harness's user configuration. Skills are the entry points; three spawn-only agents perform the work. [`USER-AGENTS.md`](USER-AGENTS.md) carries the runtime model table; this README defines how to select it.
+Clone it to `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows), then copy its installed artifacts into each harness's user configuration. Skills are the entry points; three spawn-only agents perform the work. [`MODELS.md`](MODELS.md) is the authoring and installation lookup; this README defines how to select it. Harnesses load [`USER-AGENTS.md`](USER-AGENTS.md) and do not read the table after install.
 
 ### Contents
 
 | Path | What it is |
 |---|---|
-| [`USER-AGENTS.md`](USER-AGENTS.md) | Self-contained install artifact: user-wide routing, activation gate, runtime model table, agent roles, language, and security. Workflows live in skills and agent bases |
+| [`USER-AGENTS.md`](USER-AGENTS.md) | Self-contained install artifact: user-wide routing, skill-offer gate, spawn rules, language, and security. Workflows live in skills and agent bases |
+| [`MODELS.md`](MODELS.md) | Authoring and installation model table. Not copied into harnesses; wrappers and install-time config carry the pins |
 | [`docs/USAGE.md`](docs/USAGE.md) | Harness-agnostic invocation guide for every shipped skill and the three spawn-only agents |
 | [`agents/planner-ai-tools.md`](agents/planner-ai-tools.md) | `planner-ai-tools` — decomposes, designs, owns acceptance, and delegates production code. Contains type rules; the brief defines the job |
 | [`agents/implementer-ai-tools.md`](agents/implementer-ai-tools.md) | `implementer-ai-tools` — writes and edits code for one assignment. Type rules only; the brief is the job |
 | [`agents/mechanical-ai-tools.md`](agents/mechanical-ai-tools.md) | `mechanical-ai-tools` — executes specified patches and renames, runs builds and tests, and collects evidence. Contains type rules; the brief defines the job |
 | [`agents/SUBAGENT-CONTRACT.md`](agents/SUBAGENT-CONTRACT.md) | Shared spawned-subagent contract: brief, user channel, report, model pin, spawning, and type boundaries. Not installed; read by path |
 | [`agents/<harness>/`](agents/) | One wrapper per agent: header pin, contract pointer, base pointer |
-| [`skills/`](skills/) | Ten skills, each the installed `skills/<name>/SKILL.md` (the whole skill). Each in-memory description carries its use, impact, and minimum role. The three agents have no skill |
+| [`skills/`](skills/) | Ten skills, each the installed `skills/<name>/SKILL.md` (the whole skill). Each in-memory description carries its use, impact, and `Agent:`. The three agents have no skill |
 | [`scripts/`](scripts/) | `install`, `remove`, `update`, `reinstall`, `verify` — bash ([Scripts](#scripts); rules 25–28). Windows: WSL or Git Bash |
 
 ### Quick start
@@ -38,7 +39,7 @@ Replace `install` with `remove`, `update`, `reinstall`, or `verify`. Every scrip
 
 The AI follows the matching process section below and runs that same script.
 
-After installation, see the harness-agnostic [usage guide](docs/USAGE.md) for skill prompts and agent roles.
+After installation, see the harness-agnostic [usage guide](docs/USAGE.md) for skill prompts and agent names.
 
 ## Repository rules
 
@@ -55,12 +56,12 @@ Normative for every human and every AI maintaining this repository.
 
 5. Three agents ship: `planner-ai-tools`, `implementer-ai-tools`, and `mechanical-ai-tools`. Each has a request-agnostic, harness-agnostic **base** at `agents/<name>.md` and one **wrapper** per harness at `agents/<harness-short-name>/<agent-name>.<ext>`. Bases are **mode-agnostic**: they identify required questions or approvals, while `agents/SUBAGENT-CONTRACT.md` defines the spawned user channel. Type rules prevail over a conflicting brief. Bases route delegated work; the contract governs further spawning (rule 8). Skills make the complete **Workflow** and user request available in each brief, inline or by durable path.
 6. A wrapper consists of a harness-specific header and model pin (`model:`, plus effort when present in the table), followed by pointers to `$HOME/.ai-tools/agents/SUBAGENT-CONTRACT.md` and `$HOME/.ai-tools/agents/<name>.md`, in that order. The base prevails except for the contract's user channel. Additional body text is drift. The **1,000-character** cap includes frontmatter. See the canonical body in [wrapper authoring](#model-selection-and-wrapper-authoring).
-7. Skills are harness-agnostic and live entirely in `skills/<name>/SKILL.md`, with frontmatter defined by rule 9. They use no per-harness copies, separate skill contracts or bases, root-level `skills/<name>.md`, `SKILL-CONTRACT.md`, or `MAINTAINER.md`; required maintainer text is duplicated. Descriptions contain three parts and at most 500 characters (rule 9); bodies have no character cap but follow rule 15. Skills contain neither **Stake** nor **Continue?** headings. `USER-AGENTS.md` recommends by scope without checking models. Its activation gate runs only after the user directly names a shipped `*-ai-tools` skill or chooses one after a recommendation: surface the in-memory `Impact:`, compare its in-memory `Min. role:` against the embedded model table, report fit, and start without a second confirmation. `gh-ai-tools` covers GitHub-hosted resources and administration; repository code work such as commits, branches, rebases, merges, pushes, code review, and pull-request delivery bypasses it and runs directly.
-8. **Spawning is open**: every session, skill, and agent may spawn the named agent that owns the work; spawned agents may do the same (`agents/SUBAGENT-CONTRACT.md`). If spawning fails, the run carries work allowed by its type or returns a dispatch request. Code-writing agents run concurrently on separate files; read-only discovery, builds, and tests may always run in parallel. Wrappers pin models for `planner-ai-tools`, `implementer-ai-tools`, and `mechanical-ai-tools`. `USER-AGENTS.md` gates every shipped skill: naming one authorizes its Workflow at the **Min. role**; planner-min skills carry `planner-ai-tools`. The user may proceed below the model minimum.
-9. Skill frontmatter uses universally accepted `name` and `description`, plus optional keys supported by every harness, such as `argument-hint`. The `description`, which harnesses retain without loading the body, states in order: (1) what the skill does and when to use it, including `/name`; (2) `Impact:` plus what can be billed, deleted, committed, pushed, or otherwise changed—or that impact is absent; (3) `Min. role:` with `planner`, `implementer`, or `mechanical`. Keep it within **500 characters** because harnesses budget the skill list: Codex caps it at 2% of context or 8,000 characters, and Claude Code truncates it at 1,536.
+7. Skills are harness-agnostic and live entirely in `skills/<name>/SKILL.md`, with frontmatter defined by rule 9. They use no per-harness copies, separate skill contracts or bases, root-level `skills/<name>.md`, `SKILL-CONTRACT.md`, or `MAINTAINER.md`; required maintainer text is duplicated. Descriptions contain three parts and at most 500 characters (rule 9); bodies have no character cap but follow rule 15. Skills contain neither **Stake** nor **Continue?** headings. `USER-AGENTS.md` offers skills by scope without checking models: that offer is the only USER-AGENTS.md gate. It states each option's `Impact:`, that choosing it dispatches the agent named in `Agent:`, and the model pinned on that agent's wrapper (or in the harness config written at install when the wrapper has none). A leading `/name` confirms that skill's stake, offers other fitting skills, and proceeds after the answer. Choosing a skill spawns the matching agent with that skill file as the brief; the host session does not run it. The Workflow states the work, not an identity. `gh-ai-tools` covers GitHub-hosted resources and administration; repository code work such as commits, branches, rebases, merges, pushes, code review, and pull-request delivery bypasses it and runs directly.
+8. **Spawning is open**: every session, skill, and agent may spawn the named agent that owns the work; spawned agents may do the same (`agents/SUBAGENT-CONTRACT.md`). If spawning fails, the run carries work allowed by its type or returns a dispatch request. Code-writing agents run concurrently on separate files; read-only discovery, builds, and tests may always run in parallel. Wrappers pin models for `planner-ai-tools`, `implementer-ai-tools`, and `mechanical-ai-tools`. Choosing a skill at the USER-AGENTS.md offer spawns the agent named in `Agent:` with that skill file as the brief; the host session does not carry the skill.
+9. Skill frontmatter uses universally accepted `name` and `description`, plus optional keys supported by every harness, such as `argument-hint`. The `description`, which harnesses retain without loading the body, states in order: (1) what the skill does and when to use it, including `/name`; (2) `Impact:` plus what can be billed, deleted, committed, pushed, or otherwise changed—or that impact is absent; (3) `Agent:` with `planner-ai-tools`, `implementer-ai-tools`, or `mechanical-ai-tools`. Keep it within **500 characters** because harnesses budget the skill list: Codex caps it at 2% of context or 8,000 characters, and Claude Code truncates it at 1,536.
 10. Wrappers follow each harness's official documentation. Re-check vendor docs before adding a harness or editing a wrapper — formats change upstream.
-11. Vendor model names live in the `USER-AGENTS.md` table and wrapper headers only. Dispatch uses the named agent's already-pinned wrapper. Grok installation reads the table during installation; `tools/lint.sh` reads it during authoring. [Supported harnesses](#supported-harnesses) may show accepted value *shapes*, never the choice. Bases cite **planner** / **implementer** / **mechanical** as roles (`USER-AGENTS.md` → *The three agents*). Spawn calls and skills use agent names.
-12. The `USER-AGENTS.md` model table and wrapper **headers** match in the same commit (new agent, new harness, or model change). Wrapper bodies name neither a row nor a model. Fill each cell by the [selection method](#choosing-the-models) — never memory or unsourced claims.
+11. Vendor model names live in the [`MODELS.md`](MODELS.md) table and wrapper headers only. Dispatch uses the named agent's already-pinned wrapper. Grok installation reads the table during installation; `tools/lint.sh` reads it during authoring. [Supported harnesses](#supported-harnesses) may show accepted value *shapes*, never the choice. Bases cite **planner** / **implementer** / **mechanical** as types. Spawn calls and skills use agent names.
+12. The `MODELS.md` table and wrapper **headers** match in the same commit (new agent, new harness, or model change). Wrapper bodies name neither a row nor a model. Fill each cell by the [selection method](#choosing-the-models) — never memory or unsourced claims.
 13. Antigravity's wrapper `model:` is a **subagent tier** (`inherit`/`flash`/`pro`), not a model family name — pin the table cell. Accepted shapes live in [Supported harnesses](#supported-harnesses).
 14. Every installed agent name, skill directory, slash command, frontmatter `name:`, and file basename ends in `-ai-tools`; bare names such as `planner` and `az` remain uninstalled.
 15. Use extreme concision: remove ambiguity and redundancy while preserving every instruction, rule, and intention.
@@ -93,7 +94,7 @@ Normative for every human and every AI maintaining this repository.
 
 ### Model selection and wrapper authoring
 
-The model table in [`USER-AGENTS.md`](USER-AGENTS.md) is the runtime, authoring, and installation lookup: one row per harness, one column per agent role, and the session-model change method. Family, version, and any official effort come from the harness's official **pricing/models** table for individual plans on that agent surface. Measurements come from [Artificial Analysis (AA)](https://artificialanalysis.ai/) **model** pages: Intelligence Index, Cost per Task, and Time per Task for the model itself. Cost always means AA Cost per Task. Fetch inputs with [`tools/harness-models.sh`](tools/harness-models.sh) and [`tools/aa-metrics.sh`](tools/aa-metrics.sh), which write CSVs under `dev/tmp/`. The table evaluates model potential rather than a frozen stack.
+The model table in [`MODELS.md`](MODELS.md) is the authoring and installation lookup: one row per harness, one column per agent role, and the session-model change method. Harnesses do not load it; wrappers and install-time config carry the pins. Family, version, and any official effort come from the harness's official **pricing/models** table for individual plans on that agent surface. Measurements come from [Artificial Analysis (AA)](https://artificialanalysis.ai/) **model** pages: Intelligence Index, Cost per Task, and Time per Task for the model itself. Cost always means AA Cost per Task. Fetch inputs with [`tools/harness-models.sh`](tools/harness-models.sh) and [`tools/aa-metrics.sh`](tools/aa-metrics.sh), which write CSVs under `dev/tmp/`. The table evaluates model potential rather than a frozen stack.
 
 Wrappers always pin the model token and pin effort only when the cell has an official effort **and** the wrapper form can hold it (`effort:` Claude Code, `model_reasoning_effort` Codex, `[effort=…]` Cursor).
 
@@ -120,7 +121,7 @@ A table row is reproducible research. Re-run the method for every model release 
 4. **Fallback—when measurement cannot decide** because step 3 yields an empty band, no complete candidate, or a final Cost per Task and Time per Task tie. Use the harness's official task guidance: deep reasoning, architecture, and ambiguity for **planner**; agentic software development, implementation, and tool use for **implementer**; simple, repetitive, routine, fast, or cost-sensitive work for **mechanical**. Cite it and label `documented fallback`. If guidance names **one** model, use that token and any effort it also names. Otherwise—including Auto/routing or multiple names without a winner—**repeat the previous category's cell**: implementer copies planner; mechanical copies implementer. Never invent a quantitative winner.
 5. **Write.** Put each winner in the table as the accepted model token. Append ` · effort` only when the family is effort-comparable **and** official docs list a token that matches the selected row (or the documented-fallback effort the guidance named), in the vendor's spelling. Otherwise use the model token alone. A measured winner may not be `N/A`. In the same commit (rule 12), update every affected wrapper: always pin the model token; pin effort **only** if the cell has ` · effort` **and** the wrapper form can hold it. Table shape: one row per harness; column 1 is the backticked key matching `agents/<harness>/`; scripts take the first backtick-quoted token as the model. A new harness adds that row, its wrapper folder, and [Supported harnesses](#supported-harnesses) in the same commit.
 
-Pin the role the base names (`You are the **planner** / **implementer** / **mechanical**`) from the `USER-AGENTS.md` table in the header. Body (rule 6):
+Pin the role the base names (`You are the **planner** / **implementer** / **mechanical**`) from the `MODELS.md` table in the header. Body (rule 6):
 
 ```markdown
 On Windows, %USERPROFILE% replaces $HOME.
@@ -134,7 +135,7 @@ Read it and follow it in full — it is the absolute rule set for this agent; th
 
 Codex carries the same text in `developer_instructions`, with Windows backslashes doubled for TOML.
 
-A skill carries frontmatter (rule 9), H1, one-sentence scope, then Workflow. `USER-AGENTS.md` recommends from the in-memory description, then runs the activation gate only for the selected skill. Point at `agents/<name>.md` only as a planner-role base, never as a skill base. On Windows, `%USERPROFILE%` replaces `$HOME`.
+A skill carries frontmatter (rule 9), H1, one-sentence scope, then Workflow. The Workflow is the dispatched agent's brief: it states the work, not an identity. `USER-AGENTS.md` offers from the in-memory description (the gate), then spawns the agent named in `Agent:` with that file and the user request. Point at `agents/<name>.md` only as a planner-role base, never as a skill base. On Windows, `%USERPROFILE%` replaces `$HOME`.
 
 ## Scripts
 
@@ -167,16 +168,16 @@ Check families:
 - **wrapper coverage** — every agent has exactly one wrapper per harness, no orphans (rule 5)
 - **naming** — agent bases, wrappers, skill directories, and frontmatter `name:` all end in `-ai-tools` (rule 14)
 - **skill frontmatter** — every `skills/*/SKILL.md` exists, keys a subset of `name`/`description`/`argument-hint`, and `name:` matches its directory (rule 9)
-- **skill description** — every skill `description` is at most 500 characters and states what it does, then `Impact:`, then a valid `Min. role:` (rule 9)
+- **skill description** — every skill `description` is at most 500 characters and states what it does, then `Impact:`, then a valid `Agent:` (rule 9)
 - **skill layout** — no `skills/*.md` at the skills root; every `skills/*-ai-tools/SKILL.md` exists; no `SKILL.md` contains `## Continue?` or `## Stake`; `USER-AGENTS.md` contains `## How to route a request`; no `SKILL.md` mentions `SKILL-CONTRACT` or `MAINTAINER.md` (rule 7)
 - **wrapper body** — the body is reconstructed from this README's canonical text and compared exactly (rule 6)
-- **model parity and effort pinning** — every pinned model and effort resolves through the `USER-AGENTS.md` table (rules 11–12); Grok wrappers declare no model
+- **model parity and effort pinning** — every pinned model and effort resolves through the `MODELS.md` table (rules 11–12); Grok wrappers declare no model
 - **description parity** — an agent's `description` is identical across all six wrappers
-- **model row coverage** — every harness directory has a `USER-AGENTS.md` table row and vice versa (rule 12)
+- **model row coverage** — every harness directory has a `MODELS.md` table row and vice versa (rule 12)
 - **size caps** — `USER-AGENTS.md` at most 8,000 characters (rule 3), every wrapper at most 1,000 (rule 6), every skill `description` at most 500 (rule 9)
 - **encodings and endings** — line endings (`git ls-files --eol`), executable bits, no binaries in shipped paths (rule 28)
 - **`dev/tmp` untracked** — `git ls-files dev/tmp` returns nothing (rule 29)
-- **version bump** — only with `--base <ref>`: a change under `agents/`, `skills/`, `scripts/`, or `USER-AGENTS.md` that lands on `master` requires the README version to change too (rule 4)
+- **version bump** — only with `--base <ref>`: a change under `agents/`, `skills/`, `scripts/`, `USER-AGENTS.md`, or `MODELS.md` that lands on `master` requires the README version to change too (rule 4)
 
 Exit codes: `0` clean, `1` aborted on a precondition (unknown flag, `--base` without a value), `2` finished with findings. CI (`.github/workflows/ci.yml`) runs two jobs on `ubuntu-latest`: `lint` runs the version-bump check on pull requests and `shellcheck -x -P scripts/shell -P tools/test scripts/shell/*.sh tools/*.sh tools/test/*.sh` on every push and pull request; `test-shell` runs `tools/test.sh`.
 
@@ -245,8 +246,8 @@ Every step is idempotent and reports conflicts it skips.
 3. **Instructions** — copy `USER-AGENTS.md` to each scoped harness's global instructions destination (`--no-instructions` skips). Cursor has none; Antigravity uses `$HOME/.gemini/GEMINI.md`; an existing `~/.codex/AGENTS.override.md` is reported, never touched.
 4. **Agents** — copy each wrapper from `agents/<harness>/` into that harness's agents root, per file, never per directory — those roots hold agents from other sources.
 5. **Skills** — recursively copy each `skills/*-ai-tools` directory into every scoped skills root (rules 7–9).
-6. **Grok model pinning** — Grok ignores `model:` in frontmatter and reads `~/.grok/config.toml`. The script maintains a marker-delimited `[subagents.models]` block: names from the tree, models from the `USER-AGENTS.md` table (unreadable table → skip and report, never guess). A pre-existing unmanaged block is skipped and reported, never edited. Without the pin, agents still load but inherit the session model — the strong-model guarantee is lost. The same fallback applies to any harness that ignores `model:`.
-7. **Verify** — every installed instruction, agent, and skill is a physical copy matching its source; `USER-AGENTS.md` fits the repository's 8,000-character cap (rule 3); `agents/SUBAGENT-CONTRACT.md`, every agent base, and every shipped `skills/<name>/SKILL.md` exist. Any installation symlink is a finding. Skipped under `--dry-run`; re-run anytime with `verify`.
+6. **Grok model pinning** — Grok ignores `model:` in frontmatter and reads `~/.grok/config.toml`. The script maintains a marker-delimited `[subagents.models]` block: names from the tree, models from the `MODELS.md` table (unreadable table → skip and report, never guess). A pre-existing unmanaged block is skipped and reported, never edited. Without the pin, agents still load but inherit the session model — the strong-model guarantee is lost. The same fallback applies to any harness that ignores `model:`.
+7. **Verify** — every installed instruction, agent, and skill is a physical copy matching its source; `USER-AGENTS.md` fits the repository's 8,000-character cap (rule 3); `MODELS.md`, `agents/SUBAGENT-CONTRACT.md`, every agent base, and every shipped `skills/<name>/SKILL.md` exist. Any installation symlink is a finding. Skipped under `--dry-run`; re-run anytime with `verify`.
 
 Then restart or reload any harness that caches agents or skills at startup. Confirm the three agents (`planner-ai-tools`, `implementer-ai-tools`, `mechanical-ai-tools`) and a slash command for every shipped skill.
 
@@ -310,7 +311,7 @@ Then restart or reload the harness and confirm the three agents and a slash comm
 - **Legacy or dangling ai-tools links:** [Reinstallation](#reinstallation) migrates current artifact paths to physical copies and sweeps stale links.
 - **Installed copies out of date:** copies do not track `git pull` — use [Update](#update), which refreshes unchanged copies from the previous revision.
 - **A conflicting or locally modified installed artifact should be replaced:** rerun install, update, or reinstall with `--overwrite` and an explicit `--harnesses` scope. The flag affects only known artifact destinations in that scope.
-- **An agent runs on the wrong (weak) model:** pinning is not applied. Grok: check the managed `[subagents.models]` block in `~/.grok/config.toml` (re-run [Installation](#installation) to restore it). Others: compare the installed wrapper to `$AI_TOOLS/agents/<harness>/` and the `USER-AGENTS.md` model table.
+- **An agent runs on the wrong (weak) model:** pinning is not applied. Grok: check the managed `[subagents.models]` block in `~/.grok/config.toml` (re-run [Installation](#installation) to restore it). Others: compare the installed wrapper to `$AI_TOOLS/agents/<harness>/` and the `MODELS.md` table.
 - **A copied artifact was edited locally:** preserve the edit elsewhere before `--overwrite`; installed copies are managed deployment artifacts, while `$HOME/AGENTS.md` remains the supported place for personal instructions.
 
 ## License

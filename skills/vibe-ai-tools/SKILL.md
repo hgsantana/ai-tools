@@ -6,7 +6,7 @@ description: >
   Impact: after plan approval, edits on a dedicated branch, commits, pushes,
   and opens a pull request unattended; edits and removals can be hard to undo.
   Pre-existing history remains intact. Cloud and destructive operations require
-  separate approval. Min. role: planner.
+  separate approval. Agent: planner-ai-tools.
 argument-hint: "[the change to deliver]"
 ---
 
@@ -16,14 +16,16 @@ Plan a change with the user through `planner-ai-tools`, then deliver the approve
 
 ## Workflow
 
-Carry the `planner-ai-tools` role and run these two steps in order, then stop.
+This file is the brief for the dispatched agent. Execute the Workflow.
+
+Run these two steps in order, then stop.
 
 ### 1. Plan (planner relay)
 
 Derive a kebab-case `<slug>` from the change.
 
 1. **Spawn planner**: announce the spawn in the user's language, then spawn `planner-ai-tools`.
-2. **Brief**: pass the user's request and instruct `planner-ai-tools` to follow the complete `plan-ai-tools` skill, including its workflow, multi-file format, disk-based source of truth, and boundaries.
+2. **Brief**: pass the user's request and the path `$HOME/.ai-tools/skills/plan-ai-tools/SKILL.md` (Windows: `%USERPROFILE%\.ai-tools\skills\plan-ai-tools\SKILL.md`). That file is the planning brief.
 3. **User relay**: act as a relay between `planner-ai-tools` and the user:
    - Relay questions, ambiguities, and design choices from `planner-ai-tools` to the user in the user's language.
    - Resume or re-dispatch `planner-ai-tools` with the user's answers.
@@ -31,7 +33,7 @@ Derive a kebab-case `<slug>` from the change.
 
 ### 2. Execute (full delivery)
 
-After approval, follow `dev-ai-tools` in Plan mode against `dev/<slug>/` through branch creation, sequential stages, validation, archival, push, and pull request. Its stop conditions remain in force: a blocker, a decision uncovered during implementation, or an approval reserved by the Security rules.
+After approval, follow the Workflow in `$HOME/.ai-tools/skills/dev-ai-tools/SKILL.md` (Windows: `%USERPROFILE%\.ai-tools\skills\dev-ai-tools\SKILL.md`) in Plan mode against `dev/<slug>/` through branch creation, sequential stages, validation, archival, push, and pull request. Its stop conditions remain in force: a blocker, a decision uncovered during implementation, or an approval reserved by the Security rules.
 
 One deviation applies: because this gate promised an unattended run, decide how to handle a failed stage instead of returning the archival choice. Record the choice and rationale in `dev/tmp/vibe/<slug>-decisions.md`, creating it when needed.
 
@@ -41,7 +43,6 @@ One deviation applies: because this gate promised an unattended run, decide how 
 
 ## Boundaries
 
-- Operate in the planner role for this run.
 - Spawn the agent that owns each piece of work; carry allowed work here when spawning fails.
 - Stay inside the working repository. The sole exception is a file a harness requires outside the repository by design.
 - Preserve all history that predates this work: never force-push, rewrite pre-existing commits, or delete another branch. The plan's own branch may be deleted.

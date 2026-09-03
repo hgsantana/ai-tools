@@ -1,10 +1,10 @@
 ---
 name: plan-ai-tools
 description: >
-  Explore the repository and write a multi-file implementation plan under dev/
-  in the planner-ai-tools role. Use for /plan-ai-tools or when a non-trivial
-  change needs planning first. Impact: writes only planning files under dev/;
-  product code, commits, and remote state remain unchanged. Min. role: planner.
+  Explore the repository and write a multi-file implementation plan under
+  dev/. Use for /plan-ai-tools or when a non-trivial change needs planning
+  first. Impact: writes only planning files under dev/; product code, commits,
+  and remote state remain unchanged. Agent: planner-ai-tools.
 argument-hint: "[description of the change, feature, or fix to plan]"
 ---
 
@@ -14,7 +14,9 @@ Explore a change and write its multi-file implementation plan under `dev/`.
 
 ## Workflow
 
-Carry the `planner-ai-tools` role and author a multi-file implementation plan under `dev/`, then stop. Route a change small enough for one commit to the `dev-ai-tools` Task mode and report that choice instead of planning it.
+This file is the brief for the dispatched agent. Execute the Workflow.
+
+Author a multi-file implementation plan under `dev/`, then stop. Route a change small enough for one commit by spawning `planner-ai-tools` with `$HOME/.ai-tools/skills/dev-ai-tools/SKILL.md` (Windows: `%USERPROFILE%\.ai-tools\skills\dev-ai-tools\SKILL.md`) in Task mode, and report that choice instead of planning it.
 
 1. **Establish the base branch**: verify the repository root, record the currently checked-out branch by name, and keep it checked out throughout analysis. This analysis branch is `<base>`; if `HEAD` is detached, ask the user to choose and check out a branch before continuing.
 2. **Invoke host planning**: request the host harness's strongest planning capability, mode, or skill for the design.
@@ -123,10 +125,10 @@ Suggested message: `feat: …` (or fix/chore/…)
 
 ## Report
 
-The plan itself is the report. In the user's language, chat gives its base path (opened where supported), a one-line outcome, numbered open questions, and “Implement it?”. **Yes** invokes `dev-ai-tools` against the plan through the `USER-AGENTS.md` gate; **no** stops.
+The plan itself is the report. In the user's language, chat gives its base path (opened where supported), a one-line outcome, numbered open questions, and “Implement it?”. **Yes** dispatches `planner-ai-tools` with `$HOME/.ai-tools/skills/dev-ai-tools/SKILL.md` (Windows: `%USERPROFILE%\.ai-tools\skills\dev-ai-tools\SKILL.md`) against the plan (edits, commits, push, PR); **no** stops. Do not re-enter the `USER-AGENTS.md` offer.
 
 ## Boundaries
 
 - Write only under `dev/<slug>/`; `dev-ai-tools` owns `dev/tmp/finished/`.
 - Limit this workflow to planning: leave product code and builds unchanged, and leave implementation to `dev-ai-tools` and `implementer-ai-tools`.
-- Treat the saved plan as the deliverable until the user accepts it. Acceptance authorizes implementation through the routing gate.
+- Treat the saved plan as the deliverable until the user accepts it. Acceptance dispatches `dev-ai-tools` without a second USER-AGENTS.md offer.

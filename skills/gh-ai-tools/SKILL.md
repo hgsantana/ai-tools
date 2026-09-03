@@ -5,7 +5,7 @@ description: >
   issues, and releases through the GitHub CLI (gh). Use for /gh-ai-tools;
   handle repository code work directly. Impact: remote mutations can change
   access, settings, automation, or hosted data. Reads run freely; each mutation
-  requires explicit approval. Min. role: implementer.
+  requires explicit approval. Agent: implementer-ai-tools.
 argument-hint: "[GitHub platform resource to inspect or manage]"
 ---
 
@@ -14,6 +14,8 @@ argument-hint: "[GitHub platform resource to inspect or manage]"
 Manage GitHub-hosted resources and configuration through the GitHub CLI (`gh`).
 
 ## Workflow
+
+This file is the brief for the dispatched agent. Execute the Workflow.
 
 Use `gh` for the requested GitHub platform query or administration, then stop.
 

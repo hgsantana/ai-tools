@@ -33,19 +33,19 @@ Checks:
   skill name match  skills/<x>/SKILL.md declares name: <x>
   skill description every skill description is at most 500 characters,
                     folded block included, and states what the skill does,
-                    then Impact:, then Min. role: (rule 9)
+                    then Impact:, then Agent: (rule 9)
   skill layout      no skill-root markdown, every skill directory has
                     SKILL.md, no SKILL.md contains Continue? or Stake,
-                    USER-AGENTS.md has How to route a request and Min. role,
+                    USER-AGENTS.md has How to route a request and Agent:,
                     and no references to deleted files (rule 7)
   wrapper body      every wrapper body is exactly the canonical text
                     reconstructed from the agent name (rule 6)
-  model parity      every wrapper's pinned model matches USER-AGENTS.md via
+  model parity      every wrapper's pinned model matches MODELS.md via
                     model_for; Grok wrappers declare no model: (rules 11-12)
-  effort pinning    the wrapper pins the USER-AGENTS.md cell's effort where its
+  effort pinning    the wrapper pins the MODELS.md cell's effort where its
                     form can hold one, in the vendor's spelling
   description parity same agent's description is identical across wrappers
-  model row coverage each agents/<key>/ has a USER-AGENTS.md row and vice versa
+  model row coverage each agents/<key>/ has a MODELS.md row and vice versa
   instructions cap  USER-AGENTS.md is at most 8000 characters (rule 3)
   wrapper cap       every agents/<harness>/* file is at most 1000 characters,
                     frontmatter included (rule 6)
@@ -56,7 +56,7 @@ Checks:
   no binaries       every tracked file under agents/, skills/, scripts/, and
                     tools/ is text
   version bump      CI-only, needs --base <ref> (skipped without it): when
-                    agents/, skills/, scripts/, or USER-AGENTS.md changed
+                    agents/, skills/, scripts/, USER-AGENTS.md, or MODELS.md changed
                     since <ref>, the README version line must have changed
                     too (rule 4)
   dev/tmp untracked git ls-files dev/tmp returns nothing (rule 29)
@@ -320,10 +320,10 @@ check_skill_layout() {
   else
     warn "USER-AGENTS.md missing '## How to route a request' heading: $f"
   fi
-  if grep -q 'Min\. role' "$f"; then
-    ok "USER-AGENTS.md has Min. role column: $f"
+  if grep -q 'Agent:' "$f"; then
+    ok "USER-AGENTS.md names Agent: $f"
   else
-    warn "USER-AGENTS.md missing 'Min. role' column: $f"
+    warn "USER-AGENTS.md missing 'Agent:': $f"
   fi
 
   for name in $gated $maintainer; do
@@ -411,30 +411,30 @@ check_skill_description_cap() {
 }
 
 check_skill_description_content() {
-  # rule 9: description states what it does, then Impact:, then Min. role:
-  local d f val before impact role
+  # rule 9: description states what it does, then Impact:, then Agent:
+  local d f val before impact agent
   for d in "$AI_TOOLS"/skills/*-ai-tools/; do
     [ -d "$d" ] || continue
     f="${d}SKILL.md"
     [ -f "$f" ] || continue
     val=$(yaml_frontmatter_folded_value "$f" description)
     case "$val" in
-      *"Impact:"*"Min. role:"*)
+      *"Impact:"*"Agent:"*)
         before=$(printf '%s\n' "$val" | awk '{ sub(/Impact:.*/, ""); gsub(/^[ \t]+|[ \t]+$/, ""); print }')
-        impact=$(printf '%s\n' "$val" | awk '{ sub(/.*Impact:/, ""); sub(/Min\. role:.*/, ""); gsub(/^[ \t]+|[ \t]+$/, ""); print }')
-        role=$(printf '%s\n' "$val" | awk '{ sub(/.*Min\. role:/, ""); gsub(/[.[:space:]]/, ""); print }')
+        impact=$(printf '%s\n' "$val" | awk '{ sub(/.*Impact:/, ""); sub(/Agent:.*/, ""); gsub(/^[ \t]+|[ \t]+$/, ""); print }')
+        agent=$(printf '%s\n' "$val" | awk '{ sub(/.*Agent:/, ""); gsub(/[.[:space:]]/, ""); print }')
         if [ -z "$before" ]; then
           warn "skill description has no what-it-does before Impact: $f"
         elif [ -z "$impact" ]; then
           warn "skill description Impact has no stake text: $f"
-        elif ! in_list "$role" "planner implementer mechanical"; then
-          warn "skill description has invalid Min. role: $f ('$role')"
+        elif ! in_list "$agent" "$(agent_names | tr '\n' ' ')"; then
+          warn "skill description has invalid Agent: $f ('$agent')"
         else
-          ok "skill description has what + Impact + Min. role: $f"
+          ok "skill description has what + Impact + Agent: $f"
         fi
         ;;
       *)
-        warn "skill description missing ordered Impact: or Min. role: (rule 9): $f"
+        warn "skill description missing ordered Impact: or Agent: (rule 9): $f"
         ;;
     esac
   done
@@ -442,7 +442,7 @@ check_skill_description_content() {
 
 # --- Check: wrapper body and model parity (rules 6, 11-12) --------------------
 # Never hard-code a vendor model name here — every expected model is resolved
-# through model_for, reading USER-AGENTS.md in place.
+# through model_for, reading MODELS.md in place.
 
 canonical_body() {
   # usage: canonical_body <agent-name>
@@ -505,7 +505,7 @@ check_wrapper_body() {
 
 model_effort_for() {
   # usage: model_effort_for <harness-key> <planner|implementer|mechanical>
-  # Prints the USER-AGENTS.md cell's " · effort" word, or nothing when absent.
+  # Prints the MODELS.md cell's " · effort" word, or nothing when absent.
   local key="$1" col
   case "$2" in
     planner)     col=4 ;;
@@ -538,7 +538,7 @@ check_model_parity() {
       f=$(wrapper_path "$h" "$a")
       [ -f "$f" ] || continue
       cat=$(category_for "$a")
-      expected=$(model_for "$h" "$cat") || { warn "no usable USER-AGENTS.md model row for $h/$cat: $f"; continue; }
+      expected=$(model_for "$h" "$cat") || { warn "no usable MODELS.md model row for $h/$cat: $f"; continue; }
       case "$h" in
         grok)
           if in_list model "$(yaml_frontmatter_keys "$f" | tr '\n' ' ')"; then
@@ -627,16 +627,16 @@ check_models_row_coverage() {
   rows=$(awk -F'|' 'NF >= 8 && $2 ~ /`[a-z0-9-]+`/ { k = $2; gsub(/[`[:space:]]/, "", k); print k }' "$MODEL_TABLE" 2>/dev/null)
   for h in $(harnesses); do
     if in_list "$h" "$(echo "$rows" | tr '\n' ' ')"; then
-      ok "USER-AGENTS.md model row present: $h"
+      ok "MODELS.md model row present: $h"
     else
-      warn "agents/$h/ has no USER-AGENTS.md model row"
+      warn "agents/$h/ has no MODELS.md model row"
     fi
   done
   for k in $rows; do
     if [ -d "$AI_TOOLS/agents/$k" ]; then
-      ok "USER-AGENTS.md model row has a wrapper directory: $k"
+      ok "MODELS.md model row has a wrapper directory: $k"
     else
-      warn "USER-AGENTS.md model row without agents/ directory: $k"
+      warn "MODELS.md model row without agents/ directory: $k"
     fi
   done
 }
@@ -777,7 +777,7 @@ check_version_bump() {
     skip "version bump check needs --base <ref> (the lint workflow supplies it)"
     return
   fi
-  changed=$(git -C "$AI_TOOLS" diff --name-only "$base...HEAD" -- agents skills scripts USER-AGENTS.md 2>/dev/null)
+  changed=$(git -C "$AI_TOOLS" diff --name-only "$base...HEAD" -- agents skills scripts USER-AGENTS.md MODELS.md 2>/dev/null)
   if [ -z "$changed" ]; then
     ok "no shipped content changed since $base: version bump not required"
     return

@@ -1,11 +1,11 @@
 ---
 name: dev-ai-tools
 description: >
-  Execute an accepted plan under dev/ or one task agreed with the user in the
-  planner-ai-tools role. Use for /dev-ai-tools or after plan acceptance.
+  Execute an accepted plan under dev/ or one task agreed with the user. Use
+  for /dev-ai-tools or after plan acceptance.
   Impact: edits code, runs commands, commits each step on a dedicated branch,
   archives the plan or task, pushes, and opens a pull request unattended once
-  all steps finish. Min. role: planner.
+  all steps finish. Agent: planner-ai-tools.
 argument-hint: "[plan paths, or the task to implement]"
 ---
 
@@ -15,7 +15,9 @@ Execute an accepted plan under `dev/<slug>/` or one task agreed with the user.
 
 ## Workflow
 
-Carry the `planner-ai-tools` role, select the mode, run the sequence, then stop.
+This file is the brief for the dispatched agent. Execute the Workflow.
+
+Select the mode, run the sequence, then stop.
 
 | Input | Mode |
 |---|---|
@@ -120,7 +122,7 @@ Then push `plan/<slug>` and open the pull request against the same `<base>` from
 
 | Work | Who |
 |---|---|
-| Orchestrate steps, author briefs, review diffs, audit tests, commit, set status | this session (you), in the `planner-ai-tools` role |
+| Orchestrate steps, author briefs, review diffs, audit tests, commit, set status | this agent |
 | Write and edit the code and tests of one step | `implementer-ai-tools` |
 | Run builds and tests, collect raw logs and diffs | `mechanical-ai-tools` |
 
@@ -225,4 +227,4 @@ It closes with the `F`/`E` counts, the pull request URL or the local review patc
 - Write substance to disk and hand the user paths; reserve chat for questions, approvals, and a one-line outcome.
 - Stay inside the working repository and preserve history predating this run.
 - Record a needed redesign in the report for a future planning pass.
-- Carry this role yourself. Not for pure Q&A.
+- This brief is not for pure Q&A.

@@ -4,8 +4,8 @@ description: >
   Query or manage Azure resources, subscriptions, costs, and infrastructure
   through the Azure CLI (az). Use for /az-ai-tools. Impact: mutations may
   create billable resources or remove resources and can be hard to reverse.
-  Reads run freely; each mutation requires explicit approval. Min. role:
-  implementer.
+  Reads run freely; each mutation requires explicit approval. Agent:
+  implementer-ai-tools.
 argument-hint: "[what to inspect or change in Azure]"
 ---
 
@@ -14,6 +14,8 @@ argument-hint: "[what to inspect or change in Azure]"
 Inventory, cost, and operations on Azure through the Azure CLI (`az`).
 
 ## Workflow
+
+This file is the brief for the dispatched agent. Execute the Workflow.
 
 Use `az` for the requested inventory, cost analysis, or operation, then stop.
 

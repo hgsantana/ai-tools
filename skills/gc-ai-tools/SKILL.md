@@ -4,7 +4,7 @@ description: >
   Query or manage Google Cloud resources, projects, costs, and infrastructure
   through the gcloud CLI. Use for /gc-ai-tools. Impact: mutations may create
   billable resources or remove resources and can be hard to reverse. Reads run
-  freely; each mutation requires explicit approval. Min. role: implementer.
+  freely; each mutation requires explicit approval. Agent: implementer-ai-tools.
 argument-hint: "[what to inspect or change in Google Cloud]"
 ---
 
@@ -13,6 +13,8 @@ argument-hint: "[what to inspect or change in Google Cloud]"
 Inventory, cost, and operations on Google Cloud through the `gcloud` CLI.
 
 ## Workflow
+
+This file is the brief for the dispatched agent. Execute the Workflow.
 
 Use `gcloud` for the requested inventory, cost analysis, or operation, then stop.
 
