@@ -23,8 +23,8 @@ The routing gate already surfaced the impact. Settle scope before acting. Presen
 
 | Task | Script | Flags needing explicit user approval |
 |---|---|---|
-| `update` | `scripts/shell/update.sh` | `--discard-local` |
-| `remove` | `scripts/shell/remove.sh` | `--instructions`, `--purge` (with `--yes` only inside that same approval) |
+| `update` | `scripts/shell/update.sh` | `--overwrite`, `--discard-local` |
+| `remove` | `scripts/shell/remove.sh` | `--instructions`, `--force`, `--purge` (with `--yes` only inside that same approval) |
 
 Use agents, remotes, URLs, paths, and flags defined by the tree, README, or scripts' `--help`; these sources prevail over recollection.
 
@@ -32,7 +32,7 @@ Use agents, remotes, URLs, paths, and flags defined by the tree, README, or scri
 
 This file is the brief for the dispatched agent. Execute the Workflow.
 
-1. **Scope** — ask which harnesses, instructions, and purge options are in scope. Pass the answer as `--harnesses`; an explicit "all" selects every supported harness.
+1. **Scope** — ask which harnesses, instructions, force, and purge options are in scope. Pass the answer as `--harnesses`; an explicit "all" selects every supported harness.
 2. **Dry run** — run `scripts/shell/remove.sh` with `--dry-run` and the scoped flags. Save its output to `$AI_TOOLS/dev/tmp/remove-dry-run.log` and hand over that path, together with each destructive flag the task needs as its own approval request — action, what it discards, and why.
 3. **Execute** — run the script with exactly the approved flags.
 4. **Interpret** — exit 0: clean. Exit 2: report every `WARN` with its reason. Exit 1: report the failed precondition and use only the remedy named in README Troubleshooting. Never bypass a safety refusal by resetting or deleting manually.

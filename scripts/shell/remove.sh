@@ -7,13 +7,15 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 
 usage() {
   cat <<'EOF'
-usage: remove.sh [--harnesses <list>] [--instructions] [--no-sweep]
+usage: remove.sh [--harnesses <list>] [--instructions] [--force] [--no-sweep]
                  [--purge [--yes]] [--dry-run]
 
   --harnesses <list>   comma-separated harnesses in scope; omitted selects
                        detected harnesses; "all" selects every supported harness
   --instructions       also remove the global USER-AGENTS.md copies or legacy links;
                        never touches $HOME/AGENTS.md
+  --force              remove known artifact destinations even when contents
+                       no longer match their source; never touches $HOME/AGENTS.md
   --no-sweep           skip the stale-link sweep (links from older alpha layouts)
   --purge              delete $HOME/.ai-tools itself after removal (asks for
                        confirmation; --yes skips the prompt)
@@ -29,6 +31,7 @@ while [ $# -gt 0 ]; do
     --harnesses)   HARNESSES="${2:-}"; [ -n "$HARNESSES" ] || fatal "--harnesses needs a value"; shift ;;
     --harnesses=*) HARNESSES="${1#*=}" ;;
     --instructions) INSTRUCTIONS=1 ;;
+    --force)       FORCE=1 ;;
     --no-sweep)    NO_SWEEP=1 ;;
     --purge)       PURGE=1 ;;
     --yes)         YES=1 ;;

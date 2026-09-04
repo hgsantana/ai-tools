@@ -1,9 +1,9 @@
 # shellcheck shell=bash
 # remove.sh — proves README rules 20-22, 24, 27 against scripts/shell/remove.sh:
-# remove only what ai-tools created, keep locally modified copies, never touch
-# a foreign file or a symlink pointing elsewhere, gate --instructions and
-# --purge, sweep stale links without crossing outside $AI_TOOLS, and never
-# touch $HOME/AGENTS.md.
+# remove only what ai-tools created, keep locally modified copies unless
+# --force, never touch a symlink pointing elsewhere, gate --instructions,
+# --force, and --purge, sweep stale links without crossing outside $AI_TOOLS,
+# and never touch $HOME/AGENTS.md.
 #
 # Every case installs first (via t_run on install.sh) unless noted otherwise,
 # so removal has something real to act on.
@@ -95,6 +95,93 @@ case_remove_foreign_file_kept() {
   t_cleanup "$root"
 }
 
+case_remove_force_removes_modified_copy() {
+  local root
+  t_fixture --modified-copy
+  root="$T_ROOT"
+
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code --force
+  t_assert_exit 0
+  t_assert_line "force-removed copy: $T_MODIFIED_COPY_PATH"
+  t_assert_absent "$T_MODIFIED_COPY_PATH"
+  t_assert_absent "$root/home/.claude/agents/planner-ai-tools.md"
+
+  t_cleanup "$root"
+}
+
+case_remove_force_removes_foreign_destination() {
+  local root
+  t_fixture --foreign-agent
+  root="$T_ROOT"
+
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code --force
+  t_assert_exit 0
+  t_assert_line "force-removed copy: $T_FOREIGN_AGENT_PATH"
+  t_assert_absent "$T_FOREIGN_AGENT_PATH"
+
+  t_cleanup "$root"
+}
+
+case_remove_force_keeps_external_symlink() {
+  local root before_target
+  t_fixture --external-symlink
+  root="$T_ROOT"
+  before_target=$(readlink "$T_EXTERNAL_SYMLINK_PATH")
+
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code --force
+  t_assert_exit 0
+  t_assert_line "SKIP: symlink not to ai-tools: $T_EXTERNAL_SYMLINK_PATH -> $before_target"
+  t_assert_symlink "$T_EXTERNAL_SYMLINK_PATH" "$root"
+  t_assert_regular_file "$root/external-file.md"
+  t_assert_content "$root/external-file.md" "outside ai-tools"
+
+  t_cleanup "$root"
+}
+
+case_remove_force_instructions() {
+  local root
+  t_fixture --foreign-instructions
+  root="$T_ROOT"
+
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code --instructions
+  t_assert_regular_file "$T_FOREIGN_INSTRUCTIONS_PATH"
+  t_assert_content "$T_FOREIGN_INSTRUCTIONS_PATH" "not an ai-tools file"
+
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code --instructions --force
+  t_assert_exit 0
+  t_assert_line "force-removed copy: $T_FOREIGN_INSTRUCTIONS_PATH"
+  t_assert_absent "$T_FOREIGN_INSTRUCTIONS_PATH"
+
+  t_cleanup "$root"
+}
+
+case_remove_force_dry_run() {
+  local root snap
+  t_fixture --modified-copy
+  root="$T_ROOT"
+
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
+  snap=$(t_snapshot "$root/home")
+
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code --force --dry-run
+  t_assert_exit 0
+  t_assert_line "ok: would force-remove copy: $T_MODIFIED_COPY_PATH"
+  t_assert_unchanged "$root/home" "$snap"
+  t_assert_regular_file "$T_MODIFIED_COPY_PATH"
+  if grep -qF 'local edit that matches no revision' "$T_MODIFIED_COPY_PATH"; then
+    ok "$T_CASE: --force --dry-run left the local edit: $T_MODIFIED_COPY_PATH"
+  else
+    warn "$T_CASE: --force --dry-run lost the local edit: $T_MODIFIED_COPY_PATH"
+  fi
+
+  rm -f "$snap"
+  t_cleanup "$root"
+}
+
 case_remove_external_symlink_kept() {
   # A foreign target remains foreign even when its parent path contains the
   # text "ai-tools" (the fixture root itself does).
@@ -127,14 +214,14 @@ case_remove_agents_md_untouched() {
   else warn "$T_CASE: AGENTS.md changed after remove.sh"; fi
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
-  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code --instructions
-  if cmp -s "$ref" "$root/home/AGENTS.md"; then ok "$T_CASE: AGENTS.md unchanged after remove.sh --instructions"
-  else warn "$T_CASE: AGENTS.md changed after remove.sh --instructions"; fi
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code --instructions --force
+  if cmp -s "$ref" "$root/home/AGENTS.md"; then ok "$T_CASE: AGENTS.md unchanged after remove.sh --instructions --force"
+  else warn "$T_CASE: AGENTS.md changed after remove.sh --instructions --force"; fi
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
-  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code --purge --yes
-  if cmp -s "$ref" "$root/home/AGENTS.md"; then ok "$T_CASE: AGENTS.md unchanged after remove.sh --purge --yes"
-  else warn "$T_CASE: AGENTS.md changed after remove.sh --purge --yes"; fi
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code --force --purge --yes
+  if cmp -s "$ref" "$root/home/AGENTS.md"; then ok "$T_CASE: AGENTS.md unchanged after remove.sh --force --purge --yes"
+  else warn "$T_CASE: AGENTS.md changed after remove.sh --force --purge --yes"; fi
 
   rm -f "$ref"
   t_cleanup "$root"
@@ -177,6 +264,10 @@ case_remove_grok_block() {
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses grok
   t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses grok
+  t_assert_line "SKIP: unmanaged [subagents.models] in $T_GROK_UNMANAGED_PATH"
+  t_assert_content "$T_GROK_UNMANAGED_PATH" 'some-other-agent = "some-model"'
+
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses grok --force
   t_assert_line "SKIP: unmanaged [subagents.models] in $T_GROK_UNMANAGED_PATH"
   t_assert_content "$T_GROK_UNMANAGED_PATH" 'some-other-agent = "some-model"'
 

@@ -12,6 +12,7 @@ EXT_ROOTS="$HOME/.vscode/extensions $HOME/.vscode-server/extensions $HOME/.vscod
 
 DRY_RUN=0
 OVERWRITE=0
+FORCE=0
 SCOPE=""
 FRESH_CLONE=0
 PREV=""
@@ -169,7 +170,8 @@ scoped_roots() {
 
 # --- Filesystem safety primitives (README "Safety rules") --------------------
 # Never overwrite or delete anything that is not an ai-tools link or an
-# unmodified ai-tools copy unless the caller explicitly selected --overwrite.
+# unmodified ai-tools copy unless the caller explicitly selected --overwrite
+# (replace) or --force (remove a known destination whose contents differ).
 # On conflict, skip and report; keep every operation idempotent.
 
 same_content() {
@@ -284,12 +286,16 @@ safe_unlink() {
 
 safe_uninstall_copy() {
   # usage: safe_uninstall_copy <destination-path> <source-in-ai-tools>
-  # Removes a copy only while its contents still match the ai-tools source.
+  # Removes a copy while its contents still match the ai-tools source.
+  # --force also removes that known destination when contents differ.
   local dest="$1" src="$2"
   { [ -e "$dest" ] && [ ! -L "$dest" ]; } || return 1
   if same_content "$dest" "$src"; then
     if [ "$DRY_RUN" = 1 ]; then ok "would remove copy: $dest"; return 0; fi
     rm -r "$dest" && ok "removed copy: $dest"
+  elif [ "$FORCE" = 1 ]; then
+    if [ "$DRY_RUN" = 1 ]; then ok "would force-remove copy: $dest"; return 0; fi
+    rm -r "$dest" && ok "force-removed copy: $dest"
   else
     skip "copy was modified locally, user work preserved: $dest"
     return 1

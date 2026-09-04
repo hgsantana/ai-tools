@@ -3,7 +3,7 @@
 # (outside the contract of README rules 25-27). Enforces this repository's
 # mechanically verifiable rules against the tree it runs in.
 #
-# Usage: tools/lint.sh [--help] [--base <ref>]
+# Usage: scripts/lint.sh [--help] [--base <ref>]
 #
 # Run from anywhere; it resolves its own repository root. Exit: 0 clean,
 # 1 aborted on a precondition (bad flag, missing lib.sh), 2 finished with
@@ -50,11 +50,11 @@ Checks:
   wrapper cap       every agents/<harness>/* file is at most 1000 characters,
                     frontmatter included (rule 6)
   line endings      git ls-files --eol matches the declared eol= attribute:
-                    lf for scripts/shell and tools (rule 28)
-  executable bits   scripts/shell/*.sh, tools/lint.sh, tools/test.sh,
-                    and tools/*.sh are mode 100755 (rule 28)
-  no binaries       every tracked file under agents/, skills/, scripts/, and
-                    tools/ is text
+                    lf for scripts/ (rule 28)
+  executable bits   scripts/shell/*.sh and scripts/*.sh are mode 100755
+                    (rule 28)
+  no binaries       every tracked file under agents/, skills/, and scripts/
+                    is text
   version bump      CI-only, needs --base <ref> (skipped without it): when
                     agents/, skills/, scripts/, USER-AGENTS.md, or MODELS.csv changed
                     since <ref>, the README version line must have changed
@@ -697,12 +697,12 @@ check_line_endings() {
     else
       ok "line endings correct: $path ($expected)"
     fi
-  done < <(git -C "$AI_TOOLS" ls-files --eol -- scripts/shell tools)
+  done < <(git -C "$AI_TOOLS" ls-files --eol -- scripts)
 }
 
 check_executable_bits() {
   local f mode
-  for f in "$AI_TOOLS"/scripts/shell/*.sh "$AI_TOOLS"/tools/*.sh "$AI_TOOLS"/tools/test.sh; do
+  for f in "$AI_TOOLS"/scripts/shell/*.sh "$AI_TOOLS"/scripts/*.sh; do
     [ -f "$f" ] || continue
     mode=$(git -C "$AI_TOOLS" ls-files -s -- "$f" | awk '{print $1}')
     if [ "$mode" = 100755 ]; then ok "executable bit set: $f"
@@ -712,7 +712,7 @@ check_executable_bits() {
 
 check_no_binaries() {
   local f p
-  for p in $(git -C "$AI_TOOLS" ls-files agents skills scripts tools); do
+  for p in $(git -C "$AI_TOOLS" ls-files agents skills scripts); do
     f="$AI_TOOLS/$p"
     [ -f "$f" ] || continue
     if [ ! -s "$f" ] || grep -Iq . "$f" 2>/dev/null; then

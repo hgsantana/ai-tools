@@ -23,8 +23,8 @@ The routing gate already surfaced the impact. Settle scope before acting. Presen
 
 | Task | Script | Flags needing explicit user approval |
 |---|---|---|
-| `update` | `scripts/shell/update.sh` | `--discard-local` |
-| `remove` | `scripts/shell/remove.sh` | `--instructions`, `--purge` (with `--yes` only inside that same approval) |
+| `update` | `scripts/shell/update.sh` | `--overwrite`, `--discard-local` |
+| `remove` | `scripts/shell/remove.sh` | `--instructions`, `--force`, `--purge` (with `--yes` only inside that same approval) |
 
 Use agents, remotes, URLs, paths, and flags defined by the tree, README, or scripts' `--help`; these sources prevail over recollection.
 

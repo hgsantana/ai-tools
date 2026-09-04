@@ -1,6 +1,6 @@
 # shellcheck shell=bash
-# ai-tools sandboxed test helpers — sourced by tools/test.sh, after
-# scripts/shell/lib.sh, and in scope for every case file under tools/test/.
+# ai-tools sandboxed test helpers — sourced by scripts/test.sh, after
+# scripts/shell/lib.sh, and in scope for every case file under scripts/test/.
 #
 # Every helper here is t_-prefixed so nothing shadows a name already owned
 # by scripts/shell/lib.sh (same_content, safe_copy, ok, warn, fatal, ...).
@@ -54,7 +54,7 @@ t_build_origin() {
   git init -q --bare "$origin" || return 1
   git --git-dir="$origin" symbolic-ref HEAD refs/heads/master || return 1
 
-  # shellcheck disable=SC2153 # AI_TOOLS is exported by tools/test.sh, not a typo for the local ai_tools
+  # shellcheck disable=SC2153 # AI_TOOLS is exported by scripts/test.sh, not a typo for the local ai_tools
   ( cd "$AI_TOOLS" && tar -cpf - --exclude=./.git --exclude=./dev . ) \
     | ( cd "$scratch" && tar -xpf - ) || { rm -rf "$scratch"; return 1; }
 

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # ai-tools sandboxed test suite — a development check, not an installation
 # process (outside the contract of README rules 25-27), with the same standing
-# as tools/lint.sh. Proves the install/remove/update/verify contract
+# as scripts/lint.sh. Proves the install/remove/update/verify contract
 # mechanically, against a disposable fake $HOME, never against the real one.
 #
-# Usage: tools/test.sh [--help] [--case <name>]... [--keep]
+# Usage: scripts/test.sh [--help] [--case <name>]... [--keep]
 #
 # Run from anywhere; it resolves its own repository root. Exit: 0 clean,
 # 1 aborted on a precondition, 2 finished with failures.
@@ -14,16 +14,16 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 AI_TOOLS=$(cd "$SCRIPT_DIR/.." && pwd)
 export AI_TOOLS
 . "$AI_TOOLS/scripts/shell/lib.sh"
-. "$AI_TOOLS/tools/test/lib.sh"
+. "$AI_TOOLS/scripts/test/lib.sh"
 
 # --- Case discovery by glob ---------------------------------------------------
-# Every tools/test/*.sh other than lib.sh is a case file: it defines one or
+# Every scripts/test/*.sh other than lib.sh is a case file: it defines one or
 # more case_* functions, which this runner sources and calls. Nothing
 # registers a case in a central list — a new case file needs no edit here.
 
 t_discover_case_files() {
   local f
-  for f in "$AI_TOOLS"/tools/test/*.sh; do
+  for f in "$AI_TOOLS"/scripts/test/*.sh; do
     [ -f "$f" ] || continue
     [ "$(basename "$f")" = "lib.sh" ] && continue
     echo "$f"
@@ -95,7 +95,7 @@ scripts under scripts/shell against it. Not an installation process
 cmp, diff, find, and tar.
 
   --case <name>   run one case; repeatable. <name> is either a case-file
-                  basename under tools/test/ (with or without ".sh"), which
+                  basename under scripts/test/ (with or without ".sh"), which
                   runs every case_* function in that file, or one case_*
                   function name
   --keep          do not delete sandboxes when a case finishes; print paths
@@ -126,7 +126,7 @@ export KEEP
 
 t_source_case_files
 ALL_CASES=$(t_discover_case_functions)
-[ -n "$ALL_CASES" ] || fatal "no case_* functions discovered under tools/test/*.sh"
+[ -n "$ALL_CASES" ] || fatal "no case_* functions discovered under scripts/test/*.sh"
 
 RUN_CASES=""
 if [ -n "$CASES" ]; then

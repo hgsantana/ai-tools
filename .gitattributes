@@ -1,3 +1,2 @@
 # Line endings pinned per script style (README rule 28)
-scripts/shell/*      text eol=lf
-tools/**             text eol=lf
+scripts/**           text eol=lf

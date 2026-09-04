@@ -20,13 +20,13 @@ jobs:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            tools/lint.sh --base "$PR_BASE_SHA"
+            scripts/lint.sh --base "$PR_BASE_SHA"
           else
-            tools/lint.sh
+            scripts/lint.sh
           fi
 
       - name: Run shellcheck
-        run: shellcheck -x -P scripts/shell -P tools/test scripts/shell/*.sh tools/*.sh tools/test/*.sh
+        run: shellcheck -x -P scripts/shell -P scripts/test scripts/shell/*.sh scripts/*.sh scripts/test/*.sh
 
   test-shell:
     runs-on: ubuntu-latest
@@ -36,4 +36,4 @@ jobs:
           fetch-depth: 0
 
       - name: Run shell test suite
-        run: tools/test.sh
+        run: scripts/test.sh
