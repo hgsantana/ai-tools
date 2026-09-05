@@ -37,7 +37,7 @@ Checks:
   skill layout      no skill-root markdown, every skill directory has
                     SKILL.md with semantic XML tags (<skill>, <session_workflow>,
                     <dispatch_templates>), no SKILL.md contains Continue? or Stake,
-                    USER-AGENTS.md has How to route a request and Agent:,
+                    USER-AGENTS.md has <routing_gate> and Agent:,
                     and no references to deleted files (rule 7)
   wrapper body      every wrapper body is exactly the canonical text
                     reconstructed from the agent name (rule 6)
@@ -316,10 +316,10 @@ check_skill_layout() {
   done
 
   f="$AI_TOOLS/USER-AGENTS.md"
-  if grep -q '^## How to route a request' "$f"; then
-    ok "USER-AGENTS.md has How to route a request heading: $f"
+  if grep -q '<routing_gate>' "$f"; then
+    ok "USER-AGENTS.md has routing_gate tag: $f"
   else
-    warn "USER-AGENTS.md missing '## How to route a request' heading: $f"
+    warn "USER-AGENTS.md missing '<routing_gate>' tag: $f"
   fi
   if grep -q 'Agent:' "$f"; then
     ok "USER-AGENTS.md names Agent: $f"

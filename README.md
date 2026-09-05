@@ -191,7 +191,7 @@ Check families:
 - **naming** — agent bases, wrappers, skill directories, and frontmatter `name:` all end in `-ai-tools` (rule 14)
 - **skill frontmatter** — every `skills/*/SKILL.md` exists, keys a subset of `name`/`description`/`argument-hint`, and `name:` matches its directory (rule 9)
 - **skill description** — every skill `description` is at most 500 characters and states what it does, then `Impact:`, then a valid `Agent:` (rule 9)
-- **skill layout** — no `skills/*.md` at the skills root; every `skills/*-ai-tools/SKILL.md` exists; no `SKILL.md` contains `## Continue?` or `## Stake`; `USER-AGENTS.md` contains `## How to route a request`; no `SKILL.md` mentions `SKILL-CONTRACT` or `MAINTAINER.md` (rule 7)
+- **skill layout** — no `skills/*.md` at the skills root; every `skills/*-ai-tools/SKILL.md` exists; no `SKILL.md` contains `## Continue?` or `## Stake`; `USER-AGENTS.md` contains `<routing_gate>`; no `SKILL.md` mentions `SKILL-CONTRACT` or `MAINTAINER.md` (rule 7)
 - **wrapper body** — the body is reconstructed from this README's canonical text and compared exactly (rule 6)
 - **model parity and effort pinning** — every pinned model and effort resolves through the `MODELS.csv` (rules 11–12); Grok wrappers declare no model
 - **description parity** — an agent's `description` is identical across all six wrappers
