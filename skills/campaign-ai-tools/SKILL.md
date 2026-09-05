@@ -1,15 +1,15 @@
 ---
-name: improve-ai-tools
+name: campaign-ai-tools
 description: >
   Run an autonomous local campaign in which fresh planner agents repeatedly
   plan and deliver user-directed, multi-stage repository improvements. Use for
-  /improve-ai-tools. Impact: creates or resumes a campaign branch, edits or
+  /campaign-ai-tools. Impact: creates or resumes a campaign branch, edits or
   removes files, runs commands and tests, and makes multiple local commits. It
   never pushes or writes outside the repository. Agent: planner-ai-tools.
 argument-hint: "[campaign name and optional priorities or exclusions]"
 ---
 
-<skill name="improve-ai-tools">
+<skill name="campaign-ai-tools">
   <overview>
     Run an autonomous local campaign that repeatedly plans and delivers user-directed repository improvements.
     Each iteration addresses one cohesive improvement or correction on branch `improve/{CAMPAIGN}`,

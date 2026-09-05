@@ -19,7 +19,7 @@ The `<skill_offer>` inside `<routing_gate>` is the only `USER-AGENTS.md` gate. I
 | `/vibe-ai-tools` | Plan under `dev/`, then execute that plan and deliver a pull request | `/vibe-ai-tools add resumable uploads` |
 | `/plan-ai-tools` | Explore a multi-commit change, save a staged plan under `dev/`, then offer `/dev-ai-tools` | `/plan-ai-tools redesign cache invalidation` |
 | `/dev-ai-tools` | Execute a specified `dev/` plan, a queue of pending plans, or one single-commit task | `/dev-ai-tools dev/cache-invalidation/` |
-| `/improve-ai-tools` | Repeatedly plan and deliver user-directed, multi-stage improvements in an autonomous local campaign | `/improve-ai-tools repository-hardening` |
+| `/campaign-ai-tools` | Repeatedly plan and deliver user-directed, multi-stage improvements in an autonomous local campaign | `/campaign-ai-tools repository-hardening` |
 | `/az-ai-tools` | Inspect or manage Azure resources, subscriptions, infrastructure, and costs with `az` | `/az-ai-tools list costly idle resources` |
 | `/gc-ai-tools` | Inspect or manage Google Cloud projects, infrastructure, and costs with `gcloud` | `/gc-ai-tools show resources in project-x` |
 | `/gh-ai-tools` | Inspect or manage GitHub accounts, repository administration, environments, Actions/builds, issues, and releases | `/gh-ai-tools show failing Actions runs` |
@@ -37,12 +37,12 @@ The `<skill_offer>` inside `<routing_gate>` is the only `USER-AGENTS.md` gate. I
 
 ### Continuous improvement campaign
 
-`/improve-ai-tools` uses a single initial gate. Choosing it authorizes all local, in-repository work for that campaign; it does not push, open pull requests, mutate cloud resources, or write outside the repository. The user owns the campaign and specifies its objectives and priorities.
+`/campaign-ai-tools` uses a single initial gate. Choosing it authorizes all local, in-repository work for that campaign; it does not push, open pull requests, mutate cloud resources, or write outside the repository. The user owns the campaign and specifies its objectives and priorities.
 
 Recommended prompt:
 
 ```text
-/improve-ai-tools
+/campaign-ai-tools
 
 Campaign: repository-hardening
 Objective: autonomously identify and implement useful repository improvements.
@@ -54,7 +54,7 @@ Continue until the available budget ends or a blocker occurs.
 The short form uses the user's objective or explicit campaign name:
 
 ```text
-/improve-ai-tools repository-hardening
+/campaign-ai-tools repository-hardening
 ```
 
 The campaign creates or resumes local branch `improve/repository-hardening`, committing `dev/improve/repository-hardening/campaign.md` at start. Each iteration chains planning and execution workflows through fresh, zero-context agents while keeping the orchestrator session lean:
@@ -69,7 +69,7 @@ The orchestrating agent only dispatches the planning and execution agents and ro
 If execution ends mid-plan, the last accepted stage remains committed and the campaign branch may have resumable plan files or a dirty worktree. Resume with the same campaign name:
 
 ```text
-/improve-ai-tools resume repository-hardening
+/campaign-ai-tools resume repository-hardening
 ```
 
 To request a clean stop while it is running, say `Stop after the current plan.` An immediate interruption may leave the current stage dirty without affecting earlier commits.
