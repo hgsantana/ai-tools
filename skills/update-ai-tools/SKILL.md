@@ -9,43 +9,53 @@ description: >
 argument-hint: "[optional: harnesses in scope, or extra instructions]"
 ---
 
-# Update
+<skill name="update-ai-tools">
+  <overview>
+    Run update procedure for an existing ai-tools installation per README:
+    remove current artifacts, reset clone to origin/master, and install from fresh tree.
+  </overview>
 
-Run task `update` for an existing ai-tools installation.
+  <session_workflow>
+    <step id="1" name="scope_and_intake">
+      Ask user which harnesses and flags are in scope.
+      Pass answer as `--harnesses <list>` (or "all" for all supported harnesses).
+    </step>
 
-## Scope and approvals
+    <step id="2" name="dry_run">
+      Execute `scripts/shell/update.sh` with `--dry-run` and scoped flags.
+      Save dry-run output to `dev/tmp/update-dry-run.log`.
+      Present each required destructive flag (`--overwrite`, `--discard-local`) separately with what it discards and why.
+    </step>
 
-The routing gate already surfaced the impact. Settle scope before acting. Present every destructive step separately with its flag, what it discards, and why it is needed. Execute only explicitly approved steps; omit declined flags. Approval never carries over.
+    <step id="3" name="execution">
+      Execute `scripts/shell/update.sh` with exactly the approved flags.
+      Exit 0: clean. Exit 2: report every WARN with reason. Exit 1: report precondition error.
+    </step>
 
-## Source of truth
+    <step id="4" name="report">
+      Write `dev/tmp/update-report.md` with exact invocations, results, and tree status.
+      In chat (user's language), provide the report path, outcome, and reminder to restart harnesses caching agents/skills.
+    </step>
+  </session_workflow>
 
-`$HOME/.ai-tools/README.md` defines the processes and their Safety rules; the scripts are their executable form — run them. Use the shell scripts on Linux, macOS, WSL, and Git Bash.
+  <dispatch_templates>
+    <template role="mechanical-ai-tools">
+      <role>Mechanical worker: execute update shell script and capture output.</role>
+      <input>
+        <script>scripts/shell/update.sh</script>
+        <flags>{APPROVED_FLAGS}</flags>
+      </input>
+      <instructions>
+        Run update script with approved flags.
+        Record complete stdout and stderr to dev/tmp/update-execution.log.
+        Return exit code and log path.
+      </instructions>
+    </template>
+  </dispatch_templates>
 
-| Task | Script | Flags needing explicit user approval |
-|---|---|---|
-| `update` | `scripts/shell/update.sh` | `--overwrite`, `--discard-local` |
-| `remove` | `scripts/shell/remove.sh` | `--instructions`, `--force`, `--purge` (with `--yes` only inside that same approval) |
-
-Use agents, remotes, URLs, paths, and flags defined by the tree, README, or scripts' `--help`; these sources prevail over recollection.
-
-## Workflow
-
-This file is the brief for the dispatched agent. Execute the Workflow.
-
-1. **Scope** — ask which harnesses and task-specific options are in scope. Pass the answer as `--harnesses`; an explicit "all" selects every supported harness.
-2. **Dry run** — run `scripts/shell/update.sh` with `--dry-run` and the scoped flags. Save its output to `$AI_TOOLS/dev/tmp/update-dry-run.log` and hand over that path, together with each destructive flag the task needs as its own approval request — action, what it discards, and why.
-3. **Execute** — run the script with exactly the approved flags.
-4. **Interpret** — exit 0: clean. Exit 2: report every `WARN` with its reason. Exit 1: report the failed precondition and use only the remedy named in README Troubleshooting. Never bypass a safety refusal by resetting or deleting manually.
-
-Read-only steps — discovery, `--dry-run`, `verify.sh` — run freely.
-
-## Boundaries
-
-- Touch only `$AI_TOOLS` and the harness destinations the scripts name.
-- Leave `$HOME/AGENTS.md` untouched — user-owned, outside every procedure. **Never touch `$HOME/AGENTS.md`.**
-- Report skipped conflicts to the user and preserve the scripts' `safe_*` semantics.
-- Scripts are idempotent; recover from a partial task by re-running it.
-
-## Report
-
-Write `$AI_TOOLS/dev/tmp/update-report.md` with exact invocations, each `done: … ok, … skipped, … warnings` line, every `SKIP`/`WARN` and its reason, and the resulting tree state (`HEAD` and cleanliness). Chat gets that path—opened where supported—plus the outcome, pending approvals, and a reminder to restart harnesses that cache agents or skills.
+  <boundaries>
+    <rule>Touch only $AI_TOOLS and declared harness destination roots.</rule>
+    <rule>Never touch $HOME/AGENTS.md.</rule>
+    <rule>Destructive steps require explicit separate approval; never bypass safety flags.</rule>
+  </boundaries>
+</skill>

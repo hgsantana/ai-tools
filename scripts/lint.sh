@@ -35,7 +35,8 @@ Checks:
                     folded block included, and states what the skill does,
                     then Impact:, then Agent: (rule 9)
   skill layout      no skill-root markdown, every skill directory has
-                    SKILL.md, no SKILL.md contains Continue? or Stake,
+                    SKILL.md with semantic XML tags (<skill>, <session_workflow>,
+                    <dispatch_templates>), no SKILL.md contains Continue? or Stake,
                     USER-AGENTS.md has How to route a request and Agent:,
                     and no references to deleted files (rule 7)
   wrapper body      every wrapper body is exactly the canonical text
@@ -354,6 +355,21 @@ check_skill_layout() {
         warn "SKILL.md mentions deleted contract or maintainer file: $f"
       else
         ok "SKILL.md mentions neither SKILL-CONTRACT nor MAINTAINER.md: $f"
+      fi
+      if grep -q '^<skill name="' "$f" && grep -q '</skill>$' "$f"; then
+        ok "SKILL.md has valid root skill XML tags: $f"
+      else
+        warn "SKILL.md missing valid root <skill name=\"...\"> ... </skill> tags: $f"
+      fi
+      if grep -q '<session_workflow>' "$f" && grep -q '</session_workflow>' "$f"; then
+        ok "SKILL.md has semantic session_workflow tags: $f"
+      else
+        warn "SKILL.md missing <session_workflow> ... </session_workflow> tags: $f"
+      fi
+      if grep -q '<dispatch_templates>' "$f" && grep -q '</dispatch_templates>' "$f"; then
+        ok "SKILL.md has semantic dispatch_templates tags: $f"
+      else
+        warn "SKILL.md missing <dispatch_templates> ... </dispatch_templates> tags: $f"
       fi
     else
       warn "missing SKILL.md in skill directory: $d"

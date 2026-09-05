@@ -6,7 +6,7 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
 
 ## What is installed
 
-**Ten skills** are the user entry points. Each description states purpose, `Impact:`, and `Agent:`. The skill file is the dispatched agent's brief: it states the work, not an identity.
+**Ten skills** are the user entry points. Each description states purpose, `Impact:`, and `Agent:`. Skills provide session-directed workflows structured in semantic XML, orchestrating delivery and delegating tasks to model-tiered workers via explicit dispatch templates.
 
 Commits, branches, rebases, merges, pushes, and pull-request delivery run directly and bypass `/gh-ai-tools`.
 
@@ -26,7 +26,7 @@ Then ask one short question referring to those impacts. Use the native interacti
 
 Handle the answer:
 
-- A named skill — dispatch it.
+- A named skill — execute it.
 - **Run it here** — do the work in this session; ignore ai-tools skills and agents.
 - **Something else**, **Other**, or any different answer — treat its text as a new or revised request and route it again.
 - An explicit request to stop — stop without taking action.
@@ -35,11 +35,11 @@ This offer is the only USER-AGENTS.md gate. After dispatch, a workflow that invo
 
 ### Dispatch
 
-Announce the spawn in the user's language with the agent name. Spawn that agent with a brief to follow the Workflow in `$HOME/.ai-tools/skills/<name>/SKILL.md` and the user request. Do not run the skill in this session. If spawning fails, carry the work yourself.
+The host session executes the skill's `<session_workflow>`. When a step delegates work, announce the spawn in the user's language with the agent name. Spawn that agent with the populated `<template>` XML payload from `<dispatch_templates>` and the relevant file paths. Do not pass conversational context or raw skill text. If spawning fails, carry the work yourself.
 
 ## Agents
 
-Agents are spawn-only and have no skills. Offer skills to the user, not agents. Wrappers pin their models; Grok uses the install pin. Announce every spawn with the agent name.
+Agents are model-tiered workers and have no skills. Offer skills to the user, not agents. Wrappers pin their models; Grok uses the install pin. Announce every spawn with the agent name.
 
 **Spawning is open.** Any session, skill, or agent may spawn the agent that owns the work; spawned agents may do the same. If spawning fails, carry the work yourself. Code-writing agents run in parallel on separate files; read-only exploration, builds, and tests may always run concurrently.
 

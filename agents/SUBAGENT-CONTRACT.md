@@ -6,7 +6,7 @@ The agent base you load next defines your type. Carry that role yourself. When t
 
 ## Brief
 
-The brief is a file path, or the request itself when no file is given. Read it, complete only the named work, then stop. Pass file paths and leave their contents on disk.
+The brief is an explicit `<template>` XML payload or file path provided by the session spawner. Read it, complete only the declared work within `<constraints>`, then stop. Pass file paths and leave their contents on disk.
 
 ## Reaching the user
 

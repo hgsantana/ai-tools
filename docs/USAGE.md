@@ -10,7 +10,7 @@ Invoke a skill by leading with its slash name and optional request:
 /plan-ai-tools add resumable uploads
 ```
 
-The skill offer is the only `USER-AGENTS.md` gate. It names each option's impact, that choosing it dispatches the agent named in `Agent:`, and the model pinned on that agent's wrapper (or in the harness config written at install when the wrapper has none), then offers the relevant skill, **run it here**, and **something else**. The last choice lets the user name another skill, revise the request, or propose a different approach; a native **Other** field serves the same purpose. A leading `/name` confirms that skill's stake, offers other fitting skills, and proceeds after the answer. Choosing a skill spawns the matching agent with that skill file as the brief; the host session does not run it. The Workflow states the work, not an identity. A workflow that later invokes another skill does not re-enter this gate. Later approvals still follow the skill's own rules.
+The skill offer is the only `USER-AGENTS.md` gate. It names each option's impact, that choosing it dispatches the agent named in `Agent:`, and the model pinned on that agent's wrapper (or in the harness config written at install when the wrapper has none), then offers the relevant skill, **run it here**, and **something else**. The last choice lets the user name another skill, revise the request, or propose a different approach; a native **Other** field serves the same purpose. A leading `/name` confirms that skill's stake, offers other fitting skills, and proceeds after the answer. Choosing a skill runs its session workflow, which coordinates delivery and delegates compute-heavy tasks to the model-tiered worker via explicit XML dispatch templates. A workflow that later invokes another skill does not re-enter this gate. Later approvals still follow the skill's own rules.
 
 ## Skills
 
@@ -90,7 +90,7 @@ First installation is not a skill: follow the root `README.md` installation proc
 
 ## Agents
 
-Agents are not user-facing skills. Do not offer or invoke them as alternatives to a slash skill; the selected workflow spawns the agent named in `Agent:` with the skill file as the brief.
+Agents are not user-facing skills. Do not offer or invoke them as alternatives to a slash skill; the session workflow spawns the agent named in `Agent:` passing the `<template>` XML payload from `<dispatch_templates>`.
 
 | Agent | Responsibility |
 |---|---|

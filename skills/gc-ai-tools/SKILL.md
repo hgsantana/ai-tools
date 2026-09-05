@@ -8,37 +8,60 @@ description: >
 argument-hint: "[what to inspect or change in Google Cloud]"
 ---
 
-# Google Cloud
+<skill name="gc-ai-tools">
+  <overview>
+    Inventory, cost analysis, and management of Google Cloud resources through the `gcloud` CLI.
+    Session handles user approvals and mutation guardrails, delegating CLI exploration as needed.
+  </overview>
 
-Inventory, cost, and operations on Google Cloud through the `gcloud` CLI.
+  <session_workflow>
+    <step id="1" name="intake">
+      Parse requested Google Cloud inspection, billing query, or resource operation.
+    </step>
 
-## Workflow
+    <step id="2" name="read_exploration">
+      Run read-only inspection queries freely:
+      - Project context: `gcloud config list`, `gcloud projects list`, `gcloud projects describe <project>`.
+      - Services and assets: `gcloud <service> list`, `gcloud <service> describe`, `gcloud asset search-all-resources`.
+      - Billing and monitoring: `gcloud billing accounts list`, `gcloud logging read`, `gcloud monitoring`.
+      Prefer `--format="table(...)"` or JSON piped through `jq` for concise output.
+      Optionally dispatch `mechanical-ai-tools` using `<template role="mechanical-discovery">` for bulk log or fact collection.
+    </step>
 
-This file is the brief for the dispatched agent. Execute the Workflow.
+    <step id="3" name="mutation_guardrail">
+      Identify if the command creates billable assets, mutates configurations, or deletes cloud resources.
+      Present each mutation as an explicit approval request to the user:
+      - State exact command, target project/resource, reason, and cost or blast-radius impact.
+      - Execute only after explicit affirmative user approval.
+    </step>
 
-Use `gcloud` for the requested inventory, cost analysis, or operation, then stop.
+    <step id="4" name="report">
+      Write detailed inventories, cost breakdowns, and logs to `dev/tmp/<topic>.md`.
+      In chat (user's language), provide the direct answer, the report path, and any pending approval request.
+    </step>
+  </session_workflow>
 
-### Rules
+  <dispatch_templates>
+    <template role="mechanical-discovery">
+      <role>Mechanical worker: run read-only gcloud commands and collect output.</role>
+      <input>
+        <commands>{COMMANDS}</commands>
+        <output_file>dev/tmp/{TOPIC}.md</output_file>
+      </input>
+      <instructions>
+        Execute the listed read-only gcloud commands.
+        Save formatted command outputs to {OUTPUT_FILE}.
+        Return command list, exit codes, and output path.
+      </instructions>
+      <constraints>
+        <constraint>Read-only queries only. Never execute mutating commands.</constraint>
+      </constraints>
+    </template>
+  </dispatch_templates>
 
-- Run **read-only queries** freely: list, describe, and cost queries.
-- Present each mutation as a separate approval request with its command, target, reason, and cost or blast impact. Execute it only after an explicit yes for that action; approval never carries over.
-- State each proposed mutation's **cost impact**: SKU, ongoing cost, and billable status.
-
-### Delegated exploration
-
-Spawn `mechanical-ai-tools` for read-only `gcloud` discovery — commands, state, and collected output. It returns facts: command, exit code, and output path.
-
-### Useful commands
-
-- `gcloud config list` / `gcloud projects list` — project context
-- `gcloud projects describe <project>` — inspect project
-- `gcloud <service> list` / `gcloud <service> describe` — resource inspection
-- `gcloud billing accounts list` / `gcloud billing projects describe` — billing
-- `gcloud logging read` / `gcloud monitoring` — logs and metrics
-- `gcloud asset search-all-resources` — inventory across projects or organizations
-
-Prefer `--format="table(...)"` or JSON piped through `jq` for concise output.
-
-## Report
-
-Write inventories, cost breakdowns, logs, and listings to `dev/tmp/<topic>.md`, then give the user its path—opened in their editor where supported. In the user's language, chat carries the direct answer and any mutation awaiting approval. A one- or two-line result may stay in chat alone.
+  <boundaries>
+    <rule>Read-only queries run freely; every mutation requires separate user approval.</rule>
+    <rule>State cost impact (SKU, ongoing cost, billable status) before any resource creation.</rule>
+    <rule>Save large outputs and logs to dev/tmp/ rather than flooding session context.</rule>
+  </boundaries>
+</skill>
