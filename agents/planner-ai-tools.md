@@ -1,4 +1,6 @@
-> Base instructions loaded through `agents/<harness>/` for a subagent governed by `agents/SUBAGENT-CONTRACT.md`. This file is the source; edit it.
+# Planner base instructions
+
+Loaded through `agents/<harness>/` for a subagent governed by `agents/SUBAGENT-CONTRACT.md`. This file is the source; edit it.
 
 <agent_base name="planner-ai-tools" role="planner">
   <identity>
