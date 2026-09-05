@@ -377,6 +377,41 @@ check_skill_layout() {
   done
 }
 
+# --- Check: agent base and contract layout (rules 5, 16) ----------------------
+
+check_agent_layout() {
+  local f="$AI_TOOLS/agents/SUBAGENT-CONTRACT.md"
+  if [ -f "$f" ]; then
+    ok "subagent contract present: $f"
+    if grep -q '^<subagent_contract>' "$f" && grep -q '</subagent_contract>$' "$f"; then
+      ok "SUBAGENT-CONTRACT.md has valid root subagent_contract XML tags: $f"
+    else
+      warn "SUBAGENT-CONTRACT.md missing <subagent_contract> ... </subagent_contract> tags: $f"
+    fi
+    if grep -q '^## ' "$f"; then
+      warn "SUBAGENT-CONTRACT.md must not contain markdown subheadings: $f"
+    else
+      ok "SUBAGENT-CONTRACT.md has no markdown subheadings: $f"
+    fi
+  else
+    warn "missing subagent contract: $f"
+  fi
+
+  for f in "$AI_TOOLS"/agents/*-ai-tools.md; do
+    [ -f "$f" ] || continue
+    if grep -q '^<agent_base name="' "$f" && grep -q '</agent_base>$' "$f"; then
+      ok "agent base has valid root agent_base XML tags: $f"
+    else
+      warn "agent base missing valid <agent_base name=\"...\"> ... </agent_base> tags: $f"
+    fi
+    if grep -q '^## ' "$f"; then
+      warn "agent base must not contain markdown subheadings: $f"
+    else
+      ok "agent base has no markdown subheadings: $f"
+    fi
+  done
+}
+
 yaml_frontmatter_folded_value() {
   # usage: yaml_frontmatter_folded_value <file> <key> -- the value of a
   # "key: >" folded block, continuation lines joined by one space as the
@@ -813,6 +848,7 @@ check_naming
 check_skill_frontmatter
 check_skill_name_match
 check_skill_layout
+check_agent_layout
 check_skill_description_cap
 check_skill_description_content
 check_wrapper_body

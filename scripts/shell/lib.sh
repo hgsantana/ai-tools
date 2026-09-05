@@ -409,12 +409,20 @@ GROK_END="# <<< ai-tools managed subagent models"
 
 category_for() {
   # usage: category_for <agent-name>
-  # Role the base claims via "You are the **<planner|implementer|mechanical>**".
+  # Role the base claims via role="..." attribute on <agent_base> or
+  # "You are the **<planner|implementer|mechanical>**".
   # Used at install/lint to pin wrappers from the MODELS.csv — never at dispatch.
   # Falls back to planner when the base cites none.
   local f="$AI_TOOLS/agents/$1.md" cat
   [ -f "$f" ] || return 1
   cat=$(awk '
+    match($0, /role="(planner|implementer|mechanical)"/) {
+      s = substr($0, RSTART, RLENGTH)
+      sub(/role="/, "", s)
+      sub(/".*/, "", s)
+      print s
+      exit
+    }
     match($0, /You are the \*\*(planner|implementer|mechanical)\*\*/) {
       s = substr($0, RSTART, RLENGTH)
       sub(/You are the \*\*/, "", s)
