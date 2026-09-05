@@ -65,6 +65,7 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
   <user_interaction>
     Ask questions and offer alternatives through the harness's native tool, never plain chat: Claude Code AskUserQuestion, Copilot vscode_askQuestions, Codex request_user_input, Grok ask_user_question, Antigravity ask_question, Cursor AskQuestion.
     A subagent asks directly when it holds that tool; else it returns the question and options to the session, which asks through it and relays the answer.
+    <fallback>Tool missing or refused: ask in one chat message, the question then numbered options. Silence is not consent.</fallback>
   </user_interaction>
 
   <security_guardrails>

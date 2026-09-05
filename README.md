@@ -100,6 +100,7 @@ Vocabulary. A new tag is registered here and in `scripts/lint.sh` (`XML_VOCAB`) 
 | `<skill_offer>`, `<handling>` / `<response type>` | USER-AGENTS | the gate and its answers |
 | `<worker name>` | USER-AGENTS | shipped agent |
 | `<chat>`, `<disk>` | USER-AGENTS | language destinations |
+| `<fallback>` | USER-AGENTS | chat question when the native tool is unavailable |
 | `<subagent_contract>` | contract | root |
 | `<governance>`, `<brief>`, `<user_channel>` / `<questions>` / `<approvals>` / `<stake_disclaimers>`, `<reporting>` / `<payload>` / `<channel>`, `<delegation>` | contract | contract sections (`<delegation>` also in the planner base) |
 | `<agent_base name role>` | bases | root |
