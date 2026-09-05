@@ -14,8 +14,9 @@ usage: remove.sh [--harnesses <list>] [--instructions] [--force] [--no-sweep]
                        detected harnesses; "all" selects every supported harness
   --instructions       also remove the global USER-AGENTS.md copies or legacy links;
                        never touches $HOME/AGENTS.md
-  --force              remove known artifact destinations even when contents
-                       no longer match their source; never touches $HOME/AGENTS.md
+  --force              remove known artifact destinations and orphan artifacts
+                       even when contents no longer match their source;
+                       never touches $HOME/AGENTS.md
   --no-sweep           skip the stale-link sweep (links from older alpha layouts)
   --purge              delete $HOME/.ai-tools itself after removal (asks for
                        confirmation; --yes skips the prompt)

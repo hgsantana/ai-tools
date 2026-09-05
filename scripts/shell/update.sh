@@ -13,7 +13,8 @@ usage: update.sh [--harnesses <list>] [--overwrite] [--discard-local]
   --harnesses <list>   comma-separated harnesses in scope; omitted selects
                        detected harnesses; "all" selects every supported harness
   --overwrite          replace conflicting or locally modified installed copies
-                       in the selected harnesses; never touches $HOME/AGENTS.md
+                       and prune orphan artifacts in the selected harnesses;
+                       never touches $HOME/AGENTS.md
   --discard-local      allow the reset to origin/master to discard local commits
                        and uncommitted edits inside $HOME/.ai-tools (shown first)
   --no-instructions    keep existing global instructions copies (do not remove

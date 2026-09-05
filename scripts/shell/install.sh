@@ -15,7 +15,8 @@ usage: install.sh [--harnesses <list>] [--overwrite] [--no-instructions]
                        omitted selects detected harnesses; "all" selects every
                        supported harness, whether detected or not
   --overwrite          replace conflicting or locally modified installed copies
-                       in the selected harnesses; never touches $HOME/AGENTS.md
+                       and prune orphan artifacts in the selected harnesses;
+                       never touches $HOME/AGENTS.md
   --no-instructions    skip copying USER-AGENTS.md as global instructions
   --dry-run            report what would be done without changing anything
 

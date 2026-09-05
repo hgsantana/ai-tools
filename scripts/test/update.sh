@@ -393,3 +393,52 @@ case_update_preconditions() {
 
   t_cleanup "$root"
 }
+
+case_update_preserves_orphan_without_overwrite() {
+  local root home orphan_skill orphan_agent
+
+  t_fixture
+  root="$T_ROOT"
+  home="$root/home"
+  orphan_skill="$home/.claude/skills/retired-ai-tools"
+  orphan_agent="$home/.claude/agents/retired-ai-tools.md"
+
+  mkdir -p "$orphan_skill"
+  printf 'name: retired-ai-tools\n' > "$orphan_skill/SKILL.md"
+  printf 'orphan agent\n' > "$orphan_agent"
+
+  t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
+  t_assert_exit 2
+  t_assert_line "SKIP: orphan ai-tools skill (use --overwrite or --force to remove): $orphan_skill"
+  t_assert_line "SKIP: orphan ai-tools agent (use --overwrite or --force to remove): $orphan_agent"
+  t_assert_line "WARN: orphan skill present: $orphan_skill"
+  t_assert_line "WARN: orphan agent present: $orphan_agent"
+  t_assert_regular_file "$orphan_agent"
+  t_assert_regular_file "$orphan_skill/SKILL.md"
+
+  t_cleanup "$root"
+}
+
+case_update_prunes_orphan_with_overwrite() {
+  local root home orphan_skill orphan_agent
+
+  t_fixture
+  root="$T_ROOT"
+  home="$root/home"
+  orphan_skill="$home/.claude/skills/retired-ai-tools"
+  orphan_agent="$home/.claude/agents/retired-ai-tools.md"
+
+  mkdir -p "$orphan_skill"
+  printf 'name: retired-ai-tools\n' > "$orphan_skill/SKILL.md"
+  printf 'orphan agent\n' > "$orphan_agent"
+
+  t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code --overwrite
+  t_assert_exit 0
+  t_assert_line "ok: removed orphan skill: $orphan_skill"
+  t_assert_line "ok: removed orphan agent: $orphan_agent"
+  t_assert_absent "$orphan_skill"
+  t_assert_absent "$orphan_agent"
+
+  t_cleanup "$root"
+}
+

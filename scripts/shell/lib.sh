@@ -383,6 +383,7 @@ install_agents() {
       safe_copy "$f" "$root/$(basename "$f")" || true
     done
   done
+  [ "${OVERWRITE:-0}" = 1 ] && prune_orphan_agents
 }
 
 install_skills() {
@@ -394,6 +395,7 @@ install_skills() {
       safe_copy "$p" "$root/$(basename "$p")" || true
     done
   done
+  [ "${OVERWRITE:-0}" = 1 ] && prune_orphan_skills
 }
 
 # --- Grok model pinning ------------------------------------------------------
@@ -570,6 +572,65 @@ report_links() {
   return 0
 }
 
+prune_orphan_agents() {
+  local h src root f base
+  for h in $SCOPE; do
+    src="$AI_TOOLS/agents/$h"
+    root=$(agents_root "$h")
+    [ -d "$root" ] || continue
+    for f in "$root"/*-ai-tools*; do
+      [ -e "$f" ] || continue
+      [ -L "$f" ] && continue
+      base=$(basename "$f")
+      [ -f "$src/$base" ] && continue
+      if [ "${OVERWRITE:-0}" = 1 ]; then
+        if [ "$DRY_RUN" = 1 ]; then
+          ok "would remove orphan agent: $f"
+        else
+          rm -rf "$f" && ok "removed orphan agent: $f"
+        fi
+      elif [ "${FORCE:-0}" = 1 ]; then
+        if [ "$DRY_RUN" = 1 ]; then
+          ok "would force-remove orphan agent: $f"
+        else
+          rm -rf "$f" && ok "force-removed orphan agent: $f"
+        fi
+      else
+        skip "orphan ai-tools agent (use --overwrite or --force to remove): $f"
+      fi
+    done
+  done
+}
+
+prune_orphan_skills() {
+  local h root p base
+  for h in $SCOPE; do
+    root=$(skills_root "$h")
+    [ -d "$root" ] || continue
+    for p in "$root"/*-ai-tools; do
+      [ -e "$p" ] || continue
+      [ -L "$p" ] && continue
+      base=$(basename "$p")
+      [ -d "$AI_TOOLS/skills/$base" ] && continue
+      if [ "${OVERWRITE:-0}" = 1 ]; then
+        if [ "$DRY_RUN" = 1 ]; then
+          ok "would remove orphan skill: $p"
+        else
+          rm -rf "$p" && ok "removed orphan skill: $p"
+        fi
+      elif [ "${FORCE:-0}" = 1 ]; then
+        if [ "$DRY_RUN" = 1 ]; then
+          ok "would force-remove orphan skill: $p"
+        else
+          rm -rf "$p" && ok "force-removed orphan skill: $p"
+        fi
+      else
+        skip "orphan ai-tools skill (use --overwrite or --force to remove): $p"
+      fi
+    done
+  done
+}
+
 uninstall_agents() {
   local h src root f base
   for h in $SCOPE; do
@@ -588,6 +649,7 @@ uninstall_agents() {
       fi
     done
   done
+  prune_orphan_agents
 }
 
 remove_skills() {
@@ -607,6 +669,7 @@ remove_skills() {
       fi
     done
   done
+  prune_orphan_skills
 }
 
 sweep_stale_links() {
@@ -791,6 +854,13 @@ verify_install() {
       else warn "agent absent: $root/$base"
       fi
     done
+    if [ -d "$root" ]; then
+      for f in "$root"/*-ai-tools*; do
+        [ -e "$f" ] || [ -L "$f" ] || continue
+        base=$(basename "$f")
+        [ -f "$AI_TOOLS/agents/$h/$base" ] || warn "orphan agent present: $f"
+      done
+    fi
     root=$(skills_root "$h")
     for p in "$AI_TOOLS/skills"/*-ai-tools; do
       [ -d "$p" ] || continue
@@ -805,6 +875,13 @@ verify_install() {
         warn "skill absent: $root/$name"
       fi
     done
+    if [ -d "$root" ]; then
+      for p in "$root"/*-ai-tools; do
+        [ -e "$p" ] || [ -L "$p" ] || continue
+        name=$(basename "$p")
+        [ -d "$AI_TOOLS/skills/$name" ] || warn "orphan skill present: $p"
+      done
+    fi
   done
   return 0
 }
