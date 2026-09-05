@@ -16,18 +16,14 @@ argument-hint: "[optional: harnesses in scope, or --dry-run]"
 
   <session_workflow>
     <step id="1" name="data_extraction">
-      Execute data extraction scripts (directly in session or dispatching `implementer-ai-tools` using `<template role="implementer-ai-tools">` from `<dispatch_templates>`):
+      Resolve {HARNESSES} in scope from the request (default: all).
+      Execute data extraction scripts directly in session, or dispatch `<template role="models-extractor">` from `<dispatch_templates>` substituting {HARNESSES}:
       - Run `scripts/harness-models.sh` to extract documented models and pricing tables per harness into `dev/tmp/harness-models.csv`.
       - Run `scripts/aa-metrics.sh` to fetch latest Artificial Analysis metrics into `dev/tmp/aa-metrics.csv`.
     </step>
 
     <step id="2" name="candidate_evaluation">
-      Filter and score candidate models per harness using the selection methodology:
-      - Score formula: `(Intelligence Index / Cost per Task) / Time per Task` (higher is better).
-      - Planner: Intelligence Index >= harness best - 3, then rank.
-      - Implementer: Intelligence Index >= harness best - 10, drop planner family, Cost strictly < planner, then rank.
-      - Mechanical: Cost between harness min and 3x min, drop planner/implementer families, Cost strictly < implementer, then rank.
-      - Apply documented fallback when measurement cannot decide.
+      Filter and score candidate models per harness using `<selection_method>`.
     </step>
 
     <step id="3" name="review_and_confirmation">
@@ -37,27 +33,35 @@ argument-hint: "[optional: harnesses in scope, or --dry-run]"
     </step>
 
     <step id="4" name="write_files">
-      Upon user confirmation, write updated `MODELS.csv` and synchronize wrapper headers in `agents/<harness>/` in the same commit.
+      Upon user confirmation, write updated `MODELS.csv` and synchronize wrapper headers in `agents/{HARNESS}/` in the same commit.
       Always pin model token and matching effort token where supported.
     </step>
   </session_workflow>
 
+  <selection_method>
+    <rule id="score">Score formula: `(Intelligence Index / Cost per Task) / Time per Task` (higher is better).</rule>
+    <rule id="planner-tier">Planner: Intelligence Index at least harness best minus 3, then rank.</rule>
+    <rule id="implementer-tier">Implementer: Intelligence Index at least harness best minus 10, drop planner family, Cost strictly below planner, then rank.</rule>
+    <rule id="mechanical-tier">Mechanical: Cost between harness min and 3x min, drop planner/implementer families, Cost strictly below implementer, then rank.</rule>
+    <rule id="fallback">Apply the documented fallback when measurement cannot decide.</rule>
+  </selection_method>
+
   <dispatch_templates>
-    <template role="implementer-ai-tools">
-      <role>Implementer worker: run extraction scripts, compute scores, and format diff.</role>
+    <template role="models-extractor" agent="implementer-ai-tools">
+      <job>Implementer worker: run extraction scripts, compute scores, and format diff.</job>
       <input>
         <harnesses>{HARNESSES}</harnesses>
       </input>
       <instructions>
-        Execute scripts/harness-models.sh and scripts/aa-metrics.sh.
-        Compute candidate rankings and generate proposed MODELS.csv diff.
-        Save report to dev/tmp/models-report.md.
+        Execute scripts/harness-models.sh and scripts/aa-metrics.sh for {HARNESSES}.
+        Compute candidate rankings per `<selection_method>` and generate proposed MODELS.csv diff.
+        Save report to dev/tmp/models-report.md and return its path.
       </instructions>
     </template>
   </dispatch_templates>
 
   <boundaries>
-    <rule>Never write to MODELS.csv or wrappers without explicit user confirmation of the diff.</rule>
-    <rule>Keep MODELS.csv and wrapper headers synchronized in the same commit (Rule 12).</rule>
+    <rule id="confirm-before-write">Never write to MODELS.csv or wrappers without explicit user confirmation of the diff.</rule>
+    <rule id="same-commit-sync">Keep MODELS.csv and wrapper headers synchronized in the same commit (README.md#model-selection-and-wrapper-authoring).</rule>
   </boundaries>
 </skill>

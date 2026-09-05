@@ -67,7 +67,7 @@ Normative for every human and every AI maintaining this repository.
 
 5. Three agents ship: `planner-ai-tools`, `implementer-ai-tools`, and `mechanical-ai-tools`. Each has a request-agnostic, harness-agnostic **base** at `agents/<name>.md` and one **wrapper** per harness at `agents/<harness-short-name>/<agent-name>.<ext>`. Bases and `agents/SUBAGENT-CONTRACT.md` are structured in semantic XML tags (`<agent_base>`, `<subagent_contract>`) without markdown sub-headings. Bases are **mode-agnostic**: they identify required questions or approvals, while `agents/SUBAGENT-CONTRACT.md` defines the spawned user channel. Type rules prevail over a conflicting brief. Bases route delegated work; the contract governs further spawning (rule 8). An agent serves as a model-tiered worker when spawned with a `<template>` payload.
 6. A wrapper consists of a harness-specific header and model pin (`model:`, plus effort when the CSV effort cell is non-empty and the wrapper form can hold it), followed by pointers to `$HOME/.ai-tools/agents/SUBAGENT-CONTRACT.md` and `$HOME/.ai-tools/agents/<name>.md`, in that order. The base prevails except for the contract's user channel. Additional body text is drift. The **1,000-character** cap includes frontmatter. See the canonical body in [wrapper authoring](#model-selection-and-wrapper-authoring).
-7. Skills are harness-agnostic and live entirely in `skills/<name>/SKILL.md`, with frontmatter defined by rule 9 and bodies structured in semantic XML tags (`<skill>`, `<session_workflow>`, `<dispatch_templates>`). They use no per-harness copies, separate skill contracts or bases, root-level `skills/<name>.md`, `SKILL-CONTRACT.md`, or `MAINTAINER.md`; required maintainer text is duplicated. Descriptions contain three parts and at most 500 characters (rule 9); bodies have no character cap but follow rule 15. Skills contain neither **Stake** nor **Continue?** headings. Harnesses retain frontmatter without loading the body. `USER-AGENTS.md` offers skills from that in-memory description (the only USER-AGENTS.md gate); the host session executes the `<session_workflow>` and, on delegated steps, spawns the model-tiered worker named in `Agent:` passing the `<template>` payload from `<dispatch_templates>`. `gh-ai-tools` covers GitHub-hosted resources and administration; repository code work such as commits, branches, rebases, merges, pushes, code review, and pull-request delivery bypasses it and runs directly.
+7. Skills are harness-agnostic and live entirely in `skills/<name>/SKILL.md`, with frontmatter defined by rule 9 and bodies structured in semantic XML tags (`<skill>`, `<session_workflow>`, `<dispatch_templates>`). They use no per-harness copies, separate skill contracts or bases, root-level `skills/<name>.md`, `SKILL-CONTRACT.md`, or `MAINTAINER.md`; required maintainer text is duplicated. Descriptions contain three parts and at most 500 characters (rule 9); bodies have no character cap but follow rule 15. Skills contain neither **Stake** nor **Continue?** headings. Harnesses retain frontmatter without loading the body. `USER-AGENTS.md` offers skills from that in-memory description (the only USER-AGENTS.md gate); the host session executes the `<session_workflow>` and, on delegated steps, spawns the worker named in the cited `<template>`'s `agent` attribute, passing the populated payload from `<dispatch_templates>`; the description's `Agent:` names the primary worker. Optional blocks `<status_protocol>`, `<return_protocol>`, `<selection_method>`, and `<plan_file_format>` hold protocol that steps and templates cite ([Semantic XML grammar](#semantic-xml-grammar)). `gh-ai-tools` covers GitHub-hosted resources and administration; repository code work such as commits, branches, rebases, merges, pushes, code review, and pull-request delivery bypasses it and runs directly.
 8. **Spawning is open**: every session, skill, and agent may spawn the named agent that owns the work; spawned agents may do the same (`agents/SUBAGENT-CONTRACT.md`). If spawning fails, the run carries work allowed by its type or returns a dispatch request. Code-writing agents run concurrently on separate files; read-only discovery, builds, and tests may always run in parallel. Wrappers pin models for `planner-ai-tools`, `implementer-ai-tools`, and `mechanical-ai-tools`.
 9. Skill frontmatter uses universally accepted `name` and `description`, plus optional keys supported by every harness, such as `argument-hint`. The `description`, which harnesses retain without loading the body, states in order: (1) what the skill does and when to use it, including `/name`; (2) `Impact:` plus what can be billed, deleted, committed, pushed, or otherwise changed—or that impact is absent; (3) `Agent:` with `planner-ai-tools`, `implementer-ai-tools`, or `mechanical-ai-tools`. Keep it within **500 characters** because harnesses budget the skill list: Codex caps it at 2% of context or 8,000 characters, and Claude Code truncates it at 1,536.
 10. Wrappers follow each harness's official documentation and individual frontmatter standards. Re-check vendor docs before adding a harness or editing a wrapper — formats change upstream. During wrapper authoring or compilation, standard templates in `templates/wrappers/` must be followed per harness: Grok requires double-quoting strings with colons (`"..."`) due to its strict Rust `serde_yaml` parser; Codex requires standard TOML quoting; other harnesses follow their native format.
@@ -76,9 +76,41 @@ Normative for every human and every AI maintaining this repository.
 13. Antigravity's wrapper `model:` is a **subagent tier** (`inherit`/`flash`/`pro`), not a model family name — pin the CSV cell. Accepted shapes live in [Supported harnesses](#supported-harnesses).
 14. Every installed agent name, skill directory, slash command, frontmatter `name:`, and file basename ends in `-ai-tools`; bare names such as `planner` and `az` remain uninstalled.
 15. Use extreme concision: remove ambiguity and redundancy while preserving every instruction, rule, and intention.
-16. Skills, agent bases, contracts, and `USER-AGENTS.md` state what to do. Internal cross-references across instructions, workflows, and templates cite explicit XML tags (`<skill_offer>`, `<routing_gate>`, `<dispatch_templates>`, `<template role="...">`, `<step id="...">`) rather than ambiguous prose sections. A negative (`never`, `do not`) is used only when it reinforces an essential positive, or when the positive phrasing would lose force or not make sense.
+16. Skills, agent bases, contracts, and `USER-AGENTS.md` state what to do in the [Semantic XML grammar](#semantic-xml-grammar): every cross-reference is a backticked tag reference that resolves (`<skill_offer>`, `<template role="...">`, `<step id="...">`), every variable is a `{PLACEHOLDER}`, every `<rule>` has an `id`, and every `<template>` names its `role` and `agent`. Prose citations of this README use section anchors, never rule numbers. A negative (`never`, `do not`) is used only when it reinforces an essential positive, or when the positive phrasing would lose force or not make sense.
 17. Repository files use concise English; chat uses the user's language. Rule 32 assigns content between them.
 18. A skill that can be **destructive** or **generate cost** states that impact once in its `description` `Impact:` (rule 9), rather than in a body Stake section. `USER-AGENTS.md` surfaces it **before** execution. Whoever dispatches an agent also surfaces any opening stake disclaimer from its base (`agents/SUBAGENT-CONTRACT.md`).
+
+### Semantic XML grammar
+
+The semantic-XML bodies — `USER-AGENTS.md`, `agents/SUBAGENT-CONTRACT.md`, every agent base, every `SKILL.md` — follow one grammar, enforced by `scripts/lint.sh` (rule 16):
+
+- **Angle brackets** appear only as structural tags from the vocabulary below, or as a backticked reference to one: `` `<template role="stage-implementer">` ``, `` `<step id="2">` ``, `` `<security_guardrails>` ``. Once backticked spans are removed, every body is balanced XML.
+- **Variables** are brace placeholders: `{SLUG}`, `{BASE_BRANCH}`, `{COMMANDS}`. Every placeholder a `<template>` uses is declared in its `<input>`, and every declared one is used; the session substitutes them before spawning.
+- **References** carrying an attribute (`role`, `id`, `code`, `type`) resolve to a definition in the same file, or in the file named by the word before the backtick: `` dev-ai-tools `<status_protocol>` ``, `` USER-AGENTS `<security_guardrails>` ``. Qualifiers are `USER-AGENTS`, `SUBAGENT-CONTRACT`, a skill name, or an agent name. A bare reference names a vocabulary tag.
+- **Identity**: every `<rule>` carries a kebab-case `id`, unique in its file; every `<template>` carries a functional `role` and the shipped `agent` that receives the payload; `<step>` ids are numeric per workflow; `<case>`, `<response>`, `<signal>`, and `<state>` carry `id`, `type`, or `code`.
+- **Protocol** is a block, not prose: return tokens live in `<return_protocol>`/`<signal>`, stage states in `<status_protocol>`/`<state>`, and a template ends with one cited `<signal>`.
+
+Vocabulary. A new tag is registered here and in `scripts/lint.sh` (`XML_VOCAB`) in the same commit; children of `<input>` are free payload fields and need no registration.
+
+| Tag | File | Meaning |
+|---|---|---|
+| `<user_instructions>` | USER-AGENTS | root |
+| `<system_overview>`, `<routing_gate>`, `<dispatch_protocol>`, `<agents>`, `<language_rules>`, `<user_interaction>`, `<security_guardrails>` | USER-AGENTS | top-level sections |
+| `<trigger_cases>` / `<case id condition>` | USER-AGENTS | routing cases |
+| `<skill_offer>`, `<handling>` / `<response type>` | USER-AGENTS | the gate and its answers |
+| `<worker name>` | USER-AGENTS | shipped agent |
+| `<chat>`, `<disk>` | USER-AGENTS | language destinations |
+| `<subagent_contract>` | contract | root |
+| `<governance>`, `<brief>`, `<user_channel>` / `<questions>` / `<approvals>` / `<stake_disclaimers>`, `<reporting>` / `<payload>` / `<channel>`, `<delegation>` | contract | contract sections (`<delegation>` also in the planner base) |
+| `<agent_base name role>` | bases | root |
+| `<identity>`, `<role_workflow>` / `<step>`, `<role_scope>`, `<user_decisions>`, `<assignment_rules>`, `<execution_rules>` | bases | type sections |
+| `<skill name>` | skills | root |
+| `<overview>`, `<session_workflow>` / `<step id name>`, `<boundaries>` | skills | what the session runs |
+| `<dispatch_templates>` / `<template role agent>` / `<job>`, `<input>`, `<instructions>`, `<constraints>` / `<constraint>` | skills | the payload a worker receives |
+| `<status_protocol>` / `<states>` / `<state code>` | skills | stage-file states |
+| `<return_protocol>` / `<signal code>` | skills | the worker's last line |
+| `<selection_method>`, `<plan_file_format>` / `<structure>` | skills | skill-specific protocol |
+| `<rule id>` | all | one addressable rule |
 
 ### Installation contract
 
@@ -136,11 +168,11 @@ Pin the role the base names (`You are the **planner** / **implementer** / **mech
 ```markdown
 On Windows, %USERPROFILE% replaces $HOME.
 
-You are a spawned subagent: your shared contract is `$HOME/.ai-tools/agents/SUBAGENT-CONTRACT.md`.
+You are a spawned subagent: your shared contract is `<subagent_contract>` in `$HOME/.ai-tools/agents/SUBAGENT-CONTRACT.md`.
 Read it and follow it — it governs your channel to the user and your report.
 
 Your base file is `$HOME/.ai-tools/agents/<name>.md`.
-Read it and follow it in full — it is the absolute rule set for this agent; the contract above prevails only on your channel to the user.
+Read it and follow its `<agent_base>` in full — it is the absolute rule set for this agent; `<subagent_contract>` prevails only on your channel to the user.
 ```
 
 Codex carries the same text in `developer_instructions`, with Windows backslashes doubled for TOML.
@@ -157,7 +189,7 @@ Canonical templates for creating or compiling wrappers live under `templates/wra
   - `antigravity`: Markdown YAML frontmatter with keys `name`, `description`, `model` (tier token: `inherit`, `flash`, or `pro`).
   - `cursor`: Markdown YAML frontmatter with keys `name`, `description`, `model`, `readonly: false`, `is_background: false`.
 
-A skill carries frontmatter (rule 9) and a semantic XML body (`<skill>`, `<session_workflow>`, `<dispatch_templates>`). The host session executes the workflow, conducts user alignment and git delivery, and delegates compute tasks to the model-tiered worker named in `Agent:` passing the `<template>` payload. `USER-AGENTS.md` offers from the in-memory description (the gate). Point at `agents/<name>.md` only as a worker base, never as a skill base. On Windows, `%USERPROFILE%` replaces `$HOME`.
+A skill carries frontmatter (rule 9) and a semantic XML body (`<skill>`, `<session_workflow>`, `<dispatch_templates>`). The host session executes the workflow, conducts user alignment and git delivery, and delegates compute tasks to the worker named in the cited `<template>`'s `agent` attribute, passing its populated payload. `USER-AGENTS.md` offers from the in-memory description (the gate). Point at `agents/<name>.md` only as a worker base, never as a skill base. On Windows, `%USERPROFILE%` replaces `$HOME`.
 
 ## Scripts
 
@@ -199,6 +231,9 @@ Check families:
 - **size caps** — `USER-AGENTS.md` at most 6,000 characters (rule 3), every wrapper at most 1,000 (rule 6), every skill `description` at most 500 (rule 9)
 - **encodings and endings** — line endings (`git ls-files --eol`), executable bits, no binaries in shipped paths (rule 28)
 - **`dev/tmp` untracked** — `git ls-files dev/tmp` returns nothing (rule 29)
+- **xml grammar** — every semantic-XML body is balanced once backticked spans are removed, uses only vocabulary tags outside `<input>`, gives every `<rule>` a unique `id`, and every `<template>` a `role` and a shipped `agent` (rule 16, [Semantic XML grammar](#semantic-xml-grammar))
+- **xml references** — every backticked tag reference resolves: attribute references to a definition in the same or the qualified file, bare references to the vocabulary (rule 16)
+- **placeholder parity** — every `{PLACEHOLDER}` a `<template>` uses is declared in its `<input>`, and every declared one is used (rule 16)
 - **version bump** — only with `--base <ref>`: a change under `agents/`, `skills/`, `scripts/`, `USER-AGENTS.md`, or `MODELS.csv` that lands on `master` requires the README version to change too (rule 4)
 
 Exit codes: `0` clean, `1` aborted on a precondition (unknown flag, `--base` without a value), `2` finished with findings. CI (`.github/workflows/ci.yml`) runs two jobs on `ubuntu-latest`: `lint` runs the version-bump check on pull requests and `shellcheck -x -P scripts/shell -P scripts/test scripts/shell/*.sh scripts/*.sh scripts/test/*.sh` on every push and pull request; `test-shell` runs `scripts/test.sh`.

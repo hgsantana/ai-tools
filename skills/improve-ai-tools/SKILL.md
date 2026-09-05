@@ -12,69 +12,63 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
 <skill name="improve-ai-tools">
   <overview>
     Run an autonomous local campaign that repeatedly plans and delivers user-directed repository improvements.
-    Each iteration addresses one cohesive improvement or correction on branch `improve/<campaign>`,
+    Each iteration addresses one cohesive improvement or correction on branch `improve/{CAMPAIGN}`,
     orchestrated by the session using fresh zero-context workers.
   </overview>
 
   <session_workflow>
     <step id="1" name="campaign_initialization">
-      Resolve campaign name from user request (kebab-case campaign).
+      Resolve {CAMPAIGN} from the user request (kebab-case), plus {PRIORITIES} and {EXCLUSIONS}.
       Verify repository root with `git rev-parse --show-toplevel`.
-      Check out work branch `improve/<campaign>` from clean default/base branch.
-      Initialize or update `dev/improve/<campaign>/campaign.md` with goals, priorities, exclusions, and active status.
-      Commit campaign start if new: `chore(dev): start campaign <campaign>`.
+      Check out work branch `improve/{CAMPAIGN}` from clean default/base branch.
+      Initialize or update `dev/improve/{CAMPAIGN}/campaign.md` with goals, priorities, exclusions, and active status.
+      Commit campaign start if new: `chore(dev): start campaign {CAMPAIGN}`.
     </step>
 
     <step id="2" name="planning_pass">
-      Dispatch a fresh, zero-context `planner-ai-tools` instance using `<template role="campaign-planner">` from `<dispatch_templates>`.
+      Dispatch a fresh, zero-context planner using `<template role="campaign-planner">` from `<dispatch_templates>`,
+      substituting {CAMPAIGN}, {PRIORITIES}, and {EXCLUSIONS}.
       The planner inspects repository state, selects one cohesive improvement matching user priorities,
-      and writes `dev/<slug>/` (base and stage files).
-      Returns: `PLAN <path>`, `RESUME <path>`, `NONE`, or `BLOCKED`.
-      Two consecutive `NONE` outcomes terminate the campaign cleanly.
+      writes `dev/{SLUG}/` (base and stage files), and ends with one `<signal>` from `<return_protocol>`.
+      Two consecutive `<signal code="NONE">` outcomes terminate the campaign cleanly.
     </step>
 
     <step id="3" name="execution_pass">
-      On `PLAN` or `RESUME`, dispatch a separate, fresh `planner-ai-tools` instance using `<template role="campaign-executor">` from `<dispatch_templates>`.
-      The campaign executor operates with high thinking/reasoning, owns plan delivery and acceptance, and sub-dispatches:
-      - `implementer-ai-tools` for code changes on separate files.
-      - `mechanical-ai-tools` for running tests, applying mechanical renames, and verifying commits.
-      Apply campaign overrides inside the executor:
-      - Work stays on `improve/<campaign>` without creating `plan/<slug>`.
-      - Commits accumulate locally (one commit per stage with Conventional Commits).
-      - Delivery is local: updates `dev/improve/<campaign>/campaign.md` and logs iteration under `dev/improve/<campaign>/iterations/<N>.md`.
-      - No remote push or pull request.
-      Returns to session: `DELIVERED <iteration_path>` or `BLOCKED <reason>`.
+      On `<signal code="PLAN">` or `<signal code="RESUME">`, dispatch a separate, fresh coordinator using `<template role="campaign-executor">` from `<dispatch_templates>`,
+      substituting {PLAN_PATH}, {CAMPAIGN}, and {N} (the iteration number).
+      The executor owns plan delivery and acceptance as its template instructs and ends with one `<signal>` from `<return_protocol>`.
     </step>
 
     <step id="4" name="iteration_loop">
-      Record iteration result from campaign executor.
-      Repeat <step id="2" name="planning_pass"> with a new zero-context planner.
+      Record the iteration result from the executor.
+      Repeat `<step id="2">` with a new zero-context planner.
       Do not reuse conversation context between iterations to prevent context degradation.
-      Continue until budget ends, host halts, two planners return NONE, or a pass is BLOCKED.
+      Continue until budget ends, host halts, two planners return `<signal code="NONE">`, or a pass returns `<signal code="BLOCKED">`.
     </step>
 
     <step id="5" name="completion_and_archival">
       At controlled stop or completion:
-      Copy `dev/improve/<campaign>/` to `dev/tmp/finished/improve/<campaign>/`.
-      Remove tracked folder: `git rm -r dev/improve/<campaign>/`.
-      Commit closing record: `chore(dev): complete campaign <campaign>`.
+      Copy `dev/improve/{CAMPAIGN}/` to `dev/tmp/finished/improve/{CAMPAIGN}/`.
+      Remove tracked folder: `git rm -r dev/improve/{CAMPAIGN}/`.
+      Commit closing record: `chore(dev): complete campaign {CAMPAIGN}`.
       In chat (user's language), provide branch, final HEAD, and archived campaign report path.
     </step>
   </session_workflow>
 
   <dispatch_templates>
-    <template role="campaign-planner">
-      <role>Campaign planner: evaluate repository state and design one cohesive improvement.</role>
+    <template role="campaign-planner" agent="planner-ai-tools">
+      <job>Campaign planner: evaluate repository state and design one cohesive improvement.</job>
       <input>
         <campaign>{CAMPAIGN}</campaign>
         <priorities>{PRIORITIES}</priorities>
         <exclusions>{EXCLUSIONS}</exclusions>
       </input>
       <instructions>
-        Inspect working tree and test suites against user priorities.
-        Draft canonical multi-file plan under dev/{SLUG}/.
+        Inspect working tree and test suites of campaign {CAMPAIGN} against {PRIORITIES}, skipping {EXCLUSIONS}.
+        Derive a kebab-case slug for the chosen improvement.
+        Draft the canonical multi-file plan under dev/ for that slug in the plan-ai-tools `<plan_file_format>`.
         Decide open design questions from evidence and user criteria.
-        Return PLAN dev/{SLUG}/0-{SLUG}.md (or NONE/BLOCKED).
+        End with one `<signal>` from `<return_protocol>`: PLAN, RESUME, NONE, or BLOCKED.
       </instructions>
       <constraints>
         <constraint>Do not edit code files during planning pass.</constraint>
@@ -82,31 +76,76 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
       </constraints>
     </template>
 
-    <template role="campaign-executor">
-      <role>Campaign execution coordinator (planner-ai-tools): execute plan stages on campaign branch.</role>
+    <template role="campaign-executor" agent="planner-ai-tools">
+      <job>Campaign execution coordinator: execute plan stages on the campaign branch.</job>
       <input>
         <plan_path>{PLAN_PATH}</plan_path>
-        <campaign_branch>improve/{CAMPAIGN}</campaign_branch>
+        <campaign>{CAMPAIGN}</campaign>
+        <iteration>{N}</iteration>
       </input>
       <instructions>
-        Execute stages sequentially, owning acceptance of each stage.
-        Sub-dispatch implementer-ai-tools for code changes and mechanical-ai-tools for builds, tests, and commit checks.
-        Audit test results, commit each accepted stage locally with Conventional Commits.
-        Archive completed plan to dev/tmp/finished/ and update campaign iteration logs.
-        Return DELIVERED dev/improve/{CAMPAIGN}/iterations/{N}.md (or BLOCKED with rationale).
+        Read the plan at {PLAN_PATH} and stay on improve/{CAMPAIGN}.
+        Execute stages sequentially, owning acceptance of each stage, following dev-ai-tools `<status_protocol>`:
+          1. Sub-dispatch `<template role="stage-implementer">` for code changes.
+          2. Sub-dispatch `<template role="stage-verifier">` for builds, tests, and commit checks.
+          3. Audit test results and commit each accepted stage locally with Conventional Commits.
+        Archive the completed plan to dev/tmp/finished/ and write dev/improve/{CAMPAIGN}/iterations/{N}.md.
+        Update dev/improve/{CAMPAIGN}/campaign.md and decisions.md.
+        End with one `<signal>` from `<return_protocol>`: DELIVERED or BLOCKED.
       </instructions>
       <constraints>
         <constraint>All work stays local on improve/{CAMPAIGN}: do not push or create PRs.</constraint>
-        <constraint>Sub-dispatch implementer-ai-tools and mechanical-ai-tools; do not carry editing directly.</constraint>
+        <constraint>Sub-dispatch `<template role="stage-implementer">` and `<template role="stage-verifier">`; do not carry editing directly.</constraint>
         <constraint>Preserve pre-existing commit history and base branch.</constraint>
+      </constraints>
+    </template>
+
+    <template role="stage-implementer" agent="implementer-ai-tools">
+      <job>Implementer worker: write and edit code and unit tests for the assigned stage.</job>
+      <input>
+        <assigned_file>{STAGE_FILE}</assigned_file>
+        <campaign>{CAMPAIGN}</campaign>
+      </input>
+      <instructions>
+        Implement the stage in {STAGE_FILE} on improve/{CAMPAIGN}: match surrounding style, write tests, append report.
+        Set status V per dev-ai-tools `<status_protocol>`.
+      </instructions>
+      <constraints>
+        <constraint>Do not make architectural changes outside stage scope.</constraint>
+        <constraint>Do not edit files outside declared stage files.</constraint>
+        <constraint>Do not commit or push; leave changes in working tree for executor audit.</constraint>
+      </constraints>
+    </template>
+
+    <template role="stage-verifier" agent="mechanical-ai-tools">
+      <job>Mechanical worker: run builds, tests, and collect factual evidence.</job>
+      <input>
+        <commands>{COMMANDS}</commands>
+        <topic>{TOPIC}</topic>
+      </input>
+      <instructions>
+        Execute {COMMANDS} without design decisions.
+        Capture stdout and stderr to dev/tmp/{TOPIC}-output.log.
+        Return facts: command, exit code, and output path.
+      </instructions>
+      <constraints>
+        <constraint>Do not modify production or test code unless explicitly passed as a patch.</constraint>
       </constraints>
     </template>
   </dispatch_templates>
 
+  <return_protocol>
+    <signal code="PLAN">PLAN {PLAN_PATH}</signal>
+    <signal code="RESUME">RESUME {PLAN_PATH}</signal>
+    <signal code="NONE">NONE</signal>
+    <signal code="DELIVERED">DELIVERED {ITERATION_PATH}</signal>
+    <signal code="BLOCKED">BLOCKED {REASON}</signal>
+  </return_protocol>
+
   <boundaries>
-    <rule>Session orchestrates loop; workers run with clean isolated context per pass.</rule>
-    <rule>Work is strictly local: no push, fetch, PR, deployment, or remote mutation.</rule>
-    <rule>Preserve pre-existing commit history and base branch.</rule>
-    <rule>Store runtime caches and temporary logs ignored under dev/tmp/.</rule>
+    <rule id="session-orchestrates">Session orchestrates the loop; workers run with clean isolated context per pass.</rule>
+    <rule id="strictly-local">Work is strictly local: no push, fetch, PR, deployment, or remote mutation.</rule>
+    <rule id="preserve-history">Preserve pre-existing commit history and base branch.</rule>
+    <rule id="tmp-untracked">Store runtime caches and temporary logs ignored under dev/tmp/.</rule>
   </boundaries>
 </skill>

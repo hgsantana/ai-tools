@@ -61,6 +61,16 @@ Checks:
                     since <ref>, the README version line must have changed
                     too (rule 4)
   dev/tmp untracked git ls-files dev/tmp returns nothing (rule 29)
+  xml grammar       every semantic-XML body (USER-AGENTS.md, contract, agent
+                    bases, SKILL.md) is balanced once backticked spans are
+                    removed, uses only vocabulary tags outside <input>, gives
+                    every <rule> a unique id, and every <template> a role and
+                    a shipped agent (rule 16, Semantic XML grammar)
+  xml references    every backticked tag reference resolves: attribute
+                    references to a definition in the same or the qualified
+                    file, bare references to the vocabulary (rule 16)
+  placeholder parity every {PLACEHOLDER} a <template> uses is declared in its
+                    <input>, and every declared one is used (rule 16)
 
 --base <ref>  commit-ish to diff shipped content against for the version
               bump check. Without it, that check is skipped. The lint
@@ -504,11 +514,12 @@ canonical_body() {
   # shellcheck disable=SC2016 # $HOME/%USERPROFILE% must stay literal — expanding them is the bug this check catches
   printf 'On Windows, %%USERPROFILE%% replaces $HOME.\n\n'
   # shellcheck disable=SC2016 # $HOME must stay literal — expanding it is the bug this check catches
-  printf 'You are a spawned subagent: your shared contract is `$HOME/.ai-tools/agents/SUBAGENT-CONTRACT.md`.\n'
+  printf 'You are a spawned subagent: your shared contract is `<subagent_contract>` in `$HOME/.ai-tools/agents/SUBAGENT-CONTRACT.md`.\n'
   printf 'Read it and follow it — it governs your channel to the user and your report.\n\n'
   # shellcheck disable=SC2016 # $HOME must stay literal — expanding it is the bug this check catches
   printf 'Your base file is `$HOME/.ai-tools/agents/%s.md`.\n' "$a"
-  printf 'Read it and follow it in full — it is the absolute rule set for this agent; the contract above prevails only on your channel to the user.\n'
+  # shellcheck disable=SC2016 # backticked tag references are literal text
+  printf 'Read it and follow its `<agent_base>` in full — it is the absolute rule set for this agent; `<subagent_contract>` prevails only on your channel to the user.\n'
 }
 
 wrapper_body_md() {
@@ -790,6 +801,174 @@ check_no_binaries() {
   done
 }
 
+# --- Check: semantic XML grammar (rule 16) -----------------------------------
+# The vocabulary of structural tags (README, "Semantic XML grammar"). A tag
+# outside it, outside <input>, is a finding: register a new tag in the README
+# table and here in the same commit.
+XML_VOCAB="user_instructions system_overview routing_gate trigger_cases case skill_offer handling response dispatch_protocol agents worker language_rules chat disk user_interaction security_guardrails subagent_contract governance brief user_channel questions approvals stake_disclaimers reporting payload channel delegation agent_base identity role_workflow role_scope user_decisions assignment_rules execution_rules skill overview session_workflow step dispatch_templates template job input instructions constraints constraint status_protocol states state return_protocol signal selection_method plan_file_format structure boundaries rule"
+
+xml_files() {
+  local f
+  echo "$AI_TOOLS/USER-AGENTS.md"
+  echo "$AI_TOOLS/agents/SUBAGENT-CONTRACT.md"
+  for f in "$AI_TOOLS"/agents/*-ai-tools.md; do [ -f "$f" ] && echo "$f"; done
+  for f in "$AI_TOOLS"/skills/*/SKILL.md; do [ -f "$f" ] && echo "$f"; done
+}
+
+xml_body() {
+  # usage: xml_body <file> -- the semantic-XML body: frontmatter and leading
+  # prose dropped, every backticked span replaced by `` so references and
+  # code never read as tags.
+  awk '
+    NR == 1 && $0 == "---" { infm = 1; next }
+    infm && $0 == "---" { infm = 0; next }
+    infm { next }
+    !started && /^<[a-z_]+/ { started = 1 }
+    started { gsub(/`[^`]*`/, "``"); print }
+  ' "$1"
+}
+
+xml_file_for() {
+  # usage: xml_file_for <qualifier> -> the file a qualified reference names,
+  # or nothing when the word before the backtick is not a qualifier.
+  case "$1" in
+    USER-AGENTS) echo "$AI_TOOLS/USER-AGENTS.md" ;;
+    SUBAGENT-CONTRACT) echo "$AI_TOOLS/agents/SUBAGENT-CONTRACT.md" ;;
+    *-ai-tools)
+      if [ -f "$AI_TOOLS/skills/$1/SKILL.md" ]; then echo "$AI_TOOLS/skills/$1/SKILL.md"
+      elif [ -f "$AI_TOOLS/agents/$1.md" ]; then echo "$AI_TOOLS/agents/$1.md"; fi
+      ;;
+  esac
+}
+
+xml_references() {
+  # usage: xml_references <file> -- one "qualifier|reference" line per
+  # backticked tag reference, qualifier being the word before the backtick.
+  awk '{
+    line = $0
+    while (match(line, /`<[a-z_]+[^`]*>`/)) {
+      start = RSTART; len = RLENGTH
+      ref = substr(line, start + 2, len - 4)
+      pre = substr(line, 1, start - 1)
+      q = ""
+      if (match(pre, /[A-Za-z-]+ $/)) q = substr(pre, RSTART, RLENGTH - 1)
+      print q "|" ref
+      line = substr(line, start + len)
+    }
+  }' "$1"
+}
+
+check_xml_grammar() {
+  local f findings line agents val q ref name attr target
+  agents=$(agent_names | tr '\n' ' ')
+  for f in $(xml_files); do
+    findings=$(xml_body "$f" | awk -v vocab="$XML_VOCAB" '
+      BEGIN { n = split(vocab, v, " "); for (i = 1; i <= n; i++) ok[v[i]] = 1 }
+      {
+        line = $0
+        while (match(line, /<[^<>]*>/)) {
+          if (substr(line, 1, RSTART - 1) ~ /</) print "stray < at line " NR
+          tok = substr(line, RSTART + 1, RLENGTH - 2)
+          line = substr(line, RSTART + RLENGTH)
+          if (tok ~ /^\//) {
+            name = substr(tok, 2)
+            if (depth == 0 || stack[depth] != name) print "mismatched closing tag </" name "> at line " NR
+            else { depth--; if (name == "input") ininput = 0 }
+            continue
+          }
+          name = tok; sub(/[ \/].*/, "", name)
+          if (tok !~ /\/$/) { depth++; stack[depth] = name }
+          if (name == "input") { ininput = 1; continue }
+          if (ininput) continue
+          if (!(name in ok)) print "tag outside the vocabulary <" name "> at line " NR
+          if (name == "rule") {
+            if (tok !~ / id="[a-z0-9-]+"/) print "<rule> without id at line " NR
+            else {
+              id = tok; sub(/.* id="/, "", id); sub(/".*/, "", id)
+              if (id in ids) print "duplicate rule id \"" id "\" at line " NR
+              ids[id] = 1
+            }
+          }
+          if (name == "template") {
+            if (tok !~ / role="[a-z0-9-]+"/) print "<template> without role at line " NR
+            if (tok !~ / agent="[a-z0-9-]+"/) print "<template> without agent at line " NR
+          }
+        }
+        if (line ~ /</) print "stray < at line " NR
+      }
+      END { if (depth > 0) print "unclosed <" stack[depth] "> at end of body" }
+    ')
+    if [ -z "$findings" ]; then
+      ok "semantic XML balanced, in vocabulary, rules and templates addressable: $f"
+    else
+      while IFS= read -r line; do warn "xml grammar: $line: $f"; done <<EOF
+$findings
+EOF
+    fi
+
+    findings=$(xml_body "$f" | awk '
+      /<template role="/ { intpl = 1; role = $0; sub(/.*role="/, "", role); sub(/".*/, "", role); split("", used); split("", decl); next }
+      intpl && /<input>/ { inin = 1; next }
+      intpl && /<\/input>/ { inin = 0; next }
+      intpl && /<\/template>/ {
+        for (u in used) if (!(u in decl)) print "template " role " uses undeclared placeholder " u
+        for (d in decl) if (!(d in used)) print "template " role " declares unused placeholder " d
+        intpl = 0; next
+      }
+      intpl {
+        line = $0
+        while (match(line, /\{[A-Z_]+\}/)) {
+          ph = substr(line, RSTART, RLENGTH)
+          if (inin) decl[ph] = 1; else used[ph] = 1
+          line = substr(line, RSTART + RLENGTH)
+        }
+      }
+    ')
+    if [ -z "$findings" ]; then
+      ok "template placeholders match their input: $f"
+    else
+      while IFS= read -r line; do warn "placeholder parity: $line: $f"; done <<EOF
+$findings
+EOF
+    fi
+
+    for val in $(xml_body "$f" | grep -o '<template role="[^"]*" agent="[^"]*"' | sed 's/.*agent="//; s/"$//'); do
+      if in_list "$val" "$agents"; then ok "template agent is a shipped agent: $val ($f)"
+      else warn "template agent is not a shipped agent: '$val' in $f"; fi
+    done
+
+    while IFS='|' read -r q ref; do
+      [ -n "$ref" ] || continue
+      name=${ref%% *}
+      attr=""; val=""
+      case "$ref" in
+        *" "*) attr=${ref#* }; val=${attr#*=\"}; val=${val%\"}; attr=${attr%%=*} ;;
+      esac
+      target=""
+      [ -n "$q" ] && target=$(xml_file_for "$q")
+      [ -n "$target" ] || q=""
+      [ -n "$target" ] || target="$f"
+      if [ -n "$attr" ]; then
+        if xml_body "$target" | grep -q "<${name}[^>]* ${attr}=\"${val}\""; then
+          ok "reference resolves: <$name $attr=\"$val\"> in $f"
+        else
+          warn "unresolved reference <$name $attr=\"$val\"> in $f (looked in $target)"
+        fi
+      elif [ -n "$q" ]; then
+        if xml_body "$target" | grep -q "<${name}[ >/]"; then
+          ok "qualified reference resolves: $q <$name> in $f"
+        else
+          warn "unresolved qualified reference $q <$name> in $f (looked in $target)"
+        fi
+      elif in_list "$name" "$XML_VOCAB"; then
+        ok "reference names a vocabulary tag: <$name> in $f"
+      else
+        warn "reference to a tag outside the vocabulary <$name> in $f"
+      fi
+    done < <(xml_references "$f")
+  done
+}
+
 # --- Check: dev/tmp untracked (rule 29) ---------------------------------------
 
 check_dev_tmp_untracked() {
@@ -863,6 +1042,7 @@ check_line_endings
 check_executable_bits
 check_no_binaries
 check_dev_tmp_untracked
+check_xml_grammar
 check_version_bump
 
 finish
