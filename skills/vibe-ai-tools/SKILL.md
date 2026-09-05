@@ -18,14 +18,14 @@ argument-hint: "[the change to deliver]"
 
   <session_workflow>
     <step id="1" name="interactive_planning">
-      Follow the planning workflow in the session directly:
+      Follow interactive planning in the session:
       - Refine scope, architecture, and trade-offs interactively with the user in chat.
-      - Dispatch `planner-ai-tools` using `<template role="planner-ai-tools">` to draft canonical plan under `dev/<slug>/` (base and stage files).
-      - Skip standalone /dev-ai-tools offer once the plan is on disk.
+      - Dispatch `planner-ai-tools` using `<template role="planner-ai-tools">` from `<dispatch_templates>` to draft canonical plan under `dev/<slug>/` (base and stage files).
+      - Skip the standalone `/dev-ai-tools` offer once the plan is on disk.
     </step>
 
     <step id="2" name="unattended_execution">
-      Dispatch a fresh, high-reasoning `planner-ai-tools` instance using `<template role="vibe-coordinator">` in unattended mode:
+      Dispatch a fresh, high-reasoning `planner-ai-tools` instance using `<template role="vibe-coordinator">` from `<dispatch_templates>` in unattended mode:
       - Coordinator creates branch `plan/<slug>` and initial commit `chore(dev): plan <slug>`.
       - Executes stages sequentially, sub-dispatching `implementer-ai-tools` and `mechanical-ai-tools`.
       - Autonomously resolves in-scope implementation questions and retry choices without interrupting the user.

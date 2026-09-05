@@ -16,7 +16,7 @@ argument-hint: "[optional: harnesses in scope, or --dry-run]"
 
   <session_workflow>
     <step id="1" name="data_extraction">
-      Execute data extraction scripts:
+      Execute data extraction scripts (directly in session or dispatching `implementer-ai-tools` using `<template role="implementer-ai-tools">` from `<dispatch_templates>`):
       - Run `scripts/harness-models.sh` to extract documented models and pricing tables per harness into `dev/tmp/harness-models.csv`.
       - Run `scripts/aa-metrics.sh` to fetch latest Artificial Analysis metrics into `dev/tmp/aa-metrics.csv`.
     </step>

@@ -27,7 +27,7 @@ argument-hint: "[what to inspect or change in Azure]"
       - Resources: `az <service> list`, `az <service> show`.
       - Cost and metrics: `az consumption usage list`, `az costmanagement query`, `az monitor`.
       Prefer `--output table` or `--query` (JMESPath) for concise outputs.
-      Optionally dispatch `mechanical-ai-tools` using `<template role="mechanical-discovery">` for bulk log or fact collection.
+      Optionally dispatch `mechanical-ai-tools` using `<template role="mechanical-discovery">` from `<dispatch_templates>` for bulk log or fact collection.
     </step>
 
     <step id="3" name="mutation_guardrail">

@@ -33,7 +33,7 @@ argument-hint: "[GitHub platform resource to inspect or manage]"
       - `gh secret`, `gh variable`, `gh api .../environments`.
       - `gh workflow`, `gh run`, `gh cache`.
       - `gh issue`, `gh release`, `gh api <endpoint>`.
-      Optionally dispatch `mechanical-ai-tools` using `<template role="mechanical-discovery">` for bulk fact collection.
+      Optionally dispatch `mechanical-ai-tools` using `<template role="mechanical-discovery">` from `<dispatch_templates>` for bulk fact collection.
     </step>
 
     <step id="3" name="mutation_guardrail">

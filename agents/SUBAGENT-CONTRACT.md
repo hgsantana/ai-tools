@@ -25,4 +25,4 @@ Durable state lives in files. Write before you depend on it. Communicate by refe
 
 ## Delegation
 
-**You may spawn workers.** When your base routes work to another agent, spawn that agent with a brief containing file paths rather than contents. If spawning fails, do the work yourself when your type and brief allow it. Otherwise return a **dispatch request** to your spawner with the agent name, required file paths, and the type boundary that requires delegation.
+**You may spawn workers.** When your base routes work to another agent, spawn that agent with the matching `<template>` XML payload from `<dispatch_templates>` and relevant file paths rather than inline contents. If spawning fails, do the work yourself when your type and brief allow it. Otherwise return a **dispatch request** to your spawner with the agent name, required file paths, and the type boundary that requires delegation.

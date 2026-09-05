@@ -27,7 +27,7 @@ argument-hint: "[plan paths, or the task to implement]"
     </step>
 
     <step id="2" name="execution_dispatch">
-      Dispatch a fresh, high-reasoning `planner-ai-tools` instance using `<template role="dev-coordinator">`.
+      Dispatch a fresh, high-reasoning `planner-ai-tools` instance using `<template role="dev-coordinator">` from `<dispatch_templates>`.
       The planner coordinator owns execution, acceptance, and delivery:
       - Checks out dedicated work branch `plan/<slug>` from base branch.
       - Commits the unit of work: `chore(dev): plan <slug>` or `chore(dev): task <slug>`.

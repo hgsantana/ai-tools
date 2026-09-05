@@ -15,13 +15,13 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
     The gate is the skill offer. Run it first before any interaction.
     <trigger_cases>
       <case id="1" condition="Leading shipped *-ai-tools skill">
-        Run the skill offer below: confirm that skill's Impact:, and offer other shipped skills that also fit, if any.
+        Execute &lt;skill_offer&gt;: confirm that skill's Impact:, and offer other shipped skills that also fit, if any.
       </case>
       <case id="2" condition="Simple, well specified, or documentation only">
         A typo, a one-line constant, an exact rename, a question or explanation, or a docs edit that changes no behaviour: do it now in this session without asking.
       </case>
       <case id="3" condition="Any other non-trivial request">
-        Run the skill offer below with every ai-tools skill that fits its scope. When in doubt, use case 3.
+        Execute &lt;skill_offer&gt; with every ai-tools skill fitting scope. When in doubt, use &lt;case id="3"&gt;.
       </case>
     </trigger_cases>
 
@@ -36,13 +36,13 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
         <response type="other">Treat text as a new or revised request and route it again.</response>
         <response type="stop">Stop without taking action.</response>
       </handling>
-      <rule>This offer is the only gate. After dispatch, a workflow that invokes another skill does not re-enter it. Case 2 and "run it here" bypass skills and agents.</rule>
+      <rule>This &lt;skill_offer&gt; is the only gate. After dispatch, a workflow that invokes another skill does not re-enter &lt;routing_gate&gt;. &lt;case id="2"&gt; and &lt;response type="run_it_here"&gt; bypass skills and agents.</rule>
     </skill_offer>
   </routing_gate>
 
   <dispatch_protocol>
-    The host session executes the skill's &lt;session_workflow&gt;.
-    When a step delegates work, announce the spawn in the user's language with the agent name.
+    The host session executes the selected skill's &lt;session_workflow&gt;.
+    When a &lt;step&gt; delegates work, announce the spawn in the user's language with the agent name.
     Spawn that agent with the populated &lt;template&gt; XML payload from &lt;dispatch_templates&gt; and relevant file paths.
     Do not pass conversational context or raw skill text. If spawning fails, carry the work yourself.
   </dispatch_protocol>

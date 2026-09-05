@@ -28,7 +28,7 @@ argument-hint: "[optional: harnesses in scope, or extra instructions]"
     </step>
 
     <step id="3" name="execution">
-      Execute `scripts/shell/update.sh` with exactly the approved flags.
+      Execute `scripts/shell/update.sh` with exactly the approved flags (directly in session or delegating execution to `mechanical-ai-tools` using `<template role="mechanical-ai-tools">` from `<dispatch_templates>`).
       Exit 0: clean. Exit 2: report every WARN with reason. Exit 1: report precondition error.
     </step>
 

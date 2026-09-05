@@ -25,7 +25,7 @@ argument-hint: "[what to inspect or change in Google Cloud]"
       - Services and assets: `gcloud <service> list`, `gcloud <service> describe`, `gcloud asset search-all-resources`.
       - Billing and monitoring: `gcloud billing accounts list`, `gcloud logging read`, `gcloud monitoring`.
       Prefer `--format="table(...)"` or JSON piped through `jq` for concise output.
-      Optionally dispatch `mechanical-ai-tools` using `<template role="mechanical-discovery">` for bulk log or fact collection.
+      Optionally dispatch `mechanical-ai-tools` using `<template role="mechanical-discovery">` from `<dispatch_templates>` for bulk log or fact collection.
     </step>
 
     <step id="3" name="mutation_guardrail">

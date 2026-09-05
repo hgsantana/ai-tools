@@ -26,7 +26,7 @@ argument-hint: "[description of the change, feature, or fix to plan]"
       Derive a kebab-case slug.
     </step>
     <step id="3" name="plan_dispatch">
-      Dispatch `planner-ai-tools` using the `<template role="planner-ai-tools">` below,
+      Dispatch `planner-ai-tools` using `<template role="planner-ai-tools">` from `<dispatch_templates>`,
       substituting {SLUG}, {BASE_BRANCH}, and {USER_REQUEST}.
       The planner drafts `dev/<slug>/0-<slug>.md` and each stage file `dev/<slug>/<n>-<slug>.md`.
     </step>
@@ -34,7 +34,7 @@ argument-hint: "[description of the change, feature, or fix to plan]"
       The plan itself is the report. In the user's language, chat gives the base path
       (opened where supported), a one-line outcome, and numbered open questions.
       Then offer `/dev-ai-tools` against that saved slug, stating its Impact and Agent from the skill description.
-      On user acceptance, invoke `/dev-ai-tools` against the plan without re-entering the USER-AGENTS.md gate.
+      On user acceptance, invoke `/dev-ai-tools` against the plan without re-entering `<routing_gate>`.
     </step>
   </session_workflow>
 

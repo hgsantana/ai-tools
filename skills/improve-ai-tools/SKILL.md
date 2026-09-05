@@ -26,7 +26,7 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
     </step>
 
     <step id="2" name="planning_pass">
-      Dispatch a fresh, zero-context `planner-ai-tools` instance using `<template role="campaign-planner">`.
+      Dispatch a fresh, zero-context `planner-ai-tools` instance using `<template role="campaign-planner">` from `<dispatch_templates>`.
       The planner inspects repository state, selects one cohesive improvement matching user priorities,
       and writes `dev/<slug>/` (base and stage files).
       Returns: `PLAN <path>`, `RESUME <path>`, `NONE`, or `BLOCKED`.
@@ -34,7 +34,7 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
     </step>
 
     <step id="3" name="execution_pass">
-      On `PLAN` or `RESUME`, dispatch a separate, fresh `planner-ai-tools` instance using `<template role="campaign-executor">`.
+      On `PLAN` or `RESUME`, dispatch a separate, fresh `planner-ai-tools` instance using `<template role="campaign-executor">` from `<dispatch_templates>`.
       The campaign executor operates with high thinking/reasoning, owns plan delivery and acceptance, and sub-dispatches:
       - `implementer-ai-tools` for code changes on separate files.
       - `mechanical-ai-tools` for running tests, applying mechanical renames, and verifying commits.
@@ -48,7 +48,7 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
 
     <step id="4" name="iteration_loop">
       Record iteration result from campaign executor.
-      Repeat step 2 (Planning pass) with a new zero-context planner.
+      Repeat <step id="2" name="planning_pass"> with a new zero-context planner.
       Do not reuse conversation context between iterations to prevent context degradation.
       Continue until budget ends, host halts, two planners return NONE, or a pass is BLOCKED.
     </step>
