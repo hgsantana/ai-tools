@@ -1,7 +1,7 @@
 ---
 name: implementer-ai-tools
 description: Implementer worker: writes and edits code for one stage or brief, using local design judgment. Spawned for work requiring the implementer model.
-model: gemini-3.7-flash
+model: gemini-3.8-flash
 readonly: false
 is_background: false
 ---

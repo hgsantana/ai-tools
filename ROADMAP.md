@@ -10,7 +10,6 @@ Status: `idea` (awaiting refinement) · `next` (agreed and ready) · `doing` (pl
 |---|---|---|
 | 4 | [Health-check entry point](#4-health-check-entry-point) | idea |
 | 6 | [Changelog for alpha testers](#6-changelog-for-alpha-testers) | idea |
-| 7 | [Repeatable model-table refresh](#7-repeatable-model-table-refresh) | idea |
 | 8 | [Decisions that outlive the plan](#8-decisions-that-outlive-the-plan) | idea |
 | 9 | [Resuming an interrupted delivery](#9-resuming-an-interrupted-delivery) | idea |
 | 10 | [Execution outside a git repository](#10-execution-outside-a-git-repository) | idea |
@@ -29,10 +28,6 @@ Status: `idea` (awaiting refinement) · `next` (agreed and ready) · `doing` (pl
 Rule 4 lets the README describe only the current alpha state. Give testers a concise history by adding `CHANGELOG.md` with one entry per version: shipped changes and breaking effects. Have the linter require an entry whenever the version changes. Route: `/vibe-ai-tools`.
 
 ## Capability
-
-### 7. Repeatable model-table refresh
-
-The README defines a reproducible model-selection method—list official names, join Artificial Analysis measurements, apply category thresholds, and rank by `(Intelligence Index / cost per task) / time per task`—but applying it manually across six harnesses makes freshness hard to see. Ship a `models-ai-tools` skill that runs the method end to end, records source URLs and retrieval dates, presents a diff against the `MODELS.csv`, and, after approval, updates that CSV and affected wrapper headers in one commit as rule 12 requires. Route: `/vibe-ai-tools`.
 
 ### 8. Decisions that outlive the plan
 

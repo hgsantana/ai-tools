@@ -1,7 +1,7 @@
 ---
 name: implementer-ai-tools
 description: Implementer worker: writes and edits code for one stage or brief, using local design judgment. Spawned for work requiring the implementer model.
-model: Gemini 3.7 Flash
+model: Gemini 3.8 Flash
 ---
 
 On Windows, %USERPROFILE% replaces $HOME.

@@ -1,7 +1,7 @@
 name = "planner-ai-tools"
 description = "Planner worker: decomposes work, designs the approach, owns acceptance, and writes no production code. Spawned for work requiring the planner model; distinct from the plan-ai-tools workflow."
 model = "gpt-5.6-sol"
-model_reasoning_effort = "xhigh"
+model_reasoning_effort = "high"
 developer_instructions = """
 On Windows, %USERPROFILE% replaces $HOME.
 

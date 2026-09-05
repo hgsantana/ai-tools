@@ -6,7 +6,7 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
 
 ## What is installed
 
-**Nine skills** are the user entry points. Each description states purpose, `Impact:`, and `Agent:`. The skill file is the dispatched agent's brief: it states the work, not an identity.
+**Ten skills** are the user entry points. Each description states purpose, `Impact:`, and `Agent:`. The skill file is the dispatched agent's brief: it states the work, not an identity.
 
 Commits, branches, rebases, merges, pushes, and pull-request delivery run directly and bypass `/gh-ai-tools`.
 

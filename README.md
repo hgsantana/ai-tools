@@ -1,6 +1,6 @@
 # ai-tools
 
-> **Version 0.0.46-ALPHA** — under active development. Suitable for testing; alpha versions provide neither guarantees nor backward compatibility (rule 4).
+> **Version 0.0.47-ALPHA** — under active development. Suitable for testing; alpha versions provide neither guarantees nor backward compatibility (rule 4).
 
 ## Overview
 
@@ -30,7 +30,7 @@ How it operates:
 | [`agents/mechanical-ai-tools.md`](agents/mechanical-ai-tools.md) | `mechanical-ai-tools` — executes specified patches and renames, runs builds and tests, and collects evidence. Contains type rules; the brief defines the job |
 | [`agents/SUBAGENT-CONTRACT.md`](agents/SUBAGENT-CONTRACT.md) | Shared spawned-subagent contract: brief, user channel, report, model pin, spawning, and type boundaries. Not installed; read by path |
 | [`agents/<harness>/`](agents/) | One wrapper per agent: header pin, contract pointer, base pointer |
-| [`skills/`](skills/) | Nine skills, each `skills/<name>/SKILL.md`. Harnesses list frontmatter only; the body is the dispatched agent's brief. The three agents have no skill |
+| [`skills/`](skills/) | Ten skills, each `skills/<name>/SKILL.md`. Harnesses list frontmatter only; the body is the dispatched agent's brief. The three agents have no skill |
 | [`scripts/`](scripts/) | `scripts/shell/` install processes ([Scripts](#scripts); rules 25–28); `lint.sh`, `test.sh`, `harness-models.sh`, `aa-metrics.sh` ([Development checks](#development-checks)). Windows: WSL or Git Bash |
 
 ### Quick start
@@ -105,7 +105,7 @@ Normative for every human and every AI maintaining this repository.
 
 ### Model selection and wrapper authoring
 
-[`MODELS.csv`](MODELS.csv) is the authoring and installation lookup: a CSV, one row per harness. Harnesses do not load it; wrappers and install-time config carry the pins. Installation reads it to write Grok's managed `[subagents.models]` block (unreadable CSV → skip and report, never guess). `scripts/lint.sh` checks every wrapper pin against it. Fill it with the [selection method](#choosing-the-models). The CSV evaluates model potential rather than a frozen stack.
+[`MODELS.csv`](MODELS.csv) is the authoring and installation lookup: a CSV, one row per harness. Harnesses do not load it; wrappers and install-time config carry the pins. Installation reads it to write Grok's managed `[subagents.models]` block (unreadable CSV → skip and report, never guess). `scripts/lint.sh` checks every wrapper pin against it. Fill and refresh it using the [`/models-ai-tools`](skills/models-ai-tools/SKILL.md) skill. The CSV evaluates model potential rather than a frozen stack.
 
 Family, version, and any official effort come from the harness's official **pricing/models** table for individual plans on that agent surface. Measurements come from [Artificial Analysis (AA)](https://artificialanalysis.ai/) **model** pages: Intelligence Index, Cost per Task, and Time per Task for the model itself. Cost always means AA Cost per Task. Fetch inputs with [`scripts/harness-models.sh`](scripts/harness-models.sh) and [`scripts/aa-metrics.sh`](scripts/aa-metrics.sh), which write CSVs under `dev/tmp/`.
 
@@ -127,28 +127,9 @@ How to change the **session** model lives in [Supported harnesses](#supported-ha
 
 Wrappers always pin the model token and pin effort only when the matching effort column is non-empty **and** the wrapper form can hold it (`effort:` Claude Code, `model_reasoning_effort` Codex, `[effort=…]` Cursor).
 
-#### Choosing the models
+#### Refreshing the models
 
-A CSV row is reproducible research. Re-run the method for every model release and record source URLs, retrieval date, and benchmark versions.
-
-**Terms**
-
-| Term | Meaning |
-|---|---|
-| **Family** | One official family + version from step 1 |
-| **Official effort** | A level the harness's individual-plan pricing/models table names for that surface and model. If the table names none, the family has no official effort. A label that exists only on Artificial Analysis (reasoning, non-reasoning, Adaptive Reasoning) is not one |
-| **Complete row** | An AA **model** row with independently finished numeric Intelligence Index, Cost per Task, and Time per Task > 0 — no `*`, no lab-claim stand-in |
-| **Effort-comparable** | The family has a complete row for **two or more** official efforts. One complete official row, or none, is not comparable; a later rematch writes the effort column when more levels are measured |
-| **Score** | `(Intelligence Index / Cost per Task) / Time per Task` — higher first |
-
-1. **List names.** From the harness's official **pricing/models** table for **individual** plans on this exact agent surface, list every model named by the most permissive documented first-party individual plan. Collapse each family + version to one name by removing effort, Fast/standard, and other mode suffixes: `Grok 4.6 Fast` and `Grok 4.6 High` both become `Grok 4.6`. Record the accepted configuration value, underlying model, plan, surface, and every **official effort** token named for that model (`low`, `medium`, `high`, `xhigh`, `max`, or vendor equivalent). Record an empty effort when none is named. Exclude retired, utility, internal, arbitrary BYOK, and auto-routing models. Count an alias or tier only when official documentation resolves it to one family + version on the research date. Source names and effort exclusively from that harness table rather than a vendor API catalog, team/enterprise-only list, or Artificial Analysis.
-2. **Join measurements.** Filter the AA catalog to the complete step-1 name list across all supported harnesses. Treat every AA **model** row for each remaining family + version, effort, and mode as a candidate. Record Intelligence Index, Cost per Task, and Time per Task in one table per harness. Use model-level measurements rather than harness-stack scores such as Coding Agent Index. Show gaps as `N/A` and exclude `*` estimates and lab claims from selection. Use AA Cost per Task rather than per-token or subscription prices, and calculate with downloadable source precision.
-3. **Select.** Keep candidates with complete Intelligence Index, Cost per Task, and Time per Task values; do not impute. Thresholds are inclusive and selection is per harness. When the harness names no official effort for a family, collapse that family's complete rows **before** filtering into one candidate using the unweighted mean of all three metrics; name it only by family + version. Filter and rank the resulting candidates by score, then break ties by lower Cost per Task and lower Time per Task.
-   - **planner** — keep Intelligence Index ≥ that harness's best − `3`, then rank.
-   - **implementer** — keep Intelligence Index ≥ that harness's best − `10`. Drop any survivor whose family + version is the planner's. Keep Cost per Task **strictly less** than the planner's. Then rank.
-   - **mechanical** — keep Cost per Task between that harness's minimum and `3 ×` that minimum. Drop any survivor whose family + version is the planner's or the implementer's. Keep Cost per Task **strictly less** than the implementer's (and thus than the planner's). Then rank. An empty band after those cuts is a fallback — do not reopen the planner or implementer family.
-4. **Fallback—when measurement cannot decide** because step 3 yields an empty band, no complete candidate, or a final Cost per Task and Time per Task tie. Use the harness's official task guidance: deep reasoning, architecture, and ambiguity for **planner**; agentic software development, implementation, and tool use for **implementer**; simple, repetitive, routine, fast, or cost-sensitive work for **mechanical**. Cite it and label `documented fallback`. If guidance names **one** model, use that token and any effort it also names. Otherwise—including Auto/routing or multiple names without a winner—**repeat the previous category's cell**: implementer copies planner; mechanical copies implementer. Never invent a quantitative winner.
-5. **Write.** Put each winner in the CSV as the accepted model token. Write the matching effort column only when the family is effort-comparable **and** official docs list a token that matches the selected row (or the documented-fallback effort the guidance named), in the vendor's spelling. Otherwise leave the effort cell empty. A measured winner may not be `N/A`. In the same commit (rule 12), update every affected wrapper: always pin the model token; pin effort **only** if that effort column is non-empty **and** the wrapper form can hold it. CSV shape: one data row per harness; `harness` matches `agents/<harness>/`; the role columns are the model tokens. A new harness adds that row, its wrapper folder, and [Supported harnesses](#supported-harnesses) in the same commit.
+Run `/models-ai-tools` to rebuild and refresh `MODELS.csv` and keep wrapper headers synchronized. The full reproducible selection methodology, evaluation metrics, thresholds, and fallback rules live in [`skills/models-ai-tools/SKILL.md`](skills/models-ai-tools/SKILL.md). Inputs are gathered via [`scripts/harness-models.sh`](scripts/harness-models.sh) and [`scripts/aa-metrics.sh`](scripts/aa-metrics.sh). The skill displays the proposed table and reports diffs before writing, and updates `MODELS.csv` and affected wrapper headers in the same commit (rule 12).
 
 Pin the role the base names (`You are the **planner** / **implementer** / **mechanical**`) from the `MODELS.csv` in the header. Body (rule 6):
 

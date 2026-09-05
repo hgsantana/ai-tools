@@ -1,7 +1,7 @@
 name = "implementer-ai-tools"
 description = "Implementer worker: writes and edits code for one stage or brief, using local design judgment. Spawned for work requiring the implementer model."
 model = "gpt-5.6-luna"
-model_reasoning_effort = "max"
+model_reasoning_effort = "xhigh"
 developer_instructions = """
 On Windows, %USERPROFILE% replaces $HOME.
 

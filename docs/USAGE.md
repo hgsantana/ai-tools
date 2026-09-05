@@ -25,6 +25,7 @@ The skill offer is the only `USER-AGENTS.md` gate. It names each option's impact
 | `/gh-ai-tools` | Inspect or manage GitHub accounts, repository administration, environments, Actions/builds, issues, and releases | `/gh-ai-tools show failing Actions runs` |
 | `/update-ai-tools` | Remove current-version artifacts, reset the clone, and install from origin/master | `/update-ai-tools all detected harnesses` |
 | `/remove-ai-tools` | Remove installed ai-tools artifacts from selected harnesses | `/remove-ai-tools claude-code and cursor` |
+| `/models-ai-tools` | Rebuild and refresh MODELS.csv and wrapper pins from harness docs and AA metrics | `/models-ai-tools --dry-run` |
 
 ### Delivery workflows
 
@@ -79,9 +80,11 @@ To request a clean stop while it is running, say `Stop after the current plan.` 
 
 `/gh-ai-tools` is for GitHub-hosted state and administration: accounts, organizations, repository settings and access, environments, secrets and variables, Actions, builds, artifacts, issues, and releases. Repository code work—commits, branches, tags, cherry-picks, rebases, merges, fetches, pulls, pushes, code review, and pull-request creation, updates, review, or merge—runs directly in the session without this skill. Platform policy such as rulesets, required checks, and pull-request settings remains in scope for the skill.
 
-### Installation maintenance
+### Maintenance and model operations
 
 `/update-ai-tools` runs `update.sh`. `/remove-ai-tools` runs `remove.sh`. First settle harness scope, run the matching script with `--dry-run`, and save its output. Destructive flags are presented separately and run only when explicitly approved. The scripts preserve conflicts by default and leave the user-owned `$HOME/AGENTS.md` untouched.
+
+`/models-ai-tools` dispatches `implementer-ai-tools` to rebuild `MODELS.csv` and synchronize wrapper headers. It fetches pricing from harness tables and metrics from Artificial Analysis, evaluates candidates using repository selection rules, displays the proposed table and diff, and updates files only after user confirmation.
 
 First installation is not a skill: follow the root `README.md` installation process.
 

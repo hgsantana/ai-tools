@@ -58,16 +58,18 @@ if [ -n "$IN_DIR" ]; then
   [ "$n" -gt 0 ] || { echo "ERROR: no HTML in $IN_DIR" >&2; exit 1; }
 else
   command -v curl >/dev/null 2>&1 || { echo "ERROR: curl required for a live run" >&2; exit 1; }
-  if ! curl -fsSL -A "$UA" --max-time 60 "https://artificialanalysis.ai/sitemap.xml" -o "$WORKDIR/sitemap.xml"; then
+  if ! curl -fsSL --compressed -A "$UA" --max-time 60 "https://artificialanalysis.ai/sitemap.xml" -o "$WORKDIR/sitemap.xml"; then
     echo "ERROR: sitemap GET failed" >&2
     exit 1
   fi
-  python3 - "$WORKDIR/sitemap.xml" "$WORKDIR/urls.txt" <<'PY'
+  python3 - "$WORKDIR/sitemap.xml" "$WORKDIR/urls.txt" "$WORKDIR/curl.cfg" "$WORKDIR" <<'PY'
 import re, sys
 from pathlib import Path
 text = Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")
 locs = re.findall(r"<loc>\s*(https://artificialanalysis.ai/models/[^<\s]+)\s*</loc>", text)
 seen = []
+cfg = []
+workdir = sys.argv[4]
 for loc in locs:
     if "/es/" in loc or "/zh/" in loc or "/de/" in loc or "/ko/" in loc or "/ja/" in loc or "/pt/" in loc:
         continue
@@ -75,19 +77,24 @@ for loc in locs:
         continue
     if loc not in seen:
         seen.append(loc)
+        slug = loc.rsplit('/', 1)[-1]
+        cfg.append(f'url = "{loc}"\noutput = "{workdir}/{slug}.html"')
 Path(sys.argv[2]).write_text("\n".join(seen) + ("\n" if seen else ""), encoding="utf-8")
+Path(sys.argv[3]).write_text("\n".join(cfg) + ("\n" if cfg else ""), encoding="utf-8")
 print(f"sitemap model pages: {len(seen)}", file=sys.stderr)
 PY
   [ -s "$WORKDIR/urls.txt" ] || { echo "ERROR: sitemap listed no English model pages" >&2; exit 1; }
-  i=0
-  while IFS= read -r url; do
-    [ -n "$url" ] || continue
-    i=$((i + 1))
-    slug=${url##*/}
-    if ! curl -fsSL -A "$UA" --max-time 60 "$url" -o "$WORKDIR/$slug.html"; then
-      echo "SKIP: GET failed $url"
-    fi
-  done < "$WORKDIR/urls.txt"
+  if curl --parallel --version >/dev/null 2>&1; then
+    curl --parallel --parallel-max 16 -fsSL --compressed -A "$UA" --max-time 60 -K "$WORKDIR/curl.cfg" 2>/dev/null || true
+  else
+    while IFS= read -r url; do
+      [ -n "$url" ] || continue
+      slug=${url##*/}
+      if ! curl -fsSL --compressed -A "$UA" --max-time 60 "$url" -o "$WORKDIR/$slug.html"; then
+        echo "SKIP: GET failed $url"
+      fi
+    done < "$WORKDIR/urls.txt"
+  fi
   htmln=$(find "$WORKDIR" -maxdepth 1 -name '*.html' | wc -l | tr -d ' ')
   [ "$htmln" -gt 1 ] || { echo "ERROR: need sitemap-seeded model pages, not catalog-only" >&2; exit 1; }
 fi
