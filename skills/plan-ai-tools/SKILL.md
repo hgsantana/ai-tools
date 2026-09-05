@@ -20,9 +20,10 @@ Author a multi-file implementation plan under `dev/`, then stop. Route a change 
 
 1. **Establish the base branch**: verify the repository root, record the currently checked-out branch by name, and keep it checked out throughout analysis. This analysis branch is `<base>`; if `HEAD` is detached, ask the user to choose and check out a branch before continuing.
 2. **Invoke host planning**: request the host harness's strongest planning capability, mode, or skill for the design.
-3. **Draft the plan**: structure the delivery into isolated stages where each stage defines a commit boundary. Group tests by type, add a documentation stage if behavior changes, and set explicit stage dependencies.
-4. **Save**: write `<base>` into the base plan, then write `dev/<slug>/0-<slug>.md` and each `dev/<slug>/<n>-<slug>.md` as it is drafted, so the plan survives an interrupted session.
-5. **Report**: hand over paths as defined in *Report*.
+3. **Align with the user**: in the user's language, clarify scope boundaries, present trade-offs and alternative approaches, and resolve open architectural questions before drafting the plan structure.
+4. **Draft the plan**: structure the delivery into isolated stages where each stage defines a commit boundary. Group tests by type, add a documentation stage if behavior changes, and set explicit stage dependencies.
+5. **Save**: write `<base>` into the base plan, then write `dev/<slug>/0-<slug>.md` and each `dev/<slug>/<n>-<slug>.md` as it is drafted, so the plan survives an interrupted session.
+6. **Report**: hand over paths as defined in *Report*.
 
 ## Plan file format
 

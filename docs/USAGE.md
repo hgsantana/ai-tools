@@ -19,7 +19,7 @@ The skill offer is the only `USER-AGENTS.md` gate. It names each option's impact
 | `/vibe-ai-tools` | Plan under `dev/`, then execute that plan and deliver a pull request | `/vibe-ai-tools add resumable uploads` |
 | `/plan-ai-tools` | Explore a multi-commit change, save a staged plan under `dev/`, then offer `/dev-ai-tools` | `/plan-ai-tools redesign cache invalidation` |
 | `/dev-ai-tools` | Execute a specified `dev/` plan, a queue of pending plans, or one single-commit task | `/dev-ai-tools dev/cache-invalidation/` |
-| `/improve-ai-tools` | Repeatedly plan and deliver relevant, multi-stage improvements in an autonomous local campaign | `/improve-ai-tools repository-hardening` |
+| `/improve-ai-tools` | Repeatedly plan and deliver user-directed, multi-stage improvements in an autonomous local campaign | `/improve-ai-tools repository-hardening` |
 | `/az-ai-tools` | Inspect or manage Azure resources, subscriptions, infrastructure, and costs with `az` | `/az-ai-tools list costly idle resources` |
 | `/gc-ai-tools` | Inspect or manage Google Cloud projects, infrastructure, and costs with `gcloud` | `/gc-ai-tools show resources in project-x` |
 | `/gh-ai-tools` | Inspect or manage GitHub accounts, repository administration, environments, Actions/builds, issues, and releases | `/gh-ai-tools show failing Actions runs` |
@@ -29,7 +29,7 @@ The skill offer is the only `USER-AGENTS.md` gate. It names each option's impact
 
 ### Delivery workflows
 
-`/vibe-ai-tools` is the end-to-end choice for a larger change. It follows `/plan-ai-tools` in the same run until the plan is on disk, then reads `/dev-ai-tools` and executes that plan, deciding in-scope implementation questions itself.
+`/vibe-ai-tools` is the end-to-end choice for a larger change. It follows `/plan-ai-tools` to align scope with the user interactively, writes the agreed plan to disk, then reads `/dev-ai-tools` and executes unattended, recording decisions in `dev/<slug>/vibe-decisions.md`.
 
 `/plan-ai-tools` designs only. Its output is a base plan plus one file per commit-sized stage under `dev/<slug>/`; the base plan records the branch used for analysis. After the plan is on disk it offers `/dev-ai-tools`. A one-commit request is redirected to `/dev-ai-tools` Task mode.
 
@@ -37,7 +37,7 @@ The skill offer is the only `USER-AGENTS.md` gate. It names each option's impact
 
 ### Continuous improvement campaign
 
-`/improve-ai-tools` uses a single initial gate. Choosing it authorizes all local, in-repository work for that campaign; it does not push, open pull requests, mutate cloud resources, or write outside the repository.
+`/improve-ai-tools` uses a single initial gate. Choosing it authorizes all local, in-repository work for that campaign; it does not push, open pull requests, mutate cloud resources, or write outside the repository. The user owns the campaign and specifies its objectives and priorities.
 
 Recommended prompt:
 
@@ -46,25 +46,25 @@ Recommended prompt:
 
 Campaign: repository-hardening
 Objective: autonomously identify and implement useful repository improvements.
-Prioritize correctness, reliability, tests, maintainability, and stale documentation.
-Each iteration must address one relevant, cohesive improvement or correction, planned in as many tested stages and commits as needed.
+Priorities: modernize test suites, improve error handling, update stale docs.
+Each iteration must address one cohesive improvement or correction matching these priorities, planned in as many tested stages and commits as needed.
 Continue until the available budget ends or a blocker occurs.
 ```
 
-The short form uses the skill's default priorities:
+The short form uses the user's objective or explicit campaign name:
 
 ```text
 /improve-ai-tools repository-hardening
 ```
 
-The campaign creates or resumes local branch `improve/repository-hardening`, using the repository's base-branch rules. Each iteration chains the planning and execution workflows through fresh, zero-context agents:
+The campaign creates or resumes local branch `improve/repository-hardening`, committing `dev/improve/repository-hardening/campaign.md` at start. Each iteration chains planning and execution workflows through fresh, zero-context agents while keeping the orchestrator session lean:
 
-1. A `planner-ai-tools` agent evaluates the current campaign branch and runs `plan-ai-tools`, saving one relevant multi-stage plan under `dev/`. The initial gate pre-authorizes it to resolve and accept its own recommendations.
-2. The dispatched agent receives the plan path and spawns a different `planner-ai-tools` agent to run `dev-ai-tools` against that accepted plan.
-3. The execution planner dispatches implementers and mechanical testers, judges their diffs and evidence, commits every accepted stage, archives the plan, and reports the result.
-4. The dispatched agent starts the cycle again with another new planning agent. No planner instance or conversation history is reused between passes.
+1. A fresh `planner-ai-tools` agent evaluates the campaign branch and runs `plan-ai-tools`, saving one multi-stage plan under `dev/<slug>/`. The initial gate pre-authorizes it to resolve and accept its recommendations according to the user's campaign priorities.
+2. The dispatched orchestrator receives the plan path and spawns a different fresh `planner-ai-tools` agent to run `dev-ai-tools` against that accepted plan.
+3. The execution planner dispatches implementers and mechanical testers, judges their diffs and evidence, commits every accepted stage on `improve/<campaign>`, archives the plan, and updates `dev/improve/<campaign>/campaign.md` and `decisions.md`.
+4. The dispatched orchestrator starts the cycle again with another new planning agent. No planner instance or conversation history is reused between passes.
 
-The dispatched agent only dispatches the planning and execution agents and routes their short statuses. Those planners decide in-scope questions under the initial gate; the user is not interrupted after it. Work needing remote mutation, an external write, or an unversioned destructive action blocks instead of expanding the authorization. Campaign delivery remains local: `dev-ai-tools` uses the campaign branch instead of `plan/<slug>` and does not push or open pull requests.
+The orchestrating agent only dispatches the planning and execution agents and routes their short statuses, keeping its conversation context minimal. Planners decide in-scope questions under the initial gate; the user is not interrupted after it. Work needing remote mutation, an external write, or an unversioned destructive action blocks instead of expanding the authorization. Campaign delivery remains local: `dev-ai-tools` uses the campaign branch instead of `plan/<slug>` and does not push or open pull requests. On controlled completion, `dev/improve/<campaign>/` is archived and removed in a final commit, leaving the branch clean for merge.
 
 If execution ends mid-plan, the last accepted stage remains committed and the campaign branch may have resumable plan files or a dirty worktree. Resume with the same campaign name:
 

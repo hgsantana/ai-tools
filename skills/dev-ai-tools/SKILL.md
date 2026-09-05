@@ -123,7 +123,7 @@ Then push `plan/<slug>` and open the pull request against the same `<base>` from
 
 **When no pull-request host is available**—determined at branch creation from a compatible remote; for GitHub, `gh auth status` plus a GitHub remote—return a **local review request**: branch, base, `git diff --stat`, and a patch from `git diff <base>...<branch> --output=dev/tmp/<slug>-review.patch`. Let Git write the patch, verify it with `--stat` or `wc -l`, and leave its content on disk.
 
-**A step left in `E`** stops the delivery: archive nothing, push nothing. Report how many steps failed and why, and return the choice as an approval request—retry them, deliver and archive anyway, or deliver and leave the work under `dev/`. An unattended `vibe-ai-tools` delivery, whose gate promised no further checkpoints, decides for itself and records the choice and reasoning in `dev/tmp/vibe/<slug>-decisions.md`.
+**A step left in `E`** stops the delivery: archive nothing, push nothing. Report how many steps failed and why, and return the choice as an approval request—retry them, deliver and archive anyway, or deliver and leave the work under `dev/`. An unattended `vibe-ai-tools` delivery, whose gate promised no further checkpoints, decides for itself and records the choice and reasoning in `dev/<slug>/vibe-decisions.md`.
 
 ## Dispatching
 
@@ -209,11 +209,11 @@ A subagent can die without reporting. Detection uses only the filesystem and git
 
 ## Archival
 
-A plan or task file is temporary working state, versioned so execution survives an interrupted session or fresh clone. Keep it while work remains resumable; the delivered commits, tests, and updated documentation become the remote record.
+A plan, task, or auxiliary decisions file is temporary working state, versioned so execution survives an interrupted session or fresh clone and preserves comprehension in Git history. Keep it while work remains resumable; the delivered commits, tests, and updated documentation become the permanent record.
 
 Archive once **every** step is terminal (`F`; an `E` stops the delivery) and every Dispatch log row has its Outcome filled — an open row means a writer may still return, and it still owns the file. Then do both steps:
 
-1. **Copy locally** — `mkdir -p dev/tmp/finished`, then `cp -r dev/<slug> dev/tmp/finished/<slug>` for a plan, or `cp dev/<slug>.md dev/tmp/finished/<slug>.md` for a task. `dev/tmp/` is gitignored, so the copy stays on this machine alone.
+1. **Copy locally** — `mkdir -p dev/tmp/finished`, then `cp -r dev/<slug> dev/tmp/finished/<slug>` for a plan (including auxiliary decision and fix files), or `cp dev/<slug>.md dev/tmp/finished/<slug>.md` for a task. `dev/tmp/` is gitignored, so the copy stays on this machine alone.
 2. **Remove from the repository** — `git rm -r dev/<slug>`, or `git rm dev/<slug>.md`.
 
 Before committing, confirm `git ls-files dev/tmp` prints nothing and `git status` shows the deletion. Commit it path-scoped as `chore(dev): archive <slug>`: the last commit on the branch, after every step commit and before the push.

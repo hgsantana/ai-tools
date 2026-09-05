@@ -2,7 +2,7 @@
 name: improve-ai-tools
 description: >
   Run an autonomous local campaign in which fresh planner agents repeatedly
-  plan and deliver relevant, multi-stage repository improvements. Use for
+  plan and deliver user-directed, multi-stage repository improvements. Use for
   /improve-ai-tools. Impact: creates or resumes a campaign branch, edits or
   removes files, runs commands and tests, and makes multiple local commits. It
   never pushes or writes outside the repository. Agent: planner-ai-tools.
@@ -11,13 +11,13 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
 
 # Continuous Improvement
 
-Run an autonomous, local campaign that repeatedly plans and delivers relevant repository improvements. One iteration is one accepted plan and may contain multiple stages and commits.
+Run an autonomous, local campaign that repeatedly plans and delivers user-directed repository improvements. One iteration is one accepted plan and may contain multiple stages and commits.
 
 ## Workflow
 
 This file is the brief for the dispatched agent. Execute the Workflow.
 
-Dispatch each pass. Announce spawns, supply paths, route status envelopes, and start the next pass. Do not explore, plan, edit, run commands, test, inspect diffs, judge, stage, or commit in this run. Every pass uses a new `planner-ai-tools` instance with no conversation history; in harnesses that support it, spawn with an empty context such as Codex `fork_turns: none`. If spawning fails, stop rather than carrying its work.
+Dispatch each pass. Announce spawns, supply paths, route status envelopes, and start the next pass. Keep this orchestrating session as lean as possible to conserve budget across long-running campaigns: do not load plan files, code diffs, command logs, or reports into conversation context. Do not explore, plan, edit, run commands, test, inspect diffs, judge, stage, or commit in this run. Every pass uses a new `planner-ai-tools` instance with no conversation history; in harnesses that support it, spawn with an empty context such as Codex `fork_turns: none`. If spawning fails, stop rather than carrying its work.
 
 The `USER-AGENTS.md` routing question is the campaign's sole gate. Once the user chooses `/improve-ai-tools`, the planners may accept their own recommendations and decide every in-scope question. The gate authorizes local campaign-branch creation, versioned edits and removals, commands, tests, and commits through campaign termination. Do not ask the user to approve a plan or another campaign decision; block when completion needs authority outside *Boundaries*.
 
@@ -29,26 +29,26 @@ Announce and spawn a fresh, zero-context `planner-ai-tools`. Assign it to initia
 
 1. Read the complete `plan-ai-tools` Workflow from `$HOME/.ai-tools/skills/plan-ai-tools/SKILL.md` (Windows: `%USERPROFILE%\.ai-tools\skills\plan-ai-tools\SKILL.md`) and the repository instructions.
 2. Resolve the repository root and a kebab-case `<campaign>` from the explicit name or objective. Use branch `improve/<campaign>` and resolve its base from repository rules or the local default branch without network access.
-3. For a new campaign, require a clean worktree, create and check out the campaign branch, then create `dev/tmp/improve/<campaign>/`. For an existing campaign, switch to its branch only from a clean worktree; when already on it, preserve partial work.
-4. Write or update `dev/tmp/improve/<campaign>/campaign.md` with the request, priorities, exclusions, repository root, base, branch, current `HEAD`, active plan path, completed reports, and status. Keep decisions under `decisions/` and iteration summaries under `iterations/`.
+3. For a new campaign, require a clean worktree, create and check out the campaign branch, then create `dev/improve/<campaign>/`. Commit the initial campaign definition as `chore(dev): start campaign <campaign>`. For an existing campaign, switch to its branch only from a clean worktree; when already on it, preserve partial work.
+4. Write or update `dev/improve/<campaign>/campaign.md` with the user request, priorities, exclusions, repository root, base, branch, current `HEAD`, active plan path, completed reports, and status. Keep cross-iteration decisions in `dev/improve/<campaign>/decisions.md` and iteration summaries under `dev/improve/<campaign>/iterations/`.
 5. On resume, return `RESUME <plan-path>` when one plan is already active. Reconcile its files, branch, and worktree without resetting, cleaning, stashing, amending, squashing, or reverting.
-6. Otherwise inspect the current campaign `HEAD` and choose one cohesive, relevant improvement or correction supported by repository evidence. Prefer correctness, reliability, tests, maintainability, security, performance, and stale behavior documentation over cosmetic churn. Reject artificially small or speculative work; the objective must justify `plan-ai-tools` Plan mode and may span as many stages and commits as needed.
+6. Otherwise inspect the current campaign `HEAD` and choose one cohesive, relevant improvement or correction matching the campaign objective and priorities defined by the user. The user is the owner of the campaign; evaluate candidates strictly against the user's scope and criteria. Reject work outside the campaign's intent; the objective must justify `plan-ai-tools` Plan mode and may span as many stages and commits as needed.
 7. Run the `plan-ai-tools` Workflow and write its canonical plan under `dev/<slug>/`. Resolve open design choices yourself from evidence and campaign priorities. The improve gate replaces `plan-ai-tools`' `/dev-ai-tools` offer: return `PLAN <base-plan-path>` without offering `/dev-ai-tools`.
 
 Return `PLAN`, `RESUME`, `NONE`, or `BLOCKED`. Two consecutive `NONE` results from independent fresh planners end the campaign. Give the confirmation planner the campaign scope and current repository state, but not the first planner's conclusion or reasoning.
 
 ### 2. Execution pass
 
-On `PLAN` or `RESUME`, announce and spawn a different fresh, zero-context `planner-ai-tools`. Give it only this Workflow, `campaign.md`, the exact plan path, and the complete `dev-ai-tools` Workflow at `$HOME/.ai-tools/skills/dev-ai-tools/SKILL.md` (Windows: `%USERPROFILE%\.ai-tools\skills\dev-ai-tools\SKILL.md`). Assign it to execute and judge the accepted plan in `dev-ai-tools` Plan mode.
+On `PLAN` or `RESUME`, announce and spawn a different fresh, zero-context `planner-ai-tools`. Give it only this Workflow, `dev/improve/<campaign>/campaign.md`, the exact plan path, and the complete `dev-ai-tools` Workflow at `$HOME/.ai-tools/skills/dev-ai-tools/SKILL.md` (Windows: `%USERPROFILE%\.ai-tools\skills\dev-ai-tools\SKILL.md`). Assign it to execute and judge the accepted plan in `dev-ai-tools` Plan mode.
 
 The execution planner owns the entire `dev-ai-tools` sequence. It loads the plan, dispatches `implementer-ai-tools` for production and test edits, dispatches `mechanical-ai-tools` for builds, tests, and evidence, inspects the real diffs, audits acceptance criteria and tests, orders corrections, commits accepted stages, archives the completed plan, and writes the final report. It may spawn its own helpers according to `dev-ai-tools`; do not orchestrate those workers or duplicate the judgment.
 
 Apply these campaign overrides to `dev-ai-tools`:
 
-- Treat the saved plan as already accepted and run unattended. Decide in-scope questions from the plan, repository rules, evidence, and campaign priorities; record them under the campaign's `decisions/` directory.
+- Treat the saved plan as already accepted and run unattended. Decide in-scope questions from the plan, repository rules, evidence, and campaign priorities; record cross-iteration choices in `dev/improve/<campaign>/decisions.md`.
 - Verify the exact repository root and `improve/<campaign>` before every write. Keep all plan, implementation, test, archival, and report work on that branch; do not create or switch to `plan/<slug>`.
 - Preserve `dev-ai-tools`' plan-introduction, per-stage, and archival commits. Its one-commit-per-stage rule remains; the improve iteration itself has no commit limit.
-- Keep delivery local. Replace push, pull-request creation, and local review-patch delivery with an update to `campaign.md` and an iteration summary containing the plan path, report path, commit list, final `HEAD`, and clean/dirty state.
+- Keep delivery local. Replace push, pull-request creation, and local review-patch delivery with an update to `dev/improve/<campaign>/campaign.md` and an iteration summary under `dev/improve/<campaign>/iterations/` containing the plan path, report path, commit list, final `HEAD`, and clean/dirty state.
 - A terminal execution failure is `BLOCKED`; leave resumable state untouched instead of asking the user to relax acceptance or deliver failed stages.
 
 Return `DELIVERED <report-path>` or `BLOCKED <report-path>`. On `DELIVERED`, start another *Planning pass* with a new zero-context planner. Do not reuse either planner from the completed iteration.
@@ -57,12 +57,12 @@ Return `DELIVERED <report-path>` or `BLOCKED <report-path>`. On `DELIVERED`, sta
 
 Continue until the host budget is exhausted, the host ends the run, two independent planners find no qualifying improvement, a spawn or command fails irrecoverably, or an execution pass returns `BLOCKED`.
 
-At a controlled stop, chat gives one line with the campaign branch, last committed `HEAD`, clean/dirty state reported by an agent, and `dev/tmp/improve/<campaign>/campaign.md`. A hard host cutoff needs no closing report. Resume by invoking `/improve-ai-tools` with the same campaign name.
+At a controlled stop or completion, archive `dev/improve/<campaign>/` by copying it to `dev/tmp/finished/improve/<campaign>/` and removing it with `git rm -r dev/improve/<campaign>/`, then commit as `chore(dev): complete campaign <campaign>` so the branch history preserves the complete record while leaving the repository root clean upon merge. Chat gives one line with the campaign branch, last committed `HEAD`, clean/dirty state, and `dev/tmp/finished/improve/<campaign>/campaign.md`. A hard host cutoff leaves resumable files in place without a closing commit. Resume by invoking `/improve-ai-tools` with the same campaign name.
 
 ## Boundaries
 
 - Work only in the repository resolved by the planning pass and on `improve/<campaign>`; read-only access to installed instructions is allowed.
-- Keep campaign state and writable runtime data inside the repository. Prefer `dev/tmp/improve/<campaign>/runtime/` for configurable caches, temporary files, and command output.
+- Keep campaign comprehension files under `dev/improve/<campaign>/`; runtime caches, temporary files, and command output stay ignored under `dev/tmp/improve/<campaign>/runtime/`.
 - Keep the campaign local: no fetch, push, pull request, cloud operation, external message, package publication, deployment, or other shared-state mutation.
 - Preserve the base branch and history predating the campaign. Leave failed or interrupted work resumable and unchanged.
-- Campaign metadata under `dev/tmp/` stays ignored and uncommitted.
+- Campaign documents under `dev/improve/` are tracked during the campaign and archived on completion; volatile runtime data under `dev/tmp/` stays ignored and uncommitted.
