@@ -1,6 +1,6 @@
 ---
 name: planner-ai-tools
-description: Planner worker: decomposes work, designs the approach, owns acceptance, and writes no production code. Spawned for work requiring the planner model; distinct from the plan-ai-tools workflow.
+description: "Planner worker: decomposes work, designs the approach, owns acceptance, and writes no production code. Spawned for work requiring the planner model; distinct from the plan-ai-tools workflow."
 mcpInheritance: all
 ---
 

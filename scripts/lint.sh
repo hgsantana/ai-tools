@@ -583,6 +583,9 @@ check_description_parity() {
       if [ "$ext" = toml ]; then
         val=$(toml_field_value "$f" description)
       else
+        if [ "$h" = grok ] && grep -Eq '^[[:space:]]*description:[[:space:]]+[^[:space:]"'\''].*: ' "$f"; then
+          warn "unquoted colon in Grok YAML description (must be enclosed in double quotes): $f"
+        fi
         val=$(yaml_frontmatter_value "$f" description)
       fi
       if [ -z "$first" ]; then
@@ -594,6 +597,19 @@ check_description_parity() {
         warn "description diverges across wrappers for $a: $f"
       fi
     done
+  done
+}
+
+check_wrapper_templates() {
+  local h ext f
+  for h in $(harnesses); do
+    ext=$(wrapper_ext "$h")
+    f="$AI_TOOLS/templates/wrappers/$h.$ext"
+    if [ -f "$f" ]; then
+      ok "wrapper template present: $f"
+    else
+      warn "missing wrapper template for harness $h: $f"
+    fi
   done
 }
 
@@ -787,6 +803,7 @@ check_wrapper_body
 check_model_parity
 check_effort_pinning
 check_description_parity
+check_wrapper_templates
 check_models_row_coverage
 check_instructions_cap
 check_wrapper_cap

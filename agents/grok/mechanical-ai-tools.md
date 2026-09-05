@@ -1,6 +1,6 @@
 ---
 name: mechanical-ai-tools
-description: Mechanical worker: applies known patches and renames, runs builds and tests, and collects evidence without making design decisions. Spawned for work requiring the mechanical model.
+description: "Mechanical worker: applies known patches and renames, runs builds and tests, and collects evidence without making design decisions. Spawned for work requiring the mechanical model."
 mcpInheritance: all
 ---
 
