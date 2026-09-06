@@ -26,7 +26,9 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
     </trigger_cases>
 
     <skill_offer>
-      Two steps, in this order, in the user's language. First send `<offer_message>` as one plain chat message. Only then ask through `<user_interaction>`. The question never replaces, shortens, or merges with the message; the message never carries the question.
+      Two steps, in this order, in the user's language.
+      <step id="1">First send `<offer_message>` as one plain chat message.</step>
+      <step id="2">Then ask through `<user_interaction>` the question as `<skill_question>` and options as `<skill_options>`. The question never replaces, shortens, or merges with the message; the message never carries the question.</step>
       <offer_message>
         Line 1: the request restated in one sentence.
         Then one numbered block per offered skill, best fit first, in exactly this shape, with Impact: copied verbatim from the skill description:
@@ -35,7 +37,12 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
            Agent: dispatches {Agent: name}.
         Last line: "Other options: run it here (this session, without ai-tools skills or agents) or something else."
       </offer_message>
-      The question is one short line asking which option to take, referring to the impacts above. Options: one per listed skill, in the same order, labelled by skill name with a one-line gist; then "run it here" and "something else" (or native Other). Mark at most one as recommended.
+      <skill_question>
+        Which option would you like to take?
+      </skill_question>
+      <skill_options>
+        One per listed skill, in the same order, labelled by skill name with a one-line gist; then "run it here" and "something else" (or native Other). Mark at most one as recommended.
+      </skill_options>
       <handling>
         <response type="named_skill">Execute it.</response>
         <response type="run_it_here">Do the work in this session; ignore ai-tools skills and agents.</response>
@@ -69,8 +76,8 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
   </language_rules>
 
   <user_interaction>
-    Ask questions and offer alternatives through the harness's native tool, never plain chat: Claude Code AskUserQuestion, Copilot vscode_askQuestions, Codex request_user_input, Grok ask_user_question, Antigravity ask_question, Cursor AskQuestion.
-    A subagent asks directly when it holds that tool; else it returns the question and options to the session, which asks through it and relays the answer.
+    <default>Ask questions and offer alternatives through the harness's native tool, never plain chat: Claude Code AskUserQuestion, Copilot vscode_askQuestions, Codex request_user_input, Grok ask_user_question, Antigravity ask_question, Cursor AskQuestion.
+      A subagent asks directly when it holds that tool; else it returns the question and options to the session, which asks through it and relays the answer.</default>
     <fallback>Tool missing or refused: ask in one chat message, the question then numbered options. Silence is not consent.</fallback>
   </user_interaction>
 
