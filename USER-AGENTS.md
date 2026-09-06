@@ -31,8 +31,8 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
       <step id="2">Then ask through `<user_interaction>` the question as `<skill_question>` and options as `<skill_options>`. The question never replaces, shortens, or merges with the message in `<step id="1">`; the message in `<step id="1">` never carries the question of `<step id="2">`.</step>
       <offer_message>
         Line 1: the request restated in one sentence.
-        Then one table with the following columns: #, Skill, Description, Impact, Agent. The lines represent each offered skill, best fit first, in exactly this shape, with Description, Impact, and Agent filled in using the information from the in-memory skill frontmatter (don't read from the file).
-        Last two line of the table should be:  "Run it here" (as Skill) - this session, without ai-tools skills or agents (as Description); and "Other" (as Skill) - the user specifies what to do (as Description). You can ignore Impact and Agent columns for these two last rows.
+        Then one table with the following columns: #, Skill, Description, Agent. The lines represent each offered skill, best fit first, in exactly this shape, with Description and Agent filled in using the information "Impact:" and "Agent:" from the in-memory skill frontmatter (don't read from the file).
+        Last two line of the table should be:  "Run it here" (as Skill) - this session, without ai-tools skills or agents (as Description); and "Other" (as Skill) - the user specifies what to do (as Description). You can ignore the Agent column for these two last rows.
       </offer_message>
       <skill_question>
         Which option would you like to take?
