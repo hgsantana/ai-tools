@@ -28,7 +28,7 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
     <skill_offer>
       Two steps, in this order, in the user's language.
       <step id="1">First send `<offer_message>` as one plain chat message.</step>
-      <step id="2">Then ask through `<user_interaction>` the question as `<skill_question>` and options as `<skill_options>`. The question never replaces, shortens, or merges with the message; the message never carries the question.</step>
+      <step id="2">Then ask through `<user_interaction>` the question as `<skill_question>` and options as `<skill_options>`. The question never replaces, shortens, or merges with the message in `<step id="1">`; the message in `<step id="1">` never carries the question of `<step id="2">`.</step>
       <offer_message>
         Line 1: the request restated in one sentence.
         Then one numbered block per offered skill, best fit first, in exactly this shape, with Impact: copied verbatim from the skill description:
