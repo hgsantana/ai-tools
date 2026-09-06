@@ -26,22 +26,19 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
     </trigger_cases>
 
     <skill_offer>
-      Two steps, in this order, in the user's language.
+      Two steps, in this order, both in the user's language (translated if necessary).
       <step id="1">First send `<offer_message>` as one plain chat message.</step>
       <step id="2">Then ask through `<user_interaction>` the question as `<skill_question>` and options as `<skill_options>`. The question never replaces, shortens, or merges with the message in `<step id="1">`; the message in `<step id="1">` never carries the question of `<step id="2">`.</step>
       <offer_message>
         Line 1: the request restated in one sentence.
-        Then one numbered block per offered skill, best fit first, in exactly this shape, with Impact: copied verbatim from the skill description:
-        N. **{skill}**: {what it does, from the description}
-           Impact: {Impact: text}
-           Agent: dispatches {Agent: name}.
-        Last line: "Other options: run it here (this session, without ai-tools skills or agents) or something else."
+        Then one table with the following columns: #, Skill, Description, Impact, Agent. The lines represent each offered skill, best fit first, in exactly this shape, with Description, Impact, and Agent filled in using the information from the in-memory skill frontmatter (don't read from the file).
+        Last two line of the table should be:  "Run it here" (as Skill) - this session, without ai-tools skills or agents (as Description); and "Other" (as Skill) - the user specifies what to do (as Description). You can ignore Impact and Agent columns for these two last rows.
       </offer_message>
       <skill_question>
         Which option would you like to take?
       </skill_question>
       <skill_options>
-        One per listed skill, in the same order, labelled by skill name with a one-line gist; then "run it here" and "something else" (or native Other). Mark at most one as recommended.
+        One per listed skill in the table from `<offer_message>`, in the same order, labelled by skill name with a one-line gist. Mark at most one as recommended.
       </skill_options>
       <handling>
         <response type="named_skill">Execute it.</response>
