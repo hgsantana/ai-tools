@@ -32,13 +32,15 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
       <offer_message>
         Line 1: the request restated in one sentence.
         Then one table with the following columns: #, Skill, Description, Agent. The lines represent each offered skill, best fit first, in exactly this shape, with Description and Agent filled in using the information "Impact:" and "Agent:" from the in-memory skill frontmatter (don't read from the file).
-        Last two line of the table should be:  "Run it here" (as Skill) - this session, without ai-tools skills or agents (as Description); and "Other" (as Skill) - the user specifies what to do (as Description). You can ignore the Agent column for these two last rows.
+        Last two line of the table should be:  "Run it here" (as Skill - translated if needed) - this session, without ai-tools skills or agents (as Description - translated if needed); and "Other" (as Skill - translated if needed) - the user specifies what to do (as Description - translated if needed).
+        You can ignore the Agent column for these two last rows.
       </offer_message>
       <skill_question>
         Which option would you like to take?
       </skill_question>
       <skill_options>
         One per listed skill in the table from `<offer_message>`, in the same order, labelled by skill name with a one-line gist. Mark at most one as recommended.
+        Omit "Other" option line if `<user_interaction>` API already offers it.
       </skill_options>
       <handling>
         <response type="named_skill">Execute it.</response>
