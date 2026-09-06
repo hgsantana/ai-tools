@@ -815,8 +815,8 @@ verify_install() {
   if [ "$DRY_RUN" = 1 ]; then info "dry-run: verification skipped"; return 0; fi
 
   size=$(wc -c < "$AI_TOOLS/USER-AGENTS.md")
-  if [ "$size" -le 6000 ]; then ok "instructions size: $size chars"
-  else warn "USER-AGENTS.md exceeds 6000 chars (repository limit): $size"; fi
+  if [ "$size" -le 8000 ]; then ok "instructions size: $size chars"
+  else warn "USER-AGENTS.md exceeds 8000 chars (repository limit): $size"; fi
 
   if [ -f "$MODEL_TABLE" ]; then ok "model table: $MODEL_TABLE"
   else warn "missing model table: $MODEL_TABLE — install and lint cannot resolve agent-role models"; fi

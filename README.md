@@ -60,7 +60,7 @@ Normative for every human and every AI maintaining this repository.
 
 1. This `README.md` is the repository's source of truth for its explanation, rules, and installation, removal, and update processes. `scripts/` provides their executable form (rules 25–28).
 2. For work in this repository, this README takes precedence over user-wide and harness-global instructions, including an installed `USER-AGENTS.md`.
-3. `USER-AGENTS.md` is an installation artifact for user-wide harness instructions, not this repository's rule file. It is structured entirely in semantic XML tags (`<user_instructions>`, `<system_overview>`, `<routing_gate>`, `<dispatch_protocol>`, `<agents>`, `<language_rules>`, `<user_interaction>`, `<security_guardrails>`) without markdown sub-headings, using deterministic XML tag names for all internal cross-references. Its self-imposed **6,000-character** cap is tighter than every current harness constraint, including Antigravity's 12,000-character limit. Every shipped artifact fits the strictest harness that consumes it. Register stricter constraints in [Supported harnesses](#supported-harnesses) and update affected artifacts in the same commit.
+3. `USER-AGENTS.md` is an installation artifact for user-wide harness instructions, not this repository's rule file. It is structured entirely in semantic XML tags (`<user_instructions>`, `<system_overview>`, `<routing_gate>`, `<dispatch_protocol>`, `<agents>`, `<language_rules>`, `<user_interaction>`, `<security_guardrails>`) without markdown sub-headings, using deterministic XML tag names for all internal cross-references. Its self-imposed **8,000-character** cap is tighter than every current harness constraint, including Antigravity's 12,000-character limit. Every shipped artifact fits the strictest harness that consumes it. Register stricter constraints in [Supported harnesses](#supported-harnesses) and update affected artifacts in the same commit.
 4. Pre-release (`0.x`/ALPHA at the top) versions provide no backward compatibility or migration notes; this README describes only the current state. Repair older layouts through [Update](#update) and its stale-link sweep. Change the version only in the commit or merge that lands the change on `master`. Backward-compatibility records begin with the first stable release.
 
 ### Structure and authoring
@@ -97,7 +97,7 @@ Vocabulary. A new tag is registered here and in `scripts/lint.sh` (`XML_VOCAB`) 
 | `<user_instructions>` | USER-AGENTS | root |
 | `<system_overview>`, `<routing_gate>`, `<dispatch_protocol>`, `<agents>`, `<language_rules>`, `<user_interaction>`, `<security_guardrails>` | USER-AGENTS | top-level sections |
 | `<trigger_cases>` / `<case id condition>` | USER-AGENTS | routing cases |
-| `<skill_offer>`, `<handling>` / `<response type>` | USER-AGENTS | the gate and its answers |
+| `<skill_offer>`, `<offer_message>`, `<handling>` / `<response type>` | USER-AGENTS | the gate, its chat message template, and its answers |
 | `<worker name>` | USER-AGENTS | shipped agent |
 | `<chat>`, `<disk>` | USER-AGENTS | language destinations |
 | `<fallback>` | USER-AGENTS | chat question when the native tool is unavailable |
@@ -229,7 +229,7 @@ Check families:
 - **model parity and effort pinning** — every pinned model and effort resolves through the `MODELS.csv` (rules 11–12); Grok wrappers declare no model
 - **description parity** — an agent's `description` is identical across all six wrappers
 - **model row coverage** — every harness directory has a `MODELS.csv` row and vice versa (rule 12)
-- **size caps** — `USER-AGENTS.md` at most 6,000 characters (rule 3), every wrapper at most 1,000 (rule 6), every skill `description` at most 500 (rule 9)
+- **size caps** — `USER-AGENTS.md` at most 8,000 characters (rule 3), every wrapper at most 1,000 (rule 6), every skill `description` at most 500 (rule 9)
 - **encodings and endings** — line endings (`git ls-files --eol`), executable bits, no binaries in shipped paths (rule 28)
 - **`dev/tmp` untracked** — `git ls-files dev/tmp` returns nothing (rule 29)
 - **xml grammar** — every semantic-XML body is balanced once backticked spans are removed, uses only vocabulary tags outside `<input>`, gives every `<rule>` a unique `id`, and every `<template>` a `role` and a shipped `agent` (rule 16, [Semantic XML grammar](#semantic-xml-grammar))
@@ -297,7 +297,7 @@ Change the session model (not the wrapper pin):
 Notes:
 
 - **Antigravity lives under `$HOME/.gemini`**: instructions at `GEMINI.md`, skills and agents at `config/skills/` and `config/agents/`. Do not install into `$HOME/.gemini/skills/` or `$HOME/.gemini/agents/` (retired Gemini CLI roots). The stale-link sweep unlinks leftover ai-tools links there without touching `config/`.
-- **Antigravity limits rules files to 12,000 characters.** The repository's stricter self-imposed 6,000-character cap governs `USER-AGENTS.md` (rule 3); Antigravity truncates or rejects files above its own limit.
+- **Antigravity limits rules files to 12,000 characters.** The repository's stricter self-imposed 8,000-character cap governs `USER-AGENTS.md` (rule 3); Antigravity truncates or rejects files above its own limit.
 - **Codex** reads `~/.codex/AGENTS.override.md` first if it exists; otherwise, it reads `~/.codex/AGENTS.md`. Never create, edit, or remove an existing `AGENTS.override.md` — it is user-authored and out of scope.
 - **Never install into `$HOME/.agents/`.** Several harnesses discover it; copying there as well as into each harness root would double-register every agent.
 
@@ -319,7 +319,7 @@ Every `install.sh` step is idempotent and reports conflicts it skips.
 4. **Agents** — copy each wrapper from `agents/<harness>/` into that harness's agents root, per file, never per directory — those roots hold agents from other sources.
 5. **Skills** — recursively copy each `skills/*-ai-tools` directory into every scoped skills root (rules 7–9). The copy is for the dispatched agent; harnesses list frontmatter without the host session loading the body.
 6. **Grok model pinning** — Grok ignores `model:` in frontmatter and reads `~/.grok/config.toml`. The script maintains a marker-delimited `[subagents.models]` block: names from the tree, models from the `MODELS.csv` (unreadable CSV → skip and report, never guess). A pre-existing unmanaged block is skipped and reported, never edited. Without the pin, agents still load but inherit the session model — the strong-model guarantee is lost. The same fallback applies to any harness that ignores `model:`.
-7. **Verify** — every installed instruction, agent, and skill is a physical copy matching its source; `USER-AGENTS.md` fits the repository's 6,000-character cap (rule 3); `MODELS.csv`, `agents/SUBAGENT-CONTRACT.md`, every agent base, and every shipped `skills/<name>/SKILL.md` exist. Any installation symlink is a finding. Skipped under `--dry-run`; re-run anytime with `verify`.
+7. **Verify** — every installed instruction, agent, and skill is a physical copy matching its source; `USER-AGENTS.md` fits the repository's 8,000-character cap (rule 3); `MODELS.csv`, `agents/SUBAGENT-CONTRACT.md`, every agent base, and every shipped `skills/<name>/SKILL.md` exist. Any installation symlink is a finding. Skipped under `--dry-run`; re-run anytime with `verify`.
 
 Then restart or reload any harness that caches agents or skills at startup. Confirm the three agents (`planner-ai-tools`, `implementer-ai-tools`, `mechanical-ai-tools`) and a slash command for every shipped skill.
 
@@ -382,4 +382,4 @@ MIT — see [`LICENSE`](LICENSE). Use, modify, fork, redistribute, and sell free
 Maintenance consequences:
 
 - The copyright block names the project and its URL. It is reproduced verbatim in third-party notices, so keep both lines — they make a downstream copy traceable back here.
-- Use the root `LICENSE` instead of per-file license headers in shipped artifacts. `USER-AGENTS.md` follows the **6,000-character** cap in rule 3, and every artifact follows rule 15. Installation on one's own machine is not redistribution.
+- Use the root `LICENSE` instead of per-file license headers in shipped artifacts. `USER-AGENTS.md` follows the **8,000-character** cap in rule 3, and every artifact follows rule 15. Installation on one's own machine is not redistribution.

@@ -15,7 +15,7 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
     <rule id="memory-only">Offer from session memory only: the request text and the loaded skill descriptions. Never read wrappers, MODELS.csv, harness config, or the repository first; if classifying needs exploration, use `<case id="3">`.</rule>
     <trigger_cases>
       <case id="1" condition="Leading shipped *-ai-tools skill">
-        Execute `<skill_offer>`: confirm that skill's Impact:, and offer other shipped skills that also fit, if any.
+        Execute `<skill_offer>` with that skill first, then other shipped skills that also fit, if any.
       </case>
       <case id="2" condition="Simple, well specified, or documentation only">
         A typo, a one-line constant, an exact rename, a question or explanation, or a docs edit that changes no behaviour: do it now in this session without asking.
@@ -26,10 +26,16 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
     </trigger_cases>
 
     <skill_offer>
-      In the user's language, before the interaction, name every offered skill in one chat message.
-      For each, state its Impact: from description and that choosing it dispatches the agent named in Agent:.
-      Ask one short question referring to those impacts, per `<user_interaction>`.
-      Offer "run it here" and "something else" (or native Other).
+      Two steps, in this order, in the user's language. First send `<offer_message>` as one plain chat message. Only then ask through `<user_interaction>`. The question never replaces, shortens, or merges with the message; the message never carries the question.
+      <offer_message>
+        Line 1: the request restated in one sentence.
+        Then one numbered block per offered skill, best fit first, in exactly this shape, with Impact: copied verbatim from the skill description:
+        N. **{skill}**: {what it does, from the description}
+           Impact: {Impact: text}
+           Agent: dispatches {Agent: name}.
+        Last line: "Other options: run it here (this session, without ai-tools skills or agents) or something else."
+      </offer_message>
+      The question is one short line asking which option to take, referring to the impacts above. Options: one per listed skill, in the same order, labelled by skill name with a one-line gist; then "run it here" and "something else" (or native Other). Mark at most one as recommended.
       <handling>
         <response type="named_skill">Execute it.</response>
         <response type="run_it_here">Do the work in this session; ignore ai-tools skills and agents.</response>
