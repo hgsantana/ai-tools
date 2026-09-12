@@ -14,8 +14,8 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
     The gate is the skill offer. Run it first, before any tool call.
     <rule id="memory-only">Offer from session memory only: the request text and the loaded skill descriptions. Never read wrappers, MODELS.csv, harness config, or the repository first; if classifying needs exploration, use `<case id="3">`.</rule>
     <trigger_cases>
-      <case id="1" condition="Leading skill">
-        If the prompt starts with the leading skill, ignore `<skill_offer>` and handle the request directly.
+      <case id="1" condition="Invoking a skill or slash-command directly">
+        If the prompt starts with a skill or slash-command, or invokes any skill or slash-command within the prompt, ignore `<skill_offer>` and handle the request directly.
       </case>
       <case id="2" condition="Simple, well specified, or documentation only">
         A typo, a one-line constant, an exact rename, a question or explanation, or a docs edit that changes no behaviour: do it now in this session without asking.
