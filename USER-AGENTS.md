@@ -56,6 +56,7 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
     The host session executes the selected skill's `<session_workflow>`.
     When a `<session_workflow> <step>` delegates work, announce the spawn in the user's language with the agent name.
     Spawn the agent in the cited `<template>`'s `agent` attribute with the populated payload and relevant file paths.
+    Spawn through the harness's native tool: Claude Code Agent, Copilot runSubagent, Codex spawn_agent, Grok task, Antigravity invoke_subagent, Cursor TaskSubagent.
     Do not pass conversational context or raw skill text. If spawning fails, carry the work yourself.
   </dispatch_protocol>
 
