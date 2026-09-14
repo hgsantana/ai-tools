@@ -97,10 +97,10 @@ Vocabulary. A new tag is registered here and in `scripts/lint.sh` (`XML_VOCAB`) 
 | `<user_instructions>` | USER-AGENTS | root |
 | `<system_overview>`, `<routing_gate>`, `<dispatch_protocol>`, `<agents>`, `<language_rules>`, `<user_interaction>`, `<security_guardrails>` | USER-AGENTS | top-level sections |
 | `<trigger_cases>` / `<case id condition>` | USER-AGENTS | routing cases |
-| `<skill_offer>`, `<offer_message>`, `<handling>` / `<response type>` | USER-AGENTS | the gate, its chat message template, and its answers |
+| `<skill_offer>`, `<offer_message>`, `<skill_question>`, `<skill_options>`, `<handling>` / `<response type>` | USER-AGENTS | the gate, its chat message, question, and option templates, and its answers |
 | `<worker name>` | USER-AGENTS | shipped agent |
 | `<chat>`, `<disk>` | USER-AGENTS | language destinations |
-| `<fallback>` | USER-AGENTS | chat question when the native tool is unavailable |
+| `<default>`, `<fallback>` | USER-AGENTS | native-tool question rule and its chat fallback |
 | `<subagent_contract>` | contract | root |
 | `<governance>`, `<brief>`, `<user_channel>` / `<questions>` / `<approvals>` / `<stake_disclaimers>`, `<reporting>` / `<payload>` / `<channel>`, `<delegation>` | contract | contract sections (`<delegation>` also in the planner base) |
 | `<agent_base name role>` | bases | root |
