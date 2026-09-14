@@ -82,12 +82,12 @@ Normative for every human and every AI maintaining this repository.
 
 ### Semantic XML grammar
 
-The semantic-XML bodies — `USER-AGENTS.md`, `agents/SUBAGENT-CONTRACT.md`, every agent base, every `SKILL.md` — follow one grammar, enforced by `scripts/lint.sh` (rule 16):
+The semantic-XML bodies (`USER-AGENTS.md` and every `SKILL.md`) follow one grammar, enforced by `scripts/lint.sh` (rule 16):
 
 - **Angle brackets** appear only as structural tags from the vocabulary below, or as a backticked reference to one: `` `<template role="stage-implementer">` ``, `` `<step id="2">` ``, `` `<security_guardrails>` ``. Once backticked spans are removed, every body is balanced XML.
 - **Variables** are brace placeholders: `{SLUG}`, `{BASE_BRANCH}`, `{COMMANDS}`. Every placeholder a `<template>` uses is declared in its `<input>`, and every declared one is used; the session substitutes them before spawning.
-- **References** carrying an attribute (`role`, `id`, `code`, `type`) resolve to a definition in the same file, or in the file named by the word before the backtick: `` dev-ai-tools `<status_protocol>` ``, `` USER-AGENTS `<security_guardrails>` ``. Qualifiers are `USER-AGENTS`, `SUBAGENT-CONTRACT`, a skill name, or an agent name. A bare reference names a vocabulary tag.
-- **Identity**: every `<rule>` carries a kebab-case `id`, unique in its file; every `<template>` carries a functional `role` and the shipped `agent` that receives the payload; `<step>` ids are numeric per workflow; `<case>`, `<response>`, `<signal>`, and `<state>` carry `id`, `type`, or `code`.
+- **References** carrying an attribute (`role`, `id`, `code`, `type`) resolve to a definition in the same file, or in the file named by the word before the backtick: `` dev-ai-tools `<status_protocol>` ``, `` USER-AGENTS `<security_guardrails>` ``. Qualifiers are `USER-AGENTS` or a skill name. A bare reference names a vocabulary tag.
+- **Identity**: every `<rule>` carries a kebab-case `id`, unique in its file; every `<template>` carries a functional `role`; `<step>` ids are numeric per workflow; `<case>`, `<response>`, `<signal>`, and `<state>` carry `id`, `type`, or `code`.
 - **Protocol** is a block, not prose: return tokens live in `<return_protocol>`/`<signal>`, stage states in `<status_protocol>`/`<state>`, and a template ends with one cited `<signal>`.
 
 Vocabulary. A new tag is registered here and in `scripts/lint.sh` (`XML_VOCAB`) in the same commit; children of `<input>` are free payload fields and need no registration.
@@ -98,16 +98,12 @@ Vocabulary. A new tag is registered here and in `scripts/lint.sh` (`XML_VOCAB`) 
 | `<system_overview>`, `<routing_gate>`, `<dispatch_protocol>`, `<agents>`, `<language_rules>`, `<user_interaction>`, `<security_guardrails>` | USER-AGENTS | top-level sections |
 | `<trigger_cases>` / `<case id condition>` | USER-AGENTS | routing cases |
 | `<skill_offer>`, `<offer_message>`, `<skill_question>`, `<skill_options>`, `<handling>` / `<response type>` | USER-AGENTS | the gate, its chat message, question, and option templates, and its answers |
-| `<worker name>` | USER-AGENTS | shipped agent |
+| `<worker name>` | USER-AGENTS | worker entry |
 | `<chat>`, `<disk>` | USER-AGENTS | language destinations |
 | `<default>`, `<fallback>` | USER-AGENTS | native-tool question rule and its chat fallback |
-| `<subagent_contract>` | contract | root |
-| `<governance>`, `<brief>`, `<user_channel>` / `<questions>` / `<approvals>` / `<stake_disclaimers>`, `<reporting>` / `<payload>` / `<channel>`, `<delegation>` | contract | contract sections (`<delegation>` also in the planner base) |
-| `<agent_base name role>` | bases | root |
-| `<identity>`, `<role_workflow>` / `<step>`, `<role_scope>`, `<user_decisions>`, `<assignment_rules>`, `<execution_rules>` | bases | type sections |
 | `<skill name>` | skills | root |
 | `<overview>`, `<session_workflow>` / `<step id name>`, `<boundaries>` | skills | what the session runs |
-| `<dispatch_templates>` / `<template role agent>` / `<job>`, `<input>`, `<instructions>`, `<constraints>` / `<constraint>` | skills | the payload a worker receives |
+| `<dispatch_templates>` / `<template role>` / `<job>`, `<input>`, `<instructions>`, `<constraints>` / `<constraint>` | skills | the payload a template carries |
 | `<status_protocol>` / `<states>` / `<state code>` | skills | stage-file states |
 | `<return_protocol>` / `<signal code>` | skills | the worker's last line |
 | `<selection_method>`, `<plan_file_format>` / `<structure>` | skills | skill-specific protocol |
@@ -220,26 +216,21 @@ Development checks live under `scripts/` beside `scripts/shell/` (rules 25–27)
 
 Check families:
 
-- **wrapper coverage** — every agent has exactly one wrapper per harness, no orphans (rule 5)
-- **naming** — agent bases, wrappers, skill directories, and frontmatter `name:` all end in `-ai-tools` (rule 14)
+- **naming** — skill directories end in `-ai-tools` (rule 14)
 - **skill frontmatter** — every `skills/*/SKILL.md` exists, keys a subset of `name`/`description`/`argument-hint`, and `name:` matches its directory (rule 9)
-- **skill description** — every skill `description` is at most 500 characters and states what it does, then `Impact:`, then a valid `Agent:` (rule 9)
+- **skill description** — every skill `description` is at most 500 characters and states what it does, then `Impact:` (rule 9)
 - **skill layout** — no `skills/*.md` at the skills root; every `skills/*-ai-tools/SKILL.md` exists; no `SKILL.md` contains `## Continue?` or `## Stake`; `USER-AGENTS.md` contains `<routing_gate>`; no `SKILL.md` mentions `SKILL-CONTRACT` or `MAINTAINER.md` (rule 7)
-- **wrapper body** — the body is reconstructed from this README's canonical text and compared exactly (rule 6)
-- **model parity and effort pinning** — every pinned model and effort resolves through the `MODELS.csv` (rules 11–12); Grok wrappers declare no model
-- **description parity** — an agent's `description` is identical across all six wrappers
-- **model row coverage** — every harness directory has a `MODELS.csv` row and vice versa (rule 12)
-- **size caps** — `USER-AGENTS.md` at most 8,000 characters (rule 3), every wrapper at most 1,000 (rule 6), every skill `description` at most 500 (rule 9)
+- **size caps** — `USER-AGENTS.md` at most 8,000 characters (rule 3), every skill `description` at most 500 (rule 9)
 - **encodings and endings** — line endings (`git ls-files --eol`), executable bits, no binaries in shipped paths (rule 28)
 - **`dev/tmp` untracked** — `git ls-files dev/tmp` returns nothing (rule 29)
-- **xml grammar** — every semantic-XML body is balanced once backticked spans are removed, uses only vocabulary tags outside `<input>`, gives every `<rule>` a unique `id`, and every `<template>` a `role` and a shipped `agent` (rule 16, [Semantic XML grammar](#semantic-xml-grammar))
+- **xml grammar** — every semantic-XML body is balanced once backticked spans are removed, uses only vocabulary tags outside `<input>`, gives every `<rule>` a unique `id`, and every `<template>` a `role` (rule 16, [Semantic XML grammar](#semantic-xml-grammar))
 - **xml references** — every backticked tag reference resolves: attribute references to a definition in the same or the qualified file, bare references to the vocabulary (rule 16)
 - **placeholder parity** — every `{PLACEHOLDER}` a `<template>` uses is declared in its `<input>`, and every declared one is used (rule 16)
-- **version bump** — only with `--base <ref>`: a change under `agents/`, `skills/`, `scripts/`, `USER-AGENTS.md`, or `MODELS.csv` that lands on `master` requires the README version to change too (rule 4)
+- **version bump** — only with `--base <ref>`: a change under `skills/`, `scripts/`, or `USER-AGENTS.md` that lands on `master` requires the README version to change too (rule 4)
 
 Exit codes: `0` clean, `1` aborted on a precondition (unknown flag, `--base` without a value), `2` finished with findings. CI (`.github/workflows/ci.yml`) runs two jobs on `ubuntu-latest`: `lint` runs the version-bump check on pull requests and `shellcheck -x -P scripts/shell -P scripts/test scripts/shell/*.sh scripts/*.sh scripts/test/*.sh` on every push and pull request; `test-shell` runs `scripts/test.sh`.
 
-When a rule in this README becomes mechanically verifiable, add its check to `scripts/lint.sh` and its rule number to the list above in the same commit — the two caps above (rules 3, 6) are stated here as rules; the linter only enforces them, and this README is the number a reader trusts.
+When a rule in this README becomes mechanically verifiable, add its check to `scripts/lint.sh` and its rule number to the list above in the same commit — the caps above (rules 3, 9) are stated here as rules; the linter only enforces them, and this README is the number a reader trusts.
 
 `scripts/test.sh` is likewise a development check outside rules 25–27: it runs `install`, `remove`, `update`, and `verify` against a disposable fake `HOME`, never the real one, and asserts the installation and script contract (rules 19–27). Run it from anywhere:
 

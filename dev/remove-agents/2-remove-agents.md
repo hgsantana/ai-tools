@@ -102,3 +102,41 @@ The README Development checks list and the Semantic XML grammar section change i
 - Requires stages: 1
 
 ## Implementation log
+
+Implemented in `scripts/lint.sh` and `README.md` ("Semantic XML grammar", "Development checks" sections only), per the Steps above:
+
+- Deleted `check_wrapper_coverage`, `check_agent_layout`, `canonical_body`, `wrapper_body_md`, `wrapper_body_toml`, `check_wrapper_body`, `check_model_parity`, `check_effort_pinning`, `check_description_parity`, `check_wrapper_templates`, `check_models_row_coverage`, `check_wrapper_cap`, their section-header comments, and the `# model_effort_for lives in scripts/shell/lib.sh next to model_for.` comment.
+- Deleted the Discovery block (`harnesses`, `agent_names`, `wrapper_ext`, `wrapper_path`) and `toml_field_value`; moved `in_list` next to `ends_in_ai_tools` under "Frontmatter helpers".
+- Simplified `check_naming` to the `skills/*/` directory loop only.
+- `check_skill_layout`: dropped the `Agent:` grep block for `USER-AGENTS.md`; kept `<routing_gate>`.
+- `check_skill_description_content`: now requires `Impact:` only (dropped the `Agent:` clause and the `agent_names` lookup); messages are `skill description has what + Impact: $f` / `skill description missing Impact: (rule 9): $f`.
+- `check_no_binaries`: `git ls-files skills scripts` (dropped `agents`).
+- `XML_VOCAB`: removed the contract/agent-base tag set; kept `dispatch_protocol agents worker`.
+- `xml_files`: `USER-AGENTS.md` and `skills/*/SKILL.md` only (dropped `SUBAGENT-CONTRACT.md` and `agents/*-ai-tools.md`).
+- `xml_file_for`: dropped the `SUBAGENT-CONTRACT` branch; `*-ai-tools` resolves only `skills/$1/SKILL.md`.
+- `check_xml_grammar`: dropped the `agents` local/lookup, the `<template> without agent` finding, and the "template agent is a shipped agent" loop.
+- `check_version_bump`: pathspec is now `-- skills scripts USER-AGENTS.md`.
+- usage() text and Run list updated to match (final order: `check_naming check_skill_frontmatter check_skill_name_match check_skill_layout check_skill_description_cap check_skill_description_content check_instructions_cap check_line_endings check_executable_bits check_no_binaries check_dev_tmp_untracked check_xml_grammar check_version_bump`).
+- `README.md` "Semantic XML grammar": intro, references, and identity bullets reworded to drop the contract/agent-base vocabulary; vocabulary table rows for `<subagent_contract>`, contract sections, `<agent_base name role>`, and bases deleted; `<worker name>` meaning is now "worker entry"; `<dispatch_templates>` row cites `<template role>` / "the payload a template carries".
+- `README.md` "Development checks": removed the wrapper coverage, wrapper body, model parity/effort pinning, description parity, and model row coverage bullets; reworded naming, skill description, size caps, xml grammar, and version bump bullets; closing paragraph now cites "the caps above (rules 3, 9)". Rule numbers left unrenumbered per the stage note (stage 5 renumbers).
+
+Commands run (from `/home/wsl/.ai-tools`):
+
+- `./scripts/lint.sh` → exit 0, `346 ok, 1 skipped, 0 warnings` (skip is the version-bump check without `--base`).
+- `grep -iE 'wrapper|MODELS\.csv|model parity|agent base|subagent contract|template agent'` over the lint output → no matches.
+- `grep -nE 'agent_names|harnesses\(\)|wrapper|canonical_body|model_for|model_effort_for|category_for|MODEL_TABLE|SUBAGENT-CONTRACT|agent_base|toml_field_value' scripts/lint.sh` → no matches.
+- `./scripts/test.sh` → exit 0, `361 ok, 0 skipped, 0 warnings` (matches the stage-1 baseline; lib.sh untouched).
+- `shellcheck -x -P scripts/shell -P scripts/test scripts/shell/*.sh scripts/*.sh scripts/test/*.sh` → exit 1, sole finding `SC1071` on `scripts/shell/install-zsh.sh` (pre-existing).
+- `git diff --quiet master -- skills USER-AGENTS.md` → exit 0 (byte-identical).
+
+Negative probes, each in a disposable `git worktree add -q <wt> HEAD` seeded with the working `scripts/lint.sh`, worktree removed after each run:
+
+1. Dropped `Impact:` from `skills/az-ai-tools/SKILL.md` description → exit 2, `WARN: skill description missing Impact: (rule 9): .../skills/az-ai-tools/SKILL.md`.
+2. Changed the `<template role="plan-author" agent="planner-ai-tools">` tag in `skills/plan-ai-tools/SKILL.md` to `<template name="...">` → exit 2, `WARN: xml grammar: <template> without role at line 32: .../skills/plan-ai-tools/SKILL.md`.
+3. Added `<bogus_tag></bogus_tag>` inside `<overview>` of `skills/gh-ai-tools/SKILL.md` → exit 2, `WARN: xml grammar: tag outside the vocabulary <bogus_tag> at line 3: .../skills/gh-ai-tools/SKILL.md`.
+4. `git mv skills/gc-ai-tools skills/gc-tools` → exit 2, `WARN: skill directory does not end in -ai-tools: .../skills/gc-tools/`.
+5. Added `<subagent_contract></subagent_contract>` inside `<overview>` of `skills/az-ai-tools/SKILL.md` → exit 2, `WARN: xml grammar: tag outside the vocabulary <subagent_contract> at line 3: .../skills/az-ai-tools/SKILL.md`.
+
+All five probes fired the expected finding and no other; all worktrees were removed after each run (`git worktree list` afterward shows only the pre-existing, unrelated worktrees plus the main checkout).
+
+Coordinator acceptance note: the verifier's probe 2 edited the first `<template role="` match, which is a backticked reference (line 29), so no `<template> without role` finding appeared. Rerun on the structural tag (line 42 of `skills/plan-ai-tools/SKILL.md`) exited 2 with `xml grammar: <template> without role`. Probes 1, 3, 4, 5 passed as specified. Evidence: `dev/tmp/remove-agents-stage2-output.log`. Lint 346 ok / 0 warnings, test.sh 361 ok, shellcheck only SC1071.
