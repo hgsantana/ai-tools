@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ai-tools rule linter — a development check, not an installation process
-# (outside the contract of README rules 25-27). Enforces this repository's
+# (outside the contract of README rules 18-20). Enforces this repository's
 # mechanically verifiable rules against the tree it runs in.
 #
 # Usage: scripts/lint.sh [--help] [--base <ref>]
@@ -21,43 +21,43 @@ usage: lint.sh [--help] [--base <ref>]
 
 Development check: enforces this repository's mechanically verifiable rules
 against the tree lint.sh runs in. Not an installation process (README rules
-25-27); introduces no new dependency beyond git, grep, awk, sed, wc, and tr.
+18-20); introduces no new dependency beyond git, grep, awk, sed, wc, and tr.
 
 Checks:
-  naming            every skills/*/ directory ends in -ai-tools (rule 14)
+  naming            every skills/*/ directory ends in -ai-tools (rule 7)
   skill frontmatter every skills/*/SKILL.md exists with frontmatter keys a
-                    subset of name, description, argument-hint (rule 9)
+                    subset of name, description, argument-hint (rule 6)
   skill name match  skills/<x>/SKILL.md declares name: <x>
   skill description every skill description is at most 500 characters,
                     folded block included, and states what the skill does,
-                    then Impact: (rule 9)
+                    then Impact: (rule 6)
   skill layout      no skill-root markdown, every skill directory has
                     SKILL.md with semantic XML tags (<skill>, <session_workflow>,
                     <dispatch_templates>), no SKILL.md contains Continue? or Stake,
                     USER-AGENTS.md has <routing_gate>,
-                    and no references to deleted files (rule 7)
+                    and no references to deleted files (rule 5)
   instructions cap  USER-AGENTS.md is at most 8000 characters (rule 3)
   line endings      git ls-files --eol matches the declared eol= attribute:
-                    lf for scripts/ (rule 28)
+                    lf for scripts/ (rule 21)
   executable bits   scripts/shell/*.sh and scripts/*.sh are mode 100755
-                    (rule 28)
+                    (rule 21)
   no binaries       every tracked file under skills/ and scripts/
                     is text
   version bump      CI-only, needs --base <ref> (skipped without it): when
                     skills/, scripts/, or USER-AGENTS.md changed
                     since <ref>, the README version line must have changed
                     too (rule 4)
-  dev/tmp untracked git ls-files dev/tmp returns nothing (rule 29)
+  dev/tmp untracked git ls-files dev/tmp returns nothing (rule 22)
   xml grammar       every semantic-XML body (USER-AGENTS.md, SKILL.md) is
                     balanced once backticked spans are removed, uses only
                     vocabulary tags outside <input>, gives every <rule> a
-                    unique id, and every <template> a role (rule 16,
+                    unique id, and every <template> a role (rule 9,
                     Semantic XML grammar)
   xml references    every backticked tag reference resolves: attribute
                     references to a definition in the same or the qualified
-                    file, bare references to the vocabulary (rule 16)
+                    file, bare references to the vocabulary (rule 9)
   placeholder parity every {PLACEHOLDER} a <template> uses is declared in its
-                    <input>, and every declared one is used (rule 16)
+                    <input>, and every declared one is used (rule 9)
 
 --base <ref>  commit-ish to diff shipped content against for the version
               bump check. Without it, that check is skipped. The lint
@@ -116,7 +116,7 @@ in_list() {
   case " $2 " in *" $1 "*) return 0 ;; *) return 1 ;; esac
 }
 
-# --- Check: naming (rule 14) --------------------------------------------------
+# --- Check: naming (rule 7) --------------------------------------------------
 
 check_naming() {
   local d b
@@ -131,7 +131,7 @@ check_naming() {
   done
 }
 
-# --- Check: skill frontmatter (rule 9) ----------------------------------------
+# --- Check: skill frontmatter (rule 6) ----------------------------------------
 
 check_skill_frontmatter() {
   local d f k allowed="name description argument-hint"
@@ -171,7 +171,7 @@ check_skill_name_match() {
   done
 }
 
-# --- Check: skill layout and description (rules 7, 9) ------------------------
+# --- Check: skill layout and description (rules 5, 6) ------------------------
 
 check_skill_layout() {
   local f d name
@@ -295,7 +295,7 @@ check_skill_description_cap() {
 }
 
 check_skill_description_content() {
-  # rule 9: description states what it does, then Impact:
+  # rule 6: description states what it does, then Impact:
   local d f val before impact
   for d in "$AI_TOOLS"/skills/*-ai-tools/; do
     [ -d "$d" ] || continue
@@ -309,11 +309,11 @@ check_skill_description_content() {
         if [ -n "$before" ] && [ -n "$impact" ]; then
           ok "skill description has what + Impact: $f"
         else
-          warn "skill description missing Impact: (rule 9): $f"
+          warn "skill description missing Impact: (rule 6): $f"
         fi
         ;;
       *)
-        warn "skill description missing Impact: (rule 9): $f"
+        warn "skill description missing Impact: (rule 6): $f"
         ;;
     esac
   done
@@ -358,7 +358,7 @@ check_instructions_cap() {
 
 check_line_endings() {
   # Reads git's own .gitattributes resolution via `ls-files --eol` rather
-  # than reimplementing it (rule 28): index side must be lf, working-tree
+  # than reimplementing it (rule 21): index side must be lf, working-tree
   # side and the declared attribute must match the expected style per path.
   local line path fields idx work attr expected
   while IFS= read -r line; do
@@ -404,7 +404,7 @@ check_no_binaries() {
   done
 }
 
-# --- Check: semantic XML grammar (rule 16) -----------------------------------
+# --- Check: semantic XML grammar (rule 9) -----------------------------------
 # The vocabulary of structural tags (README, "Semantic XML grammar"). A tag
 # outside it, outside <input>, is a finding: register a new tag in the README
 # table and here in the same commit.
@@ -562,7 +562,7 @@ EOF
   done
 }
 
-# --- Check: dev/tmp untracked (rule 29) ---------------------------------------
+# --- Check: dev/tmp untracked (rule 22) ---------------------------------------
 
 check_dev_tmp_untracked() {
   local tracked
@@ -570,7 +570,7 @@ check_dev_tmp_untracked() {
   if [ -z "$tracked" ]; then
     ok "dev/tmp untracked: no tracked files under dev/tmp"
   else
-    warn "tracked file(s) under dev/tmp (rule 29): $(echo "$tracked" | tr '\n' ' ')"
+    warn "tracked file(s) under dev/tmp (rule 22): $(echo "$tracked" | tr '\n' ' ')"
   fi
 }
 

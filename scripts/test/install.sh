@@ -1,5 +1,5 @@
 # shellcheck shell=bash
-# install.sh case file — README rules 19-24, 27 against scripts/shell/install.sh.
+# install.sh case file — README rules 12-17, 20 against scripts/shell/install.sh.
 # Each case builds its own fixture via t_fixture and passes an explicit
 # --harnesses list so assertions can name exact destination paths.
 
@@ -11,7 +11,7 @@ t_install() {
 }
 
 case_install_fresh() {
-  # Rule 19: fresh install physically copies every skill and instructions.
+  # Rule 12: fresh install physically copies every skill and instructions.
   local root f base
   t_fixture
   root="$T_ROOT"
@@ -35,7 +35,7 @@ case_install_fresh() {
 }
 
 case_install_idempotent() {
-  # Rule 20: running install.sh twice changes nothing on the second run.
+  # Rule 13: running install.sh twice changes nothing on the second run.
   local root before
   t_fixture
   root="$T_ROOT"
@@ -56,7 +56,7 @@ case_install_idempotent() {
 }
 
 case_install_foreign_file_skipped() {
-  # Rules 20, 22, 25: a foreign directory on a destination is skipped, not
+  # Rules 13, 15, 18: a foreign directory on a destination is skipped, not
   # overwritten, and the run still finishes the rest of the skills.
   local root
   t_fixture --foreign-skill
@@ -90,7 +90,7 @@ case_install_symlink_elsewhere_skipped() {
 }
 
 case_install_overwrite_conflicts() {
-  # Rule 20: --overwrite replaces only selected-harness artifact conflicts.
+  # Rule 13: --overwrite replaces only selected-harness artifact conflicts.
   local root external_target
   t_fixture --foreign-skill --foreign-instructions
   root="$T_ROOT"
@@ -116,7 +116,7 @@ case_install_overwrite_conflicts() {
 }
 
 case_install_agents_md_absent() {
-  # Rule 24: $HOME/AGENTS.md is not an install artifact — absent stays absent.
+  # Rule 17: $HOME/AGENTS.md is not an install artifact — absent stays absent.
   local root
   t_fixture
   root="$T_ROOT"
@@ -129,7 +129,7 @@ case_install_agents_md_absent() {
 }
 
 case_install_agents_md_present() {
-  # Rule 24: $HOME/AGENTS.md is user-owned and never touched when present.
+  # Rule 17: $HOME/AGENTS.md is user-owned and never touched when present.
   local root
   t_fixture
   root="$T_ROOT"
@@ -148,7 +148,7 @@ case_install_agents_md_present() {
 }
 
 case_install_dry_run() {
-  # Rule 27: --dry-run reports without changing anything.
+  # Rule 20: --dry-run reports without changing anything.
   local root before
   t_fixture
   root="$T_ROOT"
@@ -166,7 +166,7 @@ case_install_dry_run() {
 }
 
 case_install_legacy_symlinks_migrated() {
-  # Rule 19: legacy links into ai-tools migrate to physical copies without --overwrite.
+  # Rule 12: legacy links into ai-tools migrate to physical copies without --overwrite.
   local root source_skill
   t_fixture
   root="$T_ROOT"

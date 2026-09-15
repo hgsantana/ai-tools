@@ -1,5 +1,5 @@
 # shellcheck shell=bash
-# Extra update.sh coverage — proves README rules 20-22, 27 against scripts/shell/update.sh:
+# Extra update.sh coverage — proves README rules 13-15, 20 against scripts/shell/update.sh:
 # a full removal and installation pass produces the same state as a fresh
 # installation, sweeps stale links, keeps a locally modified copy, refuses to
 # discard local clone work without --discard-local, runs the fresh-clone

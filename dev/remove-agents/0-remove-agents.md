@@ -8,7 +8,7 @@
 | 2 | F | implementer-ai-tools |
 | 3 | F | implementer-ai-tools |
 | 4 | F | implementer-ai-tools |
-| 5 | | |
+| 5 | F | implementer-ai-tools |
 
 ## Goal
 
@@ -66,6 +66,7 @@ Strictly sequential: 1 → 2 → 3 → 4 → 5. Run one stage at a time.
 Run from the repository root after stage 5. It must print nothing (the final `grep` exits 1). Hits are allowed only in `skills/`, `USER-AGENTS.md`, and `dev/`, which are excluded. Four tokens are stripped because they are legitimate non-agent names or registrations of the untouched `USER-AGENTS.md` vocabulary:
 
 - `AGENTS.md`, `USER-AGENTS.md`, `AGENTS.override.md` (instruction file names)
+- the bare `USER-AGENTS` qualifier (the same untouched file, as named in semantic-XML references, the README vocabulary table, and `xml_file_for` in `scripts/lint.sh`; added by the coordinator during stage 5 acceptance)
 - `$HOME/.agents` (a shared discovery root the scripts report and never touch)
 - `` `<agents>` `` (README vocabulary row for the `USER-AGENTS.md` section)
 - the `XML_VOCAB=` line in `scripts/lint.sh`
@@ -75,7 +76,7 @@ TERMS='(planner|implementer|mechanical)-ai-tools|subagent|wrapper|MODELS\.csv|mo
 git ls-files --cached --others --exclude-standard -- . ':!skills' ':!USER-AGENTS.md' ':!dev' \
   | xargs -d '\n' grep -HnIiE "$TERMS" \
   | grep -vE '^scripts/lint\.sh:[0-9]+:XML_VOCAB=' \
-  | sed -E 's/(USER-)?AGENTS(\.override)?\.md//g; s/\$HOME\/\.agents//g; s/`<agents>`//g' \
+  | sed -E 's/(USER-)?AGENTS(\.override)?\.md//g; s/USER-AGENTS//g; s/\$HOME\/\.agents//g; s/`<agents>`//g' \
   | grep -iE "$TERMS"
 ```
 

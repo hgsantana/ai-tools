@@ -150,3 +150,109 @@ The remaining documentation (README overview and rules, `docs/USAGE.md`, `ROADMA
 - Requires stages: 4
 
 ## Implementation log
+
+### README/rules/scripts part (steps 1-10, plus citations in .gitattributes and scripts/)
+
+Scope covered: `README.md` (version, overview, "How it operates", Contents, Quick start, the full rule list with deletions/rewrites/renumbering, Semantic XML grammar intro citation, Scripts, Development checks, Safety rules, Installation, Removal, Update, Troubleshooting, License), `.gitattributes`, `scripts/lint.sh`, `scripts/test.sh`, `scripts/test/install.sh`, `scripts/test/verify.sh`, `scripts/test/smoke.sh`, `scripts/test/remove.sh`, `scripts/test/reinstall.sh`, `scripts/test/update.sh`. Did not touch `docs/USAGE.md` or `ROADMAP.md` (parallel implementer's part).
+
+**Steps 1-5 (top of README).** Version bumped to `0.0.48-ALPHA` (line 3). Overview first sentence dropped "three harness-agnostic agents". "How it operates" items 1, 2, 4, 5 rewritten per the stage file (item 3 left verbatim). Contents table: `USER-AGENTS.md` row dropped "and agent bases"; `docs/USAGE.md` row dropped "and the three spawn-only agents"; `skills/` row dropped the "Ten skills" count and the "dispatches workers via templates" clause; `scripts/` row's rule citation renumbered (see mapping below). Quick start's last line dropped "and agent names".
+
+**Steps 6-8 (rule deletions and renumbering).** Deleted old rules 5, 6, 8, 10, 11, 12, 13 (agent bases/wrappers/spawning/MODELS.csv/Antigravity subagent-tier rules). Rewrote old rules 3, 7, 9, 14, 16, 17(citation only), 18, 23, 32 per the stage file's verbatim text. Renumbered the remaining rules continuously 1-25 using the table in step 8 (old->new: 1-4 unchanged, 7->5, 9->6, 14->7, 15->8, 16->9, 17->10, 18->11, 19->12, 20->13, 21->14, 22->15, 23->16, 24->17, 25->18, 26->19, 27->20, 28->21, 29->22, 30->23, 31->24, 32->25). Verified with `grep -nE '^[0-9]+\. ' README.md`: rules run 1-25 with no gaps or repeats; Installation/Removal/Update step lists still run 1-5, 1-6, 1-5 (their own independent numbering, unaffected).
+
+**Rule-3 note beyond the stage file's explicit text:** rule 3 (old and new) also listed the inline USER-AGENTS.md tag set including `<dispatch_protocol>` and `<agents>`. Per the stage file's instruction to drop the inline tag list and keep the cap sentences, this removed those two flagged tokens along with the rest of the list — required for the Final acceptance grep to pass on this rule, not called out separately in the stage file's rule-7 vs rule-3 step text but implied by "drop the inline tag list".
+
+**Step 9 (citation mapping applied everywhere).** Full old->new mapping used for every rule-number citation: 1->1, 2->2, 3->3, 4->4, 7->5, 9->6, 14->7, 15->8, 16->9, 17->10, 18->11, 19->12, 20->13, 21->14, 22->15, 23->16, 24->17, 25->18, 26->19, 27->20, 28->21, 29->22, 30->23, 31->24, 32->25 (deleted: 5, 6, 8, 10, 11, 12, 13 — no citations to those survive).
+
+Checked citation list (file:line, old -> new; "unchanged" = same number before and after, still verified against the mapping):
+
+- `.gitattributes:1` rule 28 -> rule 21
+- `README.md:3` rule 4 unchanged
+- `README.md:15` rule 2 unchanged
+- `README.md:26` rules 25-28 -> rules 18-21
+- `README.md:53` rules 25-28 -> rules 18-21
+- `README.md:60` rule 9 -> rule 6 (x2), rule 15 -> rule 8
+- `README.md:61` rule 9 -> rule 6 (description part-3 deleted)
+- `README.md:65` Rule 32 -> Rule 25
+- `README.md:66` rule 9 -> rule 6
+- `README.md:70` rule 16 -> rule 9
+- `README.md:118` rule 29 -> rule 22 (x2)
+- `README.md:130` rules 25-27 -> rules 18-20
+- `README.md:139` rules 25-27 -> rules 18-20
+- `README.md:148-158` rule 14->7, 9->6, 9->6, 7->5, 3 unchanged + 9->6, 28->21, 29->22 (one bullet each, in file order)
+- `README.md:155-157` rule 16 -> rule 9 (x3)
+- `README.md:158` rule 4 unchanged
+- `README.md:162` rules 3, 9 -> rules 3, 6
+- `README.md:164` rules 25-27 -> rules 18-20; rules 19-27 -> rules 12-20
+- `README.md:173-179` rule 19->12, 20->13, 21->14, 22->15, 24->17, 27->20, 27->20
+- `README.md:183` rules 19-24 -> rules 12-17
+- `README.md:185` rules 20, 22 -> rules 13, 15
+- `README.md:187` rule 21 -> rule 14
+- `README.md:188` rule 24 -> rule 17
+- `README.md:209` rule 3 unchanged
+- `README.md:225` rule 23 -> rule 16
+- `README.md:228` rules 7-9 -> rules 5-6 (plus the carry-over sentence rewrite, see below)
+- `README.md:229` rule 3 unchanged
+- `README.md:244` rule 21 -> rule 14
+- `README.md:245` rule 4 unchanged
+- `README.md:246` rule 24 -> rule 17
+- `README.md:275` rule 23 -> rule 16
+- `README.md:290` rule 3 unchanged, rule 15 -> rule 8
+- `scripts/lint.sh:3` rules 25-27 -> rules 18-20
+- `scripts/lint.sh:24-25` rules 25-27 -> rules 18-20 (a citation split across two lines by the help-text word wrap; not visible to a single-line grep — found by an explicit cross-line scan and fixed in the same pass)
+- `scripts/lint.sh:27,29,33,38,39,41,43,49,50,54,58,60` (help text) rule 14->7, 9->6, 9->6, 7->5, 3 unchanged, 28->21, 28->21, 4 unchanged, 29->22, 16->9 (x3)
+- `scripts/lint.sh:119,134,174,298,312,316,361,407,565,573,577` (comments) rule 14->7, 9->6, rules 7,9->5,6, 9->6 (x3), 28->21, 16->9, 29->22 (x2), 4 unchanged
+- `scripts/test.sh:3,94` rules 25-27 -> rules 18-20 (both)
+- `scripts/test/install.sh:2,14,38,59,93,119,132,151,169` rules 19-24,27 -> rules 12-17,20; Rule 19->12; Rule 20->13; Rules 20,22,25->13,15,18; Rule 20->13; Rule 24->17 (x2); Rule 27->20; Rule 19->12
+- `scripts/test/verify.sh:2` rules 19-24,27 -> rules 12-17,20
+- `scripts/test/smoke.sh:4` rules 19-27 -> rules 12-20
+- `scripts/test/remove.sh:2,11,13` rules 20-22,24,27 -> rules 13-15,17,20; rule 22's -> rule 15's; rule 27 -> rule 20
+- `scripts/test/reinstall.sh:2` rules 20-22,27 -> rules 13-15,20
+- `scripts/test/update.sh:2,8,120,145,169` rules 20-22 and 27 -> rules 13-15 and 20; rule 27->20 (x2); rule 20->13; rules 20-21->13-14
+
+No citation above 25 remains anywhere in `README.md`, `.gitattributes`, or `scripts/` (verified by a regex scan for any cited number outside 1-25: none found).
+
+**Step 10.** Development checks closing paragraph: "the caps above (rules 3, 9)" -> "(rules 3, 6)" (`README.md:162`).
+
+**Carry-over items (beyond the stage file's explicit step list, per the coordinator's brief).**
+
+- README "Installation" step 4 (Skills): rewrote "The copy is for the dispatched agent; harnesses list frontmatter without the host session loading the body." -> "Harnesses list frontmatter; the host session reads the body only when it runs the skill." (`README.md:228`), alongside its rule citation.
+- Rule 3 (now still rule 3): dropped the inline USER-AGENTS.md tag list (which included `<dispatch_protocol>` and `<agents>`), keeping only the cap sentences, per the stage file's rule-3 rewrite instruction.
+- Old rule 16 (new rule 9): dropped "agent bases, contracts," and "and `agent`" from "every `<template>` names its `role` and `agent`".
+- Old rule 32 (new rule 25): dropped "every agent base," from the closing sentence.
+- Confirmed rule 31 (new 24, `campaign-ai-tools` description) needs no rewrite: "planner" there is a common noun ("a fresh planner writes...") with no `-ai-tools` suffix, so it does not match the acceptance grep's `(planner|implementer|mechanical)-ai-tools` term.
+- Left the License paragraph's "dispatched work" (`README.md:285`) unchanged: "dispatch" is not one of the acceptance grep's flagged terms.
+- Left the Semantic XML grammar's Vocabulary table and "References" bullet (`README.md:74,82-88`) unchanged: they accurately document the untouched `USER-AGENTS.md`/skills grammar, including its `<dispatch_protocol>`, `<agents>`, and `<worker name>` tags and the bare `USER-AGENTS` qualifier convention (confirmed still used verbatim in `skills/*/SKILL.md`, e.g. `` USER-AGENTS `<security_guardrails>` ``). None of these are among the four exceptions the base plan's Final acceptance grep explicitly strips before matching.
+
+**Residual Final-acceptance-grep hits (documented, not fixed).** Running the base plan's exact "Final acceptance" grep (`0-remove-agents.md`) restricted to `README.md`, `.gitattributes`, `scripts/` after all edits above still reports two hits, both being the literal qualifier string `USER-AGENTS` (no `.md` extension) used by the Semantic XML grammar's reference syntax:
+
+- `README.md:74,82-88` — the grammar's "References" bullet and the Vocabulary table's File column, describing the untouched `USER-AGENTS.md` file with its established bare-qualifier convention.
+- `scripts/lint.sh:436` — the reference-resolver's `case` branch that maps the literal qualifier `USER-AGENTS` to the file path (implemented in stage 2, unrelated to stage 5's scope; a behavior change here is out of scope for this stage).
+
+The base plan's grep already grants four exceptions for non-agent tokens that happen to match the `agents?` term (`AGENTS.md` filenames, `$HOME/.agents`, `` `<agents>` ``, the `XML_VOCAB=` line). The bare `USER-AGENTS` qualifier is structurally the same kind of false positive — it names the excluded, byte-identical `USER-AGENTS.md` file, not the three removed agents — but is not in that exception list. Rewriting it to `USER-AGENTS.md` would make the README's grammar documentation diverge from the actual, unchanged syntax used throughout `skills/*/SKILL.md` (confirmed still bare there), which is out of scope (skills stay byte-identical per decision 1). Flagging for the coordinator: either accept this as a fifth documented exception (in the same spirit as the existing four) or treat it as a known base-plan gap; no README/`scripts/` change was made to force a literal zero-hit run.
+
+**Verification run.**
+
+- `grep -nE '^[0-9]+\. ' README.md`: rules 1-25, no gaps/repeats; Installation 1-5, Removal 1-6, Update 1-5.
+- Citation audit regex over `README.md .gitattributes scripts`: every hit checked against the mapping above; none above 25.
+- README anchor check: every `](#...)` in `README.md`/`docs/USAGE.md` resolves to an existing heading; `#model-selection-and-wrapper-authoring` and `#choosing-the-models` do not appear.
+- `bash scripts/lint.sh` -> exit 0, `340 ok, 1 skipped, 0 warnings` (1 skip is the version-bump check without `--base`, as expected).
+- `bash scripts/lint.sh --base master` -> exit 2, `340 ok, 0 skipped, 1 warnings`, the single warning being the expected pre-commit version-bump WARN (`still 0.0.47-ALPHA, was 0.0.47-ALPHA`): this check reads `HEAD:README.md` via `git show`, and stage 5's changes are intentionally uncommitted per the "do not commit" constraint on this implementer. This will read `0.0.48-ALPHA` and pass once the coordinator commits stage 5 (matches how rule 4 is meant to be enforced: "Change the version only in the commit... that lands the change").
+- `bash scripts/test.sh` -> exit 0, `307 ok, 0 skipped, 0 warnings` (same count as stage 4's log; unaffected by comment/prose-only edits).
+- `shellcheck -x -P scripts/shell -P scripts/test scripts/shell/*.sh scripts/*.sh scripts/test/*.sh` -> only the pre-existing `SC1071` on `scripts/shell/install-zsh.sh`.
+- `git diff --quiet master -- skills USER-AGENTS.md` -> succeeds (both byte-identical to master).
+
+No files outside the declared list were modified. Did not commit, push, switch branches, or set the stage status (left for the coordinator, per instructions).
+
+Parallel implementer notes (docs/USAGE.md and ROADMAP.md, steps 11-22), appended by the coordinator:
+
+- Step 11: USAGE intro reduced to "Skills are the user entry points."
+- Step 12: dropped the `Agent:` dispatch clause and the worker/`<template>` clause from "Invocation and gate".
+- Step 13: removed the `/models-ai-tools` table row.
+- Step 14: `/dev-ai-tools` paragraph reads "It runs edits and tests, commits every accepted stage…".
+- Step 15: campaign chain rewritten around planning pass, execution pass, and orchestrating session.
+- Step 16: heading "Maintenance and model operations" became "Maintenance"; `/models-ai-tools` paragraph deleted.
+- Step 17: "## Agents" section deleted.
+- Steps 18-22: ROADMAP story 13 (row and section) deleted; stories 4, 9, 11, and 12 rewritten without agent, wrapper, or `MODELS.csv` terms.
+- Final acceptance grep restricted to both files printed nothing (exit 1). USAGE has no in-page anchors; ROADMAP's 7 story anchors resolve, with no dangling `#13-…`.
+
+Coordinator acceptance note: the Final acceptance grep as originally written flagged the bare `USER-AGENTS` qualifier (README lines 74 and 82-88, `scripts/lint.sh` `xml_file_for`). It names the untouched `USER-AGENTS.md` and is used verbatim by untouched skills, so the base plan's grep now also strips `USER-AGENTS`. With that exception the grep prints nothing (exit 1), and the `test ! -e` line succeeds. Verifier evidence is in `dev/tmp/remove-agents-stage5-output.log`: lint 340 ok / 0 warnings; test.sh 307 ok; shellcheck only SC1071; skills, USER-AGENTS.md, and .github unchanged; version 0.0.48-ALPHA on line 3; all README anchors resolve; no removed anchors. The highest cited rule number is 25. `lint.sh --base master` is checked after the commit, because the version-bump check reads committed history.

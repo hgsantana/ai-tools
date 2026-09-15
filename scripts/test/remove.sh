@@ -1,5 +1,5 @@
 # shellcheck shell=bash
-# remove.sh — proves README rules 20-22, 24, 27 against scripts/shell/remove.sh:
+# remove.sh — proves README rules 13-15, 17, 20 against scripts/shell/remove.sh:
 # remove only what ai-tools created, keep locally modified copies unless
 # --force, never touch a symlink pointing elsewhere, gate --instructions,
 # --force, and --purge, sweep stale links without crossing outside $AI_TOOLS,
@@ -8,9 +8,9 @@
 # Every case installs first (via t_run on install.sh) unless noted otherwise,
 # so removal has something real to act on.
 #
-# Note on exit codes: SKIP (rule 22's "skip and report") does not itself
+# Note on exit codes: SKIP (rule 15's "skip and report") does not itself
 # raise the exit code — only WARN does (scripts/shell/lib.sh: finish() exits
-# 2 only when $WARN > 0; see README rule 27, "2 finished with warnings").
+# 2 only when $WARN > 0; see README rule 20, "2 finished with warnings").
 # Several cases below observed exit 0 where an earlier draft of this file
 # (mirroring the base plan's prose) expected exit 2 for a skip-only run; the
 # assertions here follow the observed, README-consistent behaviour and this
