@@ -59,7 +59,7 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
     <rule id="implementer">`executor="implementer"` uses the implementer model the skill resolved.</rule>
     <rule id="session-subagent">`executor="session-subagent"` uses the session's own model where the API accepts a model.</rule>
     <rule id="spawn-announce">Announce each spawn in the user's language with the template role and model.</rule>
-    <rule id="spawn-fallback">If a default-worker spawn fails, the session runs the payload itself and states that in the report, unless the skill forbids that fallback (campaign passes).</rule>
+    <rule id="spawn-fallback">If a default-worker spawn fails, the session runs the payload itself and states that in the report, unless the skill forbids that fallback (campaign, vibe, and specified or queued delivery).</rule>
     <rule id="parallel-spawns">Code-writing subagents run in parallel only on separate files; read-only exploration, builds, and tests may always run concurrently.</rule>
   </execution_protocol>
 
