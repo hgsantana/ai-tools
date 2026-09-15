@@ -67,3 +67,119 @@ feat(lint): check grammar identity attributes, rule anchors, and vocabulary pari
 Stages 1 and 2. The vocabulary table layout is final after stage 1, and the check-family text after stage 2.
 
 ## Implementation log
+
+Skills-vs-HEAD check before committing: `git show HEAD:<p> | cmp` over every
+tracked `skills/` path showed no diff — the working tree matched HEAD, so no
+scratch copy of working-tree skills was needed.
+
+Checks added to `scripts/lint.sh`:
+
+- Identity attributes folded into `check_xml_grammar`'s awk program: `<step>`
+  requires a numeric `id`; `<case>` requires `id`; `<response>` requires
+  `type`; `<signal>` and `<state>` require `code`. No new function.
+- `check_rule_anchor_citations` (rule 9): `grep -nE '\b[Rr]ules? [0-9]'` over
+  `USER-AGENTS.md` and every `skills/*/SKILL.md`.
+- `check_instructions_headings` (rule 3): `grep -nE '^#{2,} '` over
+  `USER-AGENTS.md`.
+- `check_skill_description_content` extended to also require `/$name`
+  (directory basename) inside the folded description.
+- `check_vocab_parity` (rule 9): compares the README vocabulary table's
+  backticked tag names against `XML_VOCAB` using only awk/grep/sed/sort/tr.
+- Run block: added `check_instructions_headings`, `check_vocab_parity`, and
+  `check_rule_anchor_citations` next to `check_xml_grammar`.
+- Usage heredoc extended: "xml grammar" entry documents the identity
+  attributes; "skill description" documents `/<name>`; new entries
+  "instructions headings", "vocabulary parity", "rule anchors".
+- README Development checks: extended **xml grammar** and **skill
+  description** bullets; added **rule anchors**, **instructions headings**,
+  **vocabulary parity** bullets.
+
+Verification (scratch clones of `plan/readme-ruleset-sync`, declared files
+`scripts/lint.sh` and `README.md`, per the base plan's execution note):
+
+- Clean scratch clone: `lint.sh` exit 0, 390 ok, 1 skipped, 0 warnings; all
+  new `ok` lines present ("skill description names /<name>", "USER-AGENTS.md
+  has no ## sub-heading", "README vocabulary table matches XML_VOCAB (40
+  tags)", "cites no README rule number").
+- `test.sh`: exit 0, 305 ok, 0 skipped, 0 warnings (matches baseline).
+- `shellcheck -x -P scripts/shell -P scripts/test scripts/shell/*.sh
+  scripts/*.sh scripts/test/*.sh`: exit 1, SC1071 on `install-zsh.sh` only
+  (matches baseline; not a stage-3 regression).
+
+Negative probes, each on its own fresh scratch clone, edit applied then
+committed:
+
+1. `<step id="1"` → `<step id="one"` in `skills/az-ai-tools/SKILL.md`: exit
+   2, `xml grammar: <step> without a numeric id at line 8`.
+2. Dropped ` type="stop"` from the `<response>` in `USER-AGENTS.md`: exit 2,
+   `xml grammar: <response> without its type at line 43`.
+3. Appended " (rule 9)" to the `<overview>` line in
+   `skills/dev-ai-tools/SKILL.md`: exit 2, one warning, `cites a README rule
+   number instead of a section anchor (rule 9): .../SKILL.md:13`.
+4. Inserted `## Notes` before `<user_instructions>` in `USER-AGENTS.md`: exit
+   2, one warning, `USER-AGENTS.md has a ## sub-heading at line 7 (rule 3)`.
+5. Removed "Use for /gc-ai-tools." from `skills/gc-ai-tools/SKILL.md`'s
+   description: exit 2, one warning, `skill description does not name
+   /gc-ai-tools (rule 6)`.
+6. Dropped `` `<boundaries>` `` from the README vocabulary table: exit 2, one
+   warning, `vocabulary parity: boundaries missing from README table (rule
+   9)`.
+7. Added `foo` to `XML_VOCAB` in `scripts/lint.sh`: exit 2, one warning,
+   `vocabulary parity: foo missing from README table (rule 9)`.
+
+Each probe produced exactly one warning (its named one) and no others.
+
+WIP-skills check (plan risk "parallel skills work"): on a separate scratch
+clone, replaced `skills/` with the provided WIP snapshot
+(`wip-skills-snapshot/skills`, the same nine skill directories) and
+committed it, then ran `lint.sh` unmodified otherwise. Result: exit 0, 421
+ok, 1 skipped, 0 warnings — none of the five new checks (identity
+attributes, rule anchors, instructions headings, `/name` in description,
+vocabulary parity) fired against the WIP content. No finding to report; no
+skill file was touched.
+
+### Coordinator review (R1)
+
+Correction tasks (portability; existing lint.sh uses `\t` only inside awk):
+
+1. `check_vocab_parity`: replace `sed 's/$/\tR/'` and `sed 's/$/\tL/'` (GNU-only `\t` in sed; BSD sed emits a literal `t`) with awk tagging, e.g. `awk '{ print $0 "\tR" }'`, or restructure without a tab separator.
+2. `check_rule_anchor_citations`: replace the GNU `\b` in `grep -nE '\b[Rr]ules? [0-9]'` with a portable boundary such as `(^|[^A-Za-z])[Rr]ules? [0-9]`.
+3. Re-run the clean-tree lint and probes 3, 6, and 7; confirm results unchanged.
+
+#### R1 applied
+
+Both correction tasks applied to `scripts/lint.sh`:
+
+- `check_vocab_parity`: the `sed 's/$/\tR/'` / `sed 's/$/\tL/'` tagging step
+  replaced with `awk '{ print $0 "\tR" }'` / `awk '{ print $0 "\tL" }'`
+  (portable; the existing consumer awk still splits on the same literal tab).
+- `check_rule_anchor_citations`: `grep -nE '\b[Rr]ules? [0-9]'` replaced with
+  `grep -nE '(^|[^A-Za-z])[Rr]ules? [0-9]'` (portable word boundary).
+
+Re-verification (fresh scratch clones of `plan/readme-ruleset-sync`, declared
+files `scripts/lint.sh` and `README.md`):
+
+- Clean scratch clone: `lint.sh` exit 0, 390 ok, 1 skipped, 0 warnings;
+  "README vocabulary table matches XML_VOCAB (40 tags)" and "cites no README
+  rule number (rule 9)" ok lines present for `USER-AGENTS.md` and every
+  `skills/*/SKILL.md`. `test.sh` exit 0. `shellcheck -x -P scripts/shell -P
+  scripts/test scripts/shell/*.sh scripts/*.sh scripts/test/*.sh`: exit 1,
+  SC1071 on `install-zsh.sh` only.
+- Probe 3 (appended " (rule 9)" to the `<overview>` prose line in
+  `skills/dev-ai-tools/SKILL.md`): exit 2, one warning, `cites a README rule
+  number instead of a section anchor (rule 9):
+  .../skills/dev-ai-tools/SKILL.md:15`. Unchanged from before R1.
+- Probe 3 extra check: inserted a new line "Rule 9 applies." (rule number at
+  the very start of the line, no preceding character) into the same file:
+  exit 2, one warning, `.../skills/dev-ai-tools/SKILL.md:16` — confirms the
+  `(^|[^A-Za-z])` boundary still matches a line-initial "Rule 9".
+- Probe 6 (dropped `` `<boundaries>` `` from the README vocabulary table):
+  exit 2, one warning, `vocabulary parity: boundaries missing from README
+  table (rule 9)`. Unchanged from before R1.
+- Probe 7 (added `foo` to `XML_VOCAB` in `scripts/lint.sh`): exit 2, one
+  warning, `vocabulary parity: foo missing from README table (rule 9)`.
+  Unchanged from before R1.
+
+Each probe produced exactly one warning (its named one) and no others. No
+change made under `skills/`; only `scripts/lint.sh` was edited (plus this
+plan file and the base plan Status table).

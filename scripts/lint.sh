@@ -29,8 +29,8 @@ Checks:
                     subset of name, description, argument-hint (rule 6)
   skill name match  skills/<x>/SKILL.md declares name: <x>
   skill description every skill description is at most 500 characters,
-                    folded block included, and states what the skill does,
-                    then Impact:, then Agent: (rule 6)
+                    folded block included, states what the skill does, then
+                    Impact:, then Agent:, and names its own /<name> (rule 6)
   agent field       Agent: is session, or session + implementer (model
                     asked once) exactly when the skill defines
                     <implementer_job> and an executor="implementer"
@@ -45,6 +45,8 @@ Checks:
                     Execution", never <agents>, <dispatch_protocol>, or <worker,
                     and no references to deleted files (rule 5)
   instructions cap  USER-AGENTS.md is at most 8000 characters (rule 3)
+  instructions      USER-AGENTS.md has no ## sub-heading (rule 3)
+  headings
   line endings      git ls-files --eol matches the declared eol= attribute:
                     lf for scripts/ (rule 21)
   executable bits   scripts/shell/*.sh and scripts/*.sh are mode 100755
@@ -59,16 +61,22 @@ Checks:
   xml grammar       every semantic-XML body (USER-AGENTS.md, SKILL.md) is
                     balanced once backticked spans are removed, uses only
                     vocabulary tags outside <input>, gives every <rule> a
-                    unique id, and every <template> a role and an executor
-                    that is one of default-worker, implementer, or
-                    session-subagent AND has a matching <rule id> inside
-                    USER-AGENTS <execution_protocol>, never an agent
-                    attribute (rule 9, Semantic XML grammar)
+                    unique id, every <step> a numeric id, and <case>,
+                    <response>, <signal>, <state> their id, type, or code,
+                    and every <template> a role and an executor that is one
+                    of default-worker, implementer, or session-subagent AND
+                    has a matching <rule id> inside USER-AGENTS
+                    <execution_protocol>, never an agent attribute (rule 9,
+                    Semantic XML grammar)
   xml references    every backticked tag reference resolves: attribute
                     references to a definition in the same or the qualified
                     file, bare references to the vocabulary (rule 9)
   placeholder parity every {PLACEHOLDER} a <template> uses is declared in its
                     <input>, and every declared one is used (rule 9)
+  vocabulary parity the README Semantic XML grammar table and XML_VOCAB list
+                    the same tags (rule 9)
+  rule anchors      no SKILL.md or USER-AGENTS.md cites a README rule number
+                    (rule 9)
   spawn protocol    every SKILL.md with a <template> cites USER-AGENTS
   citation          <execution_protocol>, and no SKILL.md duplicates the
                     harness native subagent API list (Copilot runSubagent)
@@ -335,10 +343,12 @@ check_skill_description_cap() {
 }
 
 check_skill_description_content() {
-  # rule 6: description states what it does, then Impact:, then Agent:
-  local d f val before impact
+  # rule 6: description states what it does, then Impact:, then Agent:, and
+  # names its own slash command.
+  local d name f val before impact
   for d in "$AI_TOOLS"/skills/*-ai-tools/; do
     [ -d "$d" ] || continue
+    name=$(basename "$d")
     f="${d}SKILL.md"
     [ -f "$f" ] || continue
     val=$(yaml_frontmatter_folded_value "$f" description)
@@ -355,6 +365,10 @@ check_skill_description_content() {
       *)
         warn "skill description missing ordered Impact: and Agent: (rule 6): $f"
         ;;
+    esac
+    case "$val" in
+      *"/$name"*) ok "skill description names /$name: $f" ;;
+      *) warn "skill description does not name /$name (rule 6): $f" ;;
     esac
   done
 }
@@ -426,6 +440,24 @@ check_instructions_cap() {
     ok "USER-AGENTS.md within cap: $count/$cap chars (headroom $((cap - count)))"
   else
     warn "USER-AGENTS.md exceeds $cap chars: $count (over by $((count - cap)))"
+  fi
+}
+
+check_instructions_headings() {
+  # rule 3: after its title and short preamble, USER-AGENTS.md's body is
+  # semantic XML, not markdown sub-headings.
+  local f hits line
+  f="$AI_TOOLS/USER-AGENTS.md"
+  if [ ! -f "$f" ]; then warn "missing: $f"; return; fi
+  hits=$(grep -nE '^#{2,} ' "$f" || true)
+  if [ -z "$hits" ]; then
+    ok "USER-AGENTS.md has no ## sub-heading: $f"
+  else
+    while IFS=: read -r line _; do
+      warn "USER-AGENTS.md has a ## sub-heading at line $line (rule 3): $f"
+    done <<EOF
+$hits
+EOF
   fi
 }
 
@@ -589,6 +621,18 @@ check_xml_grammar() {
               if (!(exec_val in okexec)) print "<template> without a valid executor at line " NR
             } else print "<template> without a valid executor at line " NR
           }
+          if (name == "step") {
+            if (tok !~ / id="[0-9]+"/) print "<step> without a numeric id at line " NR
+          }
+          if (name == "case") {
+            if (tok !~ / id="[^"]+"/) print "<case> without its id at line " NR
+          }
+          if (name == "response") {
+            if (tok !~ / type="[^"]+"/) print "<response> without its type at line " NR
+          }
+          if (name == "signal" || name == "state") {
+            if (tok !~ / code="[^"]+"/) print "<" name "> without its code at line " NR
+          }
         }
         if (line ~ /</) print "stray < at line " NR
       }
@@ -658,6 +702,62 @@ EOF
       fi
     done < <(xml_references "$f")
   done
+}
+
+# --- Check: rule anchor citations (rule 9) ----------------------------------
+# Prose citations of this README use section anchors, never rule numbers.
+
+check_rule_anchor_citations() {
+  local f hits line
+  for f in "$AI_TOOLS/USER-AGENTS.md" "$AI_TOOLS"/skills/*/SKILL.md; do
+    [ -f "$f" ] || continue
+    hits=$(grep -nE '(^|[^A-Za-z])[Rr]ules? [0-9]' "$f" || true)
+    if [ -z "$hits" ]; then
+      ok "cites no README rule number (rule 9): $f"
+    else
+      while IFS=: read -r line _; do
+        warn "cites a README rule number instead of a section anchor (rule 9): $f:$line"
+      done <<EOF
+$hits
+EOF
+    fi
+  done
+}
+
+# --- Check: vocabulary parity (rule 9) ---------------------------------------
+# The README "Semantic XML grammar" table and XML_VOCAB register the same
+# tags in the same commit.
+
+check_vocab_parity() {
+  local readme_tags lint_tags findings n
+  readme_tags=$(awk '
+    /^Vocabulary\./ { invoc = 1; next }
+    invoc && /^#/ { exit }
+    invoc && /^\| `</ { print }
+  ' "$AI_TOOLS/README.md" | grep -oE '`<[a-z_]+' | sed 's/`<//' | sort -u)
+  lint_tags=$(printf '%s\n' "$XML_VOCAB" | tr ' ' '\n' | sort -u)
+  findings=$(
+    {
+      printf '%s\n' "$readme_tags" | awk '{ print $0 "\tR" }'
+      printf '%s\n' "$lint_tags" | awk '{ print $0 "\tL" }'
+    } | awk -F'\t' '
+      { c[$1]++; s[$1] = s[$1] $2 }
+      END {
+        for (t in c) if (c[t] == 1) {
+          if (s[t] == "R") print t " missing from XML_VOCAB"
+          else print t " missing from README table"
+        }
+      }
+    ' | sort
+  )
+  n=$(printf '%s\n' "$lint_tags" | grep -c .)
+  if [ -z "$findings" ]; then
+    ok "README vocabulary table matches XML_VOCAB ($n tags)"
+  else
+    while IFS= read -r line; do warn "vocabulary parity: $line (rule 9)"; done <<EOF
+$findings
+EOF
+  fi
 }
 
 # --- Check: spawn protocol citation (rule 9) --------------------------------
@@ -746,11 +846,14 @@ check_skill_description_cap
 check_skill_description_content
 check_skill_agent_field
 check_instructions_cap
+check_instructions_headings
 check_line_endings
 check_executable_bits
 check_no_binaries
 check_dev_tmp_untracked
 check_xml_grammar
+check_vocab_parity
+check_rule_anchor_citations
 check_spawn_protocol_citation
 check_version_bump
 
