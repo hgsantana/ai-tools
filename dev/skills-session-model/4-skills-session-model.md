@@ -140,3 +140,13 @@ argument-hint: "[the change to deliver]"
 - Requires stages: 3 (dev steps 2-4, plan step 3, `plan_file_format` sections)
 
 ## Implementation log
+
+- Replaced `skills/vibe-ai-tools/SKILL.md` in full with the target text: session-inline planning (plan-ai-tools `<step id="1">`, `<step id="3">`), the new `<implementer_job>` block, one `<template role="stage-implementer" executor="implementer">`, and `<boundaries>` naming the native spawn APIs. `plan-author`, `vibe-coordinator`, the vibe `stage-verifier`, and `<return_protocol>` are gone.
+- Appended `implementer_job` to the single-line `XML_VOCAB` string in `scripts/lint.sh` (line 411).
+- `README.md` rule 5: added `` `<implementer_job>` `` to the optional-blocks sentence.
+- `README.md` vocabulary table: added the `` `<implementer_job>` `` row directly after `` `<plan_file_format>` / `<structure>` ``.
+- `scripts/lint.sh; echo $?` → `0` (`315 ok, 1 skipped, 0 warnings`; the skip is the version-bump check needing `--base`). Output includes `ok: reference names a vocabulary tag: <implementer_job> in .../skills/vibe-ai-tools/SKILL.md`, the plan-ai-tools `<step id="1">`/`<step id="3">` and dev-ai-tools `<step id="2">`/`<step id="3">`/`<step id="4">` reference lines, `ok: reference resolves: <template executor="implementer">`, and `ok: skill description within cap: .../vibe-ai-tools/SKILL.md (442/500)`.
+- `git grep -niE '(planner|implementer|mechanical)-ai-tools|agent="|coordinator|sub-dispatch|high-reasoning|return_protocol' -- skills/vibe-ai-tools` → exit 1 (no matches; grep's "nothing found" code).
+- Negative probe: `git worktree add --detach <scratchpad>/vibe-stage4-probe HEAD`, copied in the working-tree `scripts/lint.sh` and `skills/vibe-ai-tools/SKILL.md`, stripped ` implementer_job` from the copied `XML_VOCAB`. `./scripts/lint.sh` in that worktree → exit `2`, with `WARN: xml grammar: tag outside the vocabulary <implementer_job> at line 32: .../skills/vibe-ai-tools/SKILL.md`. Removed the worktree afterwards (`git worktree remove --force`); `git worktree list` back to the pre-existing four entries (main tree plus `enhance-planner-reporting-dev-ai-tools`, `modelo-e-harness-info`, `qual-o-seu-harness`, none touched).
+- `scripts/test.sh` → exit 0, `305 ok, 0 skipped, 0 warnings`.
+- `shellcheck -x -P scripts/shell -P scripts/test scripts/shell/*.sh scripts/*.sh scripts/test/*.sh` → exit 1, only the known `SC1071` on `scripts/shell/install-zsh.sh` (pre-existing, not a regression).
