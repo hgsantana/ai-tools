@@ -80,6 +80,8 @@ Checks:
   spawn protocol    every SKILL.md with a <template> cites USER-AGENTS
   citation          <execution_protocol>, and no SKILL.md duplicates the
                     harness native subagent API list (Copilot runSubagent)
+  rule citations    README rules numbered 1..N without gaps; every rule N
+                    cited in tracked docs and scripts is within 1..N (rule 1)
 
 --base <ref>  commit-ish to diff shipped content against for the version
               bump check. Without it, that check is skipped. The lint
@@ -836,6 +838,68 @@ check_version_bump() {
   fi
 }
 
+# --- Check: rule citations resolve (rule 1) ----------------------------------
+# README rules are numbered 1..N without gaps, and every rule-number citation
+# in the tracked docs and scripts below names a rule that exists.
+
+check_rule_citations() {
+  local readme="$AI_TOOLS/README.md" section numbers n pairs k num
+  local pattern files f matches line match nums tok out_of_range clean
+
+  section=$(awk '
+    /^## Repository rules$/ { insec = 1; next }
+    insec && /^## / { exit }
+    insec { print }
+  ' "$readme")
+  if [ -z "$section" ]; then
+    warn "README.md has no '## Repository rules' section (rule 1)"
+    return
+  fi
+
+  numbers=$(printf '%s\n' "$section" | grep -E '^[0-9]+\. ' | sed -E 's/^([0-9]+)\..*/\1/')
+  n=$(printf '%s\n' "$numbers" | grep -c '^[0-9]' || true)
+
+  clean=1
+  pairs=$(printf '%s\n' "$numbers" | awk '{ k++; if ($1 + 0 != k) print k " " $1 }')
+  if [ -n "$pairs" ]; then
+    clean=0
+    while read -r k num; do
+      warn "README rule numbering: position $k reads \"$num.\", expected \"$k.\" (rule 1)"
+    done <<EOF
+$pairs
+EOF
+  fi
+
+  # [Rr] and [s] each sit in their own bracket expression so this literal
+  # pattern text never itself spells a bare word run: wherever lint.sh's own
+  # source quotes it below, the check cannot cite itself out of range.
+  pattern='[Rr]ule[s]? [0-9]+(–[0-9]+|-[0-9]+)?(, [0-9]+(–[0-9]+|-[0-9]+)?)*'
+
+  files=$(git -C "$AI_TOOLS" ls-files -- \
+    README.md ROADMAP.md docs/USAGE.md .gitattributes \
+    scripts/lint.sh scripts/test.sh 'scripts/test/*.sh' 'scripts/shell/*.sh')
+  for f in $files; do
+    matches=$(grep -noE "$pattern" "$AI_TOOLS/$f" || true)
+    [ -n "$matches" ] || continue
+    while IFS=: read -r line match; do
+      [ -n "$match" ] || continue
+      nums=$(printf '%s' "$match" | sed -E 's/[^0-9]/ /g')
+      out_of_range=0
+      for tok in $nums; do
+        if [ "$tok" -lt 1 ] || [ "$tok" -gt "$n" ]; then out_of_range=1; fi
+      done
+      if [ "$out_of_range" = 1 ]; then
+        clean=0
+        warn "rule citation out of range (1-$n): $f:$line: $match"
+      fi
+    done <<EOF
+$matches
+EOF
+  done
+
+  [ "$clean" = 1 ] && ok "rule citations resolve to README rules 1-$n"
+}
+
 # --- Run -----------------------------------------------------------------------
 
 check_naming
@@ -856,5 +920,6 @@ check_vocab_parity
 check_rule_anchor_citations
 check_spawn_protocol_citation
 check_version_bump
+check_rule_citations
 
 finish

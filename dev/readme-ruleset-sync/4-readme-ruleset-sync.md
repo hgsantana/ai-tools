@@ -51,3 +51,64 @@ feat(lint): check README rule numbering and rule citations
 Stage 3.
 
 ## Implementation log
+
+**Design.** Added `check_rule_citations` to `scripts/lint.sh` (rule 1), called
+last in the Run block (after `check_version_bump`). Two parts, one `clean`
+flag shared across both:
+
+- Numbering: `awk` isolates the `## Repository rules` section up to the next
+  `## ` heading (the `### ` subsection headings inside it do not match).
+  `grep -E '^[0-9]+\. '` plus `sed -E 's/^([0-9]+)\..*/\1/'` extracts each
+  rule's leading number; an `awk` pass compares the k-th number to `k` and
+  reports every gap or out-of-order position. `n` (25 today) is the count of
+  matched lines, reused as the citation range ceiling.
+- Citations: `git -C "$AI_TOOLS" ls-files -- README.md ROADMAP.md
+  docs/USAGE.md .gitattributes scripts/lint.sh scripts/test.sh
+  'scripts/test/*.sh' 'scripts/shell/*.sh'` lists the declared fileset (glob
+  pathspecs, no shell expansion since single-quoted). For each tracked file,
+  `grep -noE` with the pattern below extracts every citation; `sed -E
+  's/[^0-9]/ /g'` turns each match into space-separated numbers, checked
+  against `1..n` in a shell `for` loop (no external tool beyond
+  grep/sed/awk/git, per the stage's tool restriction).
+- Pattern: `[Rr]ule[s]? [0-9]+(–[0-9]+|-[0-9]+)?(, [0-9]+(–[0-9]+|-[0-9]+)?)*`.
+  En dash matched via a literal UTF-8 byte alternative (`–[0-9]+`) alongside
+  ASCII hyphen, avoiding a multibyte-in-bracket-expression portability risk
+  (used alternation `(a|b)` instead of a bracket `[ab]` for the dash).
+  Self-match avoidance (stage step 2): `[Rr]ule[s]?` keeps the letters `R`/`r`
+  each walled off from `ule` by a bracket close, so the pattern's own literal
+  source text (wherever this file quotes it — the `pattern=` line, the usage
+  heredoc, the README bullet) never itself spells a bare contiguous
+  `rule`/`Rule` run followed by a space and a digit; verified by inspection
+  and confirmed empirically (baseline run below is 0 warnings with
+  `scripts/lint.sh` itself in the scanned fileset).
+- `ok "rule citations resolve to README rules 1-$n"` fires only when both
+  parts are clean.
+
+**Usage and README.** Added the `rule citations` entry to `lint.sh`'s usage
+heredoc (after `spawn protocol citation`) and the **rule citations** bullet
+to README's Development checks family list (after **version bump**), both
+using the exact wording given in the stage file.
+
+**Tests** (`verify-stage.sh scripts/lint.sh README.md`, scratch clone of
+`plan/readme-ruleset-sync` from the worktree):
+
+- lint: exit 0, 391 ok / 1 skipped / 0 warnings, including `ok: rule
+  citations resolve to README rules 1-25`.
+- test.sh: exit 0, 305 ok / 0 skipped / 0 warnings.
+- shellcheck (`-x -P scripts/shell -P scripts/test scripts/shell/*.sh
+  scripts/*.sh scripts/test/*.sh`): only SC1071 on `install-zsh.sh`.
+
+**Negative probes**, each on a fresh scratch clone of `plan/readme-ruleset-sync`
+with `scripts/lint.sh` and `README.md` copied in from the worktree, probe
+edit applied inside the clone, committed, then `scripts/lint.sh` run:
+
+1. `scripts/test/update.sh:145` comment `(rule 13)` → `(rule 26)`: exit 2,
+   `WARN: rule citation out of range (1-25): scripts/test/update.sh:145: rule 26`.
+2. `README.md` rule `12.` renumbered to `13.` (leaving the real rule 13 line
+   unchanged, so both read "13."): exit 2,
+   `WARN: README rule numbering: position 12 reads "13.", expected "12." (rule 1)`.
+3. `.gitattributes` `rule 21` → `rules 18–30`: exit 2,
+   `WARN: rule citation out of range (1-25): .gitattributes:1: rules 18–30`.
+
+All three probes matched their expected file:line and out-of-range number,
+and each is the only warning lint reports for its clone.

@@ -166,6 +166,7 @@ Check families:
 - **placeholder parity** — every `{PLACEHOLDER}` a `<template>` uses is declared in its `<input>`, and every declared one is used (rule 9)
 - **vocabulary parity** — the Semantic XML grammar table and `XML_VOCAB` list the same tags (rule 9)
 - **version bump** — only with `--base <ref>`: when `skills/`, `scripts/`, or `USER-AGENTS.md` changed between `<ref>` and `HEAD`, the README version line must differ from `<ref>`'s (rule 4)
+- **rule citations** — Repository rules are numbered 1..N without gaps, and every `rule N` citation in `README.md`, `ROADMAP.md`, `docs/USAGE.md`, `.gitattributes`, and `scripts/` names an existing rule (rule 1)
 
 Exit codes: `0` clean, `1` aborted on a precondition (unknown flag, `--base` without a value), `2` finished with findings. CI (`.github/workflows/ci.yml`) runs two jobs on `ubuntu-latest` for every push and pull request. `lint` runs `scripts/lint.sh`, adding `--base` with the pull request's base SHA on pull requests, then `shellcheck -x -P scripts/shell -P scripts/test scripts/shell/*.sh scripts/*.sh scripts/test/*.sh`. `test-shell` runs `scripts/test.sh`.
 
