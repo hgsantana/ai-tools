@@ -29,8 +29,8 @@ Checks:
                     subset of name, description, argument-hint (rule 6)
   skill name match  skills/<x>/SKILL.md declares name: <x>
   skill description every skill description is at most 500 characters,
-                    folded block included, and states what the skill does,
-                    then Impact:, then Agent: (rule 6)
+                    folded block included, states what the skill does, then
+                    Impact:, then Agent:, and names its own /<name> (rule 6)
   agent field       Agent: is session, or session + implementer (model
                     asked once) exactly when the skill defines
                     <implementer_job> and an executor="implementer"
@@ -43,8 +43,10 @@ Checks:
                     with a <rule id> for default-worker, implementer, and
                     session-subagent, and the offer header "Description,
                     Execution", never <agents>, <dispatch_protocol>, or <worker,
-                    and no references to deleted files (rule 5)
+                    and no references to deleted files (rules 5, 11)
   instructions cap  USER-AGENTS.md is at most 8000 characters (rule 3)
+  instructions      USER-AGENTS.md has no ## sub-heading (rule 3)
+  headings
   line endings      git ls-files --eol matches the declared eol= attribute:
                     lf for scripts/ (rule 21)
   executable bits   scripts/shell/*.sh and scripts/*.sh are mode 100755
@@ -59,19 +61,30 @@ Checks:
   xml grammar       every semantic-XML body (USER-AGENTS.md, SKILL.md) is
                     balanced once backticked spans are removed, uses only
                     vocabulary tags outside <input>, gives every <rule> a
-                    unique id, and every <template> a role and an executor
-                    that is one of default-worker, implementer, or
-                    session-subagent AND has a matching <rule id> inside
-                    USER-AGENTS <execution_protocol>, never an agent
-                    attribute (rule 9, Semantic XML grammar)
+                    unique id, every <step> a numeric id, and <case>,
+                    <response>, <signal>, <state> their id, type, or code,
+                    and every <template> a role and an executor that is one
+                    of default-worker, implementer, or session-subagent AND
+                    has a matching <rule id> inside USER-AGENTS
+                    <execution_protocol>, never an agent attribute (rule 9,
+                    Semantic XML grammar)
   xml references    every backticked tag reference resolves: attribute
                     references to a definition in the same or the qualified
                     file, bare references to the vocabulary (rule 9)
   placeholder parity every {PLACEHOLDER} a <template> uses is declared in its
                     <input>, and every declared one is used (rule 9)
+  vocabulary parity the README Semantic XML grammar table and XML_VOCAB list
+                    the same tags (rule 9)
+  rule anchors      no SKILL.md or USER-AGENTS.md cites a README rule number
+                    (rule 9)
   spawn protocol    every SKILL.md with a <template> cites USER-AGENTS
   citation          <execution_protocol>, and no SKILL.md duplicates the
                     harness native subagent API list (Copilot runSubagent)
+  rule citations    README rules numbered 1..N without gaps; every rule N
+                    cited in tracked docs and scripts is within 1..N (rule 1)
+  harness table     lib.sh harness keys, skills roots, and instructions
+                    destinations appear in the README Scope bullet and
+                    Supported harnesses table (rule 19)
 
 --base <ref>  commit-ish to diff shipped content against for the version
               bump check. Without it, that check is skipped. The lint
@@ -335,10 +348,12 @@ check_skill_description_cap() {
 }
 
 check_skill_description_content() {
-  # rule 6: description states what it does, then Impact:, then Agent:
-  local d f val before impact
+  # rule 6: description states what it does, then Impact:, then Agent:, and
+  # names its own slash command.
+  local d name f val before impact
   for d in "$AI_TOOLS"/skills/*-ai-tools/; do
     [ -d "$d" ] || continue
+    name=$(basename "$d")
     f="${d}SKILL.md"
     [ -f "$f" ] || continue
     val=$(yaml_frontmatter_folded_value "$f" description)
@@ -355,6 +370,10 @@ check_skill_description_content() {
       *)
         warn "skill description missing ordered Impact: and Agent: (rule 6): $f"
         ;;
+    esac
+    case "$val" in
+      *"/$name"*) ok "skill description names /$name: $f" ;;
+      *) warn "skill description does not name /$name (rule 6): $f" ;;
     esac
   done
 }
@@ -426,6 +445,24 @@ check_instructions_cap() {
     ok "USER-AGENTS.md within cap: $count/$cap chars (headroom $((cap - count)))"
   else
     warn "USER-AGENTS.md exceeds $cap chars: $count (over by $((count - cap)))"
+  fi
+}
+
+check_instructions_headings() {
+  # rule 3: after its title and short preamble, USER-AGENTS.md's body is
+  # semantic XML, not markdown sub-headings.
+  local f hits line
+  f="$AI_TOOLS/USER-AGENTS.md"
+  if [ ! -f "$f" ]; then warn "missing: $f"; return; fi
+  hits=$(grep -nE '^#{2,} ' "$f" || true)
+  if [ -z "$hits" ]; then
+    ok "USER-AGENTS.md has no ## sub-heading: $f"
+  else
+    while IFS=: read -r line _; do
+      warn "USER-AGENTS.md has a ## sub-heading at line $line (rule 3): $f"
+    done <<EOF
+$hits
+EOF
   fi
 }
 
@@ -589,6 +626,18 @@ check_xml_grammar() {
               if (!(exec_val in okexec)) print "<template> without a valid executor at line " NR
             } else print "<template> without a valid executor at line " NR
           }
+          if (name == "step") {
+            if (tok !~ / id="[0-9]+"/) print "<step> without a numeric id at line " NR
+          }
+          if (name == "case") {
+            if (tok !~ / id="[^"]+"/) print "<case> without its id at line " NR
+          }
+          if (name == "response") {
+            if (tok !~ / type="[^"]+"/) print "<response> without its type at line " NR
+          }
+          if (name == "signal" || name == "state") {
+            if (tok !~ / code="[^"]+"/) print "<" name "> without its code at line " NR
+          }
         }
         if (line ~ /</) print "stray < at line " NR
       }
@@ -658,6 +707,62 @@ EOF
       fi
     done < <(xml_references "$f")
   done
+}
+
+# --- Check: rule anchor citations (rule 9) ----------------------------------
+# Prose citations of this README use section anchors, never rule numbers.
+
+check_rule_anchor_citations() {
+  local f hits line
+  for f in "$AI_TOOLS/USER-AGENTS.md" "$AI_TOOLS"/skills/*/SKILL.md; do
+    [ -f "$f" ] || continue
+    hits=$(grep -nE '(^|[^A-Za-z])[Rr]ules? [0-9]' "$f" || true)
+    if [ -z "$hits" ]; then
+      ok "cites no README rule number (rule 9): $f"
+    else
+      while IFS=: read -r line _; do
+        warn "cites a README rule number instead of a section anchor (rule 9): $f:$line"
+      done <<EOF
+$hits
+EOF
+    fi
+  done
+}
+
+# --- Check: vocabulary parity (rule 9) ---------------------------------------
+# The README "Semantic XML grammar" table and XML_VOCAB register the same
+# tags in the same commit.
+
+check_vocab_parity() {
+  local readme_tags lint_tags findings n
+  readme_tags=$(awk '
+    /^Vocabulary\./ { invoc = 1; next }
+    invoc && /^#/ { exit }
+    invoc && /^\| `</ { print }
+  ' "$AI_TOOLS/README.md" | grep -oE '`<[a-z_]+' | sed 's/`<//' | sort -u)
+  lint_tags=$(printf '%s\n' "$XML_VOCAB" | tr ' ' '\n' | sort -u)
+  findings=$(
+    {
+      printf '%s\n' "$readme_tags" | awk '{ print $0 "\tR" }'
+      printf '%s\n' "$lint_tags" | awk '{ print $0 "\tL" }'
+    } | awk -F'\t' '
+      { c[$1]++; s[$1] = s[$1] $2 }
+      END {
+        for (t in c) if (c[t] == 1) {
+          if (s[t] == "R") print t " missing from XML_VOCAB"
+          else print t " missing from README table"
+        }
+      }
+    ' | sort
+  )
+  n=$(printf '%s\n' "$lint_tags" | grep -c .)
+  if [ -z "$findings" ]; then
+    ok "README vocabulary table matches XML_VOCAB ($n tags)"
+  else
+    while IFS= read -r line; do warn "vocabulary parity: $line (rule 9)"; done <<EOF
+$findings
+EOF
+  fi
 }
 
 # --- Check: spawn protocol citation (rule 9) --------------------------------
@@ -736,6 +841,131 @@ check_version_bump() {
   fi
 }
 
+# --- Check: rule citations resolve (rule 1) ----------------------------------
+# README rules are numbered 1..N without gaps, and every rule-number citation
+# in the tracked docs and scripts below names a rule that exists.
+
+check_rule_citations() {
+  local readme="$AI_TOOLS/README.md" section numbers n pairs k num
+  local pattern files f matches line match nums tok out_of_range clean
+
+  section=$(awk '
+    /^## Repository rules$/ { insec = 1; next }
+    insec && /^## / { exit }
+    insec { print }
+  ' "$readme")
+  if [ -z "$section" ]; then
+    warn "README.md has no '## Repository rules' section (rule 1)"
+    return
+  fi
+
+  numbers=$(printf '%s\n' "$section" | grep -E '^[0-9]+\. ' | sed -E 's/^([0-9]+)\..*/\1/')
+  n=$(printf '%s\n' "$numbers" | grep -c '^[0-9]' || true)
+
+  clean=1
+  pairs=$(printf '%s\n' "$numbers" | awk '{ k++; if ($1 + 0 != k) print k " " $1 }')
+  if [ -n "$pairs" ]; then
+    clean=0
+    while read -r k num; do
+      warn "README rule numbering: position $k reads \"$num.\", expected \"$k.\" (rule 1)"
+    done <<EOF
+$pairs
+EOF
+  fi
+
+  # [Rr] and [s] each sit in their own bracket expression so this literal
+  # pattern text never itself spells a bare word run: wherever lint.sh's own
+  # source quotes it below, the check cannot cite itself out of range.
+  pattern='[Rr]ule[s]? [0-9]+(–[0-9]+|-[0-9]+)?(, [0-9]+(–[0-9]+|-[0-9]+)?)*'
+
+  files=$(git -C "$AI_TOOLS" ls-files -- \
+    README.md ROADMAP.md docs/USAGE.md .gitattributes \
+    scripts/lint.sh scripts/test.sh 'scripts/test/*.sh' 'scripts/shell/*.sh')
+  for f in $files; do
+    matches=$(grep -noE "$pattern" "$AI_TOOLS/$f" || true)
+    [ -n "$matches" ] || continue
+    while IFS=: read -r line match; do
+      [ -n "$match" ] || continue
+      nums=$(printf '%s' "$match" | sed -E 's/[^0-9]/ /g')
+      out_of_range=0
+      for tok in $nums; do
+        if [ "$tok" -lt 1 ] || [ "$tok" -gt "$n" ]; then out_of_range=1; fi
+      done
+      if [ "$out_of_range" = 1 ]; then
+        clean=0
+        warn "rule citation out of range (1-$n): $f:$line: $match"
+      fi
+    done <<EOF
+$matches
+EOF
+  done
+
+  [ "$clean" = 1 ] && ok "rule citations resolve to README rules 1-$n"
+}
+
+# --- Check: harness table parity (rule 19) -----------------------------------
+# lib.sh's ALL_HARNESSES, skills_root, and instructions_dest match the README
+# Scope bullet's harness keys and the Supported harnesses table's paths.
+
+check_harness_table() {
+  local readme="$AI_TOOLS/README.md"
+  local scope_line sect readme_keys lib_keys findings clean h r i n line
+
+  scope_line=$(grep -m1 'harness keys (' "$readme")
+  # shellcheck disable=SC2016 # backtick-quoted token pattern, not command substitution
+  readme_keys=$(printf '%s\n' "$scope_line" | grep -oE '`[a-z-]+`' | tr -d '`' | sort)
+  lib_keys=$(printf '%s\n' "$ALL_HARNESSES" | tr ' ' '\n' | sort)
+
+  clean=1
+  findings=$(
+    {
+      printf '%s\n' "$readme_keys" | awk 'NF { print $0 "\tR" }'
+      printf '%s\n' "$lib_keys" | awk 'NF { print $0 "\tL" }'
+    } | awk -F'\t' '
+      { c[$1]++; s[$1] = s[$1] $2 }
+      END {
+        for (t in c) if (c[t] == 1) {
+          if (s[t] == "R") print t " missing from lib.sh ALL_HARNESSES"
+          else print t " missing from README Scope bullet"
+        }
+      }
+    ' | sort
+  )
+  if [ -n "$findings" ]; then
+    clean=0
+    while IFS= read -r line; do warn "harness key mismatch: $line (rule 19)"; done <<EOF
+$findings
+EOF
+  fi
+
+  sect=$(awk '
+    /^## Supported harnesses$/ { insec = 1; next }
+    insec && /^## / { exit }
+    insec { print }
+  ' "$readme")
+
+  for h in $ALL_HARNESSES; do
+    # shellcheck disable=SC2016 # literal '$HOME' text: skills_root/instructions_dest
+    # echo it unexpanded so it matches the README's literal `$HOME/...` paths.
+    r=$(HOME='$HOME'; skills_root "$h")
+    # shellcheck disable=SC2016
+    i=$(HOME='$HOME'; instructions_dest "$h")
+    if printf '%s' "$sect" | grep -qF "\`$r/\`"; then
+      :
+    else
+      clean=0
+      warn "harness $h: Supported harnesses table missing skills root \`$r/\` (rule 19)"
+    fi
+    if [ -n "$i" ] && ! printf '%s' "$sect" | grep -qF "\`$i\`"; then
+      clean=0
+      warn "harness $h: Supported harnesses table missing instructions path \`$i\` (rule 19)"
+    fi
+  done
+
+  n=$(printf '%s\n' "$lib_keys" | grep -c .)
+  [ "$clean" = 1 ] && ok "Supported harnesses match lib.sh ($n harnesses)"
+}
+
 # --- Run -----------------------------------------------------------------------
 
 check_naming
@@ -746,12 +976,17 @@ check_skill_description_cap
 check_skill_description_content
 check_skill_agent_field
 check_instructions_cap
+check_instructions_headings
 check_line_endings
 check_executable_bits
 check_no_binaries
 check_dev_tmp_untracked
 check_xml_grammar
+check_vocab_parity
+check_rule_anchor_citations
 check_spawn_protocol_citation
 check_version_bump
+check_rule_citations
+check_harness_table
 
 finish
