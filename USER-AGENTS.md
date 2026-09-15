@@ -2,7 +2,7 @@
 
 Harness-agnostic rules for AI coding tools after ai-tools is installed. A repository's own `AGENTS.md` or `README.md` overrides these rules inside that repository.
 
-ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skills and this file are installed from there. `$HOME/.ai-tools/README.md` documents installation and maintenance. Leave the clone and these copies unchanged; updates reset them to `origin/master`.
+ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skills and this file are installed from there. Leave the clone and these copies unchanged; updates reset them to `origin/master`.
 
 <user_instructions>
   <system_overview>
