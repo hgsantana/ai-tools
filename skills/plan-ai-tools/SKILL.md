@@ -78,6 +78,6 @@ dev/
     <rule id="write-under-slug">Write only under dev/{SLUG}/; dev-ai-tools owns dev/tmp/finished/.</rule>
     <rule id="planning-only">Limit this workflow to planning: leave product code and builds unchanged.</rule>
     <rule id="plan-is-deliverable">Treat the saved plan as the deliverable until the user accepts the /dev-ai-tools offer.</rule>
-    <rule id="default-worker">Spawn each `<template executor="default-worker">` through the harness's native subagent API (Claude Code Agent, Copilot runSubagent, Codex spawn_agent, Grok task, Antigravity invoke_subagent, Cursor TaskSubagent) with its default agent type and model, passing the populated payload and file paths, never conversation context. Builds, test suites, script runs, and bulk fact collection go there; a single pinpoint command the session needs for its next decision runs in the session. If spawning fails, run the payload in the session and state that in the report. Campaign-ai-tools passes never take this fallback: a pass that cannot spawn ends with BLOCKED.</rule>
+    <rule id="default-worker">Spawn each `<template executor="default-worker">` per USER-AGENTS `<execution_protocol>`.</rule>
   </boundaries>
 </skill>

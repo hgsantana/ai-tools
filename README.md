@@ -1,6 +1,6 @@
 # ai-tools
 
-> **Version 0.0.49-ALPHA** — under active development. Suitable for testing; alpha versions provide neither guarantees nor backward compatibility (rule 4).
+> **Version 0.0.50-ALPHA** — under active development. Suitable for testing; alpha versions provide neither guarantees nor backward compatibility (rule 4).
 
 ## Overview
 
@@ -20,7 +20,7 @@ How it operates:
 
 | Path | What it is |
 |---|---|
-| [`USER-AGENTS.md`](USER-AGENTS.md) | User-wide routing after install: skill-offer gate, spawn rules, language, and security. Copied to each harness's global instructions destination. Workflows live in skills |
+| [`USER-AGENTS.md`](USER-AGENTS.md) | User-wide routing after install: skill-offer gate, execution protocol, language, and security. Copied to each harness's global instructions destination. Workflows live in skills |
 | [`docs/USAGE.md`](docs/USAGE.md) | Harness-agnostic invocation guide for every shipped skill |
 | [`skills/`](skills/) | Each `skills/<name>/SKILL.md` has a semantic XML body. Harnesses list frontmatter; the session executes the workflow |
 | [`scripts/`](scripts/) | `scripts/shell/` install processes ([Scripts](#scripts); rules 18–21); `lint.sh`, `test.sh` ([Development checks](#development-checks)). Windows: WSL or Git Bash |
@@ -73,7 +73,7 @@ The semantic-XML bodies (`USER-AGENTS.md` and every `SKILL.md`) follow one gramm
 - **Variables** are brace placeholders: `{SLUG}`, `{BASE_BRANCH}`, `{COMMANDS}`. Every placeholder a `<template>` uses is declared in its `<input>`, and every declared one is used; the session substitutes them before spawning.
 - **References** carrying an attribute (`role`, `id`, `code`, `type`) resolve to a definition in the same file, or in the file named by the word before the backtick: `` dev-ai-tools `<status_protocol>` ``, `` USER-AGENTS `<security_guardrails>` ``. Qualifiers are `USER-AGENTS` or a skill name. A bare reference names a vocabulary tag.
 - **Identity**: every `<rule>` carries a kebab-case `id`, unique in its file; every `<template>` carries a functional `role` and an `executor`; `<step>` ids are numeric per workflow; `<case>`, `<response>`, `<signal>`, and `<state>` carry `id`, `type`, or `code`.
-- **Executors**: `executor="default-worker"` runs the payload through the harness's native subagent API with its default agent type and model (builds, tests, script runs, bulk fact collection); `executor="implementer"` runs it with the model the user chose from the skill's `<implementer_job>` question; `executor="session-subagent"` runs it in a fresh subagent on the session's model. Work the session does itself is a `<step>`, never a template.
+- **Executors**: USER-AGENTS `<execution_protocol>` defines the three valid `executor` values (`default-worker`, `implementer`, `session-subagent`) and where each runs, the harness's native subagent API list, the spawn-failure fallback and its skill-level opt-out (campaign passes), and the parallelism rule for concurrent subagents. Work the session does itself is a `<step>`, never a template.
 - **Protocol** is a block, not prose: return tokens live in `<return_protocol>`/`<signal>`, stage states in `<status_protocol>`/`<state>`, and a template ends with one cited `<signal>`.
 
 Vocabulary. A new tag is registered here and in `scripts/lint.sh` (`XML_VOCAB`) in the same commit; children of `<input>` are free payload fields and need no registration.
@@ -81,10 +81,9 @@ Vocabulary. A new tag is registered here and in `scripts/lint.sh` (`XML_VOCAB`) 
 | Tag | File | Meaning |
 |---|---|---|
 | `<user_instructions>` | USER-AGENTS | root |
-| `<system_overview>`, `<routing_gate>`, `<dispatch_protocol>`, `<agents>`, `<language_rules>`, `<user_interaction>`, `<security_guardrails>` | USER-AGENTS | top-level sections |
+| `<system_overview>`, `<routing_gate>`, `<execution_protocol>`, `<language_rules>`, `<user_interaction>`, `<security_guardrails>` | USER-AGENTS | top-level sections |
 | `<trigger_cases>` / `<case id condition>` | USER-AGENTS | routing cases |
 | `<skill_offer>`, `<offer_message>`, `<skill_question>`, `<skill_options>`, `<handling>` / `<response type>` | USER-AGENTS | the gate, its chat message, question, and option templates, and its answers |
-| `<worker name>` | USER-AGENTS | worker entry |
 | `<chat>`, `<disk>` | USER-AGENTS | language destinations |
 | `<default>`, `<fallback>` | USER-AGENTS | native-tool question rule and its chat fallback |
 | `<skill name>` | skills | root |
@@ -151,11 +150,12 @@ Check families:
 - **skill frontmatter** — every `skills/*/SKILL.md` exists, keys a subset of `name`/`description`/`argument-hint`, and `name:` matches its directory (rule 6)
 - **skill description** — every skill `description` is at most 500 characters and states what it does, then `Impact:`, then `Agent:` (rule 6)
 - **agent field** — `Agent:` is `session`, or `session + implementer (model asked once)` exactly when the skill defines `<implementer_job>` and a `<template executor="implementer">`; only `vibe-ai-tools` and `campaign-ai-tools` spawn implementers (rule 6)
-- **skill layout** — no `skills/*.md` at the skills root; every `skills/*-ai-tools/SKILL.md` exists; no `SKILL.md` contains `## Continue?` or `## Stake`; `USER-AGENTS.md` contains `<routing_gate>`; no `SKILL.md` mentions `SKILL-CONTRACT` or `MAINTAINER.md` (rule 5)
+- **skill layout** — no `skills/*.md` at the skills root; every `skills/*-ai-tools/SKILL.md` exists; no `SKILL.md` contains `## Continue?` or `## Stake`; `USER-AGENTS.md` contains `<routing_gate>` and `<execution_protocol>` with rules `default-worker`, `implementer`, and `session-subagent`, its offer table uses the `Execution` column, and it has no `<agents>`, `<dispatch_protocol>`, or `<worker>` tag; no `SKILL.md` mentions `SKILL-CONTRACT` or `MAINTAINER.md` (rule 5)
+- **spawn protocol citation** — every skill with a `<template>` cites USER-AGENTS `<execution_protocol>`, and no skill repeats the harness native subagent API list (rule 9)
 - **size caps** — `USER-AGENTS.md` at most 8,000 characters (rule 3), every skill `description` at most 500 (rule 6)
 - **encodings and endings** — line endings (`git ls-files --eol`), executable bits, no binaries in shipped paths (rule 21)
 - **`dev/tmp` untracked** — `git ls-files dev/tmp` returns nothing (rule 22)
-- **xml grammar** — every semantic-XML body is balanced once backticked spans are removed, uses only vocabulary tags outside `<input>`, gives every `<rule>` a unique `id`, and every `<template>` a `role` and a valid `executor`, never an `agent` attribute (rule 9, [Semantic XML grammar](#semantic-xml-grammar))
+- **xml grammar** — every semantic-XML body is balanced once backticked spans are removed, uses only vocabulary tags outside `<input>`, gives every `<rule>` a unique `id`, and every `<template>` a `role` and a valid `executor` — one of the three USER-AGENTS `<execution_protocol>` defines as a rule id — never an `agent` attribute (rule 9, [Semantic XML grammar](#semantic-xml-grammar))
 - **xml references** — every backticked tag reference resolves: attribute references to a definition in the same or the qualified file, bare references to the vocabulary (rule 9)
 - **placeholder parity** — every `{PLACEHOLDER}` a `<template>` uses is declared in its `<input>`, and every declared one is used (rule 9)
 - **version bump** — only with `--base <ref>`: a change under `skills/`, `scripts/`, or `USER-AGENTS.md` that lands on `master` requires the README version to change too (rule 4)

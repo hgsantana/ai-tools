@@ -28,7 +28,7 @@ The `<skill_offer>` inside `<routing_gate>` is the only `USER-AGENTS.md` gate. I
 
 ### Who does the work
 
-Every skill runs on the session's model: the session plans, decides, reviews, and commits. Builds, test suites, script runs, and bulk fact collection go to the harness's default subagent. The skill offer's Agent column shows `session`, or `session + implementer (model asked once)` for the two skills below.
+Every skill runs on the session's model: the session plans, decides, reviews, and commits. Builds, test suites, script runs, and bulk fact collection go to the harness's default subagent. The skill offer's Execution column, filled from the skills' `Agent:` field, shows `session`, or `session + implementer (model asked once)` for the two skills below.
 
 `/vibe-ai-tools` and `/campaign-ai-tools` also spawn implementer subagents that write stage code. Before the first one, they ask one question: which model implements the stages, with one to three models the harness can use. `/vibe-ai-tools` asks after the plan is on disk. `/campaign-ai-tools` asks when the campaign starts, records the answer in `dev/improve/<campaign>/campaign.md`, and reuses it for every iteration and on resume. A harness that cannot choose a model per subagent skips the question and uses its default; the report says so.
 

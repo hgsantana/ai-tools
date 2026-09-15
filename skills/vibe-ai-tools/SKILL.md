@@ -72,7 +72,7 @@ argument-hint: "[the change to deliver]"
   <boundaries>
     <rule id="session-owns-delivery">The session owns user alignment, planning, the implementer question, in-scope decisions, acceptance, commits, archival, and the pull request.</rule>
     <rule id="one-model-question">Ask the implementer model question once per run, after the plan is on disk; reuse the answer for every stage and rework.</rule>
-    <rule id="spawn-apis">Spawn subagents through the harness's native subagent API (Claude Code Agent, Copilot runSubagent, Codex spawn_agent, Grok task, Antigravity invoke_subagent, Cursor TaskSubagent), passing the populated payload and file paths, never conversation context: each `<template executor="implementer">` with the recorded implementer model, and dev-ai-tools `<template role="stage-verifier">` with the harness default agent type and model.</rule>
+    <rule id="spawn-apis">Per USER-AGENTS `<execution_protocol>` for the native subagent API list and payload rules: `<template role="stage-implementer">` runs as `executor="implementer"` with the recorded {IMPLEMENTER_MODEL}; dev-ai-tools `<template role="stage-verifier">` runs as `executor="default-worker"` with the harness default agent type and model.</rule>
     <rule id="stay-in-repo">Stay inside the working repository. Preserve pre-existing commit history.</rule>
     <rule id="log-decisions">Log in-scope decisions to dev/{SLUG}/vibe-decisions.md for PR reviewer audit.</rule>
     <rule id="reserved-approvals">Never bypass approvals reserved by USER-AGENTS `<security_guardrails>` for cloud mutations or destructive operations.</rule>

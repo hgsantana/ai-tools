@@ -39,7 +39,10 @@ Checks:
   skill layout      no skill-root markdown, every skill directory has
                     SKILL.md with semantic XML tags (<skill>, <session_workflow>,
                     <dispatch_templates>), no SKILL.md contains Continue? or Stake,
-                    USER-AGENTS.md has <routing_gate>,
+                    USER-AGENTS.md has <routing_gate>, an <execution_protocol>
+                    with a <rule id> for default-worker, implementer, and
+                    session-subagent, and the offer header "Description,
+                    Execution", never <agents>, <dispatch_protocol>, or <worker,
                     and no references to deleted files (rule 5)
   instructions cap  USER-AGENTS.md is at most 8000 characters (rule 3)
   line endings      git ls-files --eol matches the declared eol= attribute:
@@ -57,13 +60,18 @@ Checks:
                     balanced once backticked spans are removed, uses only
                     vocabulary tags outside <input>, gives every <rule> a
                     unique id, and every <template> a role and an executor
-                    (default-worker, implementer, session-subagent), never
-                    an agent attribute (rule 9, Semantic XML grammar)
+                    that is one of default-worker, implementer, or
+                    session-subagent AND has a matching <rule id> inside
+                    USER-AGENTS <execution_protocol>, never an agent
+                    attribute (rule 9, Semantic XML grammar)
   xml references    every backticked tag reference resolves: attribute
                     references to a definition in the same or the qualified
                     file, bare references to the vocabulary (rule 9)
   placeholder parity every {PLACEHOLDER} a <template> uses is declared in its
                     <input>, and every declared one is used (rule 9)
+  spawn protocol    every SKILL.md with a <template> cites USER-AGENTS
+  citation          <execution_protocol>, and no SKILL.md duplicates the
+                    harness native subagent API list (Copilot runSubagent)
 
 --base <ref>  commit-ish to diff shipped content against for the version
               bump check. Without it, that check is skipped. The lint
@@ -180,7 +188,7 @@ check_skill_name_match() {
 # --- Check: skill layout and description (rules 5, 6) ------------------------
 
 check_skill_layout() {
-  local f d name
+  local f d name rid
   local gated="vibe-ai-tools plan-ai-tools dev-ai-tools campaign-ai-tools az-ai-tools gc-ai-tools gh-ai-tools"
   local maintainer="update-ai-tools remove-ai-tools"
 
@@ -199,6 +207,32 @@ check_skill_layout() {
     ok "USER-AGENTS.md has routing_gate tag: $f"
   else
     warn "USER-AGENTS.md missing '<routing_gate>' tag: $f"
+  fi
+
+  if grep -q '<execution_protocol>' "$f"; then
+    ok "USER-AGENTS.md has execution_protocol tag: $f"
+  else
+    warn "USER-AGENTS.md missing '<execution_protocol>' tag: $f"
+  fi
+
+  for rid in default-worker implementer session-subagent; do
+    if awk '/<execution_protocol>/{p=1} p&&/<\/execution_protocol>/{p=0} p' "$f" | grep -qF "<rule id=\"$rid\">"; then
+      ok "USER-AGENTS.md execution_protocol defines rule $rid: $f"
+    else
+      warn "USER-AGENTS.md execution_protocol missing <rule id=\"$rid\">: $f"
+    fi
+  done
+
+  if grep -qF 'Description, Execution' "$f"; then
+    ok "USER-AGENTS.md offer header uses the Execution column: $f"
+  else
+    warn "USER-AGENTS.md offer header missing 'Description, Execution': $f"
+  fi
+
+  if grep -qE '<agents>|<dispatch_protocol>|<worker' "$f"; then
+    warn "USER-AGENTS.md contains a retired <agents>, <dispatch_protocol>, or <worker tag: $f"
+  else
+    ok "USER-AGENTS.md has no retired <agents>, <dispatch_protocol>, or <worker tag: $f"
   fi
 
   for name in $gated $maintainer; do
@@ -447,7 +481,7 @@ check_no_binaries() {
 # The vocabulary of structural tags (README, "Semantic XML grammar"). A tag
 # outside it, outside <input>, is a finding: register a new tag in the README
 # table and here in the same commit.
-XML_VOCAB="user_instructions system_overview routing_gate trigger_cases case skill_offer offer_message handling response dispatch_protocol agents worker language_rules chat disk user_interaction fallback security_guardrails skill overview session_workflow step dispatch_templates template job input instructions constraints constraint status_protocol states state return_protocol signal plan_file_format structure boundaries rule skill_question skill_options default implementer_job"
+XML_VOCAB="user_instructions system_overview routing_gate trigger_cases case skill_offer offer_message handling response execution_protocol language_rules chat disk user_interaction fallback security_guardrails skill overview session_workflow step dispatch_templates template job input instructions constraints constraint status_protocol states state return_protocol signal plan_file_format structure boundaries rule skill_question skill_options default implementer_job"
 
 xml_files() {
   local f
@@ -497,11 +531,30 @@ xml_references() {
   }' "$1"
 }
 
+valid_executors() {
+  # usage: valid_executors -- space-separated executor names that are both
+  # one of the three known executor kinds and have a matching <rule id> inside
+  # USER-AGENTS.md's <execution_protocol> (rule 9). A skill <template> whose
+  # executor is not in this set is a lint finding, even if it names one of the
+  # three known kinds by spelling alone.
+  local rule_ids e out=""
+  rule_ids=$(awk '/<execution_protocol>/{p=1} p&&/<\/execution_protocol>/{p=0} p' "$AI_TOOLS/USER-AGENTS.md" \
+    | grep -oE '<rule id="[a-z0-9-]+"' | sed -E 's/<rule id="([a-z0-9-]+)"/\1/' )
+  for e in default-worker implementer session-subagent; do
+    if in_list "$e" "$(echo "$rule_ids" | tr '\n' ' ')"; then out="$out $e"; fi
+  done
+  echo "${out# }"
+}
+
 check_xml_grammar() {
-  local f findings line val q ref name attr target
+  local f findings line val q ref name attr target validexec
+  validexec=$(valid_executors)
   for f in $(xml_files); do
-    findings=$(xml_body "$f" | awk -v vocab="$XML_VOCAB" '
-      BEGIN { n = split(vocab, v, " "); for (i = 1; i <= n; i++) ok[v[i]] = 1 }
+    findings=$(xml_body "$f" | awk -v vocab="$XML_VOCAB" -v validexec="$validexec" '
+      BEGIN {
+        n = split(vocab, v, " "); for (i = 1; i <= n; i++) ok[v[i]] = 1
+        m = split(validexec, ve, " "); for (i = 1; i <= m; i++) okexec[ve[i]] = 1
+      }
       {
         line = $0
         while (match(line, /<[^<>]*>/)) {
@@ -530,7 +583,11 @@ check_xml_grammar() {
           if (name == "template") {
             if (tok !~ / role="[a-z0-9-]+"/) print "<template> without role at line " NR
             if (tok ~ / agent="/) print "<template> with retired agent attribute at line " NR
-            if (tok !~ / executor="(default-worker|implementer|session-subagent)"/) print "<template> without a valid executor at line " NR
+            if (match(tok, / executor="[a-z0-9-]+"/)) {
+              exec_val = substr(tok, RSTART, RLENGTH)
+              sub(/^ executor="/, "", exec_val); sub(/"$/, "", exec_val)
+              if (!(exec_val in okexec)) print "<template> without a valid executor at line " NR
+            } else print "<template> without a valid executor at line " NR
           }
         }
         if (line ~ /</) print "stray < at line " NR
@@ -603,6 +660,31 @@ EOF
   done
 }
 
+# --- Check: spawn protocol citation (rule 9) --------------------------------
+# Every skill that spawns a template cites the centralized execution protocol
+# instead of restating it, and the harness native subagent API list lives
+# only in USER-AGENTS.md.
+
+check_spawn_protocol_citation() {
+  local f
+  for f in "$AI_TOOLS"/skills/*/SKILL.md; do
+    [ -f "$f" ] || continue
+    if grep -q '<template' "$f"; then
+      # shellcheck disable=SC2016 # literal backticked citation text, not command substitution
+      if grep -qF 'USER-AGENTS `<execution_protocol>`' "$f"; then
+        ok "cites USER-AGENTS execution_protocol: $f"
+      else
+        warn "SKILL.md has a <template> but does not cite USER-AGENTS \`<execution_protocol>\`: $f"
+      fi
+    fi
+    if grep -qF 'Copilot runSubagent' "$f"; then
+      warn "SKILL.md repeats the harness native subagent API list (belongs only in USER-AGENTS.md): $f"
+    else
+      ok "no duplicated native subagent API list: $f"
+    fi
+  done
+}
+
 # --- Check: dev/tmp untracked (rule 22) ---------------------------------------
 
 check_dev_tmp_untracked() {
@@ -669,6 +751,7 @@ check_executable_bits
 check_no_binaries
 check_dev_tmp_untracked
 check_xml_grammar
+check_spawn_protocol_citation
 check_version_bump
 
 finish

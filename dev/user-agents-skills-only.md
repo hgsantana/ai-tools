@@ -5,8 +5,8 @@
 | Base branch | plan/skills-session-model (PR #22) |
 | Work branch | plan/user-agents-skills-only |
 | PR target | plan/skills-session-model; do not merge |
-| Status | |
-| Executor | |
+| Status | F |
+| Executor | planner-ai-tools (coordinator); implementer-ai-tools x2 (A: USER-AGENTS.md + docs; B: skills + lint + tests) |
 
 ## Objective
 
@@ -86,3 +86,14 @@ Rewrite `USER-AGENTS.md` for the skills-only model, and make it the single sourc
 ```
 refactor!: centralize spawn protocol in USER-AGENTS and drop agent sections
 ```
+
+## Implementation log
+
+- W: two implementers split by files (A: USER-AGENTS.md, README.md, docs/USAGE.md; B: skills/*/SKILL.md, scripts/lint.sh). First background dispatch overlapped with a foreground re-dispatch; B removed a duplicated `check_spawn_protocol_citation` and fixed a `valid_executors()` sed bug from that overlap. Notes: dev/tmp/user-agents-skills-only-impl-a.md, dev/tmp/user-agents-skills-only-impl-b.md.
+- USER-AGENTS.md: `<dispatch_protocol>` and `<agents>` replaced by `<execution_protocol>` (rules session-model, native-spawn, default-worker, implementer, session-subagent, spawn-announce, spawn-fallback, parallel-spawns); column `Execution`; no skill count; ~7.5k chars.
+- Skills: default-worker rule cites USER-AGENTS `<execution_protocol>`; vibe/campaign `spawn-apis` keep only the model mapping; campaign `no-nested-fallback` cites `spawn-fallback` and forbids it in passes.
+- Lint: vocab updated; USER-AGENTS layout checks; executor validity derived from `<execution_protocol>` rule ids; new `check_spawn_protocol_citation`. No test-script changes needed.
+- README version 0.0.49-ALPHA -> 0.0.50-ALPHA.
+- V: coordinator diff review passed against objective, files, and acceptance criteria.
+- T: verifier PASS (dev/tmp/user-agents-skills-only-output.log): lint 0 warnings, lint --base 0 warnings, test.sh 305 ok, shellcheck only SC1071, both greps empty, all three negative probes warn.
+- F: committed.
