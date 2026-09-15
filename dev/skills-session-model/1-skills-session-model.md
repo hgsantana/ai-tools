@@ -47,3 +47,17 @@ Remove `skills/models-ai-tools`. Its whole purpose (`MODELS.csv`, wrapper pins, 
 - Requires stages: none
 
 ## Implementation log
+
+- `git rm -r skills/models-ai-tools` was already staged by a prior attempt (`D  skills/models-ai-tools/SKILL.md`, the only file in that directory). Verified `test ! -e skills/models-ai-tools` passes — directory absent from tree and index.
+- `scripts/lint.sh` `check_skill_layout`: `maintainer` list was already reduced to `"update-ai-tools remove-ai-tools"` by the prior attempt — verified against Step 2, correct, no change needed.
+- `scripts/lint.sh` `XML_VOCAB`: `selection_method` was already removed from the space-separated line by the prior attempt — verified against Step 3, correct, no change needed.
+- `README.md` rule 5: already updated to drop `<selection_method>` from the optional-blocks sentence — verified against Step 4, correct, no change needed.
+- `README.md` vocabulary table: already updated, row now reads `` `<plan_file_format>` / `<structure>` `` — verified against Step 5, correct, no change needed.
+- No production edits were needed this pass: the prior attempt's changes to `scripts/lint.sh` and `README.md` matched the Steps exactly. Only verification, this log, and the base-plan Status update were performed here.
+- `grep -rnE 'models-ai-tools|selection_method' --exclude-dir=dev --exclude-dir=.git .` — exit 1 (no matches).
+- `scripts/lint.sh; echo $?` — exit 0, `316 ok, 1 skipped, 0 warnings` (skip is the version-bump check, expected without `--base`); no `models-ai-tools` line in output.
+- `scripts/test.sh; echo $?` — exit 0, `305 ok, 0 skipped, 0 warnings`; no case names `models-ai-tools`.
+- `test ! -e skills/models-ai-tools` — passes (absent).
+- `git diff --quiet HEAD -- USER-AGENTS.md scripts/shell scripts/test; echo $?` — exit 0 (no changes to those paths).
+- `shellcheck -x -P scripts/shell -P scripts/test scripts/shell/*.sh scripts/*.sh scripts/test/*.sh` — reports only the known `SC1071` on `scripts/shell/install-zsh.sh` (pre-existing, not a regression).
+- Note for the parent: the working tree also carries unrelated, in-progress edits to `skills/az-ai-tools/SKILL.md`, `skills/dev-ai-tools/SKILL.md`, `skills/gc-ai-tools/SKILL.md`, `skills/gh-ai-tools/SKILL.md`, and `skills/update-ai-tools/SKILL.md` from concurrent stage work (stages 2/3). None of these are stage 1's scope and none were touched here; the lint/test runs above already reflect their current state and pass cleanly.

@@ -176,7 +176,7 @@ check_skill_name_match() {
 check_skill_layout() {
   local f d name
   local gated="vibe-ai-tools plan-ai-tools dev-ai-tools campaign-ai-tools az-ai-tools gc-ai-tools gh-ai-tools"
-  local maintainer="update-ai-tools remove-ai-tools models-ai-tools"
+  local maintainer="update-ai-tools remove-ai-tools"
 
   f="$AI_TOOLS/skills/SKILL-CONTRACT.md"
   if [ ! -e "$f" ]; then ok "skill contract absent: $f"; else warn "skill contract must not exist: $f"; fi
@@ -408,7 +408,7 @@ check_no_binaries() {
 # The vocabulary of structural tags (README, "Semantic XML grammar"). A tag
 # outside it, outside <input>, is a finding: register a new tag in the README
 # table and here in the same commit.
-XML_VOCAB="user_instructions system_overview routing_gate trigger_cases case skill_offer offer_message handling response dispatch_protocol agents worker language_rules chat disk user_interaction fallback security_guardrails skill overview session_workflow step dispatch_templates template job input instructions constraints constraint status_protocol states state return_protocol signal selection_method plan_file_format structure boundaries rule skill_question skill_options default"
+XML_VOCAB="user_instructions system_overview routing_gate trigger_cases case skill_offer offer_message handling response dispatch_protocol agents worker language_rules chat disk user_interaction fallback security_guardrails skill overview session_workflow step dispatch_templates template job input instructions constraints constraint status_protocol states state return_protocol signal plan_file_format structure boundaries rule skill_question skill_options default"
 
 xml_files() {
   local f
