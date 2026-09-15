@@ -43,7 +43,7 @@ Checks:
                     with a <rule id> for default-worker, implementer, and
                     session-subagent, and the offer header "Description,
                     Execution", never <agents>, <dispatch_protocol>, or <worker,
-                    and no references to deleted files (rule 5)
+                    and no references to deleted files (rules 5, 11)
   instructions cap  USER-AGENTS.md is at most 8000 characters (rule 3)
   instructions      USER-AGENTS.md has no ## sub-heading (rule 3)
   headings

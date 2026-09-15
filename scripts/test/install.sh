@@ -35,7 +35,7 @@ case_install_fresh() {
 }
 
 case_install_idempotent() {
-  # Rule 13: running install.sh twice changes nothing on the second run.
+  # Rule 15: running install.sh twice changes nothing on the second run.
   local root before
   t_fixture
   root="$T_ROOT"
@@ -56,7 +56,7 @@ case_install_idempotent() {
 }
 
 case_install_foreign_file_skipped() {
-  # Rules 13, 15, 18: a foreign directory on a destination is skipped, not
+  # Rules 13, 15, 20: a foreign directory on a destination is skipped, not
   # overwritten, and the run still finishes the rest of the skills.
   local root
   t_fixture --foreign-skill

@@ -67,3 +67,16 @@ docs: fix rule citations and bump version to 0.0.51-ALPHA
 Stage 5, or stage 4 if stage 5 is dropped.
 
 ## Implementation log
+
+- Version bump: `README.md:3` `0.0.50-ALPHA` -> `0.0.51-ALPHA` (finding 45; first bump on this branch, base branch is also at 0.0.50-ALPHA).
+- Known-wrong citations fixed exactly as specified (findings 46-48):
+  - `scripts/test/install.sh:38`: "Rule 13: running install.sh twice changes nothing on the second run." -> "Rule 15: ...".
+  - `scripts/test/install.sh:59`: "Rules 13, 15, 18: a foreign directory..." -> "Rules 13, 15, 20: ...".
+  - `scripts/test/update.sh:145`: section header `# --- Newly shipped content (rule 13) ---` -> `# --- Newly shipped content (README Update, step 4) ---`; dashed ruler width kept at 81 columns (confirmed identical length before/after).
+- One additional wrong citation found by the cross-check (not in the base plan's known list): `scripts/lint.sh:46`, the skill-layout check's usage-text citation "(rule 5)" -> "(rules 5, 11)", to match the equivalent check description at `README.md:156` (rule 11 is the one naming the offer table's "Description"/"Execution" column pair that this check tests).
+- Evidence table written to `dev/tmp/readme-ruleset-sync-citations.md`: every citation hit from the inventory command cross-checked path:line by path:line against the final README rule text (topics 1-25), verdict "ok" or "wrong" with replacement.
+- Coverage check: re-ran the stage's inventory command (`git grep -nE '[Rr]ules? [0-9]+([–-][0-9]+)?(, [0-9]+([–-][0-9]+)?)*' -- README.md ROADMAP.md docs .gitattributes scripts`, 127 hit lines) and diffed its path:line set (grouped table rows expanded, e.g. `scripts/lint.sh:351,367,371,376` -> 4 entries) against the evidence table's path:line column: every current hit is covered by a table row, with zero uncovered lines. The only entry present in the table but absent from the current grep output is `scripts/test/update.sh:145`, which is expected: that citation was rewritten from a rule number to "README Update, step 4" and no longer matches the rule-number pattern, so it correctly drops out of the live inventory while the table still documents the before/after fix.
+  - Confirmed `git grep -nE '[Rr]ules? [0-9]' -- skills USER-AGENTS.md` prints nothing (exit 1): no rule-number citation outside README/ROADMAP/docs/.gitattributes/scripts.
+- Confirmed `git diff -- scripts/test` changes only comment-line content (both hunks in `scripts/test/install.sh` and the header line in `scripts/test/update.sh` touch only `#`-prefixed text; surrounding code is unchanged context).
+- No change under `.gitattributes`, `ROADMAP.md`, or `docs/`: the cross-check found their existing citations already correct.
+- Set base plan Status table row 6 to `V`.
