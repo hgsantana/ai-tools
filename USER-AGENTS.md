@@ -2,17 +2,17 @@
 
 Harness-agnostic rules for AI coding tools after ai-tools is installed. A repository's own `AGENTS.md` or `README.md` overrides these rules inside that repository.
 
-ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skills, agent wrappers, and this file are installed from there. `$HOME/.ai-tools/README.md` documents installation and maintenance. Leave the clone and these copies unchanged; updates reset them to `origin/master`.
+ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skills and this file are installed from there. Leave the clone and these copies unchanged; updates reset them to `origin/master`.
 
 <user_instructions>
   <system_overview>
-    Ten skills are the user entry points. Each description states purpose, Impact:, and Agent:.
+    The ai-tools skills are the user entry points. Each description states purpose, Impact:, and Agent:.
     Commits, branches, rebases, merges, pushes, and pull-request delivery run directly and bypass /gh-ai-tools.
   </system_overview>
 
   <routing_gate>
     The gate is the skill offer. Run it first, before any tool call.
-    <rule id="memory-only">Offer from session memory only: the request text and the loaded skill descriptions. Never read wrappers, MODELS.csv, harness config, or the repository first; if classifying needs exploration, use `<case id="3">`.</rule>
+    <rule id="memory-only">Offer from session memory only: the request text and the loaded skill descriptions. Never read harness config or the repository first; if classifying needs exploration, use `<case id="3">`.</rule>
     <trigger_cases>
       <case id="1" condition="Invoking a skill or slash-command directly">
         If the prompt starts with a skill or slash-command, or invokes any skill or slash-command within the prompt, ignore `<skill_offer>` and handle the request directly.
@@ -31,9 +31,9 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
       <step id="2">Then ask through `<user_interaction>` the question as `<skill_question>` and options as `<skill_options>`. The question never replaces, shortens, or merges with the message in `<step id="1">`; the message in `<step id="1">` never carries the question of `<step id="2">`.</step>
       <offer_message>
         Line 1: the request restated in one sentence.
-        Then one table with the following columns: #, Skill, Description, Agent. The lines represent each offered skill, best fit first, in exactly this shape, with Description and Agent filled in using the information "Impact:" and "Agent:" from the in-memory skill frontmatter (don't read from the file).
-        Last two line of the table should be:  "Run it here" (as Skill - translated if needed) - this session, without ai-tools skills or agents (as Description - translated if needed); and "Other" (as Skill - translated if needed) - the user specifies what to do (as Description - translated if needed).
-        You can ignore the Agent column for these two last rows.
+        Then one table with the following columns: #, Skill, Description, Execution. The lines represent each offered skill, best fit first, in exactly this shape, with Description and Execution filled in using the information "Impact:" and "Agent:" from the in-memory skill frontmatter (don't read from the file).
+        Last two line of the table should be:  "Run it here" (as Skill - translated if needed) - this session, without ai-tools skills (as Description - translated if needed); and "Other" (as Skill - translated if needed) - the user specifies what to do (as Description - translated if needed).
+        You can ignore the Execution column for these two last rows.
       </offer_message>
       <skill_question>
         Which option would you like to take?
@@ -44,31 +44,24 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
       </skill_options>
       <handling>
         <response type="named_skill">Execute it.</response>
-        <response type="run_it_here">Do the work in this session; ignore ai-tools skills and agents.</response>
+        <response type="run_it_here">Do the work in this session; ignore ai-tools skills.</response>
         <response type="other">Treat text as a new or revised request and route it again.</response>
         <response type="stop">Stop without taking action.</response>
       </handling>
-      <rule id="single-gate">This `<skill_offer>` is the only gate. After dispatch, a workflow that invokes another skill does not re-enter `<routing_gate>`. `<case id="2">` and `<response type="run_it_here">` bypass skills and agents.</rule>
+      <rule id="single-gate">This `<skill_offer>` is the only gate. After dispatch, a workflow that invokes another skill does not re-enter `<routing_gate>`. `<case id="2">` and `<response type="run_it_here">` bypass skills.</rule>
     </skill_offer>
   </routing_gate>
 
-  <dispatch_protocol>
-    The host session executes the selected skill's `<session_workflow>`.
-    When a `<session_workflow> <step>` delegates work, announce the spawn in the user's language with the agent name.
-    Spawn the agent in the cited `<template>`'s `agent` attribute with the populated payload and relevant file paths.
-    Spawn through the harness's native tool: Claude Code Agent, Copilot runSubagent, Codex spawn_agent, Grok task, Antigravity invoke_subagent, Cursor TaskSubagent.
-    Do not pass conversational context or raw skill text. If spawning fails, carry the work yourself.
-  </dispatch_protocol>
-
-  <agents>
-    Agents are model-tiered workers and have no skills. Offer skills to the user, not agents.
-    Model pins live in the wrappers (Grok: install pin) and apply at spawn; the session never reads or reports them.
-    Spawning is open: any session, skill, or agent may spawn the agent that owns the work; spawned agents may do the same.
-    Code-writing agents run in parallel on separate files; read-only exploration, builds, and tests may always run concurrently.
-    <worker name="planner-ai-tools">Decomposes work, designs, owns acceptance, and delegates production code.</worker>
-    <worker name="implementer-ai-tools">Writes and edits code for one assignment.</worker>
-    <worker name="mechanical-ai-tools">Applies specified patches and renames, runs builds and tests, collects evidence.</worker>
-  </agents>
+  <execution_protocol>
+    <rule id="session-model">The host session executes the selected skill's `<session_workflow>` on the session model.</rule>
+    <rule id="native-spawn">A `<template>` is spawned only through the harness's native subagent API: Claude Code Agent, Copilot runSubagent, Codex spawn_agent, Grok task, Antigravity invoke_subagent, Cursor TaskSubagent — passing the populated payload and file paths, never conversation context or raw skill text.</rule>
+    <rule id="default-worker">`executor="default-worker"` uses the harness default agent type and model. Builds, test suites, script runs, and bulk fact collection go to default workers; a single pinpoint command the session needs for its next decision runs in the session.</rule>
+    <rule id="implementer">`executor="implementer"` uses the implementer model the skill resolved.</rule>
+    <rule id="session-subagent">`executor="session-subagent"` uses the session's own model where the API accepts a model.</rule>
+    <rule id="spawn-announce">Announce each spawn in the user's language with the template role and model.</rule>
+    <rule id="spawn-fallback">If a default-worker spawn fails, the session runs the payload itself and states that in the report, unless the skill forbids that fallback (campaign, vibe, and specified or queued delivery).</rule>
+    <rule id="parallel-spawns">Code-writing subagents run in parallel only on separate files; read-only exploration, builds, and tests may always run concurrently.</rule>
+  </execution_protocol>
 
   <language_rules>
     <chat>User's language, and only what needs the user: questions, approvals, stake warnings, spawn announcements, plan iteration, a one-line outcome, and links to what was written. Reports, summaries, findings, and logs go to disk (dev/tmp/ in the working repository). Follow the user if they switch.</chat>

@@ -72,6 +72,6 @@ argument-hint: "[GitHub platform resource to inspect or manage]"
     <rule id="reads-free-mutations-approved">Read-only queries run freely; remote mutations require explicit approval.</rule>
     <rule id="code-work-bypasses">Repository code work bypasses this skill and executes directly under repository instructions.</rule>
     <rule id="outputs-on-disk">Save large outputs and logs to dev/tmp/ rather than flooding session context.</rule>
-    <rule id="default-worker">Spawn each `<template executor="default-worker">` through the harness's native subagent API (Claude Code Agent, Copilot runSubagent, Codex spawn_agent, Grok task, Antigravity invoke_subagent, Cursor TaskSubagent) with its default agent type and model, passing the populated payload and file paths, never conversation context. Builds, test suites, script runs, and bulk fact collection go there; a single pinpoint command the session needs for its next decision runs in the session. If spawning fails, run the payload in the session and state that in the report.</rule>
+    <rule id="default-worker">Spawn each `<template executor="default-worker">` per USER-AGENTS `<execution_protocol>`.</rule>
   </boundaries>
 </skill>

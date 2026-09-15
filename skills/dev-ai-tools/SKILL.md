@@ -12,15 +12,15 @@ argument-hint: "[plan paths, or the task to implement]"
 <skill name="dev-ai-tools">
   <overview>
     Execute a specified plan under dev/{SLUG}/, a queue of pending plans, or one task agreed with the user.
-    The session implements, accepts, commits, archives, and delivers the pull request itself; builds and tests go to a default worker.
+    Task mode: the session implements the single stage. Specified and queue: a fresh session-subagent per plan implements, accepts, commits, and opens the pull request. Builds and tests go to a default worker.
   </overview>
 
   <session_workflow>
     <step id="1" name="intake_and_mode">
       Select mode based on input:
-      - Specified (path like `dev/{SLUG}/`, `dev/{SLUG}.md`, or archived slug): run that unit.
-      - Queue (empty or `dev`): find unfinished base plans (`dev/*/0-*.md`), propose execution order, run accepted list one by one.
-      - Task (anything else): agree one task interactively with user in their language, write `dev/{SLUG}.md`.
+      - Specified (path like `dev/{SLUG}/`, `dev/{SLUG}.md`, or archived slug): spawn a fresh `<template role="plan-executor">` from `<dispatch_templates>`, substituting {SLUG}, {BASE_BRANCH}, and {PLAN_PATH}. Record only the `<signal>` from `<return_protocol>`.
+      - Queue (empty or `dev`): find unfinished base plans (`dev/*/0-*.md`), propose execution order, then spawn a fresh `<template role="plan-executor">` for each accepted plan; record only the `<signal>`; continue on `<signal code="DELIVERED">`; stop on `<signal code="BLOCKED">`.
+      - Task (anything else): agree one task interactively with user in their language, write `dev/{SLUG}.md`, then run `<step id="2">`, `<step id="3">`, and `<step id="4">` in this session.
       Verify repository root with `git rev-parse --show-toplevel`.
       Resolve base branch from plan base or request-time branch.
     </step>
@@ -48,11 +48,31 @@ argument-hint: "[plan paths, or the task to implement]"
 
     <step id="5" name="report_and_handover">
       In chat (user's language), provide the report path, a one-line outcome, and the PR URL or review patch path.
-      In Queue mode, repeat `<step id="2">`, `<step id="3">`, and `<step id="4">` for the next accepted plan.
+      After a `<template role="plan-executor">` spawn, report from the `<signal>` only: do not open the report body or plan files.
     </step>
   </session_workflow>
 
   <dispatch_templates>
+    <template role="plan-executor" executor="session-subagent">
+      <job>Execution pass: deliver one plan or task file on plan/{SLUG} and open the pull request.</job>
+      <input>
+        <slug>{SLUG}</slug>
+        <base_branch>{BASE_BRANCH}</base_branch>
+        <plan_path>{PLAN_PATH}</plan_path>
+      </input>
+      <instructions>
+        This payload is the brief; do not read sibling skill files. Nested spawn payloads are stated here.
+        Check out plan/{SLUG} from {BASE_BRANCH} and commit {PLAN_PATH} first: `chore(dev): plan {SLUG}` (or `chore(dev): task {SLUG}` for a task file).
+        For each stage in dependency order (a task is one stage), own every status except V: set W and record Executor; implement code and behaviour tests within declared files; set V; review the working-tree diff against objective, declared files, and acceptance; set T and spawn `<template role="stage-verifier">` as executor="default-worker" with the stage's commands and a kebab-case topic (it writes logs under dev/tmp/ and returns command, exit code, and path); on pass, commit with the stage's Conventional Commit message and set F; else append corrections, set R1..R3, retry up to three times, then set E.
+        When every stage is terminal: copy the unit to dev/tmp/finished/{SLUG}, git rm it, commit `chore(dev): archive {SLUG}`, push plan/{SLUG}, open a pull request targeting {BASE_BRANCH} with `gh pr create` or write dev/tmp/{SLUG}-review.patch, and write dev/tmp/{SLUG}-report.md.
+        End with one `<signal>` from `<return_protocol>`: DELIVERED or BLOCKED.
+      </instructions>
+      <constraints>
+        <constraint>Leave builds and tests to default workers; own implementation, review, acceptance, commits, and the pull request.</constraint>
+        <constraint>Preserve pre-existing commit history.</constraint>
+      </constraints>
+    </template>
+
     <template role="stage-verifier" executor="default-worker">
       <job>Default worker: run builds and tests and collect factual evidence.</job>
       <input>
@@ -70,8 +90,13 @@ argument-hint: "[plan paths, or the task to implement]"
     </template>
   </dispatch_templates>
 
+  <return_protocol>
+    <signal code="DELIVERED">DELIVERED {REPORT_PATH}</signal>
+    <signal code="BLOCKED">BLOCKED {REASON}</signal>
+  </return_protocol>
+
   <status_protocol>
-    The accepting context owns every state except V: the session in dev-ai-tools and vibe-ai-tools, the execution pass in campaign-ai-tools.
+    The accepting context owns every state except V: the session in Task mode; otherwise the execution pass (dev-ai-tools `<template role="plan-executor">`, vibe-ai-tools `<template role="vibe-executor">`, or campaign-ai-tools `<template role="campaign-executor">`).
     <states>
       <state code="W">Working - set by the accepting context before implementation starts</state>
       <state code="V">Validating - set by whoever implemented the stage once it is ready for review</state>
@@ -83,10 +108,12 @@ argument-hint: "[plan paths, or the task to implement]"
   </status_protocol>
 
   <boundaries>
-    <rule id="session-owns-delivery">The session owns intake, implementation, acceptance, commits, archival, and pull-request delivery.</rule>
+    <rule id="session-owns-intake">The session owns intake, Task-mode delivery, and reporting from the `<signal>`; each specified or queued plan runs in a fresh `<template role="plan-executor">`.</rule>
+    <rule id="signals-only">After spawning `<template role="plan-executor">`, the session stores only the `<signal>` line and paths. It does not read the plan or the report body.</rule>
+    <rule id="no-host-fallback">If `<template role="plan-executor">` cannot be spawned, do not run that plan's delivery in the session: report the missing capability.</rule>
     <rule id="substance-on-disk">Write substance to the unit's files or dev/tmp/; chat carries paths and outcomes.</rule>
     <rule id="preserve-history">Preserve history predating this work; never force-push or rebase pre-existing commits.</rule>
     <rule id="reserved-approvals">Mutations to cloud resources or destructive operations require explicit user approval per USER-AGENTS `<security_guardrails>`.</rule>
-    <rule id="default-worker">Spawn each `<template executor="default-worker">` through the harness's native subagent API (Claude Code Agent, Copilot runSubagent, Codex spawn_agent, Grok task, Antigravity invoke_subagent, Cursor TaskSubagent) with its default agent type and model, passing the populated payload and file paths, never conversation context. Builds, test suites, script runs, and bulk fact collection go there; a single pinpoint command the session needs for its next decision runs in the session. If spawning fails, run the payload in the session and state that in the report. Campaign-ai-tools passes never take this fallback: a pass that cannot spawn ends with BLOCKED.</rule>
+    <rule id="spawn-apis">Per USER-AGENTS `<execution_protocol>`: `<template role="plan-executor">` runs as `executor="session-subagent"` on the session's own model; `<template role="stage-verifier">` runs as `executor="default-worker"`.</rule>
   </boundaries>
 </skill>

@@ -59,6 +59,6 @@ argument-hint: "[optional: harnesses in scope, or extra instructions]"
     <rule id="scope-roots">Touch only $AI_TOOLS and declared harness destination roots.</rule>
     <rule id="home-agents-untouched">Never touch $HOME/AGENTS.md.</rule>
     <rule id="separate-approvals">Destructive steps require explicit separate approval; never bypass safety flags.</rule>
-    <rule id="default-worker">Spawn each `<template executor="default-worker">` through the harness's native subagent API (Claude Code Agent, Copilot runSubagent, Codex spawn_agent, Grok task, Antigravity invoke_subagent, Cursor TaskSubagent) with its default agent type and model, passing the populated payload and file paths, never conversation context. Builds, test suites, script runs, and bulk fact collection go there; a single pinpoint command the session needs for its next decision runs in the session. If spawning fails, run the payload in the session and state that in the report.</rule>
+    <rule id="default-worker">Spawn each `<template executor="default-worker">` per USER-AGENTS `<execution_protocol>`.</rule>
   </boundaries>
 </skill>

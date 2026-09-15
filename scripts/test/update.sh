@@ -142,7 +142,7 @@ case_update_reset_confined() {
   t_cleanup "$root"
 }
 
-# --- Newly shipped content (rule 13) -------------------------------------------
+# --- Newly shipped content (README Update, step 4) -----------------------------
 
 case_update_new_content_copied() {
   local root home marker
