@@ -82,6 +82,9 @@ Checks:
                     harness native subagent API list (Copilot runSubagent)
   rule citations    README rules numbered 1..N without gaps; every rule N
                     cited in tracked docs and scripts is within 1..N (rule 1)
+  harness table     lib.sh harness keys, skills roots, and instructions
+                    destinations appear in the README Scope bullet and
+                    Supported harnesses table (rule 19)
 
 --base <ref>  commit-ish to diff shipped content against for the version
               bump check. Without it, that check is skipped. The lint
@@ -900,6 +903,69 @@ EOF
   [ "$clean" = 1 ] && ok "rule citations resolve to README rules 1-$n"
 }
 
+# --- Check: harness table parity (rule 19) -----------------------------------
+# lib.sh's ALL_HARNESSES, skills_root, and instructions_dest match the README
+# Scope bullet's harness keys and the Supported harnesses table's paths.
+
+check_harness_table() {
+  local readme="$AI_TOOLS/README.md"
+  local scope_line sect readme_keys lib_keys findings clean h r i n line
+
+  scope_line=$(grep -m1 'harness keys (' "$readme")
+  # shellcheck disable=SC2016 # backtick-quoted token pattern, not command substitution
+  readme_keys=$(printf '%s\n' "$scope_line" | grep -oE '`[a-z-]+`' | tr -d '`' | sort)
+  lib_keys=$(printf '%s\n' "$ALL_HARNESSES" | tr ' ' '\n' | sort)
+
+  clean=1
+  findings=$(
+    {
+      printf '%s\n' "$readme_keys" | awk 'NF { print $0 "\tR" }'
+      printf '%s\n' "$lib_keys" | awk 'NF { print $0 "\tL" }'
+    } | awk -F'\t' '
+      { c[$1]++; s[$1] = s[$1] $2 }
+      END {
+        for (t in c) if (c[t] == 1) {
+          if (s[t] == "R") print t " missing from lib.sh ALL_HARNESSES"
+          else print t " missing from README Scope bullet"
+        }
+      }
+    ' | sort
+  )
+  if [ -n "$findings" ]; then
+    clean=0
+    while IFS= read -r line; do warn "harness key mismatch: $line (rule 19)"; done <<EOF
+$findings
+EOF
+  fi
+
+  sect=$(awk '
+    /^## Supported harnesses$/ { insec = 1; next }
+    insec && /^## / { exit }
+    insec { print }
+  ' "$readme")
+
+  for h in $ALL_HARNESSES; do
+    # shellcheck disable=SC2016 # literal '$HOME' text: skills_root/instructions_dest
+    # echo it unexpanded so it matches the README's literal `$HOME/...` paths.
+    r=$(HOME='$HOME'; skills_root "$h")
+    # shellcheck disable=SC2016
+    i=$(HOME='$HOME'; instructions_dest "$h")
+    if printf '%s' "$sect" | grep -qF "\`$r/\`"; then
+      :
+    else
+      clean=0
+      warn "harness $h: Supported harnesses table missing skills root \`$r/\` (rule 19)"
+    fi
+    if [ -n "$i" ] && ! printf '%s' "$sect" | grep -qF "\`$i\`"; then
+      clean=0
+      warn "harness $h: Supported harnesses table missing instructions path \`$i\` (rule 19)"
+    fi
+  done
+
+  n=$(printf '%s\n' "$lib_keys" | grep -c .)
+  [ "$clean" = 1 ] && ok "Supported harnesses match lib.sh ($n harnesses)"
+}
+
 # --- Run -----------------------------------------------------------------------
 
 check_naming
@@ -921,5 +987,6 @@ check_rule_anchor_citations
 check_spawn_protocol_citation
 check_version_bump
 check_rule_citations
+check_harness_table
 
 finish
