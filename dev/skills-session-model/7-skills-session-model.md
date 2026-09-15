@@ -82,3 +82,46 @@ The version is bumped once, and the repository-wide grep from the base plan pass
 - Requires stages: 6
 
 ## Implementation log
+
+`README.md`:
+- Version line (line 3): `0.0.48-ALPHA` -> `0.0.49-ALPHA`.
+- Overview item 4 ("Session-first skills"): appended "on its own model" to the first sentence and the new sentence "Builds, tests, script runs, and bulk fact collection go to the harness's default subagent; only `vibe-ai-tools` and `campaign-ai-tools` spawn implementers, on a model the user picks from one question." after it.
+- Rule 24, the `campaign-ai-tools` sentence: "a fresh planner writes ... a different fresh planner executes and judges it" -> "a fresh subagent on the session model writes ... a different fresh subagent on the session model executes and judges it with implementers on the model the user chose when the campaign started", rest unchanged.
+- No other text touched. Anchor check below confirms no heading was added or renamed.
+
+`docs/USAGE.md`:
+- Inserted new "### Who does the work" subsection (two paragraphs, verbatim from the stage spec) between the Skills table and "### Delivery workflows".
+- vibe paragraph: replaced the tail after "...writes the agreed plan to disk." with "It then asks which model implements the stages and follows `/dev-ai-tools` unattended, with implementer subagents writing stage code. Decisions are recorded in `dev/<slug>/vibe-decisions.md`."
+- dev paragraph: replaced "It runs edits and tests, commits every accepted stage, ..." with "It implements each stage in the session, sends tests to the harness's default subagent, commits every accepted stage, ...".
+- Campaign section: first paragraph now reads "...uses a single initial gate, followed by one question about the implementer model. Choosing it authorizes..." (rest unchanged); the branch/commit paragraph now says "...records the implementer model, and commits..." and "chains planning and execution passes in fresh subagents on the session model..."; step 1 now says "A fresh planning subagent evaluates ... follows `plan-ai-tools` ..." (second sentence unchanged); step 2 now reads "A separate fresh execution subagent runs the `dev-ai-tools` stage loop against that plan, spawning implementers on the recorded model."; steps 3-4 left untouched (not in scope); the orchestrating-session paragraph now reads "...after the implementer-model question at start, the user is not interrupted." and gained the new sentence "Planning and execution passes must spawn their own implementer and default subagents. On a harness where they cannot, the first pass that needs one stops the campaign as blocked, with a report naming the missing capability. The pass does not do that work itself." inserted before "Campaign delivery remains local: ..."; added "A resumed campaign reuses its recorded implementer model." directly after the resume code block.
+
+Checks run from the repository root (working tree, before any stage-7 commit):
+
+- `grep -oE '\]\(#[a-z0-9-]+\)' README.md docs/USAGE.md | sort -u`: 7 anchors (`#development-checks`, `#installation`, `#removal`, `#safety-rules`, `#scripts`, `#semantic-xml-grammar`, `#supported-harnesses`, `#update`), all matching existing `##`/`###` headings. No heading was added/renamed by this stage.
+- `grep -n 'Version 0.0.49-ALPHA' README.md`: 1 hit, line 3.
+- `grep -n 'stops the campaign as blocked' docs/USAGE.md`: 1 hit (the new sentence in the orchestrating-session paragraph). No in-pass fallback described elsewhere in the file.
+- `grep -nE 'implementer|default subagent|session model' docs/USAGE.md`: hits in the new "Who does the work" subsection, the vibe/dev paragraphs, and all touched campaign text. `grep -nE 'planner-ai-tools|implementer-ai-tools|mechanical-ai-tools|models-ai-tools' docs/USAGE.md`: no hits.
+- `test ! -e skills/models-ai-tools`: succeeds (already absent since stage 1).
+
+Final-acceptance repository-wide grep (base plan, run as-is; `--exclude-standard` already excludes untracked `dev/tmp`):
+1. `TERMS='(planner|implementer|mechanical)-ai-tools|models-ai-tools|MODELS\.csv|harness-models|aa-metrics|selection_method|agent="'` over `git ls-files --cached --others --exclude-standard -- . ':!USER-AGENTS.md' ':!dev' | xargs -d '\n' grep -HnIE "$TERMS"`: **one hit**, `scripts/lint.sh:532: if (tok ~ / agent="/) print "<template> with retired agent attribute at line " NR`. This is the linter's own detection pattern for the retired `agent="..."` attribute (added in stage 6, undeclared for stage 7), not a live `agent="` usage; `scripts/lint.sh` is outside this stage's declared files (README.md, docs/USAGE.md only), so it is reported here rather than edited.
+2. `git grep -niE '\bagents?\b|coordinator|sub-dispatch|high-reasoning' -- skills | sed -E 's/(USER-)?AGENTS(\.md)?//g; s/Agent://g' | grep -iE '\bagents?\b|coordinator|sub-dispatch|high-reasoning'`: **not empty** — 10 hits, all pre-existing `default-worker`/`spawn-apis` rule text in `skills/{az,campaign,dev,gc,gh,plan,remove,update,vibe}-ai-tools/SKILL.md` matching on the phrase "default agent type and model" (from stages 2-6, none touched by this stage), plus one incidental hit on the word "Agent" in `plan-ai-tools/SKILL.md:38` ("its Impact and Agent from the skill description"). The sed strip only removes literal `AGENTS`/`USER-AGENTS`/`Agent:`, so lowercase "agent" inside "agent type" survives and matches `\bagents?\b`. These files are outside this stage's declared scope (README.md, docs/USAGE.md), so they are reported here rather than edited.
+3. No-fallback probe over `skills/campaign-ai-tools`: **empty** (exit 1 from grep, i.e. no match) — clean.
+4. `git grep -n 'nested-spawn capability' -- skills/campaign-ai-tools`: 3 hits (the rule and one constraint per pass template), as required.
+5. `test ! -e skills/models-ai-tools`: succeeds.
+
+`scripts/lint.sh` (no `--base`): exit 0, `335 ok, 1 skipped, 0 warnings` (skip: version bump check needs `--base`).
+
+`scripts/lint.sh --base plan/remove-agents`: exit 2, `335 ok, 0 skipped, 1 warnings` — `WARN: shipped content changed without a README version bump (still 0.0.48-ALPHA, was 0.0.48-ALPHA): scripts/lint.sh skills/*/SKILL.md ...`. `check_version_bump` diffs `git show <base>:README.md` against `git show HEAD:README.md`, i.e. committed content only; this stage's version bump (README.md now 0.0.49-ALPHA in the working tree) is not yet committed, so HEAD still reads 0.0.48-ALPHA. This is expected pre-commit and matches how stage 6 deferred the same check (it ran lint without `--base`); it should read `ok: version bumped ...` and exit 0 once this stage's changes land in a commit on top of stages 1-6.
+
+`scripts/test.sh`: exit 0, `305 ok, 0 skipped, 0 warnings`.
+
+CI shellcheck command `shellcheck -x -P scripts/shell -P scripts/test scripts/shell/*.sh scripts/*.sh scripts/test/*.sh`: only the known `SC1071` on `scripts/shell/install-zsh.sh` (exit 1 from that error, no other finding).
+
+`git diff --quiet ee8596b -- USER-AGENTS.md .github scripts/shell scripts/test`: exit 0 (no diff); `USER-AGENTS.md` unchanged.
+
+Net: README.md and docs/USAGE.md changes match the stage spec and their targeted greps/anchors all pass. Two of the three base-plan final-acceptance greps do not currently print nothing: grep 1 flags `scripts/lint.sh`'s own retired-attribute detection string, and grep 2 flags pre-existing "agent type" phrasing in the `default-worker`/`spawn-apis` rules shipped by stages 2, 3, and 6, plus one "Impact and Agent" mention in plan-ai-tools. Both are outside `README.md`/`docs/USAGE.md`, so no edit was made for them per this stage's constraints; they are reported here for the orchestrating session to resolve (regex refinement in the final-acceptance grep, or rule-text rewording, whichever the base plan intends) before treating stage 7 as fully closed. The `--base` lint warning is expected to clear on commit and is not a defect.
+
+Coordinator acceptance note: accepted. Verifier log: dev/tmp/skills-session-model-stage7-output.log (lint 0, test 0, shellcheck only SC1071, invariants 0, lint --base plan/remove-agents 0 on a snapshot commit). All README/USAGE anchors resolve (re-checked in session; the verifier's 8 "missing" anchors were a slug-computation error). Final-acceptance grep 3 prints nothing and `test ! -e skills/models-ai-tools` succeeds. Greps 1 and 2 keep only mandated or pre-existing text, accepted as documented exceptions, none naming a retired agent:
+- grep 1: `scripts/lint.sh` detector line `tok ~ / agent="/` (stage 6 mandated code that enforces the retirement).
+- grep 2: "default agent type and model" in the default-worker/spawn-apis rules of nine skills (stage 2 shared rule accepted verbatim by the user, user answer 1; stage 4/5 targets); plan-ai-tools step 2 "stating its Impact and Agent from the skill description" (pre-existing, kept byte for byte by stage 3; names the description `Agent:` field); update/remove rule id `home-agents-untouched` (pre-existing; names `$HOME/AGENTS.md`).
