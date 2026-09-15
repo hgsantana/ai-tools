@@ -20,10 +20,12 @@ How it operates:
 
 | Path | What it is |
 |---|---|
-| [`USER-AGENTS.md`](USER-AGENTS.md) | User-wide routing after install: skill-offer gate, execution protocol, language, and security. Copied to each harness's global instructions destination. Workflows live in skills |
+| [`USER-AGENTS.md`](USER-AGENTS.md) | User-wide routing after install: skill-offer gate, execution protocol, language, native question tool, and security. Copied to each harness's global instructions destination. Workflows live in skills |
 | [`docs/USAGE.md`](docs/USAGE.md) | Harness-agnostic invocation guide for every shipped skill |
 | [`skills/`](skills/) | Each `skills/<name>/SKILL.md` has a semantic XML body. Harnesses list frontmatter; the session executes the workflow |
-| [`scripts/`](scripts/) | `scripts/shell/` install processes ([Scripts](#scripts); rules 18–21); `lint.sh`, `test.sh` ([Development checks](#development-checks)). Windows: WSL or Git Bash |
+| [`scripts/`](scripts/) | `scripts/shell/` install processes ([Scripts](#scripts); rules 18–21); `lint.sh`, `test.sh`, and its sourced `scripts/test/` case files ([Development checks](#development-checks)). Windows: WSL or Git Bash |
+| [`ROADMAP.md`](ROADMAP.md) | Advisory story backlog; this README stays the source of truth |
+| `dev/` | Plans, tasks, and campaigns in progress, plus untracked `dev/tmp/` (rule 22) |
 
 ### Quick start
 
@@ -36,7 +38,7 @@ curl -fsSL https://raw.githubusercontent.com/hgsantana/ai-tools/master/scripts/s
 curl -fsSL https://raw.githubusercontent.com/hgsantana/ai-tools/master/scripts/shell/install-zsh.sh | zsh
 ```
 
-After the clone exists, `"$HOME/.ai-tools/scripts/shell/update.sh"` refreshes it. `remove.sh` and `verify.sh` take `--dry-run` and `--help`. Or, in a harness:
+After the clone exists, `"$HOME/.ai-tools/scripts/shell/update.sh"` refreshes it. `install.sh`, `remove.sh`, and `update.sh` take `--dry-run`; those three and `verify.sh` take `--help`. Or, in a harness:
 
 > Install ai-tools following <https://raw.githubusercontent.com/hgsantana/ai-tools/master/README.md>
 
@@ -131,14 +133,14 @@ Processes: `install-bash` / `install-zsh` (first clone), `install`, `remove`, `u
 
 On top of rules 18–20:
 
-- **Scope** — `--harnesses <list>` accepts comma- or space-separated harness keys (`claude-code`, `grok`, `codex`, `copilot`, `cursor`, `antigravity`). Omit the flag to select detected harnesses; pass `--harnesses all` to select all six supported harnesses, including those not detected yet. An AI running a mutating script asks for scope first and passes the explicit answer.
+- **Scope** — `--harnesses <list>` accepts comma- or space-separated harness keys (`claude-code`, `grok`, `codex`, `copilot`, `cursor`, `antigravity`). Omit the flag to select detected harnesses (the script aborts with exit `1` when none is detected); pass `--harnesses all` to select all six supported harnesses, including those not detected yet. An AI running a mutating script asks for scope first and passes the explicit answer.
 - **Dry run** — `--dry-run` reports every proposed action while preserving state; it supplies the findings and approval report for unattended runs.
 - **Destructive flags** — `--overwrite` on install and update (replace conflicting artifact destinations and prune orphan `*-ai-tools` artifacts in the selected harnesses), `--discard-local` (reset discarding local work in the clone), `--instructions` (remove global instructions on removal), `--force` (remove known artifact destinations and orphan artifacts even when contents no longer match), and `--purge` (delete the clone). Without the flag the script refuses or skips; it never guesses.
 - **Physical copies** — instructions and skills are always copied. Update removes current-version artifacts, then installs from `origin/master`; `--overwrite` is required for conflicting or locally modified installed artifacts.
 
 ## Development checks
 
-Development checks live under `scripts/` beside `scripts/shell/` (rules 18–20). [`scripts/lint.sh`](scripts/lint.sh) is a development check, not an installation process: it enforces this repository's mechanically verifiable rules against the tree it runs in, with no dependency beyond `git`, `grep`, `awk`, `sed`, `wc`, `od`, `tr`. Run it from anywhere:
+Development checks live under `scripts/` beside `scripts/shell/`, outside the contract of rules 18–20. [`scripts/lint.sh`](scripts/lint.sh) is a development check, not an installation process: it enforces this repository's mechanically verifiable rules against the tree it runs in, with no dependency beyond `git`, `grep`, `awk`, `sed`, `wc`, `tr`. Run it from anywhere:
 
 ```bash
 "$HOME/.ai-tools/scripts/lint.sh"              # check the working tree
@@ -151,28 +153,29 @@ Check families:
 - **skill frontmatter** — every `skills/*/SKILL.md` exists, keys a subset of `name`/`description`/`argument-hint`, and `name:` matches its directory (rule 6)
 - **skill description** — every skill `description` is at most 500 characters and states what it does, then `Impact:`, then `Agent:` (rule 6)
 - **agent field** — `Agent:` is `session`, or `session + implementer (model asked once)` exactly when the skill defines `<implementer_job>` and a `<template executor="implementer">`; only `vibe-ai-tools` and `campaign-ai-tools` spawn implementers (rule 6)
-- **skill layout** — no `skills/*.md` at the skills root; every `skills/*-ai-tools/SKILL.md` exists; no `SKILL.md` contains `## Continue?` or `## Stake`; `USER-AGENTS.md` contains `<routing_gate>` and `<execution_protocol>` with rules `default-worker`, `implementer`, and `session-subagent`, its offer table uses the `Execution` column, and it has no `<agents>`, `<dispatch_protocol>`, or `<worker>` tag; no `SKILL.md` mentions `SKILL-CONTRACT` or `MAINTAINER.md` (rule 5)
+- **skill layout** — no `skills/*.md` at the skills root and no `skills/SKILL-CONTRACT.md` or `skills/MAINTAINER.md`; the nine shipped skills `lint.sh` names are present; every `skills/*/` has a `SKILL.md` with a root `<skill name>`, `<session_workflow>`, and `<dispatch_templates>`, and no `## Continue?` or `## Stake` heading or mention of `SKILL-CONTRACT`/`MAINTAINER.md`; `USER-AGENTS.md` contains `<routing_gate>` and `<execution_protocol>` with rules `default-worker`, `implementer`, and `session-subagent`, its offer table uses the `Execution` column, and it has no `<agents>`, `<dispatch_protocol>`, or `<worker>` tag (rules 5, 11)
 - **spawn protocol citation** — every skill with a `<template>` cites USER-AGENTS `<execution_protocol>`, and no skill repeats the harness native subagent API list (rule 9)
 - **size caps** — `USER-AGENTS.md` at most 8,000 characters (rule 3), every skill `description` at most 500 (rule 6)
-- **encodings and endings** — line endings (`git ls-files --eol`), executable bits, no binaries in shipped paths (rule 21)
+- **line endings and modes** — every tracked `scripts/` file resolves to `eol=lf` with LF in index and working tree, and `scripts/*.sh` and `scripts/shell/*.sh` are mode `100755` (rule 21)
+- **no binaries** — every tracked file under `skills/` and `scripts/` is text
 - **`dev/tmp` untracked** — `git ls-files dev/tmp` returns nothing (rule 22)
 - **xml grammar** — every semantic-XML body is balanced once backticked spans are removed, uses only vocabulary tags outside `<input>`, gives every `<rule>` a unique `id`, and every `<template>` a `role` and a valid `executor` — one of the three USER-AGENTS `<execution_protocol>` defines as a rule id — never an `agent` attribute (rule 9, [Semantic XML grammar](#semantic-xml-grammar))
 - **xml references** — every backticked tag reference resolves: attribute references to a definition in the same or the qualified file, bare references to the vocabulary (rule 9)
 - **placeholder parity** — every `{PLACEHOLDER}` a `<template>` uses is declared in its `<input>`, and every declared one is used (rule 9)
-- **version bump** — only with `--base <ref>`: a change under `skills/`, `scripts/`, or `USER-AGENTS.md` that lands on `master` requires the README version to change too (rule 4)
+- **version bump** — only with `--base <ref>`: when `skills/`, `scripts/`, or `USER-AGENTS.md` changed between `<ref>` and `HEAD`, the README version line must differ from `<ref>`'s (rule 4)
 
-Exit codes: `0` clean, `1` aborted on a precondition (unknown flag, `--base` without a value), `2` finished with findings. CI (`.github/workflows/ci.yml`) runs two jobs on `ubuntu-latest`: `lint` runs the version-bump check on pull requests and `shellcheck -x -P scripts/shell -P scripts/test scripts/shell/*.sh scripts/*.sh scripts/test/*.sh` on every push and pull request; `test-shell` runs `scripts/test.sh`.
+Exit codes: `0` clean, `1` aborted on a precondition (unknown flag, `--base` without a value), `2` finished with findings. CI (`.github/workflows/ci.yml`) runs two jobs on `ubuntu-latest` for every push and pull request. `lint` runs `scripts/lint.sh`, adding `--base` with the pull request's base SHA on pull requests, then `shellcheck -x -P scripts/shell -P scripts/test scripts/shell/*.sh scripts/*.sh scripts/test/*.sh`. `test-shell` runs `scripts/test.sh`.
 
 When a rule in this README becomes mechanically verifiable, add its check to `scripts/lint.sh` and its rule number to the list above in the same commit — the caps above (rules 3, 6) are stated here as rules; the linter only enforces them, and this README is the number a reader trusts.
 
-`scripts/test.sh` is likewise a development check outside rules 18–20: it runs `install`, `remove`, `update`, and `verify` against a disposable fake `HOME`, never the real one, and asserts the installation and script contract (rules 12–20). Run it from anywhere:
+`scripts/test.sh` is likewise a development check outside rules 18–20: it runs `install`, `remove`, `update`, and `verify` against a disposable fake `HOME`, never the real one, and asserts rules 12–15, 17, and 20. Every `scripts/test/*.sh` other than `lib.sh` is a case file defining `case_*` functions, discovered by glob; `--case` takes a case-file basename or one function name. Run it from anywhere:
 
 ```bash
 "$HOME/.ai-tools/scripts/test.sh"                    # run every case
 "$HOME/.ai-tools/scripts/test.sh" --case install --keep   # one case file, keep the sandbox
 ```
 
-The fixture stages, before any script runs: a pre-populated harness layout for all six harnesses, a local `origin` git remote so no run reaches the network, a foreign file on a destination path, a locally modified copy, and a stale link from an older layout. Against it, the suites assert:
+Each case builds its own fixture: a harness layout for all six harnesses and a local `origin` git remote so no run reaches the network, plus, per case, a foreign skill or instructions file, a locally modified copy, a stale link from an older layout, or a symlink pointing outside the clone. Against it, the suites assert:
 
 - physical copies only, including migration from legacy ai-tools symlinks (rule 12)
 - no overwrite by default and selected-harness overwrite with the explicit flag (rule 13)
@@ -222,15 +225,15 @@ curl -fsSL https://raw.githubusercontent.com/hgsantana/ai-tools/master/scripts/s
 curl -fsSL https://raw.githubusercontent.com/hgsantana/ai-tools/master/scripts/shell/install-zsh.sh | zsh
 ```
 
-The bootstrap script is self-contained: it requires `git`, clones `https://github.com/hgsantana/ai-tools.git` to `$HOME/.ai-tools` when that path is free, then execs `install.sh`. If the clone already exists, it prints the `update.sh` command and exits without changing anything. Extra flags after `| bash -s --` reach `install.sh`.
+The bootstrap script is self-contained: it requires `git`, clones `https://github.com/hgsantana/ai-tools.git` to `$HOME/.ai-tools` when that path is free, then execs `install.sh`. If the clone already exists, it prints the `update.sh` command and exits without changing anything; a path that exists but is not a clone aborts with exit `1`. Extra flags after `| bash -s --` reach `install.sh`.
 
 Every `install.sh` step is idempotent and reports conflicts it skips.
 
-1. **Preconditions** — the clone at `$HOME/.ai-tools` exists and validates (rule 16; move any existing clone there — no other location is recoverable by configuration).
+1. **Preconditions** — the clone at `$HOME/.ai-tools` exists and validates; `install.sh` clones it when missing, except under `--dry-run` (rule 16; move any existing clone there — no other location is recoverable by configuration).
 2. **Discovery and scope** — report each detected harness from its configuration directory, CLI, or known IDE extension, plus possible AI extensions outside scope. Omitted `--harnesses` selects those detected harnesses; `--harnesses all` selects all six and creates their skill roots as needed. Report `$HOME/.agents` while leaving it untouched.
 3. **Instructions** — copy `USER-AGENTS.md` to each scoped harness's global instructions destination (`--no-instructions` skips). Cursor has none; Antigravity uses `$HOME/.gemini/GEMINI.md`; an existing `~/.codex/AGENTS.override.md` is reported, never touched.
-4. **Skills** — recursively copy each `skills/*-ai-tools` directory into every scoped skills root (rules 5–6). Harnesses list frontmatter; the host session reads the body only when it runs the skill.
-5. **Verify** — every installed instruction and skill is a physical copy matching its source; `USER-AGENTS.md` fits the repository's 8,000-character cap (rule 3); every shipped `skills/<name>/SKILL.md` exists. Any installation symlink is a finding. Skipped under `--dry-run`; re-run anytime with `verify`.
+4. **Skills** — recursively copy each `skills/*-ai-tools` directory into every scoped skills root (rules 5–6). Harnesses list frontmatter; the host session reads the body only when it runs the skill. With `--overwrite`, orphan `*-ai-tools` skills no longer in the tree are pruned from the scoped roots.
+5. **Verify** — every installed instruction and skill is a physical copy matching its source; `USER-AGENTS.md` fits the repository's 8,000-character cap (rule 3); every shipped `skills/<name>/SKILL.md` exists. Any installation symlink or an orphan `*-ai-tools` skill is a finding. Skipped under `--dry-run`; re-run anytime with `verify`.
 
 Then restart or reload any harness that caches skills at startup. Confirm a slash command for every shipped skill.
 
@@ -245,11 +248,13 @@ Remove installed artifacts from harnesses while retaining the clone. Keeping `$H
 ```
 
 1. **Report** — list every possible ai-tools artifact and legacy link in the scoped roots before changing them.
-2. **Skills** — remove copies only while their contents still match their source; also unlink legacy links resolving into ai-tools. A locally modified copy is user work: skip and keep (rule 14), unless `--force`.
+2. **Skills** — remove copies only while their contents still match their source; also unlink legacy links resolving into ai-tools. A locally modified copy is user work: skip and keep (rule 14), unless `--force`. Orphan `*-ai-tools` skills no longer in the tree are removed only with `--force`.
 3. **Stale-link sweep** — remove anything in the scoped roots that still resolves into the clone, whatever its name or era. Alpha keeps no backward compatibility (rule 4); the sweep cleans older layouts. `--no-sweep` skips it.
 4. **Instructions** — only with `--instructions`; remove an exact source copy or a legacy ai-tools link, and preserve a modified or foreign destination unless `--force`. Never remove `$HOME/AGENTS.md` (rule 17).
-5. **Verify** — report any known ai-tools artifact or legacy link still in the scoped roots; expect none except preserved modified or foreign paths (gone under `--force`).
+5. **Verify** — report any link in the scoped roots that still resolves into the clone; expect none.
 6. **Purge** — with `--purge` only (prompt; `--yes` skips), delete `$HOME/.ai-tools` while always preserving `$HOME/AGENTS.md`.
+
+When `$HOME/.ai-tools` is missing, copies cannot be compared: the script warns and removes only ai-tools links.
 
 If `$AI_TOOLS/skills` was added to a harness scan path (Grok `[skills] paths`), remove only that entry, by hand — never wipe the config file. Restart the harness: skill slash commands leave its menu.
 
@@ -267,7 +272,7 @@ Remove artifacts using the **current** clone (the user's version), reset that cl
 4. **Install** — the Installation steps against the fresh tree, listing skills from the tree, never from hardcoded names.
 5. **Verify** — the Installation checks.
 
-If the default branch is renamed (e.g. `main`), the scripts follow only after the user or remote confirms it — never a guessed branch.
+The scripts target `master` only and abort when `origin/master` is missing; a renamed default branch needs a script change, never a guessed branch.
 
 Then restart or reload the harness and confirm a slash command for every shipped skill.
 
@@ -281,7 +286,7 @@ Then restart or reload the harness and confirm a slash command for every shipped
 - **Legacy or dangling ai-tools links:** [Update](#update) sweeps stale links after removing current-version artifacts.
 - **Installed copies out of date:** copies do not track `git pull` — use [Update](#update).
 - **A conflicting or locally modified installed artifact should be replaced:** rerun install or update with `--overwrite` and an explicit `--harnesses` scope. The flag affects only known artifact destinations in that scope.
-- **A locally modified installed artifact should be removed:** rerun remove with `--force` and an explicit `--harnesses` scope. The flag affects only known artifact destinations in that scope; names no longer in the tree are not destinations.
+- **A locally modified installed artifact should be removed:** rerun remove with `--force` and an explicit `--harnesses` scope. The flag affects only known artifact destinations and orphan `*-ai-tools` skills in that scope.
 - **A copied artifact was edited locally:** preserve the edit elsewhere before `--overwrite` or `--force`; installed copies are managed deployment artifacts, while `$HOME/AGENTS.md` remains the supported place for personal instructions.
 
 ## License

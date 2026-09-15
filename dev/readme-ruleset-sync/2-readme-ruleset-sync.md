@@ -73,3 +73,13 @@ docs(readme): correct script, process, and development-check descriptions
 Stage 1.
 
 ## Implementation log
+
+- Verified every claim against code before writing: `scripts/lint.sh` (dependency list, `check_skill_layout`, `check_line_endings`, `check_executable_bits`, `check_no_binaries`, `check_version_bump`), `scripts/test.sh` and `scripts/test/lib.sh` (case discovery by glob, `t_fixture` per-case options), `scripts/shell/lib.sh` (`ensure_clone`, `prune_orphan_skills`, `verify_install`, `verify_removal`, `prepare_reset`/`update_source` hardcoding `master`), `scripts/shell/install.sh`/`remove.sh`/`update.sh`/`verify.sh`/`install-bash.sh` (flag sets, `--dry-run` support, exit-1 non-clone rejection), and `.github/workflows/ci.yml` (lint job runs full `lint.sh` with `--base` only on PRs, then shellcheck, on every push and PR; `test-shell` runs `test.sh` separately). No deviation from the stage's draft texts was needed — every draft matched the code as found.
+- Applied all 11 steps to `README.md` only (Contents, Quick start, Scripts scope bullet, Development checks intro/dependency list, check families, CI sentence, test.sh paragraph, Installation, Removal, Update, Troubleshooting).
+- Confirmed both binding user decisions: `README.md` still reads "8,000-character cap" (decision 5, untouched); the CI sentence states what `lint` and `shellcheck` run without claiming shellcheck passes (decision 3).
+- Tests, scratch clone of `plan/readme-ruleset-sync` with the worktree's `README.md` copied in and committed (per base plan's Execution note):
+  - Stage grep checks (`` `od`|verify\.sh. take .--dry-run|rules 12–20\)|scripts follow only after|names no longer in the tree are not destinations|encodings and endings ``): no matches (exit 1), as required.
+  - `scripts/lint.sh`: exit 0, 369 ok, 1 skipped, 0 warnings (matches baseline).
+  - `scripts/test.sh`: exit 0, 305 ok, 0 skipped, 0 warnings (matches baseline).
+  - `shellcheck -x -P scripts/shell -P scripts/test scripts/shell/*.sh scripts/*.sh scripts/test/*.sh`: exit 1, SC1071 only on `install-zsh.sh` (matches baseline; known pre-existing failure, open question 3).
+  - Claim checks, run in the scratch clone with `HOME` pointed at a fresh `mktemp -d`: `"$V/scripts/shell/verify.sh" --dry-run` exits 1 (unknown option); `grep -n 'prune_orphan_skills' scripts/shell/lib.sh` shows it called from `install_skills` and `remove_skills` (plus its own definition); `grep -n 'od ' scripts/lint.sh` prints nothing.
