@@ -119,3 +119,29 @@ README rules 5, 6, and 9, the Semantic XML grammar, and Development checks descr
 - Requires stages: 2, 3, 4, 5 (every skill conforms)
 
 ## Implementation log
+
+`scripts/lint.sh`:
+- `check_xml_grammar` first awk, inside `if (name == "template") { … }`: added the two `print` lines for a retired `agent="..."` attribute and for a missing/invalid `executor="(default-worker|implementer|session-subagent)"`.
+- `check_skill_description_content`: pattern changed to `*"Impact:"*"Agent:"*` (ordered); `impact` computed via `sub(/.*Impact:/, "")` then `sub(/Agent:.*/, "")` (plus the existing whitespace trim kept for the emptiness check); finding text `skill description missing ordered Impact: and Agent: (rule 6)`; ok text `skill description has what + Impact + Agent`.
+- Added `IMPLEMENTER_SKILLS="vibe-ai-tools campaign-ai-tools"`, `AGENT_SESSION="session"`, `AGENT_IMPLEMENTER="session + implementer (model asked once)"`, and `check_skill_agent_field()` (verbatim per the stage spec), defined right after `check_skill_description_content` and above `# --- Run ---`.
+- Run list: `check_skill_agent_field` added right after `check_skill_description_content`.
+- Usage text: `skill description` entry now ends "...then Impact:, then Agent: (rule 6)"; new `agent field` entry added after it; `xml grammar` entry now mentions role+executor and "never an agent attribute".
+
+`README.md`:
+- Rule 5: "two parts" -> "three parts"; inserted the executor/session-model sentence after the `<session_workflow>` sentence.
+- Rule 6: added clause (3) for `Agent:` with its two allowed values.
+- Rule 9: "role" -> "role and executor".
+- Semantic XML grammar: Identity bullet now says "role and an executor"; added a new **Executors** bullet describing the three executor values and that session-only work is a `<step>`, never a template.
+- Development checks: `skill description` entry updated; new `agent field` entry added; `xml grammar` entry updated to mention role, valid executor, and no `agent` attribute.
+
+Tests run:
+- `scripts/lint.sh` on the real tree: exit 0, `335 ok, 1 skipped, 0 warnings`. Nine `ok: skill Agent: matches implementer usage` lines, two carrying `(session + implementer (model asked once))` (campaign-ai-tools, vibe-ai-tools), the other seven carrying `(session)`. The one skip is the pre-existing version-bump check (no `--base`).
+- Six negative probes, run in a disposable worktree at `mktemp -d`, each on a fresh copy of the working-tree `scripts/lint.sh` and restored via `git checkout --` between probes:
+  1. az-ai-tools template `executor="default-worker"` -> `agent="mechanical-ai-tools"`: exit 2, `WARN: xml grammar: <template> with retired agent attribute at line 36`, `WARN: xml grammar: <template> without a valid executor at line 36`, and `WARN: unresolved reference <template executor="default-worker"> in .../az-ai-tools/SKILL.md` (the rule's own backticked reference). Matches expected.
+  2. Same template, `executor="bogus"`: exit 2, `WARN: xml grammar: <template> without a valid executor at line 36`. Matches expected.
+  3. vibe-ai-tools description `Agent: session + implementer (model asked once).` -> `Agent: session.`: exit 2, `WARN: skill Agent: 'session' disagrees with <implementer_job> (1) or implementer templates (1) (rule 6)`. Matches expected.
+  4. vibe-ai-tools description -> `Agent: planner-ai-tools.`: exit 2, `WARN: skill description has invalid Agent: 'planner-ai-tools' (rule 6)`. Matches expected.
+  5. Copied `skills/vibe-ai-tools/SKILL.md` to `skills/dev-ai-tools/SKILL.md`, set `name:` and `<skill name>` to `dev-ai-tools`: exit 2, `WARN: skill spawns implementers outside vibe-ai-tools campaign-ai-tools (rule 6): .../dev-ai-tools/SKILL.md` (plus unrelated reference warnings from the copied file lacking `stage-verifier`/`<status_protocol>`, as expected). Matches expected.
+  6. `git worktree remove --force` then `rm -rf` the mktemp dir: `git worktree list` afterward shows only the three unrelated pre-existing worktrees under `/home/wsl/.ai-tools.worktrees/`; no leftover from this run.
+- `scripts/test.sh`: exit 0, `305 ok, 0 skipped, 0 warnings`.
+- CI shellcheck command `shellcheck -x -P scripts/shell -P scripts/test scripts/shell/*.sh scripts/*.sh scripts/test/*.sh`: only the known `SC1071` on `scripts/shell/install-zsh.sh`. Bare `shellcheck scripts/lint.sh` reports only `SC1091` on the pre-existing `. "$AI_TOOLS/scripts/shell/lib.sh"` line (info-level, "not following" without `-x`); confirmed identical on the committed HEAD copy of `scripts/lint.sh` before this stage's edits, so it is pre-existing and not a new finding from `check_skill_agent_field` or the other additions.

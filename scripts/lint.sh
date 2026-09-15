@@ -30,7 +30,12 @@ Checks:
   skill name match  skills/<x>/SKILL.md declares name: <x>
   skill description every skill description is at most 500 characters,
                     folded block included, and states what the skill does,
-                    then Impact: (rule 6)
+                    then Impact:, then Agent: (rule 6)
+  agent field       Agent: is session, or session + implementer (model
+                    asked once) exactly when the skill defines
+                    <implementer_job> and an executor="implementer"
+                    template; only vibe-ai-tools and campaign-ai-tools
+                    (rule 6)
   skill layout      no skill-root markdown, every skill directory has
                     SKILL.md with semantic XML tags (<skill>, <session_workflow>,
                     <dispatch_templates>), no SKILL.md contains Continue? or Stake,
@@ -51,8 +56,9 @@ Checks:
   xml grammar       every semantic-XML body (USER-AGENTS.md, SKILL.md) is
                     balanced once backticked spans are removed, uses only
                     vocabulary tags outside <input>, gives every <rule> a
-                    unique id, and every <template> a role (rule 9,
-                    Semantic XML grammar)
+                    unique id, and every <template> a role and an executor
+                    (default-worker, implementer, session-subagent), never
+                    an agent attribute (rule 9, Semantic XML grammar)
   xml references    every backticked tag reference resolves: attribute
                     references to a definition in the same or the qualified
                     file, bare references to the vocabulary (rule 9)
@@ -295,7 +301,7 @@ check_skill_description_cap() {
 }
 
 check_skill_description_content() {
-  # rule 6: description states what it does, then Impact:
+  # rule 6: description states what it does, then Impact:, then Agent:
   local d f val before impact
   for d in "$AI_TOOLS"/skills/*-ai-tools/; do
     [ -d "$d" ] || continue
@@ -303,19 +309,52 @@ check_skill_description_content() {
     [ -f "$f" ] || continue
     val=$(yaml_frontmatter_folded_value "$f" description)
     case "$val" in
-      *"Impact:"*)
+      *"Impact:"*"Agent:"*)
         before=$(printf '%s\n' "$val" | awk '{ sub(/Impact:.*/, ""); gsub(/^[ \t]+|[ \t]+$/, ""); print }')
-        impact=$(printf '%s\n' "$val" | awk '{ sub(/.*Impact:/, ""); gsub(/^[ \t]+|[ \t]+$/, ""); print }')
+        impact=$(printf '%s\n' "$val" | awk '{ sub(/.*Impact:/, ""); sub(/Agent:.*/, ""); gsub(/^[ \t]+|[ \t]+$/, ""); print }')
         if [ -n "$before" ] && [ -n "$impact" ]; then
-          ok "skill description has what + Impact: $f"
+          ok "skill description has what + Impact + Agent: $f"
         else
-          warn "skill description missing Impact: (rule 6): $f"
+          warn "skill description missing ordered Impact: and Agent: (rule 6): $f"
         fi
         ;;
       *)
-        warn "skill description missing Impact: (rule 6): $f"
+        warn "skill description missing ordered Impact: and Agent: (rule 6): $f"
         ;;
     esac
+  done
+}
+
+IMPLEMENTER_SKILLS="vibe-ai-tools campaign-ai-tools"
+AGENT_SESSION="session"
+AGENT_IMPLEMENTER="session + implementer (model asked once)"
+
+check_skill_agent_field() {
+  # rule 6: Agent: value matches implementer usage (<implementer_job> plus a
+  # structural executor="implementer" template), allowed only in
+  # IMPLEMENTER_SKILLS.
+  local d name f val agent job impl expect
+  for d in "$AI_TOOLS"/skills/*-ai-tools/; do
+    [ -d "$d" ] || continue
+    name=$(basename "$d"); f="${d}SKILL.md"
+    [ -f "$f" ] || continue
+    val=$(yaml_frontmatter_folded_value "$f" description)
+    case "$val" in *"Agent:"*) ;; *) continue ;; esac  # reported by check_skill_description_content
+    agent=$(printf '%s\n' "$val" | awk '{ sub(/.*Agent:[ \t]*/, ""); sub(/[ \t.]+$/, ""); print }')
+    case "$agent" in
+      "$AGENT_SESSION") expect=0 ;;
+      "$AGENT_IMPLEMENTER") expect=1 ;;
+      *) warn "skill description has invalid Agent: '$agent' (rule 6): $f"; continue ;;
+    esac
+    job=0; xml_body "$f" | grep -q '<implementer_job>' && job=1
+    impl=0; xml_body "$f" | grep -q '<template [^>]*executor="implementer"' && impl=1
+    if [ "$job" != "$expect" ] || [ "$impl" != "$expect" ]; then
+      warn "skill Agent: '$agent' disagrees with <implementer_job> ($job) or implementer templates ($impl) (rule 6): $f"
+    elif [ "$expect" = 1 ] && ! in_list "$name" "$IMPLEMENTER_SKILLS"; then
+      warn "skill spawns implementers outside $IMPLEMENTER_SKILLS (rule 6): $f"
+    else
+      ok "skill Agent: matches implementer usage: $f ($agent)"
+    fi
   done
 }
 
@@ -490,6 +529,8 @@ check_xml_grammar() {
           }
           if (name == "template") {
             if (tok !~ / role="[a-z0-9-]+"/) print "<template> without role at line " NR
+            if (tok ~ / agent="/) print "<template> with retired agent attribute at line " NR
+            if (tok !~ / executor="(default-worker|implementer|session-subagent)"/) print "<template> without a valid executor at line " NR
           }
         }
         if (line ~ /</) print "stray < at line " NR
@@ -621,6 +662,7 @@ check_skill_name_match
 check_skill_layout
 check_skill_description_cap
 check_skill_description_content
+check_skill_agent_field
 check_instructions_cap
 check_line_endings
 check_executable_bits
