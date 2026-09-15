@@ -51,9 +51,7 @@ prepare_reset "$DISCARD_LOCAL"
 
 # 1. Remove using this clone (the user's current version).
 report_links
-uninstall_agents
 remove_skills
-remove_grok_models
 [ "$NO_SWEEP" = 1 ] || sweep_stale_links
 [ "$NO_INSTRUCTIONS" = 1 ] || remove_instructions
 
@@ -66,10 +64,8 @@ if [ "$NO_INSTRUCTIONS" = 1 ]; then
 else
   install_instructions
 fi
-install_agents
 install_skills
-install_grok_models
 
 VERIFY_INSTRUCTIONS=$((1 - NO_INSTRUCTIONS)) verify_install
-info "restart or reload harnesses that cache agents or skills"
+info "restart or reload harnesses that cache skills"
 finish

@@ -15,13 +15,12 @@ Status: `idea` (awaiting refinement) · `next` (agreed and ready) · `doing` (pl
 | 10 | [Execution outside a git repository](#10-execution-outside-a-git-repository) | idea |
 | 11 | [Untrusted input handling](#11-untrusted-input-handling) | idea |
 | 12 | [Adding a harness, by checklist](#12-adding-a-harness-by-checklist) | idea |
-| 13 | [Cost visibility in the dispatch ledger](#13-cost-visibility-in-the-dispatch-ledger) | idea |
 
 ## Consistency
 
 ### 4. Health-check entry point
 
-`verify` is a first-class read-only process with a script, while update and removal also have slash commands. Add a `verify-ai-tools` skill that dispatches `implementer-ai-tools` to run `verify` and maps each finding to the matching README Troubleshooting entry: dangling links and stale copies to Update, and a wrong agent model to the Grok pin or wrapper comparison. Route: `/vibe-ai-tools`.
+`verify` is a first-class read-only process with a script, while update and removal also have slash commands. Add a `verify-ai-tools` skill that runs `verify` and maps each finding to the matching README Troubleshooting entry: dangling links and stale copies to Update, missing skills to a harness restart. Route: `/vibe-ai-tools`.
 
 ### 6. Changelog for alpha testers
 
@@ -35,7 +34,7 @@ The vibe workflow answers planner questions on the user's behalf and logs those 
 
 ### 9. Resuming an interrupted delivery
 
-`dev-ai-tools` defines recovery for an interrupted subagent through its dispatch ledger, snapshot-based liveness, and intake audit of orphaned `W` stages. Extend that recovery to the vibe workflow: define how a new session detects an interrupted delivery, which files authorize continuation through the existing gate, and what it verifies before resuming a partially implemented plan branch. Route: `/plan-ai-tools`.
+`dev-ai-tools` defines recovery for an interrupted run through its dispatch ledger, snapshot-based liveness, and intake audit of orphaned `W` stages. Extend that recovery to the vibe workflow: define how a new session detects an interrupted delivery, which files authorize continuation through the existing gate, and what it verifies before resuming a partially implemented plan branch. Route: `/plan-ai-tools`.
 
 ### 10. Execution outside a git repository
 
@@ -45,12 +44,8 @@ Planning outside a Git repository stores plans in `$HOME/.ai-tools-plans`, while
 
 ### 11. Untrusted input handling
 
-Several agents consume untrusted input: `gh-ai-tools` reads issue and pull request bodies, cloud agents read metadata and tags, and any agent may read a fetched page. Expand the one-line security rule into concrete handling: classify external text as data, quote it safely in reports, and require approval requests to originate from trusted instructions rather than fetched content. Route: `/plan-ai-tools`.
+Several skills consume untrusted input: `gh-ai-tools` reads issue and pull request bodies, the cloud skills read metadata and tags, and any workflow may read a fetched page. Expand the one-line security rule into concrete handling: classify external text as data, quote it safely in reports, and require approval requests to originate from trusted instructions rather than fetched content. Route: `/plan-ai-tools`.
 
 ### 12. Adding a harness, by checklist
 
-Adding a harness requires coordinated edits: one wrapper per agent, a researched `MODELS.csv` row, the Supported harnesses table, installation steps, script discovery, and any newly tighter constraint. Consolidate these requirements into an ordered checklist, and have the linter verify that every wrapper folder has both a MODELS.csv row and a Supported harnesses entry. Route: `/vibe-ai-tools`.
-
-### 13. Cost visibility in the dispatch ledger
-
-The dispatch ledger records the model behind every attempt. Extend it and the final summary with the usage data each harness exposes per attempt—tokens, duration, or a documented estimate—so outcomes and cost appear together. Mark unavailable values explicitly and base every number on reported evidence. Route: `/plan-ai-tools`.
+Adding a harness requires coordinated edits: its skills root and instructions destination in `scripts/shell/lib.sh`, detection, the Supported harnesses table, installation steps, test fixtures, and any newly tighter constraint. Consolidate these requirements into an ordered checklist. Route: `/vibe-ai-tools`.

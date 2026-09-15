@@ -47,9 +47,7 @@ set_scope "$HARNESSES"
 
 if [ -d "$AI_TOOLS" ]; then
   report_links
-  uninstall_agents
   remove_skills
-  remove_grok_models
 else
   warn "$AI_TOOLS missing — copies cannot be verified; removing links only (sweep)"
 fi
@@ -60,5 +58,5 @@ fi
 verify_removal
 [ "$PURGE" = 1 ] && purge_clone "$YES"
 
-info "restart or reload harnesses; the agents and skill slash commands should disappear"
+info "restart or reload harnesses; the skill slash commands should disappear"
 finish

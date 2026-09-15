@@ -1,11 +1,10 @@
 ---
 name: remove-ai-tools
 description: >
-  Remove this installation per the README: remove agents, skills, and
-  optionally instructions from harnesses. Use for /remove-ai-tools. Impact:
-  those tools become unavailable; the clone remains unless the user separately
-  approves a purge. Each destructive step requires explicit approval. Agent:
-  mechanical-ai-tools.
+  Remove this installation per the README: remove skills and optionally
+  instructions from harnesses. Use for /remove-ai-tools. Impact: those tools
+  become unavailable; the clone remains unless the user separately approves a
+  purge. Each destructive step requires explicit approval. Agent: session.
 argument-hint: "[optional: harnesses in scope, or extra instructions]"
 ---
 
@@ -22,13 +21,12 @@ argument-hint: "[optional: harnesses in scope, or extra instructions]"
     </step>
 
     <step id="2" name="dry_run">
-      Execute `scripts/shell/remove.sh` with `--dry-run` and scoped flags.
-      Save output to `dev/tmp/remove-dry-run.log`.
+      Spawn `<template role="script-runner">` from `<dispatch_templates>` with {FLAGS} set to `--dry-run` plus the scoped flags and {LOG_PATH} set to `dev/tmp/remove-dry-run.log`.
       Present each destructive flag (`--instructions`, `--force`, `--purge`) separately with what it removes and why.
     </step>
 
     <step id="3" name="execution">
-      Execute `scripts/shell/remove.sh` with exactly the approved flags as {APPROVED_FLAGS}, directly in session or by dispatching `<template role="script-runner">` from `<dispatch_templates>`.
+      Spawn `<template role="script-runner">` with {FLAGS} set to exactly the approved flags and {LOG_PATH} set to `dev/tmp/remove-execution.log`.
       Exit 0: clean. Exit 2: report every WARN with reason. Exit 1: report precondition error.
     </step>
 
@@ -39,17 +37,21 @@ argument-hint: "[optional: harnesses in scope, or extra instructions]"
   </session_workflow>
 
   <dispatch_templates>
-    <template role="script-runner" agent="mechanical-ai-tools">
-      <job>Mechanical worker: execute the remove shell script and capture output.</job>
+    <template role="script-runner" executor="default-worker">
+      <job>Default worker: execute the remove shell script and capture output.</job>
       <input>
         <script>scripts/shell/remove.sh</script>
-        <flags>{APPROVED_FLAGS}</flags>
+        <flags>{FLAGS}</flags>
+        <log_path>{LOG_PATH}</log_path>
       </input>
       <instructions>
-        Run scripts/shell/remove.sh with {APPROVED_FLAGS}.
-        Record complete stdout and stderr to dev/tmp/remove-execution.log.
+        Run scripts/shell/remove.sh with {FLAGS}.
+        Record complete stdout and stderr to {LOG_PATH}.
         Return exit code and log path.
       </instructions>
+      <constraints>
+        <constraint>Run exactly the given flags; add no destructive flag.</constraint>
+      </constraints>
     </template>
   </dispatch_templates>
 
@@ -57,5 +59,6 @@ argument-hint: "[optional: harnesses in scope, or extra instructions]"
     <rule id="scope-roots">Touch only $AI_TOOLS and declared harness destination roots.</rule>
     <rule id="home-agents-untouched">Never touch $HOME/AGENTS.md.</rule>
     <rule id="separate-approvals">Destructive steps require explicit separate approval; never bypass safety flags.</rule>
+    <rule id="default-worker">Spawn each `<template executor="default-worker">` per USER-AGENTS `<execution_protocol>`.</rule>
   </boundaries>
 </skill>

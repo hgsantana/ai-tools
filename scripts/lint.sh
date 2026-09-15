@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ai-tools rule linter — a development check, not an installation process
-# (outside the contract of README rules 25-27). Enforces this repository's
+# (outside the contract of README rules 18-20). Enforces this repository's
 # mechanically verifiable rules against the tree it runs in.
 #
 # Usage: scripts/lint.sh [--help] [--base <ref>]
@@ -21,56 +21,70 @@ usage: lint.sh [--help] [--base <ref>]
 
 Development check: enforces this repository's mechanically verifiable rules
 against the tree lint.sh runs in. Not an installation process (README rules
-25-27); introduces no new dependency beyond git, grep, awk, sed, wc, and tr.
+18-20); introduces no new dependency beyond git, grep, awk, sed, wc, and tr.
 
 Checks:
-  wrapper coverage  every agent has exactly one wrapper per harness, with
-                    that harness's extension; no orphan wrapper (rule 5)
-  naming            every agent base file, wrapper, skills/*/ directory, and
-                    frontmatter name: ends in -ai-tools (rule 14)
+  naming            every skills/*/ directory ends in -ai-tools (rule 7)
   skill frontmatter every skills/*/SKILL.md exists with frontmatter keys a
-                    subset of name, description, argument-hint (rule 9)
+                    subset of name, description, argument-hint (rule 6)
   skill name match  skills/<x>/SKILL.md declares name: <x>
   skill description every skill description is at most 500 characters,
-                    folded block included, and states what the skill does,
-                    then Impact:, then Agent: (rule 9)
+                    folded block included, states what the skill does, then
+                    Impact:, then Agent:, and names its own /<name> (rule 6)
+  agent field       Agent: is session, or session + implementer (model
+                    asked once) exactly when the skill defines
+                    <implementer_job> and an executor="implementer"
+                    template; only vibe-ai-tools and campaign-ai-tools
+                    (rule 6)
   skill layout      no skill-root markdown, every skill directory has
                     SKILL.md with semantic XML tags (<skill>, <session_workflow>,
                     <dispatch_templates>), no SKILL.md contains Continue? or Stake,
-                    USER-AGENTS.md has <routing_gate> and Agent:,
-                    and no references to deleted files (rule 7)
-  wrapper body      every wrapper body is exactly the canonical text
-                    reconstructed from the agent name (rule 6)
-  model parity      every wrapper's pinned model matches MODELS.csv via
-                    model_for; Grok wrappers declare no model: (rules 11-12)
-  effort pinning    the wrapper pins the MODELS.csv effort cell where its
-                    form can hold one, in the vendor's spelling
-  description parity same agent's description is identical across wrappers
-  model row coverage each agents/<key>/ has a MODELS.csv row and vice versa
+                    USER-AGENTS.md has <routing_gate>, an <execution_protocol>
+                    with a <rule id> for default-worker, implementer, and
+                    session-subagent, and the offer header "Description,
+                    Execution", never <agents>, <dispatch_protocol>, or <worker,
+                    and no references to deleted files (rules 5, 11)
   instructions cap  USER-AGENTS.md is at most 8000 characters (rule 3)
-  wrapper cap       every agents/<harness>/* file is at most 1000 characters,
-                    frontmatter included (rule 6)
+  instructions      USER-AGENTS.md has no ## sub-heading (rule 3)
+  headings
   line endings      git ls-files --eol matches the declared eol= attribute:
-                    lf for scripts/ (rule 28)
+                    lf for scripts/ (rule 21)
   executable bits   scripts/shell/*.sh and scripts/*.sh are mode 100755
-                    (rule 28)
-  no binaries       every tracked file under agents/, skills/, and scripts/
+                    (rule 21)
+  no binaries       every tracked file under skills/ and scripts/
                     is text
   version bump      CI-only, needs --base <ref> (skipped without it): when
-                    agents/, skills/, scripts/, USER-AGENTS.md, or MODELS.csv changed
+                    skills/, scripts/, or USER-AGENTS.md changed
                     since <ref>, the README version line must have changed
                     too (rule 4)
-  dev/tmp untracked git ls-files dev/tmp returns nothing (rule 29)
-  xml grammar       every semantic-XML body (USER-AGENTS.md, contract, agent
-                    bases, SKILL.md) is balanced once backticked spans are
-                    removed, uses only vocabulary tags outside <input>, gives
-                    every <rule> a unique id, and every <template> a role and
-                    a shipped agent (rule 16, Semantic XML grammar)
+  dev/tmp untracked git ls-files dev/tmp returns nothing (rule 22)
+  xml grammar       every semantic-XML body (USER-AGENTS.md, SKILL.md) is
+                    balanced once backticked spans are removed, uses only
+                    vocabulary tags outside <input>, gives every <rule> a
+                    unique id, every <step> a numeric id, and <case>,
+                    <response>, <signal>, <state> their id, type, or code,
+                    and every <template> a role and an executor that is one
+                    of default-worker, implementer, or session-subagent AND
+                    has a matching <rule id> inside USER-AGENTS
+                    <execution_protocol>, never an agent attribute (rule 9,
+                    Semantic XML grammar)
   xml references    every backticked tag reference resolves: attribute
                     references to a definition in the same or the qualified
-                    file, bare references to the vocabulary (rule 16)
+                    file, bare references to the vocabulary (rule 9)
   placeholder parity every {PLACEHOLDER} a <template> uses is declared in its
-                    <input>, and every declared one is used (rule 16)
+                    <input>, and every declared one is used (rule 9)
+  vocabulary parity the README Semantic XML grammar table and XML_VOCAB list
+                    the same tags (rule 9)
+  rule anchors      no SKILL.md or USER-AGENTS.md cites a README rule number
+                    (rule 9)
+  spawn protocol    every SKILL.md with a <template> cites USER-AGENTS
+  citation          <execution_protocol>, and no SKILL.md duplicates the
+                    harness native subagent API list (Copilot runSubagent)
+  rule citations    README rules numbered 1..N without gaps; every rule N
+                    cited in tracked docs and scripts is within 1..N (rule 1)
+  harness table     lib.sh harness keys, skills roots, and instructions
+                    destinations appear in the README Scope bullet and
+                    Supported harnesses table (rule 19)
 
 --base <ref>  commit-ish to diff shipped content against for the version
               bump check. Without it, that check is skipped. The lint
@@ -93,48 +107,6 @@ while [ $# -gt 0 ]; do
   esac
   shift
 done
-
-# --- Discovery ---------------------------------------------------------------
-# Never hard-code harness keys or agent names — a new harness or agent must
-# be picked up automatically.
-
-harnesses() {
-  local d
-  for d in "$AI_TOOLS"/agents/*/; do
-    [ -d "$d" ] || continue
-    basename "$d"
-  done
-}
-
-agent_names() {
-  local f b
-  for f in "$AI_TOOLS"/agents/*.md; do
-    [ -f "$f" ] || continue
-    b=$(basename "$f" .md)
-    [ "$b" = "SUBAGENT-CONTRACT" ] && continue
-    echo "$b"
-  done
-}
-
-in_list() {
-  # usage: in_list <needle> <space-separated haystack>
-  case " $2 " in *" $1 "*) return 0 ;; *) return 1 ;; esac
-}
-
-wrapper_ext() {
-  # usage: wrapper_ext <harness>  -> extension suffix (without leading dot,
-  # "agent.md" counts as one suffix for copilot)
-  case "$1" in
-    codex)   echo toml ;;
-    copilot) echo agent.md ;;
-    *)       echo md ;;
-  esac
-}
-
-wrapper_path() {
-  # usage: wrapper_path <harness> <agent-name>
-  echo "$AI_TOOLS/agents/$1/$2.$(wrapper_ext "$1")"
-}
 
 # --- Frontmatter helpers ------------------------------------------------------
 
@@ -162,101 +134,19 @@ yaml_frontmatter_value() {
   ' "$1"
 }
 
-toml_field_value() {
-  # usage: toml_field_value <file> <key> -- "key = \"value\"" at column 1
-  awk -v key="$2" '
-    $0 ~ "^" key "[ \t]*=" {
-      sub("^" key "[ \t]*=[ \t]*", "")
-      gsub(/^"|"$/, "")
-      print
-      exit
-    }
-  ' "$1"
-}
-
 ends_in_ai_tools() {
   case "$1" in *-ai-tools) return 0 ;; *) return 1 ;; esac
 }
 
-# --- Check: wrapper coverage (rule 5) -----------------------------------------
-
-check_wrapper_coverage() {
-  local h ext agents a f base name found
-  agents=$(agent_names | tr '\n' ' ')
-  for h in $(harnesses); do
-    ext=$(wrapper_ext "$h")
-    for a in $agents; do
-      f=$(wrapper_path "$h" "$a")
-      if [ -f "$f" ]; then
-        ok "wrapper present: $f"
-      else
-        warn "missing wrapper: $f"
-      fi
-    done
-    for f in "$AI_TOOLS/agents/$h"/*; do
-      [ -f "$f" ] || continue
-      base=$(basename "$f")
-      case "$ext" in
-        agent.md) case "$base" in *.agent.md) name=${base%.agent.md} ;; *) name="" ;; esac ;;
-        toml)     case "$base" in *.toml) name=${base%.toml} ;; *) name="" ;; esac ;;
-        md)       case "$base" in *.md) name=${base%.md} ;; *) name="" ;; esac ;;
-      esac
-      found=0
-      if [ -n "$name" ] && in_list "$name" "$agents"; then found=1; fi
-      [ "$found" = 1 ] || warn "orphan wrapper (matches no agent): $f"
-    done
-  done
+in_list() {
+  # usage: in_list <needle> <space-separated haystack>
+  case " $2 " in *" $1 "*) return 0 ;; *) return 1 ;; esac
 }
 
-# --- Check: naming (rule 14) --------------------------------------------------
+# --- Check: naming (rule 7) --------------------------------------------------
 
 check_naming() {
-  local f b h ext d name val
-
-  for f in "$AI_TOOLS"/agents/*.md; do
-    [ -f "$f" ] || continue
-    b=$(basename "$f" .md)
-    [ "$b" = "SUBAGENT-CONTRACT" ] && continue
-    if ends_in_ai_tools "$b"; then
-      ok "agent base name: $b"
-    else
-      warn "agent base file does not end in -ai-tools: $f"
-    fi
-    val=$(yaml_frontmatter_value "$f" name)
-    if [ -n "$val" ]; then
-      if ends_in_ai_tools "$val"; then ok "agent base frontmatter name: $val"
-      else warn "agent base frontmatter name does not end in -ai-tools: $f (name: $val)"; fi
-    fi
-  done
-
-  for h in $(harnesses); do
-    ext=$(wrapper_ext "$h")
-    for f in "$AI_TOOLS/agents/$h"/*; do
-      [ -f "$f" ] || continue
-      b=$(basename "$f")
-      case "$ext" in
-        agent.md) case "$b" in *.agent.md) name=${b%.agent.md} ;; *) name="" ;; esac ;;
-        toml)     case "$b" in *.toml) name=${b%.toml} ;; *) name="" ;; esac ;;
-        md)       case "$b" in *.md) name=${b%.md} ;; *) name="" ;; esac ;;
-      esac
-      [ -n "$name" ] || continue
-      if ends_in_ai_tools "$name"; then
-        ok "wrapper name: $f"
-      else
-        warn "wrapper file does not end in -ai-tools: $f"
-      fi
-      if [ "$ext" = toml ]; then
-        val=$(toml_field_value "$f" name)
-      else
-        val=$(yaml_frontmatter_value "$f" name)
-      fi
-      if [ -n "$val" ]; then
-        if ends_in_ai_tools "$val"; then ok "wrapper frontmatter name: $val ($f)"
-        else warn "wrapper frontmatter name does not end in -ai-tools: $f (name: $val)"; fi
-      fi
-    done
-  done
-
+  local d b
   for d in "$AI_TOOLS"/skills/*/; do
     [ -d "$d" ] || continue
     b=$(basename "$d")
@@ -268,7 +158,7 @@ check_naming() {
   done
 }
 
-# --- Check: skill frontmatter (rule 9) ----------------------------------------
+# --- Check: skill frontmatter (rule 6) ----------------------------------------
 
 check_skill_frontmatter() {
   local d f k allowed="name description argument-hint"
@@ -308,12 +198,12 @@ check_skill_name_match() {
   done
 }
 
-# --- Check: skill layout and description (rules 7, 9) ------------------------
+# --- Check: skill layout and description (rules 5, 6) ------------------------
 
 check_skill_layout() {
-  local f d name
+  local f d name rid
   local gated="vibe-ai-tools plan-ai-tools dev-ai-tools campaign-ai-tools az-ai-tools gc-ai-tools gh-ai-tools"
-  local maintainer="update-ai-tools remove-ai-tools models-ai-tools"
+  local maintainer="update-ai-tools remove-ai-tools"
 
   f="$AI_TOOLS/skills/SKILL-CONTRACT.md"
   if [ ! -e "$f" ]; then ok "skill contract absent: $f"; else warn "skill contract must not exist: $f"; fi
@@ -331,10 +221,31 @@ check_skill_layout() {
   else
     warn "USER-AGENTS.md missing '<routing_gate>' tag: $f"
   fi
-  if grep -q 'Agent:' "$f"; then
-    ok "USER-AGENTS.md names Agent: $f"
+
+  if grep -q '<execution_protocol>' "$f"; then
+    ok "USER-AGENTS.md has execution_protocol tag: $f"
   else
-    warn "USER-AGENTS.md missing 'Agent:': $f"
+    warn "USER-AGENTS.md missing '<execution_protocol>' tag: $f"
+  fi
+
+  for rid in default-worker implementer session-subagent; do
+    if awk '/<execution_protocol>/{p=1} p&&/<\/execution_protocol>/{p=0} p' "$f" | grep -qF "<rule id=\"$rid\">"; then
+      ok "USER-AGENTS.md execution_protocol defines rule $rid: $f"
+    else
+      warn "USER-AGENTS.md execution_protocol missing <rule id=\"$rid\">: $f"
+    fi
+  done
+
+  if grep -qF 'Description, Execution' "$f"; then
+    ok "USER-AGENTS.md offer header uses the Execution column: $f"
+  else
+    warn "USER-AGENTS.md offer header missing 'Description, Execution': $f"
+  fi
+
+  if grep -qE '<agents>|<dispatch_protocol>|<worker' "$f"; then
+    warn "USER-AGENTS.md contains a retired <agents>, <dispatch_protocol>, or <worker tag: $f"
+  else
+    ok "USER-AGENTS.md has no retired <agents>, <dispatch_protocol>, or <worker tag: $f"
   fi
 
   for name in $gated $maintainer; do
@@ -383,41 +294,6 @@ check_skill_layout() {
       fi
     else
       warn "missing SKILL.md in skill directory: $d"
-    fi
-  done
-}
-
-# --- Check: agent base and contract layout (rules 5, 16) ----------------------
-
-check_agent_layout() {
-  local f="$AI_TOOLS/agents/SUBAGENT-CONTRACT.md"
-  if [ -f "$f" ]; then
-    ok "subagent contract present: $f"
-    if grep -q '^<subagent_contract>' "$f" && grep -q '</subagent_contract>$' "$f"; then
-      ok "SUBAGENT-CONTRACT.md has valid root subagent_contract XML tags: $f"
-    else
-      warn "SUBAGENT-CONTRACT.md missing <subagent_contract> ... </subagent_contract> tags: $f"
-    fi
-    if grep -q '^## ' "$f"; then
-      warn "SUBAGENT-CONTRACT.md must not contain markdown subheadings: $f"
-    else
-      ok "SUBAGENT-CONTRACT.md has no markdown subheadings: $f"
-    fi
-  else
-    warn "missing subagent contract: $f"
-  fi
-
-  for f in "$AI_TOOLS"/agents/*-ai-tools.md; do
-    [ -f "$f" ] || continue
-    if grep -q '^<agent_base name="' "$f" && grep -q '</agent_base>$' "$f"; then
-      ok "agent base has valid root agent_base XML tags: $f"
-    else
-      warn "agent base missing valid <agent_base name=\"...\"> ... </agent_base> tags: $f"
-    fi
-    if grep -q '^## ' "$f"; then
-      warn "agent base must not contain markdown subheadings: $f"
-    else
-      ok "agent base has no markdown subheadings: $f"
     fi
   done
 }
@@ -472,10 +348,12 @@ check_skill_description_cap() {
 }
 
 check_skill_description_content() {
-  # rule 9: description states what it does, then Impact:, then Agent:
-  local d f val before impact agent
+  # rule 6: description states what it does, then Impact:, then Agent:, and
+  # names its own slash command.
+  local d name f val before impact
   for d in "$AI_TOOLS"/skills/*-ai-tools/; do
     [ -d "$d" ] || continue
+    name=$(basename "$d")
     f="${d}SKILL.md"
     [ -f "$f" ] || continue
     val=$(yaml_frontmatter_folded_value "$f" description)
@@ -483,221 +361,52 @@ check_skill_description_content() {
       *"Impact:"*"Agent:"*)
         before=$(printf '%s\n' "$val" | awk '{ sub(/Impact:.*/, ""); gsub(/^[ \t]+|[ \t]+$/, ""); print }')
         impact=$(printf '%s\n' "$val" | awk '{ sub(/.*Impact:/, ""); sub(/Agent:.*/, ""); gsub(/^[ \t]+|[ \t]+$/, ""); print }')
-        agent=$(printf '%s\n' "$val" | awk '{ sub(/.*Agent:/, ""); gsub(/[.[:space:]]/, ""); print }')
-        if [ -z "$before" ]; then
-          warn "skill description has no what-it-does before Impact: $f"
-        elif [ -z "$impact" ]; then
-          warn "skill description Impact has no stake text: $f"
-        elif ! in_list "$agent" "$(agent_names | tr '\n' ' ')"; then
-          warn "skill description has invalid Agent: $f ('$agent')"
-        else
+        if [ -n "$before" ] && [ -n "$impact" ]; then
           ok "skill description has what + Impact + Agent: $f"
+        else
+          warn "skill description missing ordered Impact: and Agent: (rule 6): $f"
         fi
         ;;
       *)
-        warn "skill description missing ordered Impact: or Agent: (rule 9): $f"
+        warn "skill description missing ordered Impact: and Agent: (rule 6): $f"
         ;;
+    esac
+    case "$val" in
+      *"/$name"*) ok "skill description names /$name: $f" ;;
+      *) warn "skill description does not name /$name (rule 6): $f" ;;
     esac
   done
 }
 
-# --- Check: wrapper body and model parity (rules 6, 11-12) --------------------
-# Never hard-code a vendor model name here — every expected model is resolved
-# through model_for, reading MODELS.csv in place.
+IMPLEMENTER_SKILLS="vibe-ai-tools campaign-ai-tools"
+AGENT_SESSION="session"
+AGENT_IMPLEMENTER="session + implementer (model asked once)"
 
-canonical_body() {
-  # usage: canonical_body <agent-name>
-  # Reconstructs the exact wrapper body text (README, "Model selection and wrapper
-  # authoring"). A regex would accept the drift this check exists to reject.
-  # The pin lives in the header; the body never names a model table or harness row.
-  local a="$1"
-  # shellcheck disable=SC2016 # $HOME/%USERPROFILE% must stay literal — expanding them is the bug this check catches
-  printf 'On Windows, %%USERPROFILE%% replaces $HOME.\n\n'
-  # shellcheck disable=SC2016 # $HOME must stay literal — expanding it is the bug this check catches
-  printf 'You are a spawned subagent: your shared contract is `<subagent_contract>` in `$HOME/.ai-tools/agents/SUBAGENT-CONTRACT.md`.\n'
-  printf 'Read it and follow it — it governs your channel to the user and your report.\n\n'
-  # shellcheck disable=SC2016 # $HOME must stay literal — expanding it is the bug this check catches
-  printf 'Your base file is `$HOME/.ai-tools/agents/%s.md`.\n' "$a"
-  # shellcheck disable=SC2016 # backticked tag references are literal text
-  printf 'Read it and follow its `<agent_base>` in full — it is the absolute rule set for this agent; `<subagent_contract>` prevails only on your channel to the user.\n'
-}
-
-wrapper_body_md() {
-  # usage: wrapper_body_md <file> -- body after the frontmatter's closing
-  # "---", with the one blank separator line dropped.
-  awk '
-    NR == 1 && $0 == "---" { infm = 1; next }
-    infm && $0 == "---" { infm = 0; started = 1; skip = 1; next }
-    started && skip && $0 == "" { skip = 0; next }
-    started { skip = 0; print }
-  ' "$1"
-}
-
-wrapper_body_toml() {
-  # usage: wrapper_body_toml <file> -- the developer_instructions value,
-  # a """-delimited multi-line basic string.
-  awk '
-    /^developer_instructions = """$/ { infm = 1; next }
-    infm && $0 == "\"\"\"" { infm = 0; exit }
-    infm { print }
-  ' "$1"
-}
-
-check_wrapper_body() {
-  local a h f ext actual expected
-  for a in $(agent_names); do
-    expected=$(canonical_body "$a")
-    for h in $(harnesses); do
-      f=$(wrapper_path "$h" "$a")
-      [ -f "$f" ] || continue
-      ext=$(wrapper_ext "$h")
-      if [ "$ext" = toml ]; then
-        actual=$(wrapper_body_toml "$f")
-      else
-        actual=$(wrapper_body_md "$f")
-      fi
-      if [ "$actual" = "$expected" ]; then
-        ok "wrapper body matches canonical text: $f"
-      else
-        warn "wrapper body does not match canonical text: $f"
-      fi
-    done
-  done
-}
-
-# model_effort_for lives in scripts/shell/lib.sh next to model_for.
-
-check_model_parity() {
-  # category_for lives in scripts/shell/lib.sh — the category the base claims.
-  local h a f val expected cat
-  for h in $(harnesses); do
-    for a in $(agent_names); do
-      f=$(wrapper_path "$h" "$a")
-      [ -f "$f" ] || continue
-      cat=$(category_for "$a")
-      expected=$(model_for "$h" "$cat") || { warn "no usable MODELS.csv model row for $h/$cat: $f"; continue; }
-      case "$h" in
-        grok)
-          if in_list model "$(yaml_frontmatter_keys "$f" | tr '\n' ' ')"; then
-            warn "grok wrapper declares model: (Grok ignores it; pinned via ~/.grok/config.toml at install time): $f"
-          else
-            ok "grok wrapper declares no model key: $f"
-          fi
-          ;;
-        codex)
-          val=$(toml_field_value "$f" model)
-          if [ "$val" = "$expected" ]; then ok "model parity: $f ($val)"
-          else warn "model mismatch: $f (expected: $expected, got: '$val')"; fi
-          ;;
-        copilot)
-          val=$(yaml_frontmatter_value "$f" model)
-          case "$val" in
-            \[*) warn "copilot model: must be a string, not an array: $f (got: '$val')" ;;
-            *)
-              if [ "$val" = "$expected" ]; then ok "model parity: $f ($val)"
-              else warn "model mismatch: $f (expected: $expected, got: '$val')"; fi
-              ;;
-          esac
-          ;;
-        *)
-          val=$(yaml_frontmatter_value "$f" model)
-          if [ "$val" = "$expected" ]; then ok "model parity: $f ($val)"
-          else warn "model mismatch: $f (expected: $expected, got: '$val')"; fi
-          ;;
-      esac
-    done
-  done
-}
-
-check_effort_pinning() {
-  local a cat f eff val
-  for a in $(agent_names); do
-    cat=$(category_for "$a")
-    f=$(wrapper_path claude-code "$a")
-    if [ -f "$f" ]; then
-      eff=$(model_effort_for claude-code "$cat")
-      if [ -n "$eff" ]; then
-        val=$(yaml_frontmatter_value "$f" effort)
-        if [ "$val" = "$eff" ]; then ok "effort pinned: $f ($eff)"
-        else warn "effort not pinned or mismatched: $f (expected: $eff, got: '$val')"; fi
-      fi
-    fi
-    f=$(wrapper_path codex "$a")
-    if [ -f "$f" ]; then
-      eff=$(model_effort_for codex "$cat")
-      if [ -n "$eff" ]; then
-        val=$(toml_field_value "$f" model_reasoning_effort)
-        if [ "$val" = "$eff" ]; then ok "effort pinned: $f ($eff)"
-        else warn "effort not pinned or mismatched: $f (expected: $eff, got: '$val')"; fi
-      fi
-    fi
-  done
-}
-
-check_description_parity() {
-  local a h f val ext first
-  for a in $(agent_names); do
-    first=""
-    for h in $(harnesses); do
-      f=$(wrapper_path "$h" "$a")
-      [ -f "$f" ] || continue
-      ext=$(wrapper_ext "$h")
-      if [ "$ext" = toml ]; then
-        val=$(toml_field_value "$f" description)
-      else
-        if [ "$h" = grok ] && grep -Eq '^[[:space:]]*description:[[:space:]]+[^[:space:]"'\''].*: ' "$f"; then
-          warn "unquoted colon in Grok YAML description (must be enclosed in double quotes): $f"
-        fi
-        val=$(yaml_frontmatter_value "$f" description)
-      fi
-      if [ -z "$first" ]; then
-        first="$val"
-        ok "description baseline set: $f"
-      elif [ "$val" = "$first" ]; then
-        ok "description matches baseline: $f"
-      else
-        warn "description diverges across wrappers for $a: $f"
-      fi
-    done
-  done
-}
-
-check_wrapper_templates() {
-  local h ext f
-  for h in $(harnesses); do
-    ext=$(wrapper_ext "$h")
-    f="$AI_TOOLS/templates/wrappers/$h.$ext"
-    if [ -f "$f" ]; then
-      ok "wrapper template present: $f"
+check_skill_agent_field() {
+  # rule 6: Agent: value matches implementer usage (<implementer_job> plus a
+  # structural executor="implementer" template), allowed only in
+  # IMPLEMENTER_SKILLS.
+  local d name f val agent job impl expect
+  for d in "$AI_TOOLS"/skills/*-ai-tools/; do
+    [ -d "$d" ] || continue
+    name=$(basename "$d"); f="${d}SKILL.md"
+    [ -f "$f" ] || continue
+    val=$(yaml_frontmatter_folded_value "$f" description)
+    case "$val" in *"Agent:"*) ;; *) continue ;; esac  # reported by check_skill_description_content
+    agent=$(printf '%s\n' "$val" | awk '{ sub(/.*Agent:[ \t]*/, ""); sub(/[ \t.]+$/, ""); print }')
+    case "$agent" in
+      "$AGENT_SESSION") expect=0 ;;
+      "$AGENT_IMPLEMENTER") expect=1 ;;
+      *) warn "skill description has invalid Agent: '$agent' (rule 6): $f"; continue ;;
+    esac
+    job=0; xml_body "$f" | grep -q '<implementer_job>' && job=1
+    impl=0; xml_body "$f" | grep -q '<template [^>]*executor="implementer"' && impl=1
+    if [ "$job" != "$expect" ] || [ "$impl" != "$expect" ]; then
+      warn "skill Agent: '$agent' disagrees with <implementer_job> ($job) or implementer templates ($impl) (rule 6): $f"
+    elif [ "$expect" = 1 ] && ! in_list "$name" "$IMPLEMENTER_SKILLS"; then
+      warn "skill spawns implementers outside $IMPLEMENTER_SKILLS (rule 6): $f"
     else
-      warn "missing wrapper template for harness $h: $f"
-    fi
-  done
-}
-
-check_models_row_coverage() {
-  local h k rows
-  rows=$(awk -F',' '
-    $1 == "harness" { next }
-    /^[[:space:]]*$/ { next }
-    {
-      k = $1
-      gsub(/^[[:space:]]+|[[:space:]]+$/, "", k)
-      if (k ~ /^[a-z0-9-]+$/) print k
-    }
-  ' "$MODEL_TABLE" 2>/dev/null)
-  for h in $(harnesses); do
-    if in_list "$h" "$(echo "$rows" | tr '\n' ' ')"; then
-      ok "MODELS.csv model row present: $h"
-    else
-      warn "agents/$h/ has no MODELS.csv model row"
-    fi
-  done
-  for k in $rows; do
-    if [ -d "$AI_TOOLS/agents/$k" ]; then
-      ok "MODELS.csv model row has a wrapper directory: $k"
-    else
-      warn "MODELS.csv model row without agents/ directory: $k"
+      ok "skill Agent: matches implementer usage: $f ($agent)"
     fi
   done
 }
@@ -739,23 +448,27 @@ check_instructions_cap() {
   fi
 }
 
-check_wrapper_cap() {
-  local h f count cap=1000 max=0 maxf=""
-  for h in $(harnesses); do
-    for f in "$AI_TOOLS/agents/$h"/*; do
-      [ -f "$f" ] || continue
-      count=$(char_count "$f")
-      if [ "$count" -le "$cap" ]; then ok "wrapper within cap: $f ($count/$cap)"
-      else warn "wrapper exceeds $cap chars: $f ($count)"; fi
-      if [ "$count" -gt "$max" ]; then max=$count; maxf=$f; fi
-    done
-  done
-  [ -n "$maxf" ] && ok "largest wrapper: $maxf ($max/$cap, headroom $((cap - max)))"
+check_instructions_headings() {
+  # rule 3: after its title and short preamble, USER-AGENTS.md's body is
+  # semantic XML, not markdown sub-headings.
+  local f hits line
+  f="$AI_TOOLS/USER-AGENTS.md"
+  if [ ! -f "$f" ]; then warn "missing: $f"; return; fi
+  hits=$(grep -nE '^#{2,} ' "$f" || true)
+  if [ -z "$hits" ]; then
+    ok "USER-AGENTS.md has no ## sub-heading: $f"
+  else
+    while IFS=: read -r line _; do
+      warn "USER-AGENTS.md has a ## sub-heading at line $line (rule 3): $f"
+    done <<EOF
+$hits
+EOF
+  fi
 }
 
 check_line_endings() {
   # Reads git's own .gitattributes resolution via `ls-files --eol` rather
-  # than reimplementing it (rule 28): index side must be lf, working-tree
+  # than reimplementing it (rule 21): index side must be lf, working-tree
   # side and the declared attribute must match the expected style per path.
   local line path fields idx work attr expected
   while IFS= read -r line; do
@@ -790,7 +503,7 @@ check_executable_bits() {
 
 check_no_binaries() {
   local f p
-  for p in $(git -C "$AI_TOOLS" ls-files agents skills scripts); do
+  for p in $(git -C "$AI_TOOLS" ls-files skills scripts); do
     f="$AI_TOOLS/$p"
     [ -f "$f" ] || continue
     if [ ! -s "$f" ] || grep -Iq . "$f" 2>/dev/null; then
@@ -801,17 +514,15 @@ check_no_binaries() {
   done
 }
 
-# --- Check: semantic XML grammar (rule 16) -----------------------------------
+# --- Check: semantic XML grammar (rule 9) -----------------------------------
 # The vocabulary of structural tags (README, "Semantic XML grammar"). A tag
 # outside it, outside <input>, is a finding: register a new tag in the README
 # table and here in the same commit.
-XML_VOCAB="user_instructions system_overview routing_gate trigger_cases case skill_offer offer_message handling response dispatch_protocol agents worker language_rules chat disk user_interaction fallback security_guardrails subagent_contract governance brief user_channel questions approvals stake_disclaimers reporting payload channel delegation agent_base identity role_workflow role_scope user_decisions assignment_rules execution_rules skill overview session_workflow step dispatch_templates template job input instructions constraints constraint status_protocol states state return_protocol signal selection_method plan_file_format structure boundaries rule"
+XML_VOCAB="user_instructions system_overview routing_gate trigger_cases case skill_offer offer_message handling response execution_protocol language_rules chat disk user_interaction fallback security_guardrails skill overview session_workflow step dispatch_templates template job input instructions constraints constraint status_protocol states state return_protocol signal plan_file_format structure boundaries rule skill_question skill_options default implementer_job"
 
 xml_files() {
   local f
   echo "$AI_TOOLS/USER-AGENTS.md"
-  echo "$AI_TOOLS/agents/SUBAGENT-CONTRACT.md"
-  for f in "$AI_TOOLS"/agents/*-ai-tools.md; do [ -f "$f" ] && echo "$f"; done
   for f in "$AI_TOOLS"/skills/*/SKILL.md; do [ -f "$f" ] && echo "$f"; done
 }
 
@@ -833,10 +544,8 @@ xml_file_for() {
   # or nothing when the word before the backtick is not a qualifier.
   case "$1" in
     USER-AGENTS) echo "$AI_TOOLS/USER-AGENTS.md" ;;
-    SUBAGENT-CONTRACT) echo "$AI_TOOLS/agents/SUBAGENT-CONTRACT.md" ;;
     *-ai-tools)
-      if [ -f "$AI_TOOLS/skills/$1/SKILL.md" ]; then echo "$AI_TOOLS/skills/$1/SKILL.md"
-      elif [ -f "$AI_TOOLS/agents/$1.md" ]; then echo "$AI_TOOLS/agents/$1.md"; fi
+      if [ -f "$AI_TOOLS/skills/$1/SKILL.md" ]; then echo "$AI_TOOLS/skills/$1/SKILL.md"; fi
       ;;
   esac
 }
@@ -852,18 +561,37 @@ xml_references() {
       pre = substr(line, 1, start - 1)
       q = ""
       if (match(pre, /[A-Za-z-]+ $/)) q = substr(pre, RSTART, RLENGTH - 1)
-      print q "|" ref
+      n = split(ref, parts, /> +</)
+      for (i = 1; i <= n; i++) print q "|" parts[i]
       line = substr(line, start + len)
     }
   }' "$1"
 }
 
+valid_executors() {
+  # usage: valid_executors -- space-separated executor names that are both
+  # one of the three known executor kinds and have a matching <rule id> inside
+  # USER-AGENTS.md's <execution_protocol> (rule 9). A skill <template> whose
+  # executor is not in this set is a lint finding, even if it names one of the
+  # three known kinds by spelling alone.
+  local rule_ids e out=""
+  rule_ids=$(awk '/<execution_protocol>/{p=1} p&&/<\/execution_protocol>/{p=0} p' "$AI_TOOLS/USER-AGENTS.md" \
+    | grep -oE '<rule id="[a-z0-9-]+"' | sed -E 's/<rule id="([a-z0-9-]+)"/\1/' )
+  for e in default-worker implementer session-subagent; do
+    if in_list "$e" "$(echo "$rule_ids" | tr '\n' ' ')"; then out="$out $e"; fi
+  done
+  echo "${out# }"
+}
+
 check_xml_grammar() {
-  local f findings line agents val q ref name attr target
-  agents=$(agent_names | tr '\n' ' ')
+  local f findings line val q ref name attr target validexec
+  validexec=$(valid_executors)
   for f in $(xml_files); do
-    findings=$(xml_body "$f" | awk -v vocab="$XML_VOCAB" '
-      BEGIN { n = split(vocab, v, " "); for (i = 1; i <= n; i++) ok[v[i]] = 1 }
+    findings=$(xml_body "$f" | awk -v vocab="$XML_VOCAB" -v validexec="$validexec" '
+      BEGIN {
+        n = split(vocab, v, " "); for (i = 1; i <= n; i++) ok[v[i]] = 1
+        m = split(validexec, ve, " "); for (i = 1; i <= m; i++) okexec[ve[i]] = 1
+      }
       {
         line = $0
         while (match(line, /<[^<>]*>/)) {
@@ -891,7 +619,24 @@ check_xml_grammar() {
           }
           if (name == "template") {
             if (tok !~ / role="[a-z0-9-]+"/) print "<template> without role at line " NR
-            if (tok !~ / agent="[a-z0-9-]+"/) print "<template> without agent at line " NR
+            if (tok ~ / agent="/) print "<template> with retired agent attribute at line " NR
+            if (match(tok, / executor="[a-z0-9-]+"/)) {
+              exec_val = substr(tok, RSTART, RLENGTH)
+              sub(/^ executor="/, "", exec_val); sub(/"$/, "", exec_val)
+              if (!(exec_val in okexec)) print "<template> without a valid executor at line " NR
+            } else print "<template> without a valid executor at line " NR
+          }
+          if (name == "step") {
+            if (tok !~ / id="[0-9]+"/) print "<step> without a numeric id at line " NR
+          }
+          if (name == "case") {
+            if (tok !~ / id="[^"]+"/) print "<case> without its id at line " NR
+          }
+          if (name == "response") {
+            if (tok !~ / type="[^"]+"/) print "<response> without its type at line " NR
+          }
+          if (name == "signal" || name == "state") {
+            if (tok !~ / code="[^"]+"/) print "<" name "> without its code at line " NR
           }
         }
         if (line ~ /</) print "stray < at line " NR
@@ -932,11 +677,6 @@ $findings
 EOF
     fi
 
-    for val in $(xml_body "$f" | grep -o '<template role="[^"]*" agent="[^"]*"' | sed 's/.*agent="//; s/"$//'); do
-      if in_list "$val" "$agents"; then ok "template agent is a shipped agent: $val ($f)"
-      else warn "template agent is not a shipped agent: '$val' in $f"; fi
-    done
-
     while IFS='|' read -r q ref; do
       [ -n "$ref" ] || continue
       name=${ref%% *}
@@ -969,7 +709,88 @@ EOF
   done
 }
 
-# --- Check: dev/tmp untracked (rule 29) ---------------------------------------
+# --- Check: rule anchor citations (rule 9) ----------------------------------
+# Prose citations of this README use section anchors, never rule numbers.
+
+check_rule_anchor_citations() {
+  local f hits line
+  for f in "$AI_TOOLS/USER-AGENTS.md" "$AI_TOOLS"/skills/*/SKILL.md; do
+    [ -f "$f" ] || continue
+    hits=$(grep -nE '(^|[^A-Za-z])[Rr]ules? [0-9]' "$f" || true)
+    if [ -z "$hits" ]; then
+      ok "cites no README rule number (rule 9): $f"
+    else
+      while IFS=: read -r line _; do
+        warn "cites a README rule number instead of a section anchor (rule 9): $f:$line"
+      done <<EOF
+$hits
+EOF
+    fi
+  done
+}
+
+# --- Check: vocabulary parity (rule 9) ---------------------------------------
+# The README "Semantic XML grammar" table and XML_VOCAB register the same
+# tags in the same commit.
+
+check_vocab_parity() {
+  local readme_tags lint_tags findings n
+  readme_tags=$(awk '
+    /^Vocabulary\./ { invoc = 1; next }
+    invoc && /^#/ { exit }
+    invoc && /^\| `</ { print }
+  ' "$AI_TOOLS/README.md" | grep -oE '`<[a-z_]+' | sed 's/`<//' | sort -u)
+  lint_tags=$(printf '%s\n' "$XML_VOCAB" | tr ' ' '\n' | sort -u)
+  findings=$(
+    {
+      printf '%s\n' "$readme_tags" | awk '{ print $0 "\tR" }'
+      printf '%s\n' "$lint_tags" | awk '{ print $0 "\tL" }'
+    } | awk -F'\t' '
+      { c[$1]++; s[$1] = s[$1] $2 }
+      END {
+        for (t in c) if (c[t] == 1) {
+          if (s[t] == "R") print t " missing from XML_VOCAB"
+          else print t " missing from README table"
+        }
+      }
+    ' | sort
+  )
+  n=$(printf '%s\n' "$lint_tags" | grep -c .)
+  if [ -z "$findings" ]; then
+    ok "README vocabulary table matches XML_VOCAB ($n tags)"
+  else
+    while IFS= read -r line; do warn "vocabulary parity: $line (rule 9)"; done <<EOF
+$findings
+EOF
+  fi
+}
+
+# --- Check: spawn protocol citation (rule 9) --------------------------------
+# Every skill that spawns a template cites the centralized execution protocol
+# instead of restating it, and the harness native subagent API list lives
+# only in USER-AGENTS.md.
+
+check_spawn_protocol_citation() {
+  local f
+  for f in "$AI_TOOLS"/skills/*/SKILL.md; do
+    [ -f "$f" ] || continue
+    if grep -q '<template' "$f"; then
+      # shellcheck disable=SC2016 # literal backticked citation text, not command substitution
+      if grep -qF 'USER-AGENTS `<execution_protocol>`' "$f"; then
+        ok "cites USER-AGENTS execution_protocol: $f"
+      else
+        warn "SKILL.md has a <template> but does not cite USER-AGENTS \`<execution_protocol>\`: $f"
+      fi
+    fi
+    if grep -qF 'Copilot runSubagent' "$f"; then
+      warn "SKILL.md repeats the harness native subagent API list (belongs only in USER-AGENTS.md): $f"
+    else
+      ok "no duplicated native subagent API list: $f"
+    fi
+  done
+}
+
+# --- Check: dev/tmp untracked (rule 22) ---------------------------------------
 
 check_dev_tmp_untracked() {
   local tracked
@@ -977,7 +798,7 @@ check_dev_tmp_untracked() {
   if [ -z "$tracked" ]; then
     ok "dev/tmp untracked: no tracked files under dev/tmp"
   else
-    warn "tracked file(s) under dev/tmp (rule 29): $(echo "$tracked" | tr '\n' ' ')"
+    warn "tracked file(s) under dev/tmp (rule 22): $(echo "$tracked" | tr '\n' ' ')"
   fi
 }
 
@@ -1006,7 +827,7 @@ check_version_bump() {
     skip "version bump check needs --base <ref> (the lint workflow supplies it)"
     return
   fi
-  changed=$(git -C "$AI_TOOLS" diff --name-only "$base...HEAD" -- agents skills scripts USER-AGENTS.md MODELS.csv 2>/dev/null)
+  changed=$(git -C "$AI_TOOLS" diff --name-only "$base...HEAD" -- skills scripts USER-AGENTS.md 2>/dev/null)
   if [ -z "$changed" ]; then
     ok "no shipped content changed since $base: version bump not required"
     return
@@ -1020,29 +841,152 @@ check_version_bump() {
   fi
 }
 
+# --- Check: rule citations resolve (rule 1) ----------------------------------
+# README rules are numbered 1..N without gaps, and every rule-number citation
+# in the tracked docs and scripts below names a rule that exists.
+
+check_rule_citations() {
+  local readme="$AI_TOOLS/README.md" section numbers n pairs k num
+  local pattern files f matches line match nums tok out_of_range clean
+
+  section=$(awk '
+    /^## Repository rules$/ { insec = 1; next }
+    insec && /^## / { exit }
+    insec { print }
+  ' "$readme")
+  if [ -z "$section" ]; then
+    warn "README.md has no '## Repository rules' section (rule 1)"
+    return
+  fi
+
+  numbers=$(printf '%s\n' "$section" | grep -E '^[0-9]+\. ' | sed -E 's/^([0-9]+)\..*/\1/')
+  n=$(printf '%s\n' "$numbers" | grep -c '^[0-9]' || true)
+
+  clean=1
+  pairs=$(printf '%s\n' "$numbers" | awk '{ k++; if ($1 + 0 != k) print k " " $1 }')
+  if [ -n "$pairs" ]; then
+    clean=0
+    while read -r k num; do
+      warn "README rule numbering: position $k reads \"$num.\", expected \"$k.\" (rule 1)"
+    done <<EOF
+$pairs
+EOF
+  fi
+
+  # [Rr] and [s] each sit in their own bracket expression so this literal
+  # pattern text never itself spells a bare word run: wherever lint.sh's own
+  # source quotes it below, the check cannot cite itself out of range.
+  pattern='[Rr]ule[s]? [0-9]+(–[0-9]+|-[0-9]+)?(, [0-9]+(–[0-9]+|-[0-9]+)?)*'
+
+  files=$(git -C "$AI_TOOLS" ls-files -- \
+    README.md ROADMAP.md docs/USAGE.md .gitattributes \
+    scripts/lint.sh scripts/test.sh 'scripts/test/*.sh' 'scripts/shell/*.sh')
+  for f in $files; do
+    matches=$(grep -noE "$pattern" "$AI_TOOLS/$f" || true)
+    [ -n "$matches" ] || continue
+    while IFS=: read -r line match; do
+      [ -n "$match" ] || continue
+      nums=$(printf '%s' "$match" | sed -E 's/[^0-9]/ /g')
+      out_of_range=0
+      for tok in $nums; do
+        if [ "$tok" -lt 1 ] || [ "$tok" -gt "$n" ]; then out_of_range=1; fi
+      done
+      if [ "$out_of_range" = 1 ]; then
+        clean=0
+        warn "rule citation out of range (1-$n): $f:$line: $match"
+      fi
+    done <<EOF
+$matches
+EOF
+  done
+
+  [ "$clean" = 1 ] && ok "rule citations resolve to README rules 1-$n"
+}
+
+# --- Check: harness table parity (rule 19) -----------------------------------
+# lib.sh's ALL_HARNESSES, skills_root, and instructions_dest match the README
+# Scope bullet's harness keys and the Supported harnesses table's paths.
+
+check_harness_table() {
+  local readme="$AI_TOOLS/README.md"
+  local scope_line sect readme_keys lib_keys findings clean h r i n line
+
+  scope_line=$(grep -m1 'harness keys (' "$readme")
+  # shellcheck disable=SC2016 # backtick-quoted token pattern, not command substitution
+  readme_keys=$(printf '%s\n' "$scope_line" | grep -oE '`[a-z-]+`' | tr -d '`' | sort)
+  lib_keys=$(printf '%s\n' "$ALL_HARNESSES" | tr ' ' '\n' | sort)
+
+  clean=1
+  findings=$(
+    {
+      printf '%s\n' "$readme_keys" | awk 'NF { print $0 "\tR" }'
+      printf '%s\n' "$lib_keys" | awk 'NF { print $0 "\tL" }'
+    } | awk -F'\t' '
+      { c[$1]++; s[$1] = s[$1] $2 }
+      END {
+        for (t in c) if (c[t] == 1) {
+          if (s[t] == "R") print t " missing from lib.sh ALL_HARNESSES"
+          else print t " missing from README Scope bullet"
+        }
+      }
+    ' | sort
+  )
+  if [ -n "$findings" ]; then
+    clean=0
+    while IFS= read -r line; do warn "harness key mismatch: $line (rule 19)"; done <<EOF
+$findings
+EOF
+  fi
+
+  sect=$(awk '
+    /^## Supported harnesses$/ { insec = 1; next }
+    insec && /^## / { exit }
+    insec { print }
+  ' "$readme")
+
+  for h in $ALL_HARNESSES; do
+    # shellcheck disable=SC2016 # literal '$HOME' text: skills_root/instructions_dest
+    # echo it unexpanded so it matches the README's literal `$HOME/...` paths.
+    r=$(HOME='$HOME'; skills_root "$h")
+    # shellcheck disable=SC2016
+    i=$(HOME='$HOME'; instructions_dest "$h")
+    if printf '%s' "$sect" | grep -qF "\`$r/\`"; then
+      :
+    else
+      clean=0
+      warn "harness $h: Supported harnesses table missing skills root \`$r/\` (rule 19)"
+    fi
+    if [ -n "$i" ] && ! printf '%s' "$sect" | grep -qF "\`$i\`"; then
+      clean=0
+      warn "harness $h: Supported harnesses table missing instructions path \`$i\` (rule 19)"
+    fi
+  done
+
+  n=$(printf '%s\n' "$lib_keys" | grep -c .)
+  [ "$clean" = 1 ] && ok "Supported harnesses match lib.sh ($n harnesses)"
+}
+
 # --- Run -----------------------------------------------------------------------
 
-check_wrapper_coverage
 check_naming
 check_skill_frontmatter
 check_skill_name_match
 check_skill_layout
-check_agent_layout
 check_skill_description_cap
 check_skill_description_content
-check_wrapper_body
-check_model_parity
-check_effort_pinning
-check_description_parity
-check_wrapper_templates
-check_models_row_coverage
+check_skill_agent_field
 check_instructions_cap
-check_wrapper_cap
+check_instructions_headings
 check_line_endings
 check_executable_bits
 check_no_binaries
 check_dev_tmp_untracked
 check_xml_grammar
+check_vocab_parity
+check_rule_anchor_citations
+check_spawn_protocol_citation
 check_version_bump
+check_rule_citations
+check_harness_table
 
 finish

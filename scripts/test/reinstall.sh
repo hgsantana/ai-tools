@@ -1,5 +1,5 @@
 # shellcheck shell=bash
-# Extra update.sh coverage — proves README rules 20-22, 27 against scripts/shell/update.sh:
+# Extra update.sh coverage — proves README rules 13-15, 20 against scripts/shell/update.sh:
 # a full removal and installation pass produces the same state as a fresh
 # installation, sweeps stale links, keeps a locally modified copy, refuses to
 # discard local clone work without --discard-local, runs the fresh-clone
@@ -54,7 +54,7 @@ case_reinstall_stale_link_removed() {
   t_run "$root" "$root/home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
   t_assert_exit 0
   t_assert_absent "$T_STALE_LINK_PATH"
-  t_assert_regular_file "$root/home/.claude/agents/planner-ai-tools.md"
+  t_assert_regular_directory "$root/home/.claude/skills/plan-ai-tools"
 
   t_cleanup "$root"
 }
@@ -69,7 +69,7 @@ case_reinstall_modified_copy_kept() {
   t_run "$root" "$root/home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
   t_assert_exit 2
   t_assert_line "SKIP: copy was modified locally, user work preserved: $T_MODIFIED_COPY_PATH"
-  if grep -qF 'local edit that matches no revision' "$T_MODIFIED_COPY_PATH"; then
+  if grep -qF 'local edit that matches no revision' "$T_MODIFIED_COPY_PATH/SKILL.md"; then
     ok "$T_CASE: modified copy survived the reinstall"
   else
     warn "$T_CASE: modified copy lost its local edit across reinstall"
@@ -147,9 +147,9 @@ case_reinstall_overwrite_modified_copy() {
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code --overwrite
   t_assert_exit 0
-  t_assert_regular_file "$T_MODIFIED_COPY_PATH"
-  t_assert_same_content "$T_MODIFIED_COPY_PATH" "$root/home/.ai-tools/agents/claude-code/implementer-ai-tools.md"
-  if grep -qF 'local edit that matches no revision' "$T_MODIFIED_COPY_PATH"; then
+  t_assert_regular_directory "$T_MODIFIED_COPY_PATH"
+  t_assert_same_content "$T_MODIFIED_COPY_PATH" "$root/home/.ai-tools/skills/dev-ai-tools"
+  if grep -qF 'local edit that matches no revision' "$T_MODIFIED_COPY_PATH/SKILL.md"; then
     warn "$T_CASE: --overwrite preserved a conflicting local edit"
   else
     ok "$T_CASE: --overwrite replaced the conflicting copy"
@@ -166,12 +166,12 @@ case_reinstall_all_harnesses() {
 
   t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses all
   t_assert_exit 0
-  t_assert_regular_file "$home/.claude/agents/planner-ai-tools.md"
-  t_assert_regular_file "$home/.grok/agents/planner-ai-tools.md"
-  t_assert_regular_file "$home/.codex/agents/planner-ai-tools.toml"
-  t_assert_regular_file "$home/.copilot/agents/planner-ai-tools.agent.md"
-  t_assert_regular_file "$home/.cursor/agents/planner-ai-tools.md"
-  t_assert_regular_file "$home/.gemini/config/agents/planner-ai-tools.md"
+  t_assert_regular_directory "$home/.claude/skills/plan-ai-tools"
+  t_assert_regular_directory "$home/.grok/skills/plan-ai-tools"
+  t_assert_regular_directory "$home/.codex/skills/plan-ai-tools"
+  t_assert_regular_directory "$home/.copilot/skills/plan-ai-tools"
+  t_assert_regular_directory "$home/.cursor/skills/plan-ai-tools"
+  t_assert_regular_directory "$home/.gemini/config/skills/plan-ai-tools"
 
   t_cleanup "$root"
 }
