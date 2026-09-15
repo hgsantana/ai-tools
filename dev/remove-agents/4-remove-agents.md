@@ -65,3 +65,23 @@ Clone validation stops requiring `MODELS.csv` and `agents/`. The README sections
 - Requires stages: 3
 
 ## Implementation log
+
+- `git rm -r agents templates MODELS.csv scripts/aa-metrics.sh scripts/harness-models.sh` staged 32 deletions (21 files under `agents/`, 7 under `templates/wrappers/`, `MODELS.csv`, `scripts/aa-metrics.sh`, `scripts/harness-models.sh`). Not committed, per constraints.
+- `scripts/shell/lib.sh`: `ensure_clone` validation changed to `{ [ -f "$AI_TOOLS/USER-AGENTS.md" ] && [ -d "$AI_TOOLS/skills" ]; }`; `require_clone` changed to `{ [ -d "$AI_TOOLS/.git" ] && [ -f "$AI_TOOLS/USER-AGENTS.md" ] && [ -d "$AI_TOOLS/skills" ]; }`. Fatal messages left verbatim.
+- `README.md`:
+  - Deleted the Overview paragraph starting "[`MODELS.csv`](MODELS.csv) is a CSV of model and effort pins…".
+  - Contents table: removed rows for `MODELS.csv`, the three `agents/*-ai-tools.md` bases, `agents/SUBAGENT-CONTRACT.md`, and `agents/<harness>/`; reworded the `scripts/` row to "`scripts/shell/` install processes ([Scripts](#scripts); rules 25–28); `lint.sh`, `test.sh` ([Development checks](#development-checks)). Windows: WSL or Git Bash".
+  - Deleted the whole "### Model selection and wrapper authoring" section (both "#### MODELS.csv format" and "#### Refreshing the models" subsections) through "#### Wrapper templates and frontmatter standards", ending at the paragraph "A skill carries frontmatter (rule 9)…".
+  - "Supported harnesses": deleted the "Change the session model (not the wrapper pin):" line and its table.
+  - Left the rule list (rules 5, 6, 8, 10–13 and their citations, including rule 6's now-dangling link to `#model-selection-and-wrapper-authoring` and rules 11/12 citing `MODELS.csv`) untouched for stage 5, as instructed.
+- Commands run (all from repo root, after staging the removals):
+  - `test ! -e agents && test ! -e templates && test ! -e MODELS.csv && test ! -e scripts/aa-metrics.sh && test ! -e scripts/harness-models.sh` → pass.
+  - `git grep -nE 'MODELS\.csv|agents/|templates/wrappers|aa-metrics|harness-models|SUBAGENT-CONTRACT' -- scripts .github .gitattributes` → no output (grep exit 1, i.e. no matches).
+  - `bash scripts/test.sh` → exit 0, `307 ok, 0 skipped, 0 warnings` (was 361 ok on the pre-stage-3 baseline; the drop reflects stage 3's move of agent-clone fixtures to skill fixtures, not a regression here).
+  - `bash scripts/lint.sh` → exit 0, `340 ok, 1 skipped, 0 warnings` (the 1 skip is the version-bump check, which needs `--base`).
+  - `shellcheck -x -P scripts/shell -P scripts/test scripts/shell/*.sh scripts/*.sh scripts/test/*.sh` → exit 1, single finding `SC1071` on `scripts/shell/install-zsh.sh` (pre-existing, matches baseline). `scripts/*.sh` now globs only `lint.sh` and `test.sh`.
+  - `grep -n 'model-selection-and-wrapper-authoring\|#models\|MODELS.csv' README.md` → 3 hits, all rule-list lines left for stage 5: rule 6 (line 61, cites `#model-selection-and-wrapper-authoring`), rule 11 (line 66, cites `MODELS.csv`), rule 12 (line 67, cites `MODELS.csv`).
+  - `git diff --quiet master -- skills USER-AGENTS.md` → succeeds (both byte-identical to master).
+- Set stage 4 status to `V` in `dev/remove-agents/0-remove-agents.md`.
+
+Coordinator acceptance note: evidence in `dev/tmp/remove-agents-stage4-output.log`, with exit codes rechecked directly because the verifier reported some incorrectly. 32 paths deleted (agents/ 22, templates/ 7, MODELS.csv, both model scripts). The git grep over scripts, .github, and .gitattributes found nothing (exit 1). test.sh 307 ok; lint 340 ok / 0 warnings; shellcheck only SC1071 on install-zsh.sh. README grep hits only rule-list items 6, 11, and 12 (deferred to stage 5). No change to lint.sh, scripts/test, .github, skills, or USER-AGENTS.md; the clone-validation test cases pass.

@@ -16,22 +16,14 @@ How it operates:
 4. **Session-first with model-tiered workers.** The three agents (`planner-ai-tools`, `implementer-ai-tools`, `mechanical-ai-tools`) are model-tiered workers. Skills provide session-directed workflows in semantic XML. The host session orchestrates execution, interacts with the user, and coordinates git delivery, delegating compute-heavy or specialized tasks to model-tiered workers via explicit dispatch templates.
 5. **Frontmatter only in the host session.** Harnesses keep skill `name` and `description` in the skill list without loading the body. The host session offers skills from that in-memory description and does not read the skill file. The spawned agent reads the Workflow.
 
-[`MODELS.csv`](MODELS.csv) is a CSV of model and effort pins. Authoring, installation, and lint read it; harnesses never load it. This README defines the CSV and how to fill it at [Model selection and wrapper authoring](#model-selection-and-wrapper-authoring).
-
 ### Contents
 
 | Path | What it is |
 |---|---|
 | [`USER-AGENTS.md`](USER-AGENTS.md) | User-wide routing after install: skill-offer gate, spawn rules, language, and security. Copied to each harness's global instructions destination. Workflows live in skills and agent bases |
-| [`MODELS.csv`](MODELS.csv) | CSV of per-harness model and effort pins. Not copied into harnesses; wrappers and install-time config carry the pins |
 | [`docs/USAGE.md`](docs/USAGE.md) | Harness-agnostic invocation guide for every shipped skill and the three spawn-only agents |
-| [`agents/planner-ai-tools.md`](agents/planner-ai-tools.md) | `planner-ai-tools` — decomposes, designs, owns acceptance, and delegates production code. Contains type rules in semantic XML; the brief defines the job |
-| [`agents/implementer-ai-tools.md`](agents/implementer-ai-tools.md) | `implementer-ai-tools` — writes and edits code for one assignment. Type rules in semantic XML; the brief is the job |
-| [`agents/mechanical-ai-tools.md`](agents/mechanical-ai-tools.md) | `mechanical-ai-tools` — executes specified patches and renames, runs builds and tests, and collects evidence. Type rules in semantic XML; the brief defines the job |
-| [`agents/SUBAGENT-CONTRACT.md`](agents/SUBAGENT-CONTRACT.md) | Shared spawned-subagent contract in semantic XML: brief, user channel, report, model pin, spawning, and type boundaries. Not installed; read by path |
-| [`agents/<harness>/`](agents/) | One wrapper per agent: header pin, contract pointer, base pointer |
 | [`skills/`](skills/) | Ten skills, each `skills/<name>/SKILL.md` with semantic XML body. Harnesses list frontmatter; the session executes the workflow and dispatches workers via templates |
-| [`scripts/`](scripts/) | `scripts/shell/` install processes ([Scripts](#scripts); rules 25–28); `lint.sh`, `test.sh`, `harness-models.sh`, `aa-metrics.sh` ([Development checks](#development-checks)). Windows: WSL or Git Bash |
+| [`scripts/`](scripts/) | `scripts/shell/` install processes ([Scripts](#scripts); rules 25–28); `lint.sh`, `test.sh` ([Development checks](#development-checks)). Windows: WSL or Git Bash |
 
 ### Quick start
 
@@ -132,62 +124,6 @@ Vocabulary. A new tag is registered here and in `scripts/lint.sh` (`XML_VOCAB`) 
 31. `dev-ai-tools` runs both forms through one sequence: read the working repository's documentation, record the unit of work on disk, implement in short steps with one commit each, write and run behaviour tests before closing a step, update any documentation the step made stale, archive by copy-then-remove, and commit the archival last. Task mode records the current branch when the user requests the task, then iterates with the user before writing `dev/<slug>.md`; from there both modes run unattended, interrupting only for a blocker, a decision uncovered by implementation, or an approval reserved by the Security rules. The dedicated work branch starts from the recorded base branch, and the pull request targets that same branch: the analysis branch in Plan mode or the request-time branch in Task mode. The branch history is symmetric: the first commit introduces the plan or task file, and the last removes it. `campaign-ai-tools` repeatedly invokes this sequence in campaign mode under user-defined priorities: a fresh planner writes each user-directed multi-stage plan, a different fresh planner executes and judges it, and accepted commits accumulate locally on `improve/<campaign>` without a push or pull request.
 32. **Substance is written to disk; the session carries questions and pointers.** Plans, tasks, and campaigns go where rule 29 puts them. Every report, summary, finding, log, and other transient artifact goes under `dev/tmp/`, created if absent; outside a Git repository, use `$HOME/.ai-tools-plans/tmp/`. `dev/tmp/` is generated state and stays untracked wherever it is created (rule 29): add the ignore rule when the repository lacks it. What reaches the user is the question that needs an answer, the approval that needs a yes, a one-line outcome, and the paths of what was written. Where the harness can open a file in the user's editor, open it rather than pasting its content. Restating on screen what already sits on disk spends the user's context twice and creates a second, diverging copy of the truth. This binds every skill, every agent base, and `USER-AGENTS.md`.
 
-### Model selection and wrapper authoring
-
-[`MODELS.csv`](MODELS.csv) is the authoring and installation lookup: a CSV, one row per harness. Harnesses do not load it; wrappers and install-time config carry the pins. Installation reads it to write Grok's managed `[subagents.models]` block (unreadable CSV → skip and report, never guess). `scripts/lint.sh` checks every wrapper pin against it. Fill and refresh it using the [`/models-ai-tools`](skills/models-ai-tools/SKILL.md) skill. The CSV evaluates model potential rather than a frozen stack.
-
-Family, version, and any official effort come from the harness's official **pricing/models** table for individual plans on that agent surface. Measurements come from [Artificial Analysis (AA)](https://artificialanalysis.ai/) **model** pages: Intelligence Index, Cost per Task, and Time per Task for the model itself. Cost always means AA Cost per Task. Fetch inputs with [`scripts/harness-models.sh`](scripts/harness-models.sh) and [`scripts/aa-metrics.sh`](scripts/aa-metrics.sh), which write CSVs under `dev/tmp/`.
-
-#### MODELS.csv format
-
-CSV text in `MODELS.csv`. Header plus one data row per `agents/<harness>/` directory. Values contain no commas; spaces in a model token are allowed. Empty effort cells mean the wrapper pins the model token only.
-
-```text
-harness,planner,planner_effort,implementer,implementer_effort,mechanical,mechanical_effort
-```
-
-| Column | Used at install / lint |
-|---|---|
-| `harness` | Row key; matches `agents/<harness>/` |
-| `planner`, `implementer`, `mechanical` | Accepted model token (`model:` in the wrapper; Grok `[subagents.models]`) |
-| `planner_effort`, `implementer_effort`, `mechanical_effort` | Official effort token when the family is effort-comparable and the wrapper form can hold it; otherwise empty |
-
-How to change the **session** model lives in [Supported harnesses](#supported-harnesses), not in this CSV.
-
-Wrappers always pin the model token and pin effort only when the matching effort column is non-empty **and** the wrapper form can hold it (`effort:` Claude Code, `model_reasoning_effort` Codex, `[effort=…]` Cursor).
-
-#### Refreshing the models
-
-Run `/models-ai-tools` to rebuild and refresh `MODELS.csv` and keep wrapper headers synchronized. The full reproducible selection methodology, evaluation metrics, thresholds, and fallback rules live in [`skills/models-ai-tools/SKILL.md`](skills/models-ai-tools/SKILL.md). Inputs are gathered via [`scripts/harness-models.sh`](scripts/harness-models.sh) and [`scripts/aa-metrics.sh`](scripts/aa-metrics.sh). The skill displays the proposed table and reports diffs before writing, and updates `MODELS.csv` and affected wrapper headers in the same commit (rule 12).
-
-Pin the role the base names (`You are the **planner** / **implementer** / **mechanical**`) from the `MODELS.csv` in the header. Body (rule 6):
-
-```markdown
-On Windows, %USERPROFILE% replaces $HOME.
-
-You are a spawned subagent: your shared contract is `<subagent_contract>` in `$HOME/.ai-tools/agents/SUBAGENT-CONTRACT.md`.
-Read it and follow it — it governs your channel to the user and your report.
-
-Your base file is `$HOME/.ai-tools/agents/<name>.md`.
-Read it and follow its `<agent_base>` in full — it is the absolute rule set for this agent; `<subagent_contract>` prevails only on your channel to the user.
-```
-
-Codex carries the same text in `developer_instructions`, with Windows backslashes doubled for TOML.
-
-#### Wrapper templates and frontmatter standards
-
-Canonical templates for creating or compiling wrappers live under `templates/wrappers/` (`claude-code.md`, `grok.md`, `codex.toml`, `copilot.agent.md`, `antigravity.md`, `cursor.md`), accompanied by `templates/wrappers/README.md`. When authoring or compiling wrappers:
-
-- **Harness-specific frontmatter standards**:
-  - `grok`: Strict YAML. `description` must be double-quoted (`"..."`) when containing `: ` because Grok's Rust `serde_yaml` parser rejects unquoted scalars with colons. Keys: `name`, `description`, `mcpInheritance: all`. Grok ignores frontmatter `model:`; model pinning is written to `~/.grok/config.toml` under `[subagents.models]` at install time.
-  - `codex`: Strict TOML format (`*.toml`). All string values must be quoted. Keys: `name = "..."`, `description = "..."`, `model = "..."`, optional `model_reasoning_effort = "..."`, with prompt body in `developer_instructions = """..."""`.
-  - `claude-code`: Markdown YAML frontmatter with `name`, `description`, `model`, optional `effort` (when non-empty in `MODELS.csv`).
-  - `copilot`: Extension `*.agent.md` with keys `name`, `description`, `model` (single string scalar, e.g. `"Grok 4.6"`).
-  - `antigravity`: Markdown YAML frontmatter with keys `name`, `description`, `model` (tier token: `inherit`, `flash`, or `pro`).
-  - `cursor`: Markdown YAML frontmatter with keys `name`, `description`, `model`, `readonly: false`, `is_background: false`.
-
-A skill carries frontmatter (rule 9) and a semantic XML body (`<skill>`, `<session_workflow>`, `<dispatch_templates>`). The host session executes the workflow, conducts user alignment and git delivery, and delegates compute tasks to the worker named in the cited `<template>`'s `agent` attribute, passing its populated payload. `USER-AGENTS.md` offers from the in-memory description (the gate). Point at `agents/<name>.md` only as a worker base, never as a skill base. On Windows, `%USERPROFILE%` replaces `$HOME`.
-
 ## Scripts
 
 Every process below is an executable script shared by humans and AIs. Each is idempotent, handles conflicts per item by skipping and reporting, and enforces the [Safety rules](#safety-rules).
@@ -273,17 +209,6 @@ One row per harness: global instructions destination and skills root.
 | GitHub Copilot | `$HOME/.copilot/instructions/ai-tools.instructions.md` | `$HOME/.copilot/skills/` |
 | Google Antigravity | `$HOME/.gemini/GEMINI.md` | `$HOME/.gemini/config/skills/` |
 | Cursor | Not copied — no documented path for global User Rules; Cursor reads project-root `AGENTS.md` natively | `$HOME/.cursor/skills/` |
-
-Change the session model (not the wrapper pin):
-
-| Harness | How |
-|---|---|
-| Claude Code | `/model` in the session |
-| Grok Build | `/model` in the session; `[models] default` in `~/.grok/config.toml` |
-| OpenAI Codex | `/model` in the session; `--model` at launch |
-| GitHub Copilot | `/model` in the session |
-| Google Antigravity | model selector in the Agent panel |
-| Cursor | model picker under the chat input |
 
 Notes:
 

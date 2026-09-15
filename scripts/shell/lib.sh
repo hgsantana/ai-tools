@@ -298,12 +298,12 @@ ensure_clone() {
     # shellcheck disable=SC2034 # read by install.sh after a bootstrap clone
     FRESH_CLONE=1
   fi
-  { [ -f "$AI_TOOLS/USER-AGENTS.md" ] && [ -f "$AI_TOOLS/MODELS.csv" ] && [ -d "$AI_TOOLS/agents" ]; } \
+  { [ -f "$AI_TOOLS/USER-AGENTS.md" ] && [ -d "$AI_TOOLS/skills" ]; } \
     || fatal "$AI_TOOLS is not an ai-tools clone (move any existing clone here — the only supported location)"
 }
 
 require_clone() {
-  { [ -d "$AI_TOOLS/.git" ] && [ -f "$AI_TOOLS/USER-AGENTS.md" ] && [ -f "$AI_TOOLS/MODELS.csv" ]; } \
+  { [ -d "$AI_TOOLS/.git" ] && [ -f "$AI_TOOLS/USER-AGENTS.md" ] && [ -d "$AI_TOOLS/skills" ]; } \
     || fatal "$AI_TOOLS is missing or not a clone — run scripts/shell/install-bash.sh (or install-zsh.sh) to clone"
 }
 
