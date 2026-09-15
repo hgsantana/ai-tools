@@ -4,7 +4,7 @@
 
 | Stage | Status | Agent |
 |------:|:------:|-------|
-| 1 | | |
+| 1 | F | implementer-ai-tools |
 | 2 | | |
 | 3 | | |
 | 4 | | |
@@ -175,6 +175,7 @@ Verified with no change needed:
 
    Recommendation: a separate docs task after this plan.
 8. **Rule 25 non-Git fallback.** S1 drops `$HOME/.ai-tools-plans/tmp/` because nothing implements it. If the user wants that behaviour, it is a skill change (ROADMAP story 10), not a README rule. Recommendation: drop, as planned.
+
 ### User decisions
 
 The user accepted every recommendation above:

@@ -65,3 +65,16 @@ docs(readme): align repository rules with the session-model tree
 None.
 
 ## Implementation log
+
+Applied all 15 steps to `README.md` (Overview item 3; rules 3, 4, 6, 7, 9, 11, 20, 21, 23, 24, 25; Semantic XML grammar Executors/Protocol bullets and vocabulary table). Rule 4 got the per-PR bump text (user decision 2, step 3 as written). Rule 24 kept the "update any documentation the step made stale" clause (open question 4) and gained the Queue-mode, vibe-ai-tools, and campaign-model/no-nested-fallback/stop-condition sentences. Rule 25 dropped the non-Git `$HOME/.ai-tools-plans/tmp/` fallback clause (open question 8), ending after "created if absent". No other file touched; no rule renumbered (still 1-25).
+
+Tests, run in a scratch clone (`mktemp -d`) of `plan/readme-ruleset-sync` cloned from this worktree, with the worktree's `README.md` copied in and committed as `probe`:
+
+- `grep -nE 'file basename|best planning|ai-tools-plans|lands the change on .master' README.md`: no output (exit 1). Pass.
+- Rule count: `grep -c '^[0-9]\+\. ' <(awk '/^## Repository rules/{p=1;next} /^## /{p=0} p' README.md)` → 25. Pass.
+- Vocabulary: README table tag set has 40 entries and diffs empty against sorted `XML_VOCAB` from `scripts/lint.sh`. Pass.
+- `scripts/lint.sh`: exit 0 — 369 ok, 1 skipped (version-bump check, needs `--base`), 0 warnings. Matches baseline.
+- `scripts/test.sh`: exit 0 — 305 ok, 0 skipped, 0 warnings. Matches baseline.
+- `shellcheck -x -P scripts/shell -P scripts/test scripts/shell/*.sh scripts/*.sh scripts/test/*.sh`: exit 1, SC1071 only on `install-zsh.sh`. Matches documented baseline (open question 3).
+
+Scratch clone removed after verification.
