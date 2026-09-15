@@ -28,7 +28,7 @@ case_verify_clean() {
   t_cleanup "$root"
 }
 
-case_verify_agent_absent() {
+case_verify_skill_absent() {
   local root before dest
   t_fixture
   root="$T_ROOT"
@@ -36,20 +36,20 @@ case_verify_agent_absent() {
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
 
-  dest="$root/home/.claude/agents/planner-ai-tools.md"
-  rm -f "$dest" || fatal "$T_CASE: cannot remove $dest"
+  dest="$root/home/.claude/skills/plan-ai-tools"
+  rm -rf "$dest" || fatal "$T_CASE: cannot remove $dest"
 
   before=$(t_snapshot "$root/home")
   t_verify "$root" --harnesses claude-code
   t_assert_exit 2
-  t_assert_line "WARN: agent absent: $dest"
+  t_assert_line "WARN: skill absent: $dest"
   t_assert_unchanged "$root/home" "$before"
   rm -f "$before"
 
   t_cleanup "$root"
 }
 
-case_verify_agent_differs() {
+case_verify_skill_differs() {
   local root before dest
   t_fixture
   root="$T_ROOT"
@@ -57,14 +57,13 @@ case_verify_agent_differs() {
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
 
-  dest="$root/home/.claude/agents/planner-ai-tools.md"
-  rm -f "$dest" || fatal "$T_CASE: cannot remove $dest"
-  printf 'unrelated regular file\n' > "$dest"
+  dest="$root/home/.claude/skills/plan-ai-tools"
+  printf 'unrelated file\n' > "$dest/SKILL.md"
 
   before=$(t_snapshot "$root/home")
   t_verify "$root" --harnesses claude-code
   t_assert_exit 2
-  t_assert_line "WARN: agent differs from source: $dest"
+  t_assert_line "WARN: skill differs from source: $dest"
   t_assert_unchanged "$root/home" "$before"
   rm -f "$before"
 
@@ -77,7 +76,6 @@ case_verify_rejects_legacy_symlinks() {
   root="$T_ROOT"
   home="$root/home"
 
-  ln -s "$home/.ai-tools/agents/claude-code/planner-ai-tools.md" "$home/.claude/agents/planner-ai-tools.md"
   ln -s "$home/.ai-tools/skills/plan-ai-tools" "$home/.claude/skills/plan-ai-tools"
   ln -s "$home/.ai-tools/USER-AGENTS.md" "$home/.claude/CLAUDE.md"
 

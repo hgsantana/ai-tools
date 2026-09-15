@@ -27,7 +27,6 @@ case_remove_removes_installed_copies() {
   t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code
   t_assert_exit 0
   t_assert_line "removed copy:"
-  t_assert_absent "$root/home/.claude/agents/planner-ai-tools.md"
   t_assert_absent "$root/home/.claude/skills/plan-ai-tools"
   if [ -e "$root/home/.claude/CLAUDE.md" ] || [ -L "$root/home/.claude/CLAUDE.md" ]; then
     ok "$T_CASE: instructions still present (no --instructions): $root/home/.claude/CLAUDE.md"
@@ -64,33 +63,33 @@ case_remove_modified_copy_kept() {
   t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code
   t_assert_exit 0
   t_assert_line "SKIP: copy was modified locally, user work preserved: $T_MODIFIED_COPY_PATH"
-  t_assert_regular_file "$T_MODIFIED_COPY_PATH"
-  if grep -qF 'local edit that matches no revision' "$T_MODIFIED_COPY_PATH"; then
+  t_assert_regular_directory "$T_MODIFIED_COPY_PATH"
+  if grep -qF 'local edit that matches no revision' "$T_MODIFIED_COPY_PATH/SKILL.md"; then
     ok "$T_CASE: modified copy survived byte-for-byte: $T_MODIFIED_COPY_PATH"
   else
     warn "$T_CASE: modified copy lost its local edit: $T_MODIFIED_COPY_PATH"
   fi
   # Every unmodified copy from the same installation must be gone.
-  t_assert_absent "$root/home/.claude/agents/planner-ai-tools.md"
+  t_assert_absent "$root/home/.claude/skills/plan-ai-tools"
 
   t_cleanup "$root"
 }
 
 case_remove_foreign_file_kept() {
   local root
-  t_fixture --foreign-agent
+  t_fixture --foreign-skill
   root="$T_ROOT"
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code
   t_assert_exit 0
-  # This foreign file is a regular file occupying a
-  # wrapper's destination, so safe_uninstall_copy compares content and finds
-  # it does not match the ai-tools source, producing a "modified locally" skip.
-  t_assert_line "SKIP: copy was modified locally, user work preserved: $T_FOREIGN_AGENT_PATH"
-  t_assert_regular_file "$T_FOREIGN_AGENT_PATH"
-  t_assert_content "$T_FOREIGN_AGENT_PATH" "not an ai-tools file"
+  # This foreign directory occupies a skill's destination, so
+  # safe_uninstall_copy compares content and finds it does not match the
+  # ai-tools source, producing a "modified locally" skip.
+  t_assert_line "SKIP: copy was modified locally, user work preserved: $T_FOREIGN_SKILL_PATH"
+  t_assert_regular_directory "$T_FOREIGN_SKILL_PATH"
+  t_assert_content "$T_FOREIGN_SKILL_PATH/SKILL.md" "not an ai-tools file"
 
   t_cleanup "$root"
 }
@@ -105,21 +104,21 @@ case_remove_force_removes_modified_copy() {
   t_assert_exit 0
   t_assert_line "force-removed copy: $T_MODIFIED_COPY_PATH"
   t_assert_absent "$T_MODIFIED_COPY_PATH"
-  t_assert_absent "$root/home/.claude/agents/planner-ai-tools.md"
+  t_assert_absent "$root/home/.claude/skills/plan-ai-tools"
 
   t_cleanup "$root"
 }
 
 case_remove_force_removes_foreign_destination() {
   local root
-  t_fixture --foreign-agent
+  t_fixture --foreign-skill
   root="$T_ROOT"
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code --force
   t_assert_exit 0
-  t_assert_line "force-removed copy: $T_FOREIGN_AGENT_PATH"
-  t_assert_absent "$T_FOREIGN_AGENT_PATH"
+  t_assert_line "force-removed copy: $T_FOREIGN_SKILL_PATH"
+  t_assert_absent "$T_FOREIGN_SKILL_PATH"
 
   t_cleanup "$root"
 }
@@ -135,8 +134,8 @@ case_remove_force_keeps_external_symlink() {
   t_assert_exit 0
   t_assert_line "SKIP: symlink not to ai-tools: $T_EXTERNAL_SYMLINK_PATH -> $before_target"
   t_assert_symlink "$T_EXTERNAL_SYMLINK_PATH" "$root"
-  t_assert_regular_file "$root/external-file.md"
-  t_assert_content "$root/external-file.md" "outside ai-tools"
+  t_assert_regular_file "$root/external-skill/SKILL.md"
+  t_assert_content "$root/external-skill/SKILL.md" "outside ai-tools"
 
   t_cleanup "$root"
 }
@@ -171,8 +170,8 @@ case_remove_force_dry_run() {
   t_assert_exit 0
   t_assert_line "ok: would force-remove copy: $T_MODIFIED_COPY_PATH"
   t_assert_unchanged "$root/home" "$snap"
-  t_assert_regular_file "$T_MODIFIED_COPY_PATH"
-  if grep -qF 'local edit that matches no revision' "$T_MODIFIED_COPY_PATH"; then
+  t_assert_regular_directory "$T_MODIFIED_COPY_PATH"
+  if grep -qF 'local edit that matches no revision' "$T_MODIFIED_COPY_PATH/SKILL.md"; then
     ok "$T_CASE: --force --dry-run left the local edit: $T_MODIFIED_COPY_PATH"
   else
     warn "$T_CASE: --force --dry-run lost the local edit: $T_MODIFIED_COPY_PATH"
@@ -257,46 +256,6 @@ case_remove_antigravity_instructions() {
   t_cleanup "$root"
 }
 
-case_remove_grok_block() {
-  local root
-  t_fixture --unmanaged-grok-block
-  root="$T_ROOT"
-
-  t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses grok
-  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses grok
-  t_assert_line "SKIP: unmanaged [subagents.models] in $T_GROK_UNMANAGED_PATH"
-  t_assert_content "$T_GROK_UNMANAGED_PATH" 'some-other-agent = "some-model"'
-
-  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses grok --force
-  t_assert_line "SKIP: unmanaged [subagents.models] in $T_GROK_UNMANAGED_PATH"
-  t_assert_content "$T_GROK_UNMANAGED_PATH" 'some-other-agent = "some-model"'
-
-  t_cleanup "$root"
-
-  t_fixture
-  root="$T_ROOT"
-  mkdir -p "$root/home/.grok" || fatal "$T_CASE: cannot create $root/home/.grok"
-  printf 'before-marker\n' > "$root/home/.grok/config.toml"
-  t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses grok
-  printf 'after-marker\n' >> "$root/home/.grok/config.toml"
-
-  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses grok
-  t_assert_line "grok models block removed:"
-  t_assert_content "$root/home/.grok/config.toml" "before-marker"
-  t_assert_content "$root/home/.grok/config.toml" "after-marker"
-  t_assert_no_line "ERROR:"
-
-  t_cleanup "$root"
-
-  t_fixture
-  root="$T_ROOT"
-  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses grok
-  t_assert_line "ok: absent: $root/home/.grok/config.toml"
-  t_assert_absent "$root/home/.grok/config.toml"
-
-  t_cleanup "$root"
-}
-
 case_remove_stale_link_sweep() {
   local root real_dir
   t_fixture --stale-link
@@ -304,8 +263,8 @@ case_remove_stale_link_sweep() {
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
 
-  # A real directory named like a wrapper must survive the sweep.
-  real_dir="$root/home/.claude/agents/some-real-ai-tools-dir"
+  # A real directory whose name contains ai-tools must survive the sweep.
+  real_dir="$root/home/.claude/skills/some-real-ai-tools-dir"
   mkdir -p "$real_dir" || fatal "$T_CASE: cannot create $real_dir"
   printf 'not a link\n' > "$real_dir/f"
 
@@ -398,7 +357,7 @@ case_remove_without_a_clone() {
   t_run "$root" "$saved/shell/remove.sh" --harnesses claude-code
   t_assert_exit 2
   t_assert_line "WARN: $root/home/.ai-tools missing — copies cannot be verified; removing links only (sweep)"
-  t_assert_regular_file "$root/home/.claude/agents/planner-ai-tools.md"
+  t_assert_regular_directory "$root/home/.claude/skills/plan-ai-tools"
 
   t_cleanup "$root"
 }
@@ -412,12 +371,12 @@ case_remove_all_harnesses() {
   t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses all
   t_run "$root" "$home/.ai-tools/scripts/shell/remove.sh" --harnesses all
   t_assert_exit 0
-  t_assert_absent "$home/.claude/agents/planner-ai-tools.md"
-  t_assert_absent "$home/.grok/agents/planner-ai-tools.md"
-  t_assert_absent "$home/.codex/agents/planner-ai-tools.toml"
-  t_assert_absent "$home/.copilot/agents/planner-ai-tools.agent.md"
-  t_assert_absent "$home/.cursor/agents/planner-ai-tools.md"
-  t_assert_absent "$home/.gemini/config/agents/planner-ai-tools.md"
+  t_assert_absent "$home/.claude/skills/plan-ai-tools"
+  t_assert_absent "$home/.grok/skills/plan-ai-tools"
+  t_assert_absent "$home/.codex/skills/plan-ai-tools"
+  t_assert_absent "$home/.copilot/skills/plan-ai-tools"
+  t_assert_absent "$home/.cursor/skills/plan-ai-tools"
+  t_assert_absent "$home/.gemini/config/skills/plan-ai-tools"
 
   t_cleanup "$root"
 }
@@ -440,47 +399,39 @@ case_remove_precondition_failures() {
 }
 
 case_remove_preserves_orphan_without_force() {
-  local root home orphan_skill orphan_agent
+  local root home orphan_skill
 
   t_fixture
   root="$T_ROOT"
   home="$root/home"
   orphan_skill="$home/.claude/skills/retired-ai-tools"
-  orphan_agent="$home/.claude/agents/retired-ai-tools.md"
 
   mkdir -p "$orphan_skill"
   printf 'name: retired-ai-tools\n' > "$orphan_skill/SKILL.md"
-  printf 'orphan agent\n' > "$orphan_agent"
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code
   t_assert_exit 0
   t_assert_line "SKIP: orphan ai-tools skill (use --overwrite or --force to remove): $orphan_skill"
-  t_assert_line "SKIP: orphan ai-tools agent (use --overwrite or --force to remove): $orphan_agent"
-  t_assert_regular_file "$orphan_agent"
   t_assert_regular_file "$orphan_skill/SKILL.md"
 
   t_cleanup "$root"
 }
 
 case_remove_prunes_orphan_with_force() {
-  local root home orphan_skill orphan_agent
+  local root home orphan_skill
 
   t_fixture
   root="$T_ROOT"
   home="$root/home"
   orphan_skill="$home/.claude/skills/retired-ai-tools"
-  orphan_agent="$home/.claude/agents/retired-ai-tools.md"
 
   mkdir -p "$orphan_skill"
   printf 'name: retired-ai-tools\n' > "$orphan_skill/SKILL.md"
-  printf 'orphan agent\n' > "$orphan_agent"
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code --force
   t_assert_exit 0
   t_assert_line "ok: force-removed orphan skill: $orphan_skill"
-  t_assert_line "ok: force-removed orphan agent: $orphan_agent"
   t_assert_absent "$orphan_skill"
-  t_assert_absent "$orphan_agent"
 
   t_cleanup "$root"
 }

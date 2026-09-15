@@ -8,14 +8,14 @@
 # --- Reset guard (rule 27) -----------------------------------------------------
 
 case_update_reset_guard_dirty() {
-  local root home wrapper before
+  local root home readme_file before
 
   t_fixture
   root="$T_ROOT"
   home="$root/home"
-  wrapper="$home/.ai-tools/README.md"
+  readme_file="$home/.ai-tools/README.md"
 
-  printf '\nlocal edit that has never been committed\n' >> "$wrapper"
+  printf '\nlocal edit that has never been committed\n' >> "$readme_file"
 
   before=$(t_snapshot "$home/.claude")
 
@@ -24,7 +24,7 @@ case_update_reset_guard_dirty() {
   t_assert_line "local changes in"
   t_assert_line "the reset would discard the local work above"
 
-  if grep -qF 'local edit that has never been committed' "$wrapper"; then
+  if grep -qF 'local edit that has never been committed' "$readme_file"; then
     ok "$T_CASE: local edit still present"
   else
     warn "$T_CASE: local edit lost"
@@ -61,14 +61,14 @@ case_update_reset_guard_ahead() {
 }
 
 case_update_discard_local() {
-  local root home wrapper origin_head head_after
+  local root home readme_file origin_head head_after
 
   t_fixture
   root="$T_ROOT"
   home="$root/home"
-  wrapper="$home/.ai-tools/README.md"
+  readme_file="$home/.ai-tools/README.md"
 
-  printf '\nlocal edit that has never been committed\n' >> "$wrapper"
+  printf '\nlocal edit that has never been committed\n' >> "$readme_file"
 
   t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code --discard-local
   t_assert_exit 0
@@ -82,7 +82,7 @@ case_update_discard_local() {
     warn "$T_CASE: HEAD $head_after != origin/master $origin_head"
   fi
 
-  if grep -qF 'local edit that has never been committed' "$wrapper"; then
+  if grep -qF 'local edit that has never been committed' "$readme_file"; then
     warn "$T_CASE: local edit still present after discard"
   else
     ok "$T_CASE: local edit discarded"
@@ -94,11 +94,11 @@ case_update_discard_local() {
 case_update_reset_confined() {
   local root home agents_md foreign_path claude_md before_agents before_claude before_foreign
 
-  t_fixture --foreign-agent
+  t_fixture --foreign-skill
   root="$T_ROOT"
   home="$root/home"
   agents_md="$home/AGENTS.md"
-  foreign_path="$T_FOREIGN_AGENT_PATH"
+  foreign_path="$T_FOREIGN_SKILL_PATH/SKILL.md"
   claude_md="$home/.claude/CLAUDE.md"
 
   printf 'user content, never touched\n' > "$agents_md"
@@ -115,7 +115,7 @@ case_update_reset_confined() {
     commit -q -m "local work"
 
   t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code --discard-local
-  # Exit 2: verify_install warns that the foreign agent file and the
+  # Exit 2: verify_install warns that the foreign skill directory and the
   # pre-filled CLAUDE.md differ from source — proof they were skipped, not
   # overwritten. The reset itself (rule 27) still succeeded (exit 0 would
   # require the pre-existing foreign content to be gone, which it must not be).
@@ -169,19 +169,17 @@ case_update_new_content_copied() {
 # --- Copy refresh vs. preservation (rules 20-21) -------------------------------
 
 case_update_stale_copy_refreshed() {
-  local root home marker wrapper instructions skill
+  local root home marker instructions skill
 
   t_fixture
   root="$T_ROOT"
   home="$root/home"
   marker="stalecopy"
-  wrapper="$home/.claude/agents/implementer-ai-tools.md"
   instructions="$home/.claude/CLAUDE.md"
   skill="$home/.claude/skills/plan-ai-tools"
 
   t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
-  t_assert_regular_file "$wrapper"
   t_assert_regular_file "$instructions"
   t_assert_regular_directory "$skill"
 
@@ -190,7 +188,6 @@ case_update_stale_copy_refreshed() {
   t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
   t_assert_exit 0
   t_assert_line "copied:"
-  t_assert_same_content "$wrapper" "$home/.ai-tools/agents/claude-code/implementer-ai-tools.md"
   t_assert_same_content "$instructions" "$home/.ai-tools/USER-AGENTS.md"
   t_assert_same_content "$skill" "$home/.ai-tools/skills/plan-ai-tools"
 
@@ -198,19 +195,19 @@ case_update_stale_copy_refreshed() {
 }
 
 case_update_modified_copy_kept() {
-  local root home marker wrapper before
+  local root home marker target before
 
   t_fixture
   root="$T_ROOT"
   home="$root/home"
   marker="modcopy"
-  wrapper="$home/.claude/agents/implementer-ai-tools.md"
+  target="$home/.claude/skills/plan-ai-tools/SKILL.md"
 
   t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
 
-  printf '\nlocal edit that matches no revision\n' >> "$wrapper"
-  before=$(cat "$wrapper")
+  printf '\nlocal edit that matches no revision\n' >> "$target"
+  before=$(cat "$target")
 
   t_origin_commit "$marker"
 
@@ -218,7 +215,7 @@ case_update_modified_copy_kept() {
   t_assert_exit 2
   t_assert_line "SKIP: copy was modified locally, user work preserved:"
 
-  if [ "$(cat "$wrapper")" = "$before" ]; then
+  if [ "$(cat "$target")" = "$before" ]; then
     ok "$T_CASE: modified copy preserved"
   else
     warn "$T_CASE: modified copy changed"
@@ -228,43 +225,43 @@ case_update_modified_copy_kept() {
 }
 
 case_update_up_to_date_copy() {
-  local root home marker wrapper
+  local root home marker skill
 
   t_fixture
   root="$T_ROOT"
   home="$root/home"
   marker="uptodate"
-  wrapper="$home/.claude/agents/planner-ai-tools.md"
+  skill="$home/.claude/skills/az-ai-tools"
 
   t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
 
-  # t_origin_commit only touches implementer-ai-tools.md; planner-ai-tools.md's
-  # copy stays equal to its (unchanged) source across the reset.
+  # t_origin_commit only touches plan-ai-tools/SKILL.md; az-ai-tools's copy
+  # stays equal to its (unchanged) source across the reset.
   t_origin_commit "$marker"
 
   t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
   t_assert_exit 0
-  t_assert_line "copied: $wrapper"
+  t_assert_line "copied: $skill"
 
   t_cleanup "$root"
 }
 
 case_update_overwrite_modified_copy() {
-  local root home wrapper
+  local root home skill
 
   t_fixture
   root="$T_ROOT"
   home="$root/home"
-  wrapper="$home/.claude/agents/implementer-ai-tools.md"
+  skill="$home/.claude/skills/plan-ai-tools"
 
   t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
-  printf '\nlocal edit that should be replaced\n' >> "$wrapper"
+  printf '\nlocal edit that should be replaced\n' >> "$skill/SKILL.md"
 
   t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code --overwrite
   t_assert_exit 0
-  t_assert_same_content "$wrapper" "$home/.ai-tools/agents/claude-code/implementer-ai-tools.md"
-  if grep -qF 'local edit that should be replaced' "$wrapper"; then
+  t_assert_same_content "$skill" "$home/.ai-tools/skills/plan-ai-tools"
+  if grep -qF 'local edit that should be replaced' "$skill/SKILL.md"; then
     warn "$T_CASE: --overwrite preserved the modified copy"
   else
     ok "$T_CASE: --overwrite replaced the modified copy"
@@ -395,49 +392,40 @@ case_update_preconditions() {
 }
 
 case_update_preserves_orphan_without_overwrite() {
-  local root home orphan_skill orphan_agent
+  local root home orphan_skill
 
   t_fixture
   root="$T_ROOT"
   home="$root/home"
   orphan_skill="$home/.claude/skills/retired-ai-tools"
-  orphan_agent="$home/.claude/agents/retired-ai-tools.md"
 
   mkdir -p "$orphan_skill"
   printf 'name: retired-ai-tools\n' > "$orphan_skill/SKILL.md"
-  printf 'orphan agent\n' > "$orphan_agent"
 
   t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
   t_assert_exit 2
   t_assert_line "SKIP: orphan ai-tools skill (use --overwrite or --force to remove): $orphan_skill"
-  t_assert_line "SKIP: orphan ai-tools agent (use --overwrite or --force to remove): $orphan_agent"
   t_assert_line "WARN: orphan skill present: $orphan_skill"
-  t_assert_line "WARN: orphan agent present: $orphan_agent"
-  t_assert_regular_file "$orphan_agent"
   t_assert_regular_file "$orphan_skill/SKILL.md"
 
   t_cleanup "$root"
 }
 
 case_update_prunes_orphan_with_overwrite() {
-  local root home orphan_skill orphan_agent
+  local root home orphan_skill
 
   t_fixture
   root="$T_ROOT"
   home="$root/home"
   orphan_skill="$home/.claude/skills/retired-ai-tools"
-  orphan_agent="$home/.claude/agents/retired-ai-tools.md"
 
   mkdir -p "$orphan_skill"
   printf 'name: retired-ai-tools\n' > "$orphan_skill/SKILL.md"
-  printf 'orphan agent\n' > "$orphan_agent"
 
   t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code --overwrite
   t_assert_exit 0
   t_assert_line "ok: removed orphan skill: $orphan_skill"
-  t_assert_line "ok: removed orphan agent: $orphan_agent"
   t_assert_absent "$orphan_skill"
-  t_assert_absent "$orphan_agent"
 
   t_cleanup "$root"
 }

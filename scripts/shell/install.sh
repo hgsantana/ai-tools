@@ -47,10 +47,8 @@ if [ "$NO_INSTRUCTIONS" = 1 ]; then
 else
   install_instructions
 fi
-install_agents
 install_skills
-install_grok_models
 
 VERIFY_INSTRUCTIONS=$((1 - NO_INSTRUCTIONS)) verify_install
-info "restart or reload harnesses that cache agents or skills, then check the agent list and skill slash commands"
+info "restart or reload harnesses that cache skills, then check the skill slash commands"
 finish

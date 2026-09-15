@@ -34,17 +34,6 @@ finish() {
 
 # --- Harness table (mirrors "Supported harnesses" in README.md) -------------
 
-agents_root() {
-  case "$1" in
-    claude-code) echo "$HOME/.claude/agents" ;;
-    grok)        echo "$HOME/.grok/agents" ;;
-    codex)       echo "$HOME/.codex/agents" ;;
-    copilot)     echo "$HOME/.copilot/agents" ;;
-    cursor)      echo "$HOME/.cursor/agents" ;;
-    antigravity) echo "$HOME/.gemini/config/agents" ;;
-  esac
-}
-
 skills_root() {
   case "$1" in
     claude-code) echo "$HOME/.claude/skills" ;;
@@ -158,12 +147,9 @@ set_scope() {
   info "scope:$SCOPE"
 }
 
-in_scope() { case " $SCOPE " in *" $1 "*) return 0 ;; *) return 1 ;; esac; }
-
 scoped_roots() {
   local h
   for h in $SCOPE; do
-    agents_root "$h"
     skills_root "$h"
   done | sort -u
 }
@@ -371,21 +357,6 @@ install_instructions() {
   return 0
 }
 
-install_agents() {
-  # Per file, never per directory — the roots hold agents from other sources.
-  local h src root f
-  for h in $SCOPE; do
-    src="$AI_TOOLS/agents/$h"
-    root=$(agents_root "$h")
-    [ -d "$src" ] || { skip "no wrapper folder: $src"; continue; }
-    for f in "$src"/*-ai-tools*; do
-      [ -f "$f" ] || continue
-      safe_copy "$f" "$root/$(basename "$f")" || true
-    done
-  done
-  [ "${OVERWRITE:-0}" = 1 ] && prune_orphan_agents
-}
-
 install_skills() {
   local h root p
   for h in $SCOPE; do
@@ -396,167 +367,6 @@ install_skills() {
     done
   done
   [ "${OVERWRITE:-0}" = 1 ] && prune_orphan_skills
-}
-
-# --- Grok model pinning ------------------------------------------------------
-# Grok ignores model: in agent frontmatter; models live in ~/.grok/config.toml.
-# Only the marker-delimited block below is ever written or removed.
-
-MODEL_TABLE="$AI_TOOLS/MODELS.csv"
-GROK_TOML="$HOME/.grok/config.toml"
-GROK_BEGIN="# >>> ai-tools managed subagent models — do not edit inside this block"
-GROK_END="# <<< ai-tools managed subagent models"
-
-category_for() {
-  # usage: category_for <agent-name>
-  # Role the base claims via role="..." attribute on <agent_base> or
-  # "You are the **<planner|implementer|mechanical>**".
-  # Used at install/lint to pin wrappers from the MODELS.csv — never at dispatch.
-  # Falls back to planner when the base cites none.
-  local f="$AI_TOOLS/agents/$1.md" cat
-  [ -f "$f" ] || return 1
-  cat=$(awk '
-    match($0, /role="(planner|implementer|mechanical)"/) {
-      s = substr($0, RSTART, RLENGTH)
-      sub(/role="/, "", s)
-      sub(/".*/, "", s)
-      print s
-      exit
-    }
-    match($0, /You are the \*\*(planner|implementer|mechanical)\*\*/) {
-      s = substr($0, RSTART, RLENGTH)
-      sub(/You are the \*\*/, "", s)
-      sub(/\*\*.*/, "", s)
-      print s
-      exit
-    }
-  ' "$f")
-  [ -n "$cat" ] || cat=planner
-  printf '%s\n' "$cat"
-}
-
-models_csv_field() {
-  # usage: models_csv_field <harness key> <1-based column>
-  # MODELS.csv columns: harness,planner,planner_effort,implementer,
-  # implementer_effort,mechanical,mechanical_effort (README rules 11-12).
-  # Prints the trimmed field when the harness row exists; empty cells print
-  # nothing and still succeed. Values contain no commas.
-  local key="$1" col="$2"
-  [ -f "$MODEL_TABLE" ] || return 1
-  awk -F',' -v key="$key" -v col="$col" '
-    $1 == "harness" { next }
-    /^[[:space:]]*$/ { next }
-    {
-      k = $1
-      gsub(/^[[:space:]]+|[[:space:]]+$/, "", k)
-      if (k == key) {
-        if (col > NF) exit 1
-        v = $col
-        gsub(/^[[:space:]]+|[[:space:]]+$/, "", v)
-        print v
-        found = 1
-        exit
-      }
-    }
-    END { exit !found }
-  ' "$MODEL_TABLE"
-}
-
-model_for() {
-  # usage: model_for <harness key> <planner|implementer|mechanical>
-  # Reads MODELS.csv, the single source of model names (README rules 11-12).
-  local col v
-  case "$2" in
-    planner)     col=2 ;;
-    implementer) col=4 ;;
-    mechanical)  col=6 ;;
-    *)           return 1 ;;
-  esac
-  v=$(models_csv_field "$1" "$col") || return 1
-  [ -n "$v" ] || return 1
-  printf '%s\n' "$v"
-}
-
-model_effort_for() {
-  # usage: model_effort_for <harness key> <planner|implementer|mechanical>
-  # Prints the CSV effort cell, or nothing when it is empty.
-  local col
-  case "$2" in
-    planner)     col=3 ;;
-    implementer) col=5 ;;
-    mechanical)  col=7 ;;
-    *)           return 1 ;;
-  esac
-  models_csv_field "$1" "$col"
-}
-
-grok_models_toml() {
-  # Names from the tree; models from the MODELS.csv, row grok, via the
-  # category each base claims (category_for).
-  local f name cat model
-  echo "[subagents.models]"
-  for f in "$AI_TOOLS/agents"/*-ai-tools.md; do
-    [ -f "$f" ] || continue
-    name=$(basename "$f" .md)
-    cat=$(category_for "$name") || return 1
-    model=$(model_for grok "$cat") || return 1
-    printf '%s = "%s"\n' "$name" "$model"
-  done
-}
-
-install_grok_models() {
-  in_scope grok || return 0
-  local desired current tmp models
-  models=$(grok_models_toml) || {
-    skip "grok model pinning: no usable \`grok\` row in $MODEL_TABLE — block left untouched"
-    return 0
-  }
-  desired=$(printf '%s\n%s\n%s\n' "$GROK_BEGIN" "$models" "$GROK_END")
-  if [ -f "$GROK_TOML" ] && grep -qF "$GROK_BEGIN" "$GROK_TOML"; then
-    current=$(sed -n "/^$GROK_BEGIN\$/,/^$GROK_END\$/p" "$GROK_TOML")
-    if [ "$current" = "$desired" ]; then
-      ok "grok models block up to date: $GROK_TOML"
-      return 0
-    fi
-    if [ "$DRY_RUN" = 1 ]; then ok "would refresh grok models block: $GROK_TOML"; return 0; fi
-    tmp=$(mktemp) || { warn "mktemp failed; grok models block not refreshed"; return 1; }
-    sed "/^$GROK_BEGIN\$/,/^$GROK_END\$/d" "$GROK_TOML" > "$tmp" \
-      && printf '%s\n' "$desired" >> "$tmp" \
-      && cat "$tmp" > "$GROK_TOML" \
-      && ok "grok models block refreshed: $GROK_TOML"
-    rm -f "$tmp"
-    return 0
-  fi
-  if [ -f "$GROK_TOML" ] && grep -q '^\[subagents\.models\]' "$GROK_TOML"; then
-    skip "unmanaged [subagents.models] already in $GROK_TOML — verify the ai-tools entries manually (README, Installation)"
-    return 0
-  fi
-  if [ "$DRY_RUN" = 1 ]; then ok "would append grok models block: $GROK_TOML"; return 0; fi
-  mkdir -p "$(dirname "$GROK_TOML")" 2>/dev/null
-  # shellcheck disable=SC2094 # [ -s ] stats the file, it does not read its content — no overlap with the append below
-  if { [ -s "$GROK_TOML" ] && echo; printf '%s\n' "$desired"; } >> "$GROK_TOML"; then
-    ok "grok models block appended: $GROK_TOML"
-  else
-    warn "could not write $GROK_TOML — pin models manually (README, Installation)"
-  fi
-}
-
-remove_grok_models() {
-  in_scope grok || return 0
-  [ -f "$GROK_TOML" ] || { ok "absent: $GROK_TOML"; return 0; }
-  if grep -qF "$GROK_BEGIN" "$GROK_TOML"; then
-    if [ "$DRY_RUN" = 1 ]; then ok "would remove grok models block: $GROK_TOML"; return 0; fi
-    local tmp
-    tmp=$(mktemp) || { warn "mktemp failed; grok models block not removed"; return 1; }
-    sed "/^$GROK_BEGIN\$/,/^$GROK_END\$/d" "$GROK_TOML" > "$tmp" \
-      && cat "$tmp" > "$GROK_TOML" \
-      && ok "grok models block removed: $GROK_TOML"
-    rm -f "$tmp"
-  elif grep -q '^\[subagents\.models\]' "$GROK_TOML"; then
-    skip "unmanaged [subagents.models] in $GROK_TOML — not written by ai-tools, left untouched"
-  else
-    ok "no grok models block in: $GROK_TOML"
-  fi
 }
 
 # --- Removal steps -----------------------------------------------------------
@@ -578,36 +388,6 @@ report_links() {
     [ -n "$dest" ] && [ -L "$dest" ] && info "instructions: $dest -> $(readlink "$dest")"
   done
   return 0
-}
-
-prune_orphan_agents() {
-  local h src root f base
-  for h in $SCOPE; do
-    src="$AI_TOOLS/agents/$h"
-    root=$(agents_root "$h")
-    [ -d "$root" ] || continue
-    for f in "$root"/*-ai-tools*; do
-      [ -e "$f" ] || continue
-      [ -L "$f" ] && continue
-      base=$(basename "$f")
-      [ -f "$src/$base" ] && continue
-      if [ "${OVERWRITE:-0}" = 1 ]; then
-        if [ "$DRY_RUN" = 1 ]; then
-          ok "would remove orphan agent: $f"
-        else
-          rm -rf "$f" && ok "removed orphan agent: $f"
-        fi
-      elif [ "${FORCE:-0}" = 1 ]; then
-        if [ "$DRY_RUN" = 1 ]; then
-          ok "would force-remove orphan agent: $f"
-        else
-          rm -rf "$f" && ok "force-removed orphan agent: $f"
-        fi
-      else
-        skip "orphan ai-tools agent (use --overwrite or --force to remove): $f"
-      fi
-    done
-  done
 }
 
 prune_orphan_skills() {
@@ -637,27 +417,6 @@ prune_orphan_skills() {
       fi
     done
   done
-}
-
-uninstall_agents() {
-  local h src root f base
-  for h in $SCOPE; do
-    src="$AI_TOOLS/agents/$h"
-    root=$(agents_root "$h")
-    [ -d "$src" ] || continue
-    for f in "$src"/*-ai-tools*; do
-      [ -f "$f" ] || continue
-      base=$(basename "$f")
-      if [ -L "$root/$base" ]; then
-        safe_unlink "$root/$base" || true
-      elif [ -e "$root/$base" ]; then
-        safe_uninstall_copy "$root/$base" "$f" || true
-      else
-        ok "absent: $root/$base"
-      fi
-    done
-  done
-  prune_orphan_agents
 }
 
 remove_skills() {
@@ -691,19 +450,15 @@ sweep_stale_links() {
       is_ai_tools_link "$p" && safe_unlink "$p" || true
     done < <(find "$root" -maxdepth 1 -type l 2>/dev/null)
   done
-  # Whole-directory links from an older alpha install (no-op on real directories)
-  for root in "$HOME/.claude/agents" "$HOME/.grok/agents"; do
-    [ -L "$root" ] && safe_unlink "$root"
-  done
-  # Retired Gemini CLI roots (not a harness). Do not touch Antigravity's
-  # $HOME/.gemini/config/{agents,skills} or GEMINI.md.
-  for root in "$HOME/.gemini/agents" "$HOME/.gemini/skills"; do
-    [ -d "$root" ] || continue
+  # Retired Gemini CLI skills root (not a harness). Do not touch Antigravity's
+  # $HOME/.gemini/config/skills or GEMINI.md.
+  root="$HOME/.gemini/skills"
+  if [ -d "$root" ]; then
     while IFS= read -r p; do
       [ -n "$p" ] || continue
       is_ai_tools_link "$p" && safe_unlink "$p" || true
     done < <(find "$root" -maxdepth 1 -type l 2>/dev/null)
-  done
+  fi
   return 0
 }
 
@@ -780,7 +535,7 @@ refresh_copies() {
   # usage: refresh_copies [include-instructions 0|1]
   # Refresh every physical copy matching the previous revision ($PREV).
   # A copy matching neither revision is user work unless --overwrite was given.
-  local include_instructions="${1:-1}" h src root f base dest p name
+  local include_instructions="${1:-1}" h root dest p name
   if [ "$include_instructions" = 1 ]; then
     for h in $SCOPE; do
       dest=$(instructions_dest "$h")
@@ -789,15 +544,6 @@ refresh_copies() {
     done
   fi
   for h in $SCOPE; do
-    src="$AI_TOOLS/agents/$h"
-    root=$(agents_root "$h")
-    [ -d "$src" ] || continue
-    for f in "$src"/*-ai-tools*; do
-      [ -f "$f" ] || continue
-      base=$(basename "$f")
-      dest="$root/$base"
-      refresh_one_copy "$f" "$dest" "agents/$h/$base"
-    done
     root=$(skills_root "$h")
     for p in "$AI_TOOLS/skills"/*-ai-tools; do
       [ -d "$p" ] || continue
@@ -811,22 +557,12 @@ refresh_copies() {
 
 verify_install() {
   # VERIFY_INSTRUCTIONS=0 skips the instructions checks (install --no-instructions).
-  local check_instr="${VERIFY_INSTRUCTIONS:-1}" h dest size base root p name f
+  local check_instr="${VERIFY_INSTRUCTIONS:-1}" h dest size root p name
   if [ "$DRY_RUN" = 1 ]; then info "dry-run: verification skipped"; return 0; fi
 
   size=$(wc -c < "$AI_TOOLS/USER-AGENTS.md")
   if [ "$size" -le 8000 ]; then ok "instructions size: $size chars"
   else warn "USER-AGENTS.md exceeds 8000 chars (repository limit): $size"; fi
-
-  if [ -f "$MODEL_TABLE" ]; then ok "model table: $MODEL_TABLE"
-  else warn "missing model table: $MODEL_TABLE — install and lint cannot resolve agent-role models"; fi
-
-  if [ -f "$AI_TOOLS/agents/SUBAGENT-CONTRACT.md" ]; then ok "subagent contract: $AI_TOOLS/agents/SUBAGENT-CONTRACT.md"
-  else warn "missing subagent contract: $AI_TOOLS/agents/SUBAGENT-CONTRACT.md — wrappers point at it before their base"; fi
-
-  for base in "$AI_TOOLS/agents"/*-ai-tools.md; do
-    if [ -f "$base" ]; then ok "agent base: $base"; else warn "missing agent base: $base"; fi
-  done
 
   for p in "$AI_TOOLS/skills"/*-ai-tools; do
     [ -d "$p" ] || continue
@@ -852,23 +588,6 @@ verify_install() {
   fi
 
   for h in $SCOPE; do
-    root=$(agents_root "$h")
-    for f in "$AI_TOOLS/agents/$h"/*-ai-tools*; do
-      [ -f "$f" ] || continue
-      base=$(basename "$f")
-      if [ -L "$root/$base" ]; then warn "agent must be a physical copy, not a symlink: $root/$base -> $(readlink "$root/$base")"
-      elif cmp -s "$root/$base" "$f" 2>/dev/null; then ok "agent copy: $root/$base"
-      elif [ -e "$root/$base" ]; then warn "agent differs from source: $root/$base"
-      else warn "agent absent: $root/$base"
-      fi
-    done
-    if [ -d "$root" ]; then
-      for f in "$root"/*-ai-tools*; do
-        [ -e "$f" ] || [ -L "$f" ] || continue
-        base=$(basename "$f")
-        [ -f "$AI_TOOLS/agents/$h/$base" ] || warn "orphan agent present: $f"
-      done
-    fi
     root=$(skills_root "$h")
     for p in "$AI_TOOLS/skills"/*-ai-tools; do
       [ -d "$p" ] || continue

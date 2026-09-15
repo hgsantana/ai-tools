@@ -18,28 +18,21 @@ T_CASE=""
 T_LAST_EXIT=0
 T_LAST_OUTPUT=""
 T_ROOT=""
-T_FOREIGN_AGENT_PATH=""
+T_FOREIGN_SKILL_PATH=""
 T_FOREIGN_INSTRUCTIONS_PATH=""
 T_MODIFIED_COPY_PATH=""
-T_GROK_UNMANAGED_PATH=""
 T_STALE_LINK_PATH=""
 T_EXTERNAL_SYMLINK_PATH=""
 
 # --- Fixture -----------------------------------------------------------------
 
 T_HARNESS_DIRS="
-.claude/agents
 .claude/skills
-.grok/agents
 .grok/skills
-.codex/agents
 .codex/skills
-.copilot/agents
 .copilot/skills
 .copilot/instructions
-.cursor/agents
 .cursor/skills
-.gemini/config/agents
 .gemini/config/skills
 "
 
@@ -70,9 +63,8 @@ t_build_origin() {
 }
 
 t_fixture() {
-  # usage: t_fixture [--foreign-agent] [--foreign-instructions]
-  #                   [--modified-copy] [--unmanaged-grok-block]
-  #                   [--stale-link] [--external-symlink]
+  # usage: t_fixture [--foreign-skill] [--foreign-instructions]
+  #                   [--modified-copy] [--stale-link] [--external-symlink]
   # Builds a disposable sandbox under ${TMPDIR:-/tmp} and sets T_ROOT to its
   # root. Called plainly (never `root=$(t_fixture ...)`) so the T_* option
   # variables it sets land in the caller's shell, not a lost subshell.
@@ -103,50 +95,39 @@ t_fixture() {
 	insteadOf = https://github.com/hgsantana/ai-tools.git
 EOF
 
-  T_FOREIGN_AGENT_PATH=""
+  T_FOREIGN_SKILL_PATH=""
   T_FOREIGN_INSTRUCTIONS_PATH=""
   T_MODIFIED_COPY_PATH=""
-  T_GROK_UNMANAGED_PATH=""
   T_STALE_LINK_PATH=""
   T_EXTERNAL_SYMLINK_PATH=""
 
   while [ $# -gt 0 ]; do
     case "$1" in
-      --foreign-agent)
-        mkdir -p "$home/.claude/agents" || fatal "t_fixture: cannot create $home/.claude/agents"
-        T_FOREIGN_AGENT_PATH="$home/.claude/agents/planner-ai-tools.md"
-        printf 'not an ai-tools file\n' > "$T_FOREIGN_AGENT_PATH"
+      --foreign-skill)
+        mkdir -p "$home/.claude/skills/plan-ai-tools" || fatal "t_fixture: cannot create $home/.claude/skills/plan-ai-tools"
+        T_FOREIGN_SKILL_PATH="$home/.claude/skills/plan-ai-tools"
+        printf 'not an ai-tools file\n' > "$T_FOREIGN_SKILL_PATH/SKILL.md"
         ;;
       --foreign-instructions)
         T_FOREIGN_INSTRUCTIONS_PATH="$home/.claude/CLAUDE.md"
         printf 'not an ai-tools file\n' > "$T_FOREIGN_INSTRUCTIONS_PATH"
         ;;
       --modified-copy)
-        mkdir -p "$home/.claude/agents" || fatal "t_fixture: cannot create $home/.claude/agents"
-        T_MODIFIED_COPY_PATH="$home/.claude/agents/implementer-ai-tools.md"
-        cp "$home/.ai-tools/agents/claude-code/implementer-ai-tools.md" "$T_MODIFIED_COPY_PATH" \
+        T_MODIFIED_COPY_PATH="$home/.claude/skills/dev-ai-tools"
+        cp -R "$home/.ai-tools/skills/dev-ai-tools" "$T_MODIFIED_COPY_PATH" \
           || fatal "t_fixture: cannot stage modified copy"
-        printf '\nlocal edit that matches no revision\n' >> "$T_MODIFIED_COPY_PATH"
-        ;;
-      --unmanaged-grok-block)
-        mkdir -p "$home/.grok" || fatal "t_fixture: cannot create $home/.grok"
-        T_GROK_UNMANAGED_PATH="$home/.grok/config.toml"
-        cat >> "$T_GROK_UNMANAGED_PATH" <<'TOML'
-[subagents.models]
-some-other-agent = "some-model"
-TOML
+        printf '\nlocal edit that matches no revision\n' >> "$T_MODIFIED_COPY_PATH/SKILL.md"
         ;;
       --stale-link)
-        mkdir -p "$home/.claude/agents" || fatal "t_fixture: cannot create $home/.claude/agents"
-        T_STALE_LINK_PATH="$home/.claude/agents/old-layout-ai-tools.md"
-        ln -s "$home/.ai-tools/agents/claude-code/planner-ai-tools.md" "$T_STALE_LINK_PATH" \
+        T_STALE_LINK_PATH="$home/.claude/skills/old-layout-ai-tools"
+        ln -s "$home/.ai-tools/skills/plan-ai-tools" "$T_STALE_LINK_PATH" \
           || fatal "t_fixture: cannot create stale-link fixture"
         ;;
       --external-symlink)
-        mkdir -p "$home/.claude/agents" || fatal "t_fixture: cannot create $home/.claude/agents"
-        printf 'outside ai-tools\n' > "$root/external-file.md"
-        T_EXTERNAL_SYMLINK_PATH="$home/.claude/agents/implementer-ai-tools.md"
-        ln -s "$root/external-file.md" "$T_EXTERNAL_SYMLINK_PATH" \
+        mkdir -p "$root/external-skill" || fatal "t_fixture: cannot create $root/external-skill"
+        printf 'outside ai-tools\n' > "$root/external-skill/SKILL.md"
+        T_EXTERNAL_SYMLINK_PATH="$home/.claude/skills/az-ai-tools"
+        ln -s "$root/external-skill" "$T_EXTERNAL_SYMLINK_PATH" \
           || fatal "t_fixture: cannot create external-symlink fixture"
         ;;
       *) fatal "t_fixture: unknown option: $1" ;;
@@ -368,9 +349,8 @@ t_assert_unchanged() {
 t_origin_commit() {
   # usage: t_origin_commit <label>
   # Clones the fixture's bare origin (T_ROOT/origin.git) into a scratch dir,
-  # makes deterministic changes — appends marker lines to USER-AGENTS.md,
-  # agents/claude-code/implementer-ai-tools.md, and the existing
-  # skills/plan-ai-tools/SKILL.md file, then adds a new
+  # makes deterministic changes — appends marker lines to USER-AGENTS.md and
+  # the existing skills/plan-ai-tools/SKILL.md file, then adds a new
   # skills/<label>-ai-tools/ directory containing SKILL.md (the single-file
   # layout the repository ships) — commits and pushes to master, giving the fixture's clone
   # something new to update to. Returns nothing; the caller already knows the
@@ -388,10 +368,6 @@ t_origin_commit() {
     || fatal "t_origin_commit: git config user.email failed"
 
   printf '\n<!-- t_origin_commit marker: %s -->\n' "$label" \
-    >> "$scratch/agents/claude-code/implementer-ai-tools.md" \
-    || fatal "t_origin_commit: cannot append marker to wrapper"
-
-  printf '\n<!-- t_origin_commit marker: %s -->\n' "$label" \
     >> "$scratch/USER-AGENTS.md" \
     || fatal "t_origin_commit: cannot append marker to instructions"
 
@@ -404,7 +380,7 @@ t_origin_commit() {
   cat > "$scratch/skills/$label-ai-tools/SKILL.md" <<EOF
 ---
 name: $label-ai-tools
-description: Test-only skill added by t_origin_commit for marker $label. Impact: none. Agent: mechanical-ai-tools.
+description: Test-only skill added by t_origin_commit for marker $label. Impact: none.
 ---
 
 # $label

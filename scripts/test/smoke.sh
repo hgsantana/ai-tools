@@ -36,7 +36,7 @@ case_smoke() {
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/verify.sh" --harnesses claude-code
   t_assert_exit 2
-  t_assert_line "WARN: agent absent:"
+  t_assert_line "WARN: skill absent:"
 
   changed=$(find "$HOME" -maxdepth 1 -newer "$marker" 2>/dev/null)
   if [ -z "$changed" ]; then
