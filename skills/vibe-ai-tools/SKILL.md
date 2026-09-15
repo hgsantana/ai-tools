@@ -1,128 +1,106 @@
 ---
 name: vibe-ai-tools
 description: >
-  Plan a change under dev/, then execute that plan through dev-ai-tools,
-  deciding in-scope implementation questions. Use for /vibe-ai-tools.
-  Impact: after the plan is on disk, edits on a dedicated branch, commits,
-  pushes, and opens a pull request unattended; edits and removals can be hard
-  to undo. Pre-existing history remains intact. Cloud and destructive
-  operations require separate approval. Agent: planner-ai-tools.
+  Plan a change under dev/, then execute that plan through a fresh
+  execution pass, deciding in-scope implementation questions. Use for
+  /vibe-ai-tools. Impact: after the plan is on disk, edits on a dedicated
+  branch, commits, pushes, and opens a pull request unattended; edits and
+  removals can be hard to undo. Pre-existing history remains intact. Cloud
+  and destructive operations require separate approval. Agent: session +
+  implementer (model asked once).
 argument-hint: "[the change to deliver]"
 ---
 
 <skill name="vibe-ai-tools">
   <overview>
-    Plan a change under dev/{SLUG}/ interactively with the user, then execute and deliver that plan
-    unattended through dev-ai-tools mechanics, deciding in-scope implementation questions autonomously.
+    Plan a change under dev/{SLUG}/ interactively with the user, then spawn a fresh execution pass to deliver it.
+    The session plans and asks the implementer model; a session-subagent accepts, commits, and opens the pull request; implementers write stage code; builds and tests go to a default worker.
   </overview>
 
   <session_workflow>
     <step id="1" name="interactive_planning">
-      Refine scope, architecture, and trade-offs interactively with the user in chat.
-      Dispatch `<template role="plan-author">` from `<dispatch_templates>`, substituting {SLUG}, {BASE_BRANCH}, and {REQUEST},
-      to draft the canonical plan under `dev/{SLUG}/` (base and stage files).
+      Run plan-ai-tools `<step id="1">` to record {BASE_BRANCH}.
+      Refine scope, architecture, and trade-offs interactively with the user in chat, and derive a kebab-case {SLUG}.
+      Run plan-ai-tools `<step id="3">` to write the plan under dev/{SLUG}/ per plan-ai-tools `<plan_file_format>`.
       Skip the standalone `/dev-ai-tools` offer once the plan is on disk.
     </step>
 
-    <step id="2" name="unattended_execution">
-      Dispatch a fresh, high-reasoning coordinator using `<template role="vibe-coordinator">` from `<dispatch_templates>`,
-      substituting {PLAN_PATH}, {SLUG}, and {BASE_BRANCH}.
-      The coordinator executes unattended as its template instructs and ends with one `<signal>` from `<return_protocol>`.
+    <step id="2" name="implementer_model">
+      With the plan on disk and before execution, ask the user exactly one question through USER-AGENTS `<user_interaction>`: which model implements this plan's stages, with 1-3 options chosen per `<implementer_job>`.
+      Record the answer as {IMPLEMENTER_MODEL} in dev/{SLUG}/vibe-decisions.md; ask nothing else before delivery.
     </step>
 
-    <step id="3" name="report">
-      In chat (user's language), provide the report path, a one-line outcome, and the PR URL or local review patch.
-      Interrupt user during execution only for unresolvable blockers or approvals reserved by USER-AGENTS `<security_guardrails>` and escalated by the coordinator.
+    <step id="3" name="unattended_execution">
+      Spawn a fresh `<template role="vibe-executor">` from `<dispatch_templates>`, substituting {SLUG}, {BASE_BRANCH}, and {IMPLEMENTER_MODEL}.
+      Record only the `<signal>` from `<return_protocol>`. Do not open the plan, vibe-decisions.md, or the report body.
+    </step>
+
+    <step id="4" name="report">
+      In chat (user's language), provide the report path from the signal, a one-line outcome, the implementer model used, and the PR URL or review patch path.
+      Interrupt the user only when the pass returns `<signal code="BLOCKED">` for an unresolvable blocker or an approval reserved by USER-AGENTS `<security_guardrails>`.
     </step>
   </session_workflow>
 
-  <dispatch_templates>
-    <template role="plan-author" agent="planner-ai-tools">
-      <job>Planner worker: write the multi-stage plan under dev/{SLUG}/.</job>
-      <input>
-        <slug>{SLUG}</slug>
-        <base_branch>{BASE_BRANCH}</base_branch>
-        <request>{REQUEST}</request>
-      </input>
-      <instructions>
-        Plan {REQUEST} against {BASE_BRANCH}.
-        Draft 0-{SLUG}.md and numbered stage files under dev/{SLUG}/ in the plan-ai-tools `<plan_file_format>`.
-        Do not edit product code.
-      </instructions>
-    </template>
+  <implementer_job>
+    The implementer takes one stage file at a time and delivers it without supervision: it reads the stage and the code it touches, edits production code and tests across several files within the declared scope, matches the repository's style and conventions, writes and runs behaviour tests, and appends a factual implementation log. It makes no architecture, planning, or user-facing decisions and never commits.
+    Required capability: reliable multi-file code editing in an unfamiliar codebase, test writing and debugging, precise adherence to written acceptance criteria, and tool use for file edits and shell commands.
+    Offer 1-3 models that the harness's native subagent API can select, by their exact harness names: the strongest coding fit first and marked recommended, then cheaper or faster options that still meet the required capability.
+    When that API cannot select a model per spawn, skip the question, record `harness default` as the model, and state that in the report. When a spawn with the chosen model fails, retry once with the harness default and record that.
+  </implementer_job>
 
-    <template role="vibe-coordinator" agent="planner-ai-tools">
-      <job>Vibe execution coordinator: execute plan unattended, decide trade-offs, and deliver PR.</job>
+  <dispatch_templates>
+    <template role="vibe-executor" executor="session-subagent">
+      <job>Execution pass: deliver one plan on plan/{SLUG} with implementers, then open the pull request.</job>
       <input>
-        <plan_path>{PLAN_PATH}</plan_path>
         <slug>{SLUG}</slug>
         <base_branch>{BASE_BRANCH}</base_branch>
+        <implementer_model>{IMPLEMENTER_MODEL}</implementer_model>
       </input>
       <instructions>
-        Read plan from {PLAN_PATH} and create work branch plan/{SLUG} from {BASE_BRANCH}.
-        Commit initial plan: chore(dev): plan {SLUG}.
-        Execute each stage sequentially, following dev-ai-tools `<status_protocol>`:
-          1. Sub-dispatch `<template role="stage-implementer">` to write code and tests.
-          2. Autonomously resolve in-scope implementation questions and retry choices.
-          3. Record every decision and trade-off in dev/{SLUG}/vibe-decisions.md.
-          4. Sub-dispatch `<template role="stage-verifier">` to verify test suites.
-          5. Commit each accepted stage locally with Conventional Commits.
-        Archive plan, stages, and decisions: copy to dev/tmp/finished/{SLUG}/, git rm -r dev/{SLUG}/.
-        Commit archival: chore(dev): archive {SLUG}.
-        Push branch and open pull request (or write review patch to dev/tmp/{SLUG}-review.patch).
-        Write summary report to dev/tmp/{SLUG}-report.md.
-        End with one `<signal>` from `<return_protocol>`.
+        This payload is the brief; do not read sibling skill files. Nested spawn payloads are stated here.
+        Check out plan/{SLUG} from {BASE_BRANCH} and commit the unit first: `chore(dev): plan {SLUG}`.
+        For each stage in dependency order, own every status except V: set W and record Executor as implementer plus {IMPLEMENTER_MODEL}; spawn `<template role="stage-implementer">` as executor="implementer" with {IMPLEMENTER_MODEL}, substituting the stage file and {SLUG}; review the working-tree diff against objective, declared files, and acceptance; set T and spawn dev-ai-tools `<template role="stage-verifier">` as executor="default-worker" with the stage's commands and a kebab-case topic (it writes logs under dev/tmp/ and returns command, exit code, and path); on pass, commit with the stage's Conventional Commit message and set F; else append corrections, set R1..R3, retry up to three times, then set E.
+        Decide in-scope questions from code evidence; append each decision to dev/{SLUG}/vibe-decisions.md.
+        When every stage is terminal: copy the unit to dev/tmp/finished/{SLUG}, git rm it, commit `chore(dev): archive {SLUG}`, push plan/{SLUG}, open a pull request targeting {BASE_BRANCH} with `gh pr create` or write dev/tmp/{SLUG}-review.patch, and write dev/tmp/{SLUG}-report.md.
+        End with one `<signal>` from `<return_protocol>`: DELIVERED or BLOCKED.
       </instructions>
       <constraints>
-        <constraint>Execute unattended; do not ask user routine questions settled by code evidence.</constraint>
-        <constraint>Sub-dispatch `<template role="stage-implementer">` for code changes and `<template role="stage-verifier">` for tests.</constraint>
-        <constraint>All changes land on plan/{SLUG}; preserve base branch and history.</constraint>
-        <constraint>Escalate approvals reserved by USER-AGENTS `<security_guardrails>` to the host session.</constraint>
+        <constraint>Leave stage code to the implementer and builds and tests to default workers; own review, acceptance, commits, and the pull request.</constraint>
+        <constraint>When the implementer or a default worker cannot be spawned, do not do that work yourself: end with `<signal code="BLOCKED">` naming the missing nested-spawn capability.</constraint>
+        <constraint>Preserve pre-existing commit history.</constraint>
       </constraints>
     </template>
 
-    <template role="stage-implementer" agent="implementer-ai-tools">
-      <job>Implementer worker: write and edit code and unit tests for the assigned stage.</job>
+    <template role="stage-implementer" executor="implementer">
+      <job>Implementer: write and edit code and behaviour tests for one plan stage.</job>
       <input>
         <assigned_file>{STAGE_FILE}</assigned_file>
         <slug>{SLUG}</slug>
       </input>
       <instructions>
-        Implement the stage in {STAGE_FILE} for dev/{SLUG}/: match surrounding style, write tests, append report.
-        Set status V per dev-ai-tools `<status_protocol>`.
+        Read {STAGE_FILE} of dev/{SLUG}/ and the repository rules (README.md, AGENTS.md if present). Implement only that stage.
+        Match surrounding style, keep edits within the declared files, and write behaviour tests for delivered changes.
+        Append factual notes to the Implementation log of {STAGE_FILE}, set status V, and return a one-line outcome with the changed paths.
       </instructions>
       <constraints>
         <constraint>Do not make architectural changes outside stage scope.</constraint>
         <constraint>Do not edit files outside declared stage files.</constraint>
-        <constraint>Do not commit or push; leave changes in working tree for coordinator audit.</constraint>
-      </constraints>
-    </template>
-
-    <template role="stage-verifier" agent="mechanical-ai-tools">
-      <job>Mechanical worker: run builds, tests, and collect factual evidence.</job>
-      <input>
-        <commands>{COMMANDS}</commands>
-        <topic>{TOPIC}</topic>
-      </input>
-      <instructions>
-        Execute {COMMANDS} without design decisions.
-        Capture stdout and stderr to dev/tmp/{TOPIC}-output.log.
-        Return facts: command, exit code, and output path.
-      </instructions>
-      <constraints>
-        <constraint>Do not modify production or test code unless explicitly passed as a patch.</constraint>
+        <constraint>Do not commit or push; leave changes in the working tree for execution pass review.</constraint>
       </constraints>
     </template>
   </dispatch_templates>
 
   <return_protocol>
-    <signal code="DELIVERED">DELIVERED {REPORT_PATH} {PR_URL}</signal>
-    <signal code="BLOCKED">BLOCKED {REPORT_PATH} {REASON}</signal>
+    <signal code="DELIVERED">DELIVERED {REPORT_PATH}</signal>
+    <signal code="BLOCKED">BLOCKED {REASON}</signal>
   </return_protocol>
 
   <boundaries>
-    <rule id="session-owns-alignment">Session owns user alignment, plan review, and final chat reporting.</rule>
-    <rule id="coordinator-owns-execution">Planner coordinator owns unattended execution, in-scope decisions, acceptance, commits, archival, and PR.</rule>
+    <rule id="session-owns-planning">The session owns user alignment, planning, the implementer question, and reporting from the `<signal>`; the execution pass owns in-scope decisions, acceptance, commits, archival, and the pull request.</rule>
+    <rule id="signals-only">After spawning `<template role="vibe-executor">`, the session stores only the `<signal>` line and paths. It does not read the plan, vibe-decisions.md, or the report body.</rule>
+    <rule id="one-model-question">Ask the implementer model question once per run, after the plan is on disk; reuse the answer for every stage and rework.</rule>
+    <rule id="spawn-apis">Per USER-AGENTS `<execution_protocol>` for the native subagent API list and payload rules: `<template role="vibe-executor">` runs as `executor="session-subagent"` on the session's own model; `<template role="stage-implementer">` runs as `executor="implementer"` with the recorded {IMPLEMENTER_MODEL}; dev-ai-tools `<template role="stage-verifier">` runs as `executor="default-worker"` with the harness default agent type and model.</rule>
+    <rule id="no-host-fallback">If `<template role="vibe-executor">` cannot be spawned, do not run delivery in the session: report the missing capability.</rule>
     <rule id="stay-in-repo">Stay inside the working repository. Preserve pre-existing commit history.</rule>
     <rule id="log-decisions">Log in-scope decisions to dev/{SLUG}/vibe-decisions.md for PR reviewer audit.</rule>
     <rule id="reserved-approvals">Never bypass approvals reserved by USER-AGENTS `<security_guardrails>` for cloud mutations or destructive operations.</rule>

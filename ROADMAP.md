@@ -48,4 +48,4 @@ Several skills consume untrusted input: `gh-ai-tools` reads issue and pull reque
 
 ### 12. Adding a harness, by checklist
 
-Adding a harness requires coordinated edits: its skills root and instructions destination in `scripts/shell/lib.sh`, detection, the Supported harnesses table, installation steps, test fixtures, and any newly tighter constraint. Consolidate these requirements into an ordered checklist, and have the linter verify that every harness key in `lib.sh` has a Supported harnesses entry. Route: `/vibe-ai-tools`.
+Adding a harness requires coordinated edits: its skills root and instructions destination in `scripts/shell/lib.sh`, detection, the Supported harnesses table, installation steps, test fixtures, and any newly tighter constraint. Consolidate these requirements into an ordered checklist. Route: `/vibe-ai-tools`.
