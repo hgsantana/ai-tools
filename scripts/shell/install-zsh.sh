@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# shellcheck shell=sh
 # ai-tools first-install bootstrap (zsh). Self-contained: no lib.sh.
 # Usage: curl -fsSL https://raw.githubusercontent.com/hgsantana/ai-tools/master/scripts/shell/install-zsh.sh | zsh
 # Keep in sync with install-bash.sh.
@@ -11,6 +12,11 @@ REPO_URL="https://github.com/hgsantana/ai-tools.git"
 die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 
 command -v git >/dev/null 2>&1 || die "git is required"
+[ -n "$AI_TOOLS" ] || die "AI_TOOLS is empty"
+case "$AI_TOOLS" in
+  /|"$HOME"|"$HOME/") die "AI_TOOLS is an unsafe path: $AI_TOOLS" ;;
+esac
+[ "$AI_TOOLS" = "$HOME/.ai-tools" ] || die "AI_TOOLS must be $HOME/.ai-tools (the only supported clone location); got: $AI_TOOLS"
 
 if [ -e "$AI_TOOLS" ]; then
   if [ -d "$AI_TOOLS/.git" ] && [ -f "$AI_TOOLS/scripts/shell/install.sh" ]; then

@@ -64,6 +64,7 @@ argument-hint: "[what to inspect or change in Azure]"
     <rule id="reads-free-mutations-approved">Read-only queries run freely; every mutation requires separate user approval.</rule>
     <rule id="state-cost">State cost impact (SKU, ongoing cost, billable status) before any resource creation.</rule>
     <rule id="outputs-on-disk">Save large outputs and logs to dev/tmp/ rather than flooding session context.</rule>
-    <rule id="default-worker">Spawn each `<template executor="default-worker">` per USER-AGENTS `<execution_protocol>`.</rule>
+    <rule id="protocol-source">When USER-AGENTS `<execution_protocol>`, `<user_interaction>`, or `<security_guardrails>` are not already loaded, read `$HOME/.ai-tools/USER-AGENTS.md` before the first spawn or approval. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
+    <rule id="default-worker">Spawn each `<template executor="default-worker">` per USER-AGENTS `<execution_protocol>`, assembling nested payloads per USER-AGENTS `<rule id="payload-assembly">`.</rule>
   </boundaries>
 </skill>

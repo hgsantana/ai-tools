@@ -35,6 +35,39 @@ case_update_reset_guard_dirty() {
   t_cleanup "$root"
 }
 
+case_update_reset_guard_ahead_on_master_while_detached() {
+  # Local master can be ahead even when HEAD is another branch at origin/master.
+  local root home head_before
+  t_fixture
+  root="$T_ROOT"
+  home="$root/home"
+
+  git -C "$home/.ai-tools" checkout -q -B other origin/master
+  git -C "$home/.ai-tools" checkout -q master
+  printf 'master-only file\n' > "$home/.ai-tools/master-only.txt"
+  git -C "$home/.ai-tools" add master-only.txt
+  git -C "$home/.ai-tools" -c user.name="ai-tools test" -c user.email="test@example.invalid" \
+    commit -q -m "local master commit"
+  git -C "$home/.ai-tools" checkout -q other
+  head_before=$(git -C "$home/.ai-tools" rev-parse HEAD)
+
+  t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses cursor
+  t_assert_exit 1
+  t_assert_line "local master commits ahead of origin/master:"
+  if [ "$(git -C "$home/.ai-tools" rev-parse HEAD)" = "$head_before" ]; then
+    ok "$T_CASE: HEAD unchanged"
+  else
+    warn "$T_CASE: HEAD moved"
+  fi
+  if git -C "$home/.ai-tools" cat-file -e master:master-only.txt 2>/dev/null; then
+    ok "$T_CASE: local master commit kept"
+  else
+    warn "$T_CASE: local master commit discarded"
+  fi
+
+  t_cleanup "$root"
+}
+
 case_update_reset_guard_ahead() {
   local root home head_before head_after
 
@@ -302,6 +335,9 @@ case_update_dry_run() {
   t_assert_exit 0
   t_assert_line "would reset"
   t_assert_line "to origin/master"
+  t_assert_line "planning installation from origin/master"
+  t_assert_line "dryrun-ai-tools"
+  t_assert_line "remote-tracking refs may have been updated"
   t_assert_line "dry-run: verification skipped"
 
   t_assert_unchanged "$home/.claude" "$before"

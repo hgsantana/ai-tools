@@ -1,6 +1,6 @@
 # Using ai-tools
 
-This guide is harness-agnostic. Skills are the user entry points.
+This guide is harness-agnostic. Skills are the user entry points. Automatic routing depends on the user-wide instructions being loaded; see [Supported harnesses](../README.md#supported-harnesses).
 
 ## Invocation and gate
 
@@ -10,7 +10,7 @@ Invoke a skill by leading with its slash name and optional request:
 /plan-ai-tools add resumable uploads
 ```
 
-The `<skill_offer>` inside `<routing_gate>` is the only `USER-AGENTS.md` gate. It names each option's impact, then offers the relevant skill, **run it here**, and **something else**. The last choice lets the user name another skill, revise the request, or propose a different approach; a native **Other** field serves the same purpose. A leading `/name` confirms that skill's stake, offers other fitting skills, and proceeds after the answer. Choosing a skill runs its `<session_workflow>`, which coordinates delivery. A workflow that later invokes another skill does not re-enter `<routing_gate>`. Later approvals still follow the skill's own rules.
+`USER-AGENTS.md` routes in three cases, for a new end-user request in the host session only. A prompt that starts with or mentions a skill or slash command runs that skill's `<session_workflow>` immediately. Simple, well specified, or documentation-only requests run in the session without asking. Other non-trivial requests receive the `<skill_offer>` inside `<routing_gate>`, the only USER-AGENTS gate. The offer names each option's impact, then lists the relevant skill, **run it here**, and **something else**. The last choice lets the user name another skill, revise the request, or propose a different approach; a native **Other** field serves the same purpose. Choosing a skill from the offer runs its `<session_workflow>`. A workflow that later invokes another skill does not re-enter `<routing_gate>`. Authorized delegated payloads, spawn briefs, and continuations skip the gate; a fresh worker that loads these instructions executes its brief and does not offer skills. If `$HOME/AGENTS.md` exists, follow it after the gate; if missing, ignore it. Later skill-specific questions and mutation approvals still follow the skill's own rules.
 
 ## Skills
 
@@ -30,19 +30,21 @@ The `<skill_offer>` inside `<routing_gate>` is the only `USER-AGENTS.md` gate. I
 
 Every skill runs on the session's model. The session handles user alignment and short signals. Multi-stage delivery (vibe, specified or queued dev plans, campaign iterations) runs in a fresh session-subagent so the host context stays lean. Builds, test suites, script runs, and bulk fact collection go to the harness's default subagent. The skill offer's Execution column, filled from the skills' `Agent:` field, shows `session`, or `session + implementer (model asked once)` for the two skills below.
 
+`/vibe-ai-tools`, `/campaign-ai-tools`, and specified or queued `/dev-ai-tools` need those execution subagents plus nested spawning (implementers for vibe and campaign; default workers for verification). If a required spawn is unavailable, delivery stops as blocked; the host session does not take over. `/dev-ai-tools` Task mode stays in the session. Other skills may run a failed default-worker payload in the session and say so in the report.
+
 `/vibe-ai-tools` and `/campaign-ai-tools` also spawn implementer subagents that write stage code. Before the first one, they ask one question: which model implements the stages, with one to three models the harness can use. `/vibe-ai-tools` asks after the plan is on disk. `/campaign-ai-tools` asks when the campaign starts, records the answer in `dev/improve/<campaign>/campaign.md`, and reuses it for every iteration and on resume. A harness that cannot choose a model per subagent skips the question and uses its default; the report says so.
 
 ### Delivery workflows
 
 `/vibe-ai-tools` is the end-to-end choice for a larger change. It follows `/plan-ai-tools` to align scope with the user interactively and writes the agreed plan to disk. It then asks which model implements the stages and spawns a fresh execution pass: implementer subagents write stage code; the pass reviews, commits, and opens the pull request. The session reports from the pass's short status. Decisions are recorded in `dev/<slug>/vibe-decisions.md`.
 
-`/plan-ai-tools` designs only. Its output is a base plan plus one file per commit-sized stage under `dev/<slug>/`; the base plan records the branch used for analysis. After the plan is on disk it offers `/dev-ai-tools`. A one-commit request is redirected to `/dev-ai-tools` Task mode.
+`/plan-ai-tools` designs only. Its output is a base plan plus one file per commit-sized stage under `dev/<slug>/`; the base plan records the branch used for analysis. After the plan is on disk it offers `/dev-ai-tools`. A one-commit request presents `/dev-ai-tools` Task mode with that skill's Impact and Agent and waits for acceptance before invoking it; refusal ends with a short planning assessment.
 
-`/dev-ai-tools` executes a specified `dev/<slug>/` plan, or lists pending plans, proposes an order, and runs the accepted queue; or agrees one single-commit task. Specified and queued plans each run in a fresh execution pass on `plan/<slug>`. Task mode implements the single stage in the session. Tests go to the harness's default subagent. Each pass commits every accepted stage, archives the temporary work files, and opens a pull request or writes a local review patch when no host is available.
+`/dev-ai-tools` executes a specified `dev/<slug>/` plan, or lists pending plans, proposes an order, and runs the accepted queue; or agrees one single-commit task. Specified and queued plans each run in a fresh execution pass on `plan/<slug>`. Task mode implements the single stage in the session. Tests go to the harness's default subagent. Delivery (archive, push, pull request) runs only when every required stage is finished (`F`). An exhausted stage (`E`) blocks, keeps the work unit, and stops the queue. The pass signal includes the report path and the PR URL or review-patch path so the session can report without opening the report body. Resume of an existing `plan/<slug>` preserves accepted commits.
 
 ### Continuous improvement campaign
 
-`/campaign-ai-tools` uses a single initial gate, followed by one question about the implementer model. Choosing it authorizes all local, in-repository work for that campaign; it does not push, open pull requests, mutate cloud resources, or write outside the repository. The user owns the campaign and specifies its objectives and priorities.
+`/campaign-ai-tools` authorizes all local, in-repository work for that campaign when the skill is invoked directly or chosen from the offer. It does not push, open pull requests, mutate cloud resources, or write outside the repository. After that authorization, one separate question asks which model implements the stages. The user owns the campaign and specifies its objectives and priorities.
 
 Recommended prompt:
 
@@ -64,12 +66,12 @@ The short form uses the user's objective or explicit campaign name:
 
 The campaign creates or resumes local branch `improve/repository-hardening`, records the implementer model, and commits `dev/improve/repository-hardening/campaign.md` at start. Each iteration chains planning and execution passes in fresh subagents on the session model while keeping the orchestrating session lean:
 
-1. A fresh planning subagent evaluates the campaign branch from its spawn payload, saving one multi-stage plan under `dev/<slug>/`. The initial gate pre-authorizes it to resolve and accept its recommendations according to the user's campaign priorities.
+1. A fresh planning subagent evaluates the campaign branch from its spawn payload, saving one multi-stage plan under `dev/<slug>/`. Invocation or selection pre-authorizes it to resolve and accept its recommendations according to the user's campaign priorities.
 2. A separate fresh execution subagent runs the `dev-ai-tools` stage loop against that plan, spawning implementers on the recorded model.
 3. The execution pass judges diffs and test evidence, commits every accepted stage on `improve/<campaign>`, archives the plan, and updates `dev/improve/<campaign>/campaign.md` and `decisions.md`.
 4. The orchestrating session starts the cycle again with a new planning pass. No planning context or conversation history is reused between passes.
 
-The orchestrating session only starts the planning and execution passes and stores their short statuses. It does not open plan or iteration files. Each pass receives its job in the spawn payload and does not read skill files. Planning decides in-scope questions under the initial gate; after the implementer-model question at start, the user is not interrupted. Work needing remote mutation, an external write, or an unversioned destructive action blocks instead of expanding the authorization. Planning and execution passes must spawn their own implementer and default subagents. On a harness where they cannot, the first pass that needs one stops the campaign as blocked, with a report naming the missing capability. The pass does not do that work itself. Campaign delivery remains local: `dev-ai-tools` uses the campaign branch instead of `plan/<slug>` and does not push or open pull requests. On controlled completion, `dev/improve/<campaign>/` is archived and removed in a final commit, leaving the branch clean for merge.
+The orchestrating session only starts the planning and execution passes and stores their short statuses. It does not open plan or iteration files. Each pass receives its job in the spawn payload and does not read skill files. Planning decides in-scope questions under that authorization; after the implementer-model question at start, the user is not interrupted. Work needing remote mutation, an external write, or an unversioned destructive action blocks instead of expanding the authorization. Planning and execution passes must spawn their own implementer and default subagents. On a harness where they cannot, the first pass that needs one stops the campaign as blocked, with a report naming the missing capability. The pass does not do that work itself. Campaign delivery remains local: `dev-ai-tools` uses the campaign branch instead of `plan/<slug>` and does not push or open pull requests. On two consecutive planning passes with nothing to plan, `dev/improve/<campaign>/` is archived and removed in a final commit, leaving the branch clean for merge. Budget exhaustion or a host halt pauses instead: campaign.md stays on the branch with last accepted stage and model. An exhausted stage (`E`) blocks the iteration, keeps the plan, and does not archive the campaign.
 
 If execution ends mid-plan, the last accepted stage remains committed and the campaign branch may have resumable plan files or a dirty worktree. Resume with the same campaign name:
 
@@ -89,6 +91,6 @@ To request a clean stop while it is running, say `Stop after the current plan.` 
 
 ### Maintenance
 
-`/update-ai-tools` runs `update.sh`. `/remove-ai-tools` runs `remove.sh`. First settle harness scope, run the matching script with `--dry-run`, and save its output. Destructive flags are presented separately and run only when explicitly approved. The scripts preserve conflicts by default and leave the user-owned `$HOME/AGENTS.md` untouched.
+`/update-ai-tools` runs `"$HOME/.ai-tools/scripts/shell/update.sh"`. `/remove-ai-tools` runs `"$HOME/.ai-tools/scripts/shell/remove.sh"`. Both resolve that canonical clone first and do not run a relative script from the caller's project. First settle harness scope, run the matching script with `--dry-run`, and save its output. Destructive flags are presented separately and run only when explicitly approved. The scripts preserve conflicts by default and leave the user-owned `$HOME/AGENTS.md` untouched. An approved `--purge` writes dry-run, execution, and final reports under `$HOME/.ai-tools-remove-logs` so evidence survives deleting the clone.
 
 First installation is not a skill: follow the root `README.md` installation process.

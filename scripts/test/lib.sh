@@ -33,6 +33,7 @@ T_HARNESS_DIRS="
 .copilot/skills
 .copilot/instructions
 .cursor/skills
+.cursor/rules
 .gemini/config/skills
 "
 
@@ -171,16 +172,14 @@ t_sandbox_guard() {
   esac
 }
 
-t_run() {
-  # usage: t_run <root> <script> [args...]
-  # Runs one script confined to the sandbox; captured output and exit code
-  # land in T_LAST_OUTPUT / T_LAST_EXIT.
-  local root="$1" script="$2" home ai_tools out
-  shift 2
-  home="$root/home"
-  ai_tools="$root/home/.ai-tools"
+t_run_at() {
+  # usage: t_run_at <root> <home> <ai_tools> <script> [args...]
+  # Same as t_run with an explicit HOME and AI_TOOLS (spaces, foreign
+  # AI_TOOLS probes). Both paths must still stay under <root>.
+  local root="$1" home="$2" ai_tools="$3" script="$4" out
+  shift 4
   t_sandbox_guard "$root" "$home" "$ai_tools"
-  out=$(mktemp "${TMPDIR:-/tmp}/ai-tools-test-out.XXXXXX") || fatal "t_run: mktemp failed"
+  out=$(mktemp "${TMPDIR:-/tmp}/ai-tools-test-out.XXXXXX") || fatal "t_run_at: mktemp failed"
   env -i \
     PATH="$PATH" \
     HOME="$home" \
@@ -194,6 +193,15 @@ t_run() {
   T_LAST_EXIT=$?
   T_LAST_OUTPUT=$(cat "$out")
   rm -f "$out"
+}
+
+t_run() {
+  # usage: t_run <root> <script> [args...]
+  # Runs one script confined to the sandbox; captured output and exit code
+  # land in T_LAST_OUTPUT / T_LAST_EXIT.
+  local root="$1" script="$2"
+  shift 2
+  t_run_at "$root" "$root/home" "$root/home/.ai-tools" "$script" "$@"
 }
 
 t_run_stdin() {

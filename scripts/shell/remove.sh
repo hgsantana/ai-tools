@@ -43,6 +43,7 @@ while [ $# -gt 0 ]; do
   shift
 done
 
+assert_supported_clone_path
 set_scope "$HARNESSES"
 
 if [ -d "$AI_TOOLS" ]; then

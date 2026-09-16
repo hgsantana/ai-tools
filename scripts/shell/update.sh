@@ -67,5 +67,6 @@ fi
 install_skills
 
 VERIFY_INSTRUCTIONS=$((1 - NO_INSTRUCTIONS)) verify_install
+end_update_dry_plan
 info "restart or reload harnesses that cache skills"
 finish

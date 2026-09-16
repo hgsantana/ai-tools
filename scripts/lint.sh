@@ -43,7 +43,9 @@ Checks:
                     with a <rule id> for default-worker, implementer, and
                     session-subagent, and the offer header "Description,
                     Execution", never <agents>, <dispatch_protocol>, or <worker,
-                    and no references to deleted files (rules 5, 11)
+                    YAML applyTo/alwaysApply, a delegated-worker gate
+                    exemption, optional $HOME/AGENTS.md, and no references
+                    to deleted files (rules 5, 11)
   instructions cap  USER-AGENTS.md is at most 8000 characters (rule 3)
   instructions      USER-AGENTS.md has no ## sub-heading (rule 3)
   headings
@@ -53,7 +55,8 @@ Checks:
                     (rule 21)
   no binaries       every tracked file under skills/ and scripts/
                     is text
-  version bump      CI-only, needs --base <ref> (skipped without it): when
+  version bump      CI-only, needs --base <ref> (skipped without it): <ref>
+                    must be a commit (invalid base is a finding); when
                     skills/, scripts/, or USER-AGENTS.md changed
                     since <ref>, the README version line must have changed
                     too (rule 4)
@@ -246,6 +249,24 @@ check_skill_layout() {
     warn "USER-AGENTS.md contains a retired <agents>, <dispatch_protocol>, or <worker tag: $f"
   else
     ok "USER-AGENTS.md has no retired <agents>, <dispatch_protocol>, or <worker tag: $f"
+  fi
+
+  if awk 'NR==1{ok=($0=="---")} NR==2{ok=ok && index($0,"applyTo:") && index($0,"**")} NR==3{ok=ok && index($0,"alwaysApply: true")} NR==4{ok=ok && $0=="---"; exit !ok}' "$f"; then
+    ok "USER-AGENTS.md has Copilot applyTo and Cursor alwaysApply frontmatter: $f"
+  else
+    warn "USER-AGENTS.md missing YAML applyTo: \"**\" and alwaysApply: true frontmatter: $f"
+  fi
+
+  if grep -q 'authorized delegated payload' "$f" && grep -q 'does not offer skills' "$f"; then
+    ok "USER-AGENTS.md exempts delegated workers from the routing gate: $f"
+  else
+    warn "USER-AGENTS.md missing delegated-worker routing-gate exemption: $f"
+  fi
+
+  if grep -q '\$HOME/AGENTS.md' "$f"; then
+    ok "USER-AGENTS.md loads optional \$HOME/AGENTS.md after the routing gate: $f"
+  else
+    warn "USER-AGENTS.md never mentions \$HOME/AGENTS.md: $f"
   fi
 
   for name in $gated $maintainer; do
@@ -827,7 +848,12 @@ check_version_bump() {
     skip "version bump check needs --base <ref> (the lint workflow supplies it)"
     return
   fi
-  changed=$(git -C "$AI_TOOLS" diff --name-only "$base...HEAD" -- skills scripts USER-AGENTS.md 2>/dev/null)
+  git -C "$AI_TOOLS" rev-parse --verify "$base^{commit}" >/dev/null 2>&1 \
+    || { warn "version bump check: --base is not a commit: $base"; return; }
+  if ! changed=$(git -C "$AI_TOOLS" diff --name-only "$base...HEAD" -- skills scripts USER-AGENTS.md); then
+    warn "version bump check: git diff failed against $base"
+    return
+  fi
   if [ -z "$changed" ]; then
     ok "no shipped content changed since $base: version bump not required"
     return
@@ -879,7 +905,7 @@ EOF
   pattern='[Rr]ule[s]? [0-9]+(–[0-9]+|-[0-9]+)?(, [0-9]+(–[0-9]+|-[0-9]+)?)*'
 
   files=$(git -C "$AI_TOOLS" ls-files -- \
-    README.md ROADMAP.md docs/USAGE.md .gitattributes \
+    README.md docs/USAGE.md .gitattributes \
     scripts/lint.sh scripts/test.sh 'scripts/test/*.sh' 'scripts/shell/*.sh')
   for f in $files; do
     matches=$(grep -noE "$pattern" "$AI_TOOLS/$f" || true)

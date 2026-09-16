@@ -232,6 +232,45 @@ case_install_all_includes_undetected_harnesses() {
   t_assert_regular_directory "$home/.copilot/skills/plan-ai-tools"
   t_assert_regular_directory "$home/.cursor/skills/plan-ai-tools"
   t_assert_regular_directory "$home/.gemini/config/skills/plan-ai-tools"
+  t_assert_regular_file "$home/.copilot/instructions/ai-tools.instructions.md"
+  t_assert_same_content "$home/.copilot/instructions/ai-tools.instructions.md" "$home/.ai-tools/USER-AGENTS.md"
+  t_assert_regular_file "$home/.cursor/rules/ai-tools.mdc"
+  t_assert_same_content "$home/.cursor/rules/ai-tools.mdc" "$home/.ai-tools/USER-AGENTS.md"
+
+  t_cleanup "$root"
+}
+
+case_install_copilot_instructions_frontmatter() {
+  # Copilot user instructions attach automatically only with applyTo.
+  local root dest
+  t_fixture
+  root="$T_ROOT"
+
+  t_install "$root" --harnesses copilot
+  t_assert_exit 0
+  dest="$root/home/.copilot/instructions/ai-tools.instructions.md"
+  t_assert_regular_file "$dest"
+  t_assert_same_content "$dest" "$root/home/.ai-tools/USER-AGENTS.md"
+  t_assert_content "$dest" 'applyTo: "**"'
+  t_assert_no_line "no global instructions destination: copilot"
+
+  t_cleanup "$root"
+}
+
+case_install_cursor_instructions() {
+  # Cursor machine-local user rules: ~/.cursor/rules/*.mdc with alwaysApply.
+  local root dest
+  t_fixture
+  root="$T_ROOT"
+
+  t_install "$root" --harnesses cursor
+  t_assert_exit 0
+  dest="$root/home/.cursor/rules/ai-tools.mdc"
+  t_assert_regular_file "$dest"
+  t_assert_same_content "$dest" "$root/home/.ai-tools/USER-AGENTS.md"
+  t_assert_content "$dest" "alwaysApply: true"
+  t_assert_no_line "no global instructions destination: cursor"
+  t_assert_regular_directory "$root/home/.cursor/skills/plan-ai-tools"
 
   t_cleanup "$root"
 }
@@ -328,6 +367,43 @@ case_bootstrap_rejects_non_clone() {
   t_run "$root" "$AI_TOOLS/scripts/shell/install-bash.sh"
   t_assert_exit 1
   t_assert_line "exists but is not an ai-tools clone"
+
+  t_cleanup "$root"
+}
+
+case_install_parent_symlink_protects_agents_md() {
+  # Rule 17: a harness directory that aliases $HOME must not let --overwrite
+  # replace $HOME/AGENTS.md (resolved destination, including parent symlinks).
+  local root home
+  t_fixture
+  root="$T_ROOT"
+  home="$root/home"
+
+  printf 'user overrides\n' > "$home/AGENTS.md"
+  rm -rf "$home/.codex"
+  ln -s "$home" "$home/.codex" || fatal "$T_CASE: cannot alias .codex to HOME"
+
+  t_install "$root" --harnesses codex --overwrite
+  t_assert_exit 2
+  t_assert_line "refusing \$HOME/AGENTS.md alias:"
+  t_assert_content "$home/AGENTS.md" "user overrides"
+  t_assert_regular_directory "$home/.codex/skills/plan-ai-tools"
+
+  t_cleanup "$root"
+}
+
+case_install_home_with_spaces() {
+  local root home
+  t_fixture
+  root="$T_ROOT"
+  mv "$root/home" "$root/home with spaces" || fatal "$T_CASE: cannot rename HOME"
+  home="$root/home with spaces"
+
+  t_run_at "$root" "$home" "$home/.ai-tools" \
+    "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
+  t_assert_exit 0
+  t_assert_regular_directory "$home/.claude/skills/plan-ai-tools"
+  t_assert_regular_file "$home/.claude/CLAUDE.md"
 
   t_cleanup "$root"
 }

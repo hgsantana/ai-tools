@@ -72,6 +72,7 @@ argument-hint: "[GitHub platform resource to inspect or manage]"
     <rule id="reads-free-mutations-approved">Read-only queries run freely; remote mutations require explicit approval.</rule>
     <rule id="code-work-bypasses">Repository code work bypasses this skill and executes directly under repository instructions.</rule>
     <rule id="outputs-on-disk">Save large outputs and logs to dev/tmp/ rather than flooding session context.</rule>
-    <rule id="default-worker">Spawn each `<template executor="default-worker">` per USER-AGENTS `<execution_protocol>`.</rule>
+    <rule id="protocol-source">When USER-AGENTS `<execution_protocol>`, `<user_interaction>`, or `<security_guardrails>` are not already loaded, read `$HOME/.ai-tools/USER-AGENTS.md` before the first spawn or approval. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
+    <rule id="default-worker">Spawn each `<template executor="default-worker">` per USER-AGENTS `<execution_protocol>`, assembling nested payloads per USER-AGENTS `<rule id="payload-assembly">`.</rule>
   </boundaries>
 </skill>

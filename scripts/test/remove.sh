@@ -256,6 +256,34 @@ case_remove_antigravity_instructions() {
   t_cleanup "$root"
 }
 
+case_remove_cursor_instructions() {
+  local root dest
+  t_fixture
+  root="$T_ROOT"
+  dest="$root/home/.cursor/rules/ai-tools.mdc"
+
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses cursor
+  t_assert_regular_file "$dest"
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses cursor --instructions
+  t_assert_absent "$dest"
+
+  t_cleanup "$root"
+}
+
+case_remove_copilot_instructions() {
+  local root dest
+  t_fixture
+  root="$T_ROOT"
+  dest="$root/home/.copilot/instructions/ai-tools.instructions.md"
+
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses copilot
+  t_assert_regular_file "$dest"
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses copilot --instructions
+  t_assert_absent "$dest"
+
+  t_cleanup "$root"
+}
+
 case_remove_stale_link_sweep() {
   local root real_dir
   t_fixture --stale-link
@@ -432,6 +460,98 @@ case_remove_prunes_orphan_with_force() {
   t_assert_exit 0
   t_assert_line "ok: force-removed orphan skill: $orphan_skill"
   t_assert_absent "$orphan_skill"
+
+  t_cleanup "$root"
+}
+
+case_remove_parent_symlink_protects_agents_md() {
+  local root home
+  t_fixture
+  root="$T_ROOT"
+  home="$root/home"
+
+  printf 'user overrides\n' > "$home/AGENTS.md"
+  rm -rf "$home/.codex"
+  ln -s "$home" "$home/.codex" || fatal "$T_CASE: cannot alias .codex to HOME"
+  mkdir -p "$home/.codex/skills" || fatal "$T_CASE: cannot create aliased skills root"
+
+  t_run "$root" "$home/.ai-tools/scripts/shell/remove.sh" \
+    --harnesses codex --instructions --force
+  t_assert_exit 2
+  t_assert_line "refusing \$HOME/AGENTS.md alias:"
+  t_assert_content "$home/AGENTS.md" "user overrides"
+
+  t_cleanup "$root"
+}
+
+case_remove_home_with_spaces_sweeps_stale_link() {
+  local root home stale
+  t_fixture
+  root="$T_ROOT"
+  mv "$root/home" "$root/home with spaces" || fatal "$T_CASE: cannot rename HOME"
+  home="$root/home with spaces"
+  stale="$home/.claude/skills/old-layout-ai-tools"
+  ln -s "$home/.ai-tools/skills/plan-ai-tools" "$stale" \
+    || fatal "$T_CASE: cannot create stale link under spaced HOME"
+
+  t_run_at "$root" "$home" "$home/.ai-tools" \
+    "$home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code
+  t_assert_exit 0
+  t_assert_line "removed link: $stale"
+  t_assert_absent "$stale"
+
+  t_cleanup "$root"
+}
+
+case_remove_failed_rm_is_warning() {
+  local root home wrapper real_rm skill
+  t_fixture
+  root="$T_ROOT"
+  home="$root/home"
+  skill="$home/.claude/skills/plan-ai-tools"
+
+  t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
+  t_assert_regular_directory "$skill"
+
+  wrapper="$root/bin"
+  mkdir -p "$wrapper" || fatal "$T_CASE: cannot create wrapper dir"
+  real_rm=$(command -v rm)
+  cat > "$wrapper/rm" <<EOF
+#!/bin/sh
+for a in "\$@"; do
+  case "\$a" in
+    *skills/*-ai-tools*) exit 1 ;;
+  esac
+done
+exec $real_rm "\$@"
+EOF
+  chmod +x "$wrapper/rm" || fatal "$T_CASE: cannot chmod rm wrapper"
+
+  PATH="$wrapper:$PATH" t_run "$root" "$home/.ai-tools/scripts/shell/remove.sh" \
+    --harnesses claude-code
+  t_assert_exit 2
+  t_assert_line "cannot remove copy:"
+  t_assert_line "still installed: $skill"
+  t_assert_regular_directory "$skill"
+
+  t_cleanup "$root"
+}
+
+case_remove_purge_rejects_foreign_ai_tools() {
+  local root home foreign
+  t_fixture
+  root="$T_ROOT"
+  home="$root/home"
+  foreign="$root/unrelated"
+  mkdir -p "$foreign" || fatal "$T_CASE: cannot create foreign AI_TOOLS"
+  printf 'keep\n' > "$foreign/keep.txt"
+
+  t_run_at "$root" "$home" "$foreign" \
+    "$home/.ai-tools/scripts/shell/remove.sh" --harnesses cursor --purge --yes
+  t_assert_exit 1
+  t_assert_line "AI_TOOLS must be"
+  t_assert_regular_file "$foreign/keep.txt"
+  t_assert_content "$foreign/keep.txt" "keep"
 
   t_cleanup "$root"
 }

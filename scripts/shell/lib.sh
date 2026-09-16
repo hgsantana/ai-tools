@@ -8,7 +8,6 @@ set -u
 AI_TOOLS="${AI_TOOLS:-$HOME/.ai-tools}"
 REPO_URL="https://github.com/hgsantana/ai-tools.git"
 ALL_HARNESSES="claude-code grok codex copilot cursor antigravity"
-EXT_ROOTS="$HOME/.vscode/extensions $HOME/.vscode-server/extensions $HOME/.vscode-insiders/extensions $HOME/.vscode-server-insiders/extensions $HOME/.vscodium/extensions"
 
 DRY_RUN=0
 OVERWRITE=0
@@ -16,6 +15,10 @@ FORCE=0
 SCOPE=""
 FRESH_CLONE=0
 PREV=""
+SOURCE_TREE=""
+UPDATE_DRY_PLAN=0
+DRY_RUN_FETCHED=0
+DRY_GONE=""
 OK=0 SKIP=0 WARN=0
 
 ok()   { OK=$((OK+1));     printf 'ok: %s\n'   "$*"; }
@@ -26,10 +29,94 @@ fatal(){ printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 
 finish() {
   suffix=""
-  [ "$DRY_RUN" = 1 ] && suffix=" (dry-run: nothing was changed)"
+  if [ "$DRY_RUN" = 1 ]; then
+    if [ "$DRY_RUN_FETCHED" = 1 ]; then
+      suffix=" (dry-run: harness state unchanged; remote-tracking refs may have been updated)"
+    else
+      suffix=" (dry-run: nothing was changed)"
+    fi
+  fi
   printf 'done: %d ok, %d skipped, %d warnings%s\n' "$OK" "$SKIP" "$WARN" "$suffix"
   [ "$WARN" -gt 0 ] && exit 2
   exit 0
+}
+
+# Tree install copies from. Update --dry-run points this at an archive of
+# origin/master so the approval report includes incoming artifacts.
+source_root() {
+  if [ -n "${SOURCE_TREE:-}" ]; then
+    printf '%s' "$SOURCE_TREE"
+  else
+    printf '%s' "$AI_TOOLS"
+  fi
+}
+
+ext_roots() {
+  printf '%s\n' \
+    "$HOME/.vscode/extensions" \
+    "$HOME/.vscode-server/extensions" \
+    "$HOME/.vscode-insiders/extensions" \
+    "$HOME/.vscode-server-insiders/extensions" \
+    "$HOME/.vscodium/extensions"
+}
+
+# Resolve an existing path, or the longest existing ancestor plus the missing
+# tail, so parent-directory symlinks are visible before a mutation.
+canonical_path() {
+  local path="$1" cur tail resolved
+  [ -n "$path" ] || return 1
+  cur="$path"
+  tail=""
+  while :; do
+    if [ -e "$cur" ] || [ -L "$cur" ]; then
+      resolved=$(readlink -f "$cur" 2>/dev/null || printf '%s' "$cur")
+      printf '%s%s\n' "$resolved" "$tail"
+      return 0
+    fi
+    [ "$cur" = "/" ] && break
+    tail="/${cur##*/}$tail"
+    case "$cur" in
+      */*)
+        cur="${cur%/*}"
+        [ -n "$cur" ] || cur="/"
+        ;;
+      *) break ;;
+    esac
+  done
+  printf '%s\n' "$path"
+}
+
+is_home_agents_alias() {
+  local dest="$1" resolved protected
+  [ -n "$dest" ] || return 1
+  case "$dest" in
+    "$HOME/AGENTS.md"|"$HOME/AGENTS.md/") return 0 ;;
+  esac
+  resolved=$(canonical_path "$dest")
+  protected=$(canonical_path "$HOME/AGENTS.md")
+  [ "$resolved" = "$protected" ]
+}
+
+refuse_protected_dest() {
+  local dest="$1"
+  if is_home_agents_alias "$dest"; then
+    warn "refusing \$HOME/AGENTS.md alias: $dest"
+    return 0
+  fi
+  return 1
+}
+
+assert_supported_clone_path() {
+  local expected="$HOME/.ai-tools"
+  [ -n "$AI_TOOLS" ] || fatal "AI_TOOLS is empty"
+  case "$AI_TOOLS" in
+    /|"$HOME"|"$HOME/") fatal "AI_TOOLS is an unsafe path: $AI_TOOLS" ;;
+  esac
+  [ "$AI_TOOLS" = "$expected" ] && return 0
+  if [ -e "$AI_TOOLS" ] || [ -L "$AI_TOOLS" ]; then
+    [ "$(canonical_path "$AI_TOOLS")" = "$(canonical_path "$expected")" ] && return 0
+  fi
+  fatal "AI_TOOLS must be $expected (the only supported clone location); got: $AI_TOOLS"
 }
 
 # --- Harness table (mirrors "Supported harnesses" in README.md) -------------
@@ -52,7 +139,7 @@ instructions_dest() {
     codex)       echo "$HOME/.codex/AGENTS.md" ;;
     copilot)     echo "$HOME/.copilot/instructions/ai-tools.instructions.md" ;;
     antigravity) echo "$HOME/.gemini/GEMINI.md" ;;
-    cursor)      echo "" ;;  # Cursor has no global instructions destination
+    cursor)      echo "$HOME/.cursor/rules/ai-tools.mdc" ;;
   esac
 }
 
@@ -61,10 +148,10 @@ instructions_dest() {
 has_extension() {
   # usage: has_extension <extension-id-prefix>
   local root d
-  for root in $EXT_ROOTS; do
+  while IFS= read -r root; do
     [ -d "$root" ] || continue
     for d in "$root/$1"*; do [ -d "$d" ] && return 0; done
-  done
+  done < <(ext_roots)
   return 1
 }
 
@@ -95,16 +182,12 @@ report_discovery() {
   done
   [ -d "$HOME/.agents" ] && info "found: $HOME/.agents (shared discovery root — left untouched)"
   # Informational-only: possible AI extensions with no confirmed config convention.
-  local jb_roots=""
-  for jb in "$HOME"/.local/share/JetBrains/*/plugins; do
-    [ -d "$jb" ] && jb_roots="$jb_roots $jb"
-  done
   # Glob instead of `ls | grep` so names with non-alphanumeric characters
   # (spaces, globs, newlines) are handled correctly; nocasematch replaces
   # the two grep -i passes and is restored to its prior state on exit.
   shopt -q nocasematch && nocasematch_was_set=1
   shopt -s nocasematch
-  for root in $EXT_ROOTS $jb_roots; do
+  while IFS= read -r root; do
     [ -d "$root" ] || continue
     for entry in "$root"/*; do
       [ -e "$entry" ] || continue
@@ -118,7 +201,12 @@ report_discovery() {
       esac
       info "possible AI extension (not offered): $name in $root"
     done
-  done
+  done < <(
+    ext_roots
+    for jb in "$HOME"/.local/share/JetBrains/*/plugins; do
+      [ -d "$jb" ] && printf '%s\n' "$jb"
+    done
+  )
   [ "$nocasematch_was_set" = 1 ] || shopt -u nocasematch
   return 0
 }
@@ -147,11 +235,25 @@ set_scope() {
   info "scope:$SCOPE"
 }
 
-scoped_roots() {
+each_scoped_root() {
   local h
   for h in $SCOPE; do
     skills_root "$h"
   done | sort -u
+}
+
+scoped_roots() {
+  each_scoped_root
+}
+
+mark_dry_gone() {
+  DRY_GONE="${DRY_GONE}
+$1"
+}
+
+is_dry_gone() {
+  [ -n "$DRY_GONE" ] || return 1
+  printf '%s\n' "$DRY_GONE" | grep -Fxq -- "$1"
 }
 
 # --- Filesystem safety primitives (README "Safety rules") --------------------
@@ -190,6 +292,7 @@ copy_artifact() {
   # usage: copy_artifact <source> <destination> <install|migrate|overwrite|refresh>
   # The destination is one explicit harness artifact, never a harness root.
   local src="$1" dest="$2" action="$3" dry_message done_message
+  refuse_protected_dest "$dest" && return 1
   case "$action" in
     install)   dry_message="would copy"; done_message="copied" ;;
     migrate)   dry_message="would migrate legacy link to copy"; done_message="migrated legacy link to copy" ;;
@@ -224,6 +327,11 @@ safe_copy() {
   # All installs are physical copies. Legacy ai-tools links migrate safely;
   # foreign links and differing artifacts require explicit --overwrite.
   local src="$1" dest="$2"
+  refuse_protected_dest "$dest" && return 1
+  if [ "$DRY_RUN" = 1 ] && is_dry_gone "$dest"; then
+    copy_artifact "$src" "$dest" install
+    return $?
+  fi
   if [ -L "$dest" ]; then
     if is_ai_tools_link "$dest"; then
       copy_artifact "$src" "$dest" migrate
@@ -255,6 +363,7 @@ safe_unlink() {
   # usage: safe_unlink <destination-path>
   # Removes only symlinks resolving into ai-tools.
   local dest="$1" t
+  refuse_protected_dest "$dest" && return 1
   if [ ! -e "$dest" ] && [ ! -L "$dest" ]; then
     ok "absent: $dest"
     return 0
@@ -266,8 +375,17 @@ safe_unlink() {
   t=$(readlink "$dest")
   is_ai_tools_link "$dest" \
     || { skip "symlink not to ai-tools: $dest -> $t"; return 1; }
-  if [ "$DRY_RUN" = 1 ]; then ok "would remove link: $dest (-> $t)"; return 0; fi
-  rm "$dest" && ok "removed link: $dest (was -> $t)"
+  if [ "$DRY_RUN" = 1 ]; then
+    mark_dry_gone "$dest"
+    ok "would remove link: $dest (-> $t)"
+    return 0
+  fi
+  if rm "$dest"; then
+    ok "removed link: $dest (was -> $t)"
+  else
+    warn "cannot remove link: $dest"
+    return 1
+  fi
 }
 
 safe_uninstall_copy() {
@@ -275,13 +393,32 @@ safe_uninstall_copy() {
   # Removes a copy while its contents still match the ai-tools source.
   # --force also removes that known destination when contents differ.
   local dest="$1" src="$2"
+  refuse_protected_dest "$dest" && return 1
   { [ -e "$dest" ] && [ ! -L "$dest" ]; } || return 1
   if same_content "$dest" "$src"; then
-    if [ "$DRY_RUN" = 1 ]; then ok "would remove copy: $dest"; return 0; fi
-    rm -r "$dest" && ok "removed copy: $dest"
+    if [ "$DRY_RUN" = 1 ]; then
+      mark_dry_gone "$dest"
+      ok "would remove copy: $dest"
+      return 0
+    fi
+    if rm -r "$dest"; then
+      ok "removed copy: $dest"
+    else
+      warn "cannot remove copy: $dest"
+      return 1
+    fi
   elif [ "$FORCE" = 1 ]; then
-    if [ "$DRY_RUN" = 1 ]; then ok "would force-remove copy: $dest"; return 0; fi
-    rm -r "$dest" && ok "force-removed copy: $dest"
+    if [ "$DRY_RUN" = 1 ]; then
+      mark_dry_gone "$dest"
+      ok "would force-remove copy: $dest"
+      return 0
+    fi
+    if rm -r "$dest"; then
+      ok "force-removed copy: $dest"
+    else
+      warn "cannot force-remove copy: $dest"
+      return 1
+    fi
   else
     skip "copy was modified locally, user work preserved: $dest"
     return 1
@@ -292,6 +429,7 @@ safe_uninstall_copy() {
 
 ensure_clone() {
   # Clones to $AI_TOOLS when missing; validates the tree either way.
+  assert_supported_clone_path
   if [ ! -d "$AI_TOOLS" ]; then
     [ "$DRY_RUN" = 1 ] && fatal "$AI_TOOLS missing — clone it first: git clone $REPO_URL \"$AI_TOOLS\""
     git clone "$REPO_URL" "$AI_TOOLS" || fatal "clone failed: $REPO_URL -> $AI_TOOLS"
@@ -303,6 +441,7 @@ ensure_clone() {
 }
 
 require_clone() {
+  assert_supported_clone_path
   { [ -d "$AI_TOOLS/.git" ] && [ -f "$AI_TOOLS/USER-AGENTS.md" ] && [ -d "$AI_TOOLS/skills" ]; } \
     || fatal "$AI_TOOLS is missing or not a clone — run scripts/shell/install-bash.sh (or install-zsh.sh) to clone"
 }
@@ -312,19 +451,54 @@ prepare_reset() {
   # Fetches origin/master and refuses a discarding reset unless --discard-local.
   # Sets PREV. Does not check out or reset. Call before removing harness artifacts
   # so a refused reset cannot leave the install stripped.
-  local discard="${1:-0}" dirty ahead
+  local discard="${1:-0}" dirty ahead master_ahead current
   git -C "$AI_TOOLS" fetch origin || fatal "fetch failed — fix the remote or auth and retry"
   git -C "$AI_TOOLS" show-ref --verify --quiet refs/remotes/origin/master \
     || fatal "origin/master not found after fetch — fix the remote and retry"
   PREV=$(git -C "$AI_TOOLS" rev-parse HEAD)
   dirty=$(git -C "$AI_TOOLS" status --porcelain)
   ahead=$(git -C "$AI_TOOLS" log --oneline origin/master..HEAD 2>/dev/null)
-  if [ -n "$dirty$ahead" ]; then
+  master_ahead=""
+  if git -C "$AI_TOOLS" show-ref --verify --quiet refs/heads/master; then
+    current=$(git -C "$AI_TOOLS" rev-parse --abbrev-ref HEAD)
+    if [ "$current" != "master" ]; then
+      master_ahead=$(git -C "$AI_TOOLS" log --oneline origin/master..refs/heads/master 2>/dev/null)
+    fi
+  fi
+  if [ -n "$dirty$ahead$master_ahead" ]; then
     [ -n "$dirty" ] && { echo "local changes in $AI_TOOLS:"; git -C "$AI_TOOLS" status --short; }
     [ -n "$ahead" ] && { echo "local commits ahead of origin/master:"; echo "$ahead"; }
+    [ -n "$master_ahead" ] && { echo "local master commits ahead of origin/master:"; echo "$master_ahead"; }
     [ "$discard" = 1 ] \
       || fatal "the reset would discard the local work above — stash/branch it, or re-run with --discard-local"
   fi
+}
+
+begin_update_dry_plan() {
+  # Archive origin/master into a disposable tree so dry-run install planning
+  # reports incoming artifacts. Removal planning still uses the current clone.
+  local tmp archive
+  [ "$DRY_RUN" = 1 ] || return 0
+  tmp=$(mktemp -d "${TMPDIR:-/tmp}/ai-tools-update-plan.XXXXXX") \
+    || fatal "cannot create dry-run planning tree"
+  archive="$tmp/origin-master.tar"
+  if git -C "$AI_TOOLS" archive --format=tar -o "$archive" origin/master \
+    && tar -xf "$archive" -C "$tmp"; then
+    SOURCE_TREE="$tmp"
+    UPDATE_DRY_PLAN=1
+    rm -f "$archive"
+    info "dry-run: planning installation from origin/master ($(git -C "$AI_TOOLS" rev-parse --short origin/master))"
+  else
+    rm -rf "$tmp"
+    fatal "cannot archive origin/master for dry-run planning"
+  fi
+}
+
+end_update_dry_plan() {
+  [ "$UPDATE_DRY_PLAN" = 1 ] || return 0
+  [ -n "$SOURCE_TREE" ] && rm -rf "$SOURCE_TREE"
+  SOURCE_TREE=""
+  UPDATE_DRY_PLAN=0
 }
 
 update_source() {
@@ -333,7 +507,9 @@ update_source() {
   local discard="${1:-0}"
   [ -n "$PREV" ] || prepare_reset "$discard"
   if [ "$DRY_RUN" = 1 ]; then
+    DRY_RUN_FETCHED=1
     ok "would reset $AI_TOOLS to origin/master ($(git -C "$AI_TOOLS" rev-parse --short origin/master))"
+    begin_update_dry_plan
     return 0
   fi
   git -C "$AI_TOOLS" checkout -f master >/dev/null 2>&1 || fatal "cannot check out master in $AI_TOOLS"
@@ -344,7 +520,8 @@ update_source() {
 # --- Install steps -----------------------------------------------------------
 
 install_instructions() {
-  local h dest
+  local h dest src
+  src="$(source_root)/USER-AGENTS.md"
   for h in $SCOPE; do
     dest=$(instructions_dest "$h")
     [ -n "$dest" ] || { info "no global instructions destination: $h"; continue; }
@@ -352,16 +529,17 @@ install_instructions() {
       # shellcheck disable=SC2088 # literal "~" in user-facing prose, not a path to expand
       info "~/.codex/AGENTS.override.md exists and takes precedence while present (never touched)"
     fi
-    safe_copy "$AI_TOOLS/USER-AGENTS.md" "$dest" || true
+    safe_copy "$src" "$dest" || true
   done
   return 0
 }
 
 install_skills() {
-  local h root p
+  local h root p src
+  src="$(source_root)/skills"
   for h in $SCOPE; do
     root=$(skills_root "$h")
-    for p in "$AI_TOOLS/skills"/*-ai-tools; do
+    for p in "$src"/*-ai-tools; do
       [ -d "$p" ] || continue
       safe_copy "$p" "$root/$(basename "$p")" || true
     done
@@ -374,7 +552,8 @@ install_skills() {
 report_links() {
   # Read-only: what removal would touch. info lines only (no counters in subshells).
   local root p t h dest
-  for root in $(scoped_roots); do
+  while IFS= read -r root; do
+    [ -n "$root" ] || continue
     [ -d "$root" ] || continue
     find "$root" -maxdepth 1 -type l 2>/dev/null | while IFS= read -r p; do
       t=$(readlink "$p")
@@ -382,7 +561,7 @@ report_links() {
     done
     find "$root" -mindepth 1 -maxdepth 1 \( -type f -o -type d \) -name '*-ai-tools*' 2>/dev/null \
       | while IFS= read -r p; do info "possible copy: $p"; done
-  done
+  done < <(each_scoped_root)
   for h in $SCOPE; do
     dest=$(instructions_dest "$h")
     [ -n "$dest" ] && [ -L "$dest" ] && info "instructions: $dest -> $(readlink "$dest")"
@@ -399,18 +578,25 @@ prune_orphan_skills() {
       [ -e "$p" ] || continue
       [ -L "$p" ] && continue
       base=$(basename "$p")
-      [ -d "$AI_TOOLS/skills/$base" ] && continue
+      [ -d "$(source_root)/skills/$base" ] && continue
+      refuse_protected_dest "$p" && continue
       if [ "${OVERWRITE:-0}" = 1 ]; then
         if [ "$DRY_RUN" = 1 ]; then
+          mark_dry_gone "$p"
           ok "would remove orphan skill: $p"
+        elif rm -rf "$p"; then
+          ok "removed orphan skill: $p"
         else
-          rm -rf "$p" && ok "removed orphan skill: $p"
+          warn "cannot remove orphan skill: $p"
         fi
       elif [ "${FORCE:-0}" = 1 ]; then
         if [ "$DRY_RUN" = 1 ]; then
+          mark_dry_gone "$p"
           ok "would force-remove orphan skill: $p"
+        elif rm -rf "$p"; then
+          ok "force-removed orphan skill: $p"
         else
-          rm -rf "$p" && ok "force-removed orphan skill: $p"
+          warn "cannot force-remove orphan skill: $p"
         fi
       else
         skip "orphan ai-tools skill (use --overwrite or --force to remove): $p"
@@ -443,13 +629,14 @@ sweep_stale_links() {
   # Alpha carries no backward compatibility: remove anything in the scoped roots
   # still resolving into ai-tools, whatever its name or era.
   local root p
-  for root in $(scoped_roots); do
+  while IFS= read -r root; do
+    [ -n "$root" ] || continue
     [ -d "$root" ] || continue
     while IFS= read -r p; do
       [ -n "$p" ] || continue
       is_ai_tools_link "$p" && safe_unlink "$p" || true
     done < <(find "$root" -maxdepth 1 -type l 2>/dev/null)
-  done
+  done < <(each_scoped_root)
   # Retired Gemini CLI skills root (not a harness). Do not touch Antigravity's
   # $HOME/.gemini/config/skills or GEMINI.md.
   root="$HOME/.gemini/skills"
@@ -481,14 +668,22 @@ remove_instructions() {
 purge_clone() {
   # usage: purge_clone <yes 0|1> — deletes $AI_TOOLS itself. Never $HOME/AGENTS.md.
   local yes="${1:-0}" answer
+  assert_supported_clone_path
   [ -d "$AI_TOOLS" ] || { ok "absent: $AI_TOOLS"; return 0; }
+  { [ -d "$AI_TOOLS/.git" ] && [ -f "$AI_TOOLS/USER-AGENTS.md" ] && [ -d "$AI_TOOLS/skills" ]; } \
+    || fatal "$AI_TOOLS is not an ai-tools clone — refusing purge"
   if [ "$DRY_RUN" = 1 ]; then ok "would delete: $AI_TOOLS"; return 0; fi
   if [ "$yes" != 1 ]; then
     printf 'Delete %s entirely? Type yes to confirm: ' "$AI_TOOLS"
     read -r answer || answer=""
     [ "$answer" = yes ] || { skip "purge not confirmed: $AI_TOOLS kept"; return 1; }
   fi
-  rm -rf "$AI_TOOLS" && ok "deleted: $AI_TOOLS"
+  if rm -rf "$AI_TOOLS"; then
+    ok "deleted: $AI_TOOLS"
+  else
+    warn "cannot delete: $AI_TOOLS"
+    return 1
+  fi
 }
 
 # --- Update steps ------------------------------------------------------------
@@ -535,17 +730,18 @@ refresh_copies() {
   # usage: refresh_copies [include-instructions 0|1]
   # Refresh every physical copy matching the previous revision ($PREV).
   # A copy matching neither revision is user work unless --overwrite was given.
-  local include_instructions="${1:-1}" h root dest p name
+  local include_instructions="${1:-1}" h root dest p name src
+  src=$(source_root)
   if [ "$include_instructions" = 1 ]; then
     for h in $SCOPE; do
       dest=$(instructions_dest "$h")
       [ -n "$dest" ] || continue
-      refresh_one_copy "$AI_TOOLS/USER-AGENTS.md" "$dest" "USER-AGENTS.md"
+      refresh_one_copy "$src/USER-AGENTS.md" "$dest" "USER-AGENTS.md"
     done
   fi
   for h in $SCOPE; do
     root=$(skills_root "$h")
-    for p in "$AI_TOOLS/skills"/*-ai-tools; do
+    for p in "$src/skills"/*-ai-tools; do
       [ -d "$p" ] || continue
       name=$(basename "$p")
       refresh_one_copy "$p" "$root/$name" "skills/$name"
@@ -557,14 +753,15 @@ refresh_copies() {
 
 verify_install() {
   # VERIFY_INSTRUCTIONS=0 skips the instructions checks (install --no-instructions).
-  local check_instr="${VERIFY_INSTRUCTIONS:-1}" h dest size root p name
+  local check_instr="${VERIFY_INSTRUCTIONS:-1}" h dest size root p name src
   if [ "$DRY_RUN" = 1 ]; then info "dry-run: verification skipped"; return 0; fi
+  src=$(source_root)
 
-  size=$(wc -c < "$AI_TOOLS/USER-AGENTS.md")
+  size=$(wc -c < "$src/USER-AGENTS.md")
   if [ "$size" -le 8000 ]; then ok "instructions size: $size chars"
   else warn "USER-AGENTS.md exceeds 8000 chars (repository limit): $size"; fi
 
-  for p in "$AI_TOOLS/skills"/*-ai-tools; do
+  for p in "$src/skills"/*-ai-tools; do
     [ -d "$p" ] || continue
     name=$(basename "$p")
     if [ -f "$p/SKILL.md" ]; then ok "skill source: $p/SKILL.md"
@@ -577,7 +774,7 @@ verify_install() {
       [ -n "$dest" ] || continue
       if [ -L "$dest" ]; then
         warn "instructions must be a physical copy, not a symlink: $dest -> $(readlink "$dest")"
-      elif [ -f "$dest" ] && cmp -s "$dest" "$AI_TOOLS/USER-AGENTS.md"; then
+      elif [ -f "$dest" ] && cmp -s "$dest" "$src/USER-AGENTS.md"; then
         ok "instructions copy: $dest"
       elif [ -e "$dest" ]; then
         warn "instructions differ from source: $dest"
@@ -589,7 +786,7 @@ verify_install() {
 
   for h in $SCOPE; do
     root=$(skills_root "$h")
-    for p in "$AI_TOOLS/skills"/*-ai-tools; do
+    for p in "$src/skills"/*-ai-tools; do
       [ -d "$p" ] || continue
       name=$(basename "$p")
       if [ -L "$root/$name" ]; then
@@ -606,7 +803,7 @@ verify_install() {
       for p in "$root"/*-ai-tools; do
         [ -e "$p" ] || [ -L "$p" ] || continue
         name=$(basename "$p")
-        [ -d "$AI_TOOLS/skills/$name" ] || warn "orphan skill present: $p"
+        [ -d "$src/skills/$name" ] || warn "orphan skill present: $p"
       done
     fi
   done
@@ -614,9 +811,11 @@ verify_install() {
 }
 
 verify_removal() {
-  local root p t remaining=0
+  local root p t remaining=0 src dest h
   if [ "$DRY_RUN" = 1 ]; then info "dry-run: removal verification skipped"; return 0; fi
-  for root in $(scoped_roots); do
+  src=$(source_root)
+  while IFS= read -r root; do
+    [ -n "$root" ] || continue
     [ -d "$root" ] || continue
     while IFS= read -r p; do
       [ -n "$p" ] || continue
@@ -626,7 +825,25 @@ verify_removal() {
         remaining=1
       fi
     done < <(find "$root" -maxdepth 1 -type l 2>/dev/null)
-  done
+  done < <(each_scoped_root)
+  if [ -d "$src/skills" ]; then
+    for h in $SCOPE; do
+      root=$(skills_root "$h")
+      for p in "$src/skills"/*-ai-tools; do
+        [ -d "$p" ] || continue
+        dest="$root/$(basename "$p")"
+        if [ -e "$dest" ] && [ ! -L "$dest" ]; then
+          if same_content "$dest" "$p"; then
+            warn "still installed: $dest"
+            remaining=1
+          elif [ "$FORCE" = 1 ]; then
+            warn "still installed after --force: $dest"
+            remaining=1
+          fi
+        fi
+      done
+    done
+  fi
   [ "$remaining" = 0 ] && ok "no ai-tools links remain in the scoped roots"
   return 0
 }
