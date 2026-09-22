@@ -1,57 +1,60 @@
 ---
 name: campaign-ai-tools
 description: >
-  Run an autonomous local campaign in which fresh session-model passes
-  repeatedly plan and deliver user-directed, multi-stage repository
-  improvements. Use for /campaign-ai-tools. Impact: creates or resumes a
-  campaign branch, edits or removes files, runs commands and tests, and makes
-  multiple local commits. It never pushes or writes outside the repository.
-  Agent: session + implementer (model asked once).
+  Run an autonomous local campaign in which the session iterates scope,
+  a planner writes each plan, and implementers deliver its stages. Use for
+  /campaign-ai-tools. Impact: creates or resumes a campaign branch, edits or
+  removes files, runs commands and tests, and makes multiple local commits.
+  It never pushes or writes outside the repository. Agent: session +
+  implementer (model asked once).
 argument-hint: "[campaign name and optional priorities or exclusions]"
 ---
 
 <skill name="campaign-ai-tools">
   <overview>
     Run an autonomous local campaign that repeatedly plans and delivers user-directed repository improvements.
-    Each iteration addresses one cohesive improvement or correction on branch `improve/{CAMPAIGN}`,
-    orchestrated by the session through fresh subagents on the session model: one planning pass and one execution pass per iteration.
-    Execution passes spawn implementers on the model the user chose at initialization and send builds and tests to default workers.
+    The session iterates campaign scope with the user, then mediates on disk: it spawns a planner to write each plan, spawns an implementer per stage, and respawns the same planner role to validate that stage from the working-tree diff. Chat names paths only.
   </overview>
 
   <session_workflow>
     <step id="1" name="campaign_initialization">
-      Resolve {CAMPAIGN} from the user request (kebab-case), plus {PRIORITIES} and {EXCLUSIONS}.
+      Resolve {CAMPAIGN} from the user request (kebab-case), plus {PRIORITIES} and {EXCLUSIONS}, iterating scope with the user until those are recorded.
       Verify repository root with `git rev-parse --show-toplevel`.
-      Before any mutation, run the recovery check: if `dev/improve/{CAMPAIGN}/campaign.md` exists on `improve/{CAMPAIGN}` or can be restored from that branch, resume it. Record the branch, last accepted stage, last iteration number, and recorded implementer model. Preserve accepted commits and a dirty worktree from an unfinished stage. Choose the next iteration as last + 1. A planning pass may return `<signal code="RESUME">` only for a unit this check found. If the name is new, check out `improve/{CAMPAIGN}` from a clean default/base branch and initialize `dev/improve/{CAMPAIGN}/campaign.md` with goals, priorities, exclusions, and active status.
+      Before any mutation, run the recovery check: if `dev/improve/{CAMPAIGN}/campaign.md` exists on `improve/{CAMPAIGN}` or can be restored from that branch, resume it. Record the branch, last accepted stage, last iteration number, and recorded implementer model. Preserve accepted commits and a dirty worktree from an unfinished stage. Choose the next iteration as last + 1. A planner PLAN spawn may return `<signal code="RESUME">` only for a unit this check found. If the name is new, check out `improve/{CAMPAIGN}` from a clean default/base branch and initialize `dev/improve/{CAMPAIGN}/campaign.md` with goals, priorities, exclusions, and active status.
       Resolve {IMPLEMENTER_MODEL}: reuse the implementer model recorded in campaign.md; when none is recorded, ask the user exactly one question through USER-AGENTS `<user_interaction>`, which model implements this campaign's stages, with 1-3 options chosen per `<implementer_job>`, and record the answer in campaign.md.
       Commit campaign start if new: `chore(dev): start campaign {CAMPAIGN}`; on resume, commit a newly recorded model with the campaign.md update.
     </step>
 
-    <step id="2" name="planning_pass">
-      Spawn a fresh, zero-context planning pass using `<template role="campaign-planner">` from `<dispatch_templates>`,
-      substituting {CAMPAIGN}, {PRIORITIES}, and {EXCLUSIONS}.
-      Record only the `<signal>` from `<return_protocol>`. Do not open the plan directory.
+    <step id="2" name="plan">
+      Spawn `<template role="campaign-planner">` from `<dispatch_templates>` as executor="session-subagent" with {MODE} set to PLAN, substituting {CAMPAIGN}, {PRIORITIES}, {EXCLUSIONS}, and empty {STAGE_FILE}.
+      Record only the `<signal>` from `<return_protocol>`. In chat, name the plan path from that signal. Do not open the plan directory.
       Two consecutive `<signal code="NONE">` outcomes terminate the campaign cleanly.
+      If the planner cannot be spawned, treat the campaign as `<signal code="BLOCKED">` without planning in the session.
     </step>
 
-    <step id="3" name="execution_pass">
-      On `<signal code="PLAN">` or `<signal code="RESUME">`, spawn a separate, fresh execution pass using `<template role="campaign-executor">` from `<dispatch_templates>`,
-      substituting {PLAN_PATH}, {CAMPAIGN}, {N} (the iteration number), and {IMPLEMENTER_MODEL}.
-      Record only the `<signal>` from `<return_protocol>`. Do not open the plan, the iteration file, or campaign.md.
+    <step id="3" name="stage_loop">
+      On `<signal code="PLAN">` or `<signal code="RESUME">`, stay on `improve/{CAMPAIGN}`. If the unit is not yet committed on this branch, commit it first as `chore(dev): plan` plus the plan directory name. Resume unfinished stages without rewriting accepted F commits.
+      For each unfinished stage in dependency order, following dev-ai-tools `<status_protocol>`:
+        1. Set W and record Executor as implementer plus {IMPLEMENTER_MODEL} in the base plan Status table.
+        2. Spawn `<template role="stage-implementer">` from `<dispatch_templates>` as executor="implementer" with {IMPLEMENTER_MODEL}, substituting {STAGE_FILE} and {CAMPAIGN}; if that spawn is rejected only for the recorded model, retry once with the harness default and name the model used in the iteration file; if the spawn fails, leave the stage unaccepted and treat the campaign as `<signal code="BLOCKED">` without implementing in the session.
+        3. Spawn `<template role="campaign-planner">` again as executor="session-subagent" with {MODE} set to VALIDATE, substituting {CAMPAIGN}, {PRIORITIES}, {EXCLUSIONS}, and {STAGE_FILE}. The session passes only those paths; it does not assemble a diff or open the stage. Record only the VALIDATE `<signal>`.
+        4. On `<signal code="ACCEPT">`: commit with the stage's Conventional Commit message and set F. On `<signal code="REWORK">`: set R1..R3 and retry the implementer spawn up to three times, then set E. On `<signal code="BLOCKED">` from VALIDATE: set E. The session does not open the verdict file; a retrying implementer reads `dev/tmp/{CAMPAIGN}-validate.md` when that path exists.
+      On E: stop remaining stages, retain the plan, and go to `<step id="5">` as blocked. Do not start a dependent stage.
+      Successful completion of the iteration is every required stage F. Only then: copy the plan to `dev/tmp/finished/` under its slug, `git rm` the tracked plan, commit `chore(dev): archive` plus that slug, write the iteration file for {N} under `dev/improve/{CAMPAIGN}/iterations/`, including the implementer model actually used, update campaign.md and decisions.md with last accepted stage and iteration {N}, and commit `chore(dev): record campaign {CAMPAIGN} iteration {N}`.
+      If any required stage is E, a planner or implementer spawn is missing, or a reserved approval is pending: retain the plan, do not archive it, write evidence under `dev/tmp/` named from the plan slug, update campaign.md status, and treat the outcome as `<signal code="BLOCKED">`. Partial delivery is not authorized.
     </step>
 
     <step id="4" name="iteration_loop">
-      Store only the `<signal>` from each pass.
-      Repeat `<step id="2">` with a new zero-context planning pass.
-      Do not reuse conversation context between iterations to prevent context degradation.
-      Continue until budget ends, host halts, two planning passes return `<signal code="NONE">`, or a pass returns `<signal code="BLOCKED">`; then run `<step id="5">`.
+      Store only the `<signal>` from each spawn.
+      Repeat `<step id="2">` with a new PLAN spawn.
+      Continue until budget ends, host halts, two PLAN spawns return `<signal code="NONE">`, or a spawn returns `<signal code="BLOCKED">`; then run `<step id="5">`.
     </step>
 
     <step id="5" name="completion_and_archival">
       Distinguish outcomes. Archive only a completed campaign (two consecutive `<signal code="NONE">`): copy `dev/improve/{CAMPAIGN}/` to `dev/tmp/finished/improve/{CAMPAIGN}/`, `git rm -r dev/improve/{CAMPAIGN}/`, and commit `chore(dev): complete campaign {CAMPAIGN}`.
-      On budget exhaustion or host halt: do not archive. Preserve `dev/improve/{CAMPAIGN}/`, write paused status, last accepted stage, last iteration, and {IMPLEMENTER_MODEL} into campaign.md, commit `chore(dev): pause campaign {CAMPAIGN}`, and report the pause reason. The campaign stays resumable.
+      On budget exhaustion or host halt: do not archive. Preserve `dev/improve/{CAMPAIGN}/`, write paused status, last accepted stage, last iteration, and {IMPLEMENTER_MODEL} into campaign.md, commit `chore(dev): pause campaign {CAMPAIGN}`, and name the pause path in chat. The campaign stays resumable.
       After `<signal code="BLOCKED">`: skip archival so the campaign stays resumable, write the signal's reason and evidence path into campaign.md status, and commit `chore(dev): block campaign {CAMPAIGN}`.
-      In chat (user's language), provide branch, final HEAD, and the signal line.
+      In chat (user's language), name branch, final HEAD, and disk paths. Do not paste reports.
     </step>
   </session_workflow>
 
@@ -59,51 +62,28 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
     The implementer takes one stage file at a time and delivers it without supervision: it reads the stage and the code it touches, edits production code and tests across several files within the declared scope, matches the repository's style and conventions, writes and runs behaviour tests, and appends a factual implementation log. It makes no architecture, planning, or user-facing decisions and never commits.
     Required capability: reliable multi-file code editing in an unfamiliar codebase, test writing and debugging, precise adherence to written acceptance criteria, and tool use for file edits and shell commands.
     Offer 1-3 models that the harness's native subagent API can select, by their exact harness names: the strongest coding fit first and marked recommended, then cheaper or faster options that still meet the required capability.
-    When that API cannot select a model per spawn, skip the question, record `harness default` as the model in campaign.md, and state that in the campaign report. When a spawn is rejected only for the recorded model, retry once with the harness default model and name the model used in the iteration file. When a pass cannot spawn subagents at all, `<rule id="no-nested-fallback">` applies.
+    When that API cannot select a model per spawn, skip the question, record `harness default` as the model in campaign.md, and name that path in chat. When a spawn is rejected only for the recorded model, retry once with the harness default model and name the model used in the iteration file. When the planner or implementer cannot be spawned, `<rule id="no-planner-or-implementer-fallback">` applies.
   </implementer_job>
 
   <dispatch_templates>
     <template role="campaign-planner" executor="session-subagent">
-      <job>Campaign planning pass: evaluate repository state and design one cohesive improvement.</job>
+      <job>Campaign planner: in PLAN mode, write one cohesive plan; in VALIDATE mode, judge one stage from the working-tree diff.</job>
       <input>
+        <mode>{MODE}</mode>
         <campaign>{CAMPAIGN}</campaign>
         <priorities>{PRIORITIES}</priorities>
         <exclusions>{EXCLUSIONS}</exclusions>
+        <assigned_file>{STAGE_FILE}</assigned_file>
       </input>
       <instructions>
-        This payload is the brief; do not read sibling skill files. Nested spawn payloads are assembled here per USER-AGENTS `<rule id="payload-assembly">`. Include plan-ai-tools `<template role="repo-discovery">` and dev-ai-tools `<template role="stage-verifier">` in the brief.
-        Inspect the working tree of campaign {CAMPAIGN} against {PRIORITIES}, skipping {EXCLUSIONS}. If an unfinished plan directory already exists for this campaign, validate its recorded branch and stage statuses and end with `<signal code="RESUME">` for that path; do not derive a new slug. Spawn plan-ai-tools `<template role="repo-discovery">` as executor="default-worker" with questions and a kebab-case topic (it writes facts under dev/tmp/ and returns the path and a one-line summary). Spawn dev-ai-tools `<template role="stage-verifier">` as executor="default-worker" for test or build evidence.
-        For new work, derive a kebab-case slug. Write only under that directory: base `0-<slug>.md` (Status table with empty Status and Executor cells, Goal, Base branch, Execution graph, Stages index, Open questions) and one numbered stage file per Conventional Commit (Objective, Files, Steps, Tests, Acceptance criteria, Commit message, Dependencies, Implementation log). Leave product and test code unchanged. The planning pass does not commit; the execution pass owns the first plan commit.
-        Decide open design questions from evidence and user criteria.
-        End with one `<signal>` from `<return_protocol>`: PLAN, RESUME, NONE, or BLOCKED. Return `<signal code="RESUME">` only when the recovery check found an unfinished unit.
+        This payload is the brief; do not read sibling skill files. Nested spawn payloads are assembled here per USER-AGENTS `<rule id="payload-assembly">`. Include plan-ai-tools `<template role="repo-discovery">` in the brief.
+        When {MODE} is PLAN: inspect the working tree of campaign {CAMPAIGN} against {PRIORITIES}, skipping {EXCLUSIONS}. If an unfinished plan directory already exists for this campaign, validate its recorded branch and stage statuses and end with `<signal code="RESUME">` for that path; do not derive a new slug. Spawn plan-ai-tools `<template role="repo-discovery">` as executor="default-worker" with questions and a kebab-case topic. If that spawn fails, read and grep the tree yourself. For new work, derive a kebab-case slug. Write only under that directory: base `0-<slug>.md` (Status table with empty Status and Executor cells, Goal, Base branch, Execution graph, Stages index, Open questions) and one numbered stage file per Conventional Commit (Objective, Files, Steps, Tests, Acceptance criteria, Commit message, Dependencies, Implementation log). Leave product and test code unchanged. Do not commit. Decide open design questions from evidence and user criteria. End with one PLAN, RESUME, NONE, or BLOCKED `<signal>`. Return `<signal code="RESUME">` only when the recovery check found an unfinished unit. {STAGE_FILE} is unused in PLAN.
+        When {MODE} is VALIDATE: read {STAGE_FILE} and run `git diff` against HEAD on `improve/{CAMPAIGN}` yourself. Judge whether that uncommitted diff meets the stage Objective, Files, and Acceptance criteria. Reject the stage when a criterion is not demonstrated. Write the verdict to `dev/tmp/{CAMPAIGN}-validate.md`. End with one ACCEPT, REWORK, or BLOCKED `<signal>`. Do not commit and do not edit product code. The session does not assemble or pass a diff.
       </instructions>
       <constraints>
-        <constraint>Do not edit code files during planning pass.</constraint>
         <constraint>Do not push or touch remote repository.</constraint>
-        <constraint>Read and grep files directly, but run no test suites, builds, or bulk collection yourself: when a needed default-worker spawn is unavailable, end with `<signal code="BLOCKED">` naming the missing nested-spawn capability.</constraint>
-      </constraints>
-    </template>
-
-    <template role="campaign-executor" executor="session-subagent">
-      <job>Campaign execution pass: deliver one plan's stages on the campaign branch.</job>
-      <input>
-        <plan_path>{PLAN_PATH}</plan_path>
-        <campaign>{CAMPAIGN}</campaign>
-        <iteration>{N}</iteration>
-        <implementer_model>{IMPLEMENTER_MODEL}</implementer_model>
-      </input>
-      <instructions>
-        This payload is the brief; do not read sibling skill files. Nested spawn payloads are assembled here per USER-AGENTS `<rule id="payload-assembly">`. Include `<template role="stage-implementer">` from this file, dev-ai-tools `<template role="stage-verifier">`, and dev-ai-tools `<status_protocol>` in the brief.
-        Read the plan at {PLAN_PATH} and stay on improve/{CAMPAIGN}. If the unit is not yet committed on this branch, commit it first as `chore(dev): plan` plus the plan directory name. Resume unfinished stages without rewriting accepted F commits.
-        For each unfinished stage in dependency order, own every status except V: set W and record Executor as implementer plus {IMPLEMENTER_MODEL} in the base plan Status table; spawn `<template role="stage-implementer">` as executor="implementer" with {IMPLEMENTER_MODEL}, substituting the stage file; if that spawn is rejected only for the recorded model, retry once with the harness default and name the model used in the iteration file; review the working-tree diff against objective, declared files, and acceptance; set T and spawn dev-ai-tools `<template role="stage-verifier">` as executor="default-worker" with the stage's commands and a kebab-case topic (it writes logs under dev/tmp/ and returns command, exit code, and path); on pass, commit locally with the stage's Conventional Commit message and set F; else append corrections, set R1..R3, retry up to three times, then set E.
-        Successful completion of the iteration is every required stage F. Only then: copy the plan to `dev/tmp/finished/` under its slug, `git rm` the tracked plan, commit `chore(dev): archive` plus that slug, write the iteration file for {N} under `dev/improve/{CAMPAIGN}/iterations/`, including the implementer model actually used, update campaign.md and decisions.md with last accepted stage and iteration {N}, and commit `chore(dev): record campaign {CAMPAIGN} iteration {N}`.
-        If any required stage is E, a nested spawn is missing, or a reserved approval is pending: retain the plan, do not archive it, write evidence under `dev/tmp/` named from the plan slug, update campaign.md status, and end with `<signal code="BLOCKED">`. Do not start a dependent stage after E. Partial delivery is not authorized.
-      </instructions>
-      <constraints>
-        <constraint>All work stays local on improve/{CAMPAIGN}: do not push or create PRs.</constraint>
-        <constraint>Leave stage code to the implementer and builds and tests to default workers; own review, acceptance, and commits.</constraint>
-        <constraint>When the implementer or a default worker cannot be spawned, do not do that work yourself: leave the stage unaccepted and end with `<signal code="BLOCKED">` naming the missing nested-spawn capability.</constraint>
-        <constraint>Preserve pre-existing commit history and base branch.</constraint>
+        <constraint>PLAN does not edit product or test code; VALIDATE does not edit product, test, or plan files other than the verdict file.</constraint>
+        <constraint>If a default-worker spawn fails, run that discovery yourself per USER-AGENTS `<rule id="spawn-fallback">`.</constraint>
       </constraints>
     </template>
 
@@ -114,14 +94,16 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
         <campaign>{CAMPAIGN}</campaign>
       </input>
       <instructions>
-        Read {STAGE_FILE} on improve/{CAMPAIGN} and the repository rules (README.md, AGENTS.md if present). Implement only that stage.
+        This payload is the brief; do not read sibling skill files. Nested spawn payloads are assembled here per USER-AGENTS `<rule id="payload-assembly">`. Include dev-ai-tools `<template role="stage-verifier">` in the brief.
+        Read {STAGE_FILE} on improve/{CAMPAIGN} and the repository rules (README.md, AGENTS.md if present). If `dev/tmp/{CAMPAIGN}-validate.md` exists, apply its corrections. Implement only that stage.
         Match surrounding style, keep product and test edits within the declared files, and write behaviour tests for delivered changes.
-        Append factual notes to the Implementation log of {STAGE_FILE}, set that stage's Status cell to V in the base plan Status table, and return a one-line outcome with the changed paths.
+        Spawn dev-ai-tools `<template role="stage-verifier">` as executor="default-worker" with the stage's commands and a kebab-case topic. If that spawn fails, run the commands yourself and write the same log.
+        Append factual notes to the Implementation log of {STAGE_FILE}, set that stage's Status cell to V in the base plan Status table, and return a one-line outcome with the changed paths, test exit code, and log path.
       </instructions>
       <constraints>
         <constraint>Do not make architectural changes outside stage scope.</constraint>
         <constraint>Edit only the declared stage files, the Implementation log of {STAGE_FILE}, and that stage's Status cell in the plan's `0-*.md`.</constraint>
-        <constraint>Do not commit or push; leave changes in the working tree for execution pass review.</constraint>
+        <constraint>Do not commit or push; leave changes in the working tree for planner VALIDATE.</constraint>
       </constraints>
     </template>
   </dispatch_templates>
@@ -130,21 +112,25 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
     <signal code="PLAN">PLAN {PLAN_PATH}</signal>
     <signal code="RESUME">RESUME {PLAN_PATH}</signal>
     <signal code="NONE">NONE</signal>
+    <signal code="ACCEPT">ACCEPT {STAGE_FILE} {VERDICT_PATH}</signal>
+    <signal code="REWORK">REWORK {STAGE_FILE} {VERDICT_PATH}</signal>
     <signal code="DELIVERED">DELIVERED {ITERATION_PATH} {IMPLEMENTER_MODEL}</signal>
     <signal code="BLOCKED">BLOCKED {REASON} {EVIDENCE_PATH}</signal>
   </return_protocol>
 
   <boundaries>
-    <rule id="session-orchestrates">The session orchestrates the loop and owns the implementer question; every planning and execution pass runs in a fresh subagent with clean isolated context.</rule>
-    <rule id="signals-only">After each spawn, the session stores only the `<signal>` line and its fields. It does not read the plan, the iteration file, campaign.md, or decisions.md.</rule>
-    <rule id="brief-not-skills">Each pass receives its job in the spawn payload, including nested spawn payloads assembled per USER-AGENTS `<rule id="payload-assembly">`. Passes do not read sibling skill files.</rule>
+    <rule id="session-mediates">The session iterates scope, owns the implementer question, commits, archives, and names disk paths in chat. It does not judge a stage diff; VALIDATE does.</rule>
+    <rule id="signals-only">After each spawn, the session stores only the `<signal>` line and its fields. It does not read the plan, the iteration file, campaign.md, decisions.md, or the VALIDATE verdict body.</rule>
+    <rule id="brief-not-skills">Each spawn receives its job in the payload, including nested spawn payloads assembled per USER-AGENTS `<rule id="payload-assembly">`. Spawned contexts do not read sibling skill files.</rule>
     <rule id="one-model-question">Ask the implementer model question at most once per campaign; reuse the model recorded in campaign.md for every iteration and on resume.</rule>
-    <rule id="plan-git-lifecycle">The execution pass commits a new plan before implementation, archives a completed iteration by copy-then-`git rm`, and commits iteration and campaign metadata. The planning pass writes the plan directory and does not commit.</rule>
+    <rule id="plan-git-lifecycle">The session commits a new plan before implementation, archives a completed iteration by copy-then-`git rm`, and commits iteration and campaign metadata. PLAN writes the plan directory and does not commit.</rule>
+    <rule id="validate-is-diff">VALIDATE reads the stage file and the working-tree `git diff` against HEAD; the session passes only {STAGE_FILE} and campaign paths, never an assembled diff.</rule>
     <rule id="completion-is-f">An iteration archives and records DELIVERED only when every required stage is F. An E stage is BLOCKED and retains the plan.</rule>
     <rule id="pause-not-archive">Archive the campaign directory only after two consecutive NONE results. Budget exhaustion and host halt pause and commit resumable campaign.md; they do not remove it.</rule>
     <rule id="protocol-source">When USER-AGENTS `<execution_protocol>`, `<user_interaction>`, or `<security_guardrails>` are not already loaded, read `$HOME/.ai-tools/USER-AGENTS.md` before the first spawn or approval. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
-    <rule id="spawn-apis">Per USER-AGENTS `<execution_protocol>` for the native subagent API list and payload rules: `<template role="campaign-planner">` and `<template role="campaign-executor">` run as `executor="session-subagent"` on the session's own model; `<template role="stage-implementer">` runs as `executor="implementer"` with the recorded {IMPLEMENTER_MODEL}, or `harness default` per `<implementer_job>` when the API cannot select a model.</rule>
-    <rule id="no-nested-fallback">A pass that cannot spawn the implementer or a default worker never does that work itself, on the session model or any other: it ends with `<signal code="BLOCKED">` naming the missing nested-spawn capability, and the campaign stops through `<step id="4">` and records the block in `<step id="5">` without archival. Passes never take the fallback of USER-AGENTS `<rule id="spawn-fallback">`.</rule>
+    <rule id="spawn-apis">Per USER-AGENTS `<execution_protocol>`: `<template role="campaign-planner">` runs as `executor="session-subagent"` on the session's own model; `<template role="stage-implementer">` runs as `executor="implementer"` with the recorded {IMPLEMENTER_MODEL}, or `harness default` per `<implementer_job>` when the API cannot select a model.</rule>
+    <rule id="no-planner-or-implementer-fallback">If the planner or implementer cannot be spawned, the session does not take that role: it ends as `<signal code="BLOCKED">` naming the missing spawn, and the campaign stops through `<step id="4">` and records the block in `<step id="5">` without archival.</rule>
+    <rule id="worker-fallback">If a default-worker spawn fails, the spawning planner or implementer runs that payload itself per USER-AGENTS `<rule id="spawn-fallback">`.</rule>
     <rule id="strictly-local">Work is strictly local: no push, fetch, PR, deployment, or remote mutation.</rule>
     <rule id="preserve-history">Preserve pre-existing commit history and base branch.</rule>
     <rule id="tmp-untracked">Store runtime caches and temporary logs ignored under dev/tmp/.</rule>
