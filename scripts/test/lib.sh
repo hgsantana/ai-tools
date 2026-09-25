@@ -39,7 +39,7 @@ T_HARNESS_DIRS="
 
 t_build_origin() {
   # usage: t_build_origin <origin-git-dir>
-  # Tars the working tree (excluding .git and dev/) into a scratch commit
+  # Tars the working tree (excluding .git, dev/, and plans/) into a scratch commit
   # and pushes it to a fresh bare repo at <origin-git-dir>. The tree under
   # test is the *working* tree, including any uncommitted change.
   local origin="$1" scratch
@@ -49,7 +49,7 @@ t_build_origin() {
   git --git-dir="$origin" symbolic-ref HEAD refs/heads/master || return 1
 
   # shellcheck disable=SC2153 # AI_TOOLS is exported by scripts/test.sh, not a typo for the local ai_tools
-  ( cd "$AI_TOOLS" && tar -cpf - --exclude=./.git --exclude=./dev . ) \
+  ( cd "$AI_TOOLS" && tar -cpf - --exclude=./.git --exclude=./dev --exclude=./plans . ) \
     | ( cd "$scratch" && tar -xpf - ) || { rm -rf "$scratch"; return 1; }
 
   git -C "$scratch" init -q || { rm -rf "$scratch"; return 1; }

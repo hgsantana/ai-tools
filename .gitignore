@@ -1,3 +1,2 @@
-# Plans and tasks are versioned under dev/; generated state is not.
-/dev/tmp/
+# Plans are versioned under plans/; generated state lives in OS temp.
 .vscode/

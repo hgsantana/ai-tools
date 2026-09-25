@@ -36,7 +36,7 @@ argument-hint: "[what to inspect or change in Google Cloud]"
     </step>
 
     <step id="4" name="report">
-      Write detailed inventories, cost breakdowns, and logs to `dev/tmp/{TOPIC}.md`.
+      Write detailed inventories, cost breakdowns, and logs to `${TMPDIR:-/tmp}/ai-tools/{TOPIC}.md`.
       In chat (user's language), provide the direct answer, the report path, and any pending approval request.
     </step>
   </session_workflow>
@@ -50,7 +50,7 @@ argument-hint: "[what to inspect or change in Google Cloud]"
       </input>
       <instructions>
         Execute the read-only gcloud commands listed in {COMMANDS}.
-        Save formatted command outputs to dev/tmp/{TOPIC}.md.
+        Save formatted command outputs to ${TMPDIR:-/tmp}/ai-tools/{TOPIC}.md.
         Return command list, exit codes, and output path.
       </instructions>
       <constraints>
@@ -62,7 +62,7 @@ argument-hint: "[what to inspect or change in Google Cloud]"
   <boundaries>
     <rule id="reads-free-mutations-approved">Read-only queries run freely; every mutation requires separate user approval.</rule>
     <rule id="state-cost">State cost impact (SKU, ongoing cost, billable status) before any resource creation.</rule>
-    <rule id="outputs-on-disk">Save large outputs and logs to dev/tmp/ rather than flooding session context.</rule>
+    <rule id="outputs-on-disk">Save large outputs and logs to ${TMPDIR:-/tmp}/ai-tools/ rather than flooding session context.</rule>
     <rule id="protocol-source">When USER-AGENTS `<execution_protocol>`, `<user_interaction>`, or `<security_guardrails>` are not already loaded, read `$HOME/.ai-tools/USER-AGENTS.md` before the first spawn or approval. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
     <rule id="default-worker">Spawn each `<template executor="default-worker">` per USER-AGENTS `<execution_protocol>`, assembling nested payloads per USER-AGENTS `<rule id="payload-assembly">`.</rule>
   </boundaries>

@@ -69,7 +69,7 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
   </execution_protocol>
 
   <language_rules>
-    <chat>User's language; only questions, approvals, stake warnings, spawn announcements, plan iteration, a one-line outcome, and links to what was written. Reports, summaries, findings, and logs go to disk (dev/tmp/ in the working repository). Follow if they switch.</chat>
+    <chat>User's language; only questions, approvals, stake warnings, spawn announcements, plan iteration, a one-line outcome, and links to what was written. Reports, summaries, findings, and logs go to disk (OS temp ${TMPDIR:-/tmp}/ai-tools). Follow if they switch.</chat>
     <disk>Concise English by default: code, comments, commits, docs, plans, briefs, logs, and subagent prompts. Use another language when the user asks, the task is translation, or the loaded repository already uses another language; stay English if mixed or unclear.</disk>
   </language_rules>
 

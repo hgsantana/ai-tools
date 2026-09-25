@@ -1,7 +1,7 @@
 ---
 name: dev-ai-tools
 description: >
-  Execute a specified plan under dev/, or list pending plans, propose an
+  Execute a specified plan under plans/, or list pending plans, propose an
   order, and run them; or agree one task with the user. Use for /dev-ai-tools
   or after plan acceptance. Impact: edits code, runs commands, commits each
   step on a dedicated branch, archives the plan or task, pushes, and opens a
@@ -11,7 +11,7 @@ argument-hint: "[plan paths, or the task to implement]"
 
 <skill name="dev-ai-tools">
   <overview>
-    Execute a specified plan under dev/{SLUG}/, a queue of pending plans, or one task agreed with the user.
+    Execute a specified plan under plans/{SLUG}/, a queue of pending plans, or one task agreed with the user.
     Task mode: the session plans and implements when the work fits one Conventional Commit. Specified and queue: the session judges each stage, commits, and opens the pull request; an implementer writes each stage; tests go to a default worker when that spawn works.
   </overview>
 
@@ -19,14 +19,14 @@ argument-hint: "[plan paths, or the task to implement]"
     <step id="1" name="intake_and_mode">
       Verify repository root with `git rev-parse --show-toplevel`.
       Select mode based on input:
-      - Specified (path like `dev/{SLUG}/`, `dev/{SLUG}.md`, or archived slug): before any mutation, locate the unit as `dev/{SLUG}/` or `dev/{SLUG}.md` if present; else look up `dev/tmp/finished/{SLUG}/` and the archive commit in Git history. Record {BASE_BRANCH} from the plan base or the request-time branch. If `plan/{SLUG}` already exists with accepted F stages, treat as resume: preserve those commits and skip initialization already completed. An archived slug with no recoverable branch or unit returns `<signal code="BLOCKED">`. Otherwise run `<step id="2">`, `<step id="3">`, and `<step id="4">` in this session.
-      - Queue (empty or `dev`): find unfinished base plans (`dev/*/0-*.md`), propose execution order, then run `<step id="2">`, `<step id="3">`, and `<step id="4">` in this session for each accepted plan; continue on `<signal code="DELIVERED">`; stop on `<signal code="BLOCKED">` and do not advance the queue.
-      - Task (anything else): agree one task interactively with the user in their language. If it does not fit one Conventional Commit, present `plan-ai-tools` or `vibe-ai-tools` stating that skill's Impact and Agent from its description, obtain acceptance, and invoke it without re-entering USER-AGENTS `<routing_gate>`; on refusal, end with a short assessment and write no task file. If it fits, write `dev/{SLUG}.md`, then run `<step id="2">`, `<step id="3">`, and `<step id="4">` in this session.
+      - Specified (path like `plans/{SLUG}/`, `plans/{SLUG}.md`, or archived slug): before any mutation, locate the unit as `plans/{SLUG}/` or `plans/{SLUG}.md` if present; else look up `${TMPDIR:-/tmp}/ai-tools/finished/{SLUG}/` and the archive commit in Git history. Record {BASE_BRANCH} from the plan base or the request-time branch. If `plan/{SLUG}` already exists with accepted F stages, treat as resume: preserve those commits and skip initialization already completed. An archived slug with no recoverable branch or unit returns `<signal code="BLOCKED">`. Otherwise run `<step id="2">`, `<step id="3">`, and `<step id="4">` in this session.
+      - Queue (empty or `plans`): find unfinished base plans (`plans/*/0-*.md`), propose execution order, then run `<step id="2">`, `<step id="3">`, and `<step id="4">` in this session for each accepted plan; continue on `<signal code="DELIVERED">`; stop on `<signal code="BLOCKED">` and do not advance the queue.
+      - Task (anything else): agree one task interactively with the user in their language. If it does not fit one Conventional Commit, present `plan-ai-tools` or `vibe-ai-tools` stating that skill's Impact and Agent from its description, obtain acceptance, and invoke it without re-entering USER-AGENTS `<routing_gate>`; on refusal, end with a short assessment and write no task file. If it fits, write `plans/{SLUG}.md`, then run `<step id="2">`, `<step id="3">`, and `<step id="4">` in this session.
     </step>
 
     <step id="2" name="branch_and_record">
       Read the unit of work and the repository rules (README.md, AGENTS.md if present).
-      On a new unit: check out `plan/{SLUG}` from {BASE_BRANCH} and commit the unit first: `chore(dev): plan {SLUG}` (or `chore(dev): task {SLUG}`).
+      On a new unit: check out `plan/{SLUG}` from {BASE_BRANCH} and commit the unit first: `chore(plans): plan {SLUG}` (or `chore(plans): task {SLUG}`).
       On resume: stay on `plan/{SLUG}`, preserve accepted commits, and skip that first plan or task commit.
     </step>
 
@@ -42,8 +42,8 @@ argument-hint: "[plan paths, or the task to implement]"
     </step>
 
     <step id="4" name="archive_and_deliver">
-      Successful completion is every required stage F. Only then: copy the unit to dev/tmp/finished/{SLUG}, remove it with `git rm -r dev/{SLUG}` (or `git rm dev/{SLUG}.md`), commit `chore(dev): archive {SLUG}`, push `plan/{SLUG}`, open a pull request targeting {BASE_BRANCH} with `gh pr create` or write dev/tmp/{SLUG}-review.patch when no host is available, write dev/tmp/{SLUG}-report.md, and treat the outcome as `<signal code="DELIVERED">`.
-      If any required stage is E, an implementer spawn is missing, or a reserved approval is pending: retain the unit, do not archive, push, or open a pull request, write evidence to dev/tmp/{SLUG}-blocked.md, and treat the outcome as `<signal code="BLOCKED">`. Partial delivery is not authorized.
+      Successful completion is every required stage F. Only then: copy the unit to ${TMPDIR:-/tmp}/ai-tools/finished/{SLUG}, remove it with `git rm -r plans/{SLUG}` (or `git rm plans/{SLUG}.md`), commit `chore(plans): archive {SLUG}`, push `plan/{SLUG}`, open a pull request targeting {BASE_BRANCH} with `gh pr create` or write ${TMPDIR:-/tmp}/ai-tools/{SLUG}-review.patch when no host is available, write ${TMPDIR:-/tmp}/ai-tools/{SLUG}-report.md, and treat the outcome as `<signal code="DELIVERED">`.
+      If any required stage is E, an implementer spawn is missing, or a reserved approval is pending: retain the unit, do not archive, push, or open a pull request, write evidence to ${TMPDIR:-/tmp}/ai-tools/{SLUG}-blocked.md, and treat the outcome as `<signal code="BLOCKED">`. Partial delivery is not authorized.
     </step>
 
     <step id="5" name="report_and_handover">
@@ -60,14 +60,14 @@ argument-hint: "[plan paths, or the task to implement]"
       </input>
       <instructions>
         This payload is the brief; do not read sibling skill files. Nested spawn payloads are assembled here per USER-AGENTS `<rule id="payload-assembly">`. Include `<template role="stage-verifier">` from this file in the brief.
-        Read {STAGE_FILE} of dev/{SLUG}/ and the repository rules (README.md, AGENTS.md if present). Implement only that stage.
+        Read {STAGE_FILE} of plans/{SLUG}/ and the repository rules (README.md, AGENTS.md if present). Implement only that stage.
         Match surrounding style, keep product and test edits within the declared files, and write behaviour tests for delivered changes.
         Spawn `<template role="stage-verifier">` as executor="default-worker" with the stage's commands and a kebab-case topic. If that spawn fails, run the commands yourself and write the same log.
         Append factual notes to the Implementation log of {STAGE_FILE}, set that stage's Status cell to V in the base plan Status table, and return a one-line outcome with the changed paths, test exit code, and log path.
       </instructions>
       <constraints>
         <constraint>Do not make architectural changes outside stage scope.</constraint>
-        <constraint>Edit only the declared stage files, the Implementation log of {STAGE_FILE}, and that stage's Status cell in `dev/{SLUG}/0-{SLUG}.md`.</constraint>
+        <constraint>Edit only the declared stage files, the Implementation log of {STAGE_FILE}, and that stage's Status cell in `plans/{SLUG}/0-{SLUG}.md`.</constraint>
         <constraint>Do not commit or push; leave changes in the working tree for session review.</constraint>
       </constraints>
     </template>
@@ -80,7 +80,7 @@ argument-hint: "[plan paths, or the task to implement]"
       </input>
       <instructions>
         Execute {COMMANDS} without design decisions.
-        Capture stdout and stderr to dev/tmp/{TOPIC}-output.log.
+        Capture stdout and stderr to ${TMPDIR:-/tmp}/ai-tools/{TOPIC}-output.log.
         Return facts: command, exit code, and output path.
       </instructions>
       <constraints>
@@ -113,7 +113,7 @@ argument-hint: "[plan paths, or the task to implement]"
     <rule id="no-implementer-fallback">If `<template role="stage-implementer">` cannot be spawned, specified and queue modes do not implement that stage in the session: they end as `<signal code="BLOCKED">` naming the missing spawn.</rule>
     <rule id="worker-fallback">If `<template role="stage-verifier">` cannot be spawned, the spawning context runs those commands itself per USER-AGENTS `<rule id="spawn-fallback">`.</rule>
     <rule id="completion-is-f">Archive, push, and pull-request creation run only when every required stage is F. An E stage is BLOCKED and retains the work unit.</rule>
-    <rule id="substance-on-disk">Write substance to the unit's files or dev/tmp/; chat carries paths and outcomes.</rule>
+    <rule id="substance-on-disk">Write substance to the unit's files or OS temp (${TMPDIR:-/tmp}/ai-tools); chat carries paths and outcomes.</rule>
     <rule id="preserve-history">Preserve history predating this work; never force-push or rebase pre-existing commits.</rule>
     <rule id="protocol-source">When USER-AGENTS `<execution_protocol>`, `<user_interaction>`, or `<security_guardrails>` are not already loaded, read `$HOME/.ai-tools/USER-AGENTS.md` before the first spawn or approval. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
     <rule id="reserved-approvals">Mutations to cloud resources or destructive operations require explicit user approval per USER-AGENTS `<security_guardrails>`.</rule>

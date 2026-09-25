@@ -23,7 +23,7 @@ argument-hint: "[optional: harnesses in scope, or extra instructions]"
 
     <step id="2" name="dry_run">
       Resolve the canonical clone as `$HOME/.ai-tools` (Windows: `%USERPROFILE%\.ai-tools`). Refuse if that path is missing or is not the supported clone.
-      Use the clone's `dev/tmp/` as {REPORT_DIR}.
+      Use the OS temp directory `${TMPDIR:-/tmp}/ai-tools` as {REPORT_DIR}.
       Spawn `<template role="script-runner">` from `<dispatch_templates>` with {SCRIPT} set to the quoted absolute `"$HOME/.ai-tools/scripts/shell/update.sh"`, {FLAGS} set to `--dry-run` plus the scoped flags, and {LOG_PATH} set to `{REPORT_DIR}/update-dry-run.log`.
       Present each required destructive flag (`--overwrite`, `--discard-local`) separately with what it discards and why.
     </step>

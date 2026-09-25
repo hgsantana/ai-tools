@@ -22,7 +22,7 @@ argument-hint: "[optional: harnesses in scope, or extra instructions]"
 
     <step id="2" name="dry_run">
       Resolve the canonical clone as `$HOME/.ai-tools` (Windows: `%USERPROFILE%\.ai-tools`). Refuse if that path is missing or is not the supported clone.
-      If `--purge` is in scope, select a surviving report directory outside the clone before any run: `$HOME/.ai-tools-remove-logs` (create if absent). Otherwise use the clone's `dev/tmp/`. Record that absolute directory as {REPORT_DIR}.
+      If `--purge` is in scope, select a surviving report directory outside the clone before any run: `$HOME/.ai-tools-remove-logs` (create if absent). Otherwise use the OS temp directory (`${TMPDIR:-/tmp}/ai-tools`). Record that absolute directory as {REPORT_DIR}.
       Spawn `<template role="script-runner">` from `<dispatch_templates>` with {SCRIPT} set to the quoted absolute `"$HOME/.ai-tools/scripts/shell/remove.sh"`, {FLAGS} set to `--dry-run` plus the scoped flags, and {LOG_PATH} set to `{REPORT_DIR}/remove-dry-run.log`.
       Present each destructive flag (`--instructions`, `--force`, `--purge`) separately with what it removes and why.
     </step>

@@ -47,16 +47,16 @@ argument-hint: "[[model] [effort] | [effort]] <task description>"
       agy --model "{MODEL}" --effort "{EFFORT}" --add-dir "." --dangerously-skip-permissions -p "{CLEAN_PROMPT}"
       ```
       Execute via `run_command` in the workspace root.
-      Save CLI execution output, session transcripts, and run details to `dev/tmp/{TOPIC}.md`.
+      Save CLI execution output, session transcripts, and run details to `${TMPDIR:-/tmp}/ai-tools/{TOPIC}.md`.
     </step>
 
     <step id="5" name="report">
-      Write detailed CLI execution transcripts, modified files inventory, and diagnostic output to `dev/tmp/{TOPIC}.md`.
+      Write detailed CLI execution transcripts, modified files inventory, and diagnostic output to `${TMPDIR:-/tmp}/ai-tools/{TOPIC}.md`.
       In chat (user's language), provide the concise outcome:
       - Model and reasoning effort used.
       - Status and summary of completed work.
       - Clickable links to created or modified files.
-      - Path to the detailed report `dev/tmp/{TOPIC}.md`.
+      - Path to the detailed report `${TMPDIR:-/tmp}/ai-tools/{TOPIC}.md`.
     </step>
   </session_workflow>
 
@@ -69,7 +69,7 @@ argument-hint: "[[model] [effort] | [effort]] <task description>"
       </input>
       <instructions>
         Execute the read-only agy queries listed in {COMMANDS}.
-        Write formatted command outputs to dev/tmp/{TOPIC}.md.
+        Write formatted command outputs to ${TMPDIR:-/tmp}/ai-tools/{TOPIC}.md.
         Return command list, exit codes, and output path.
       </instructions>
       <constraints>
@@ -83,7 +83,7 @@ argument-hint: "[[model] [effort] | [effort]] <task description>"
     <rule id="token-economy">Reference repository paths directly; avoid dumping large file contents into command prompts.</rule>
     <rule id="unbiased-reasoning">State goals and constraints plainly; allow the effort parameter to regulate thinking depth naturally.</rule>
     <rule id="destructive-guardrail">Destructive operations require explicit affirmative user approval before execution.</rule>
-    <rule id="outputs-on-disk">Save command outputs, run transcripts, and logs to dev/tmp/ rather than flooding session context.</rule>
+    <rule id="outputs-on-disk">Save command outputs, run transcripts, and logs to ${TMPDIR:-/tmp}/ai-tools/ rather than flooding session context.</rule>
     <rule id="protocol-source">When USER-AGENTS `<execution_protocol>`, `<user_interaction>`, or `<security_guardrails>` are not already loaded, read `$HOME/.ai-tools/USER-AGENTS.md` before the first spawn or approval. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
     <rule id="default-worker">Spawn each `<template executor="default-worker">` per USER-AGENTS `<execution_protocol>`, assembling nested payloads per USER-AGENTS `<rule id="payload-assembly">`.</rule>
   </boundaries>
