@@ -263,6 +263,7 @@ check_skill_layout() {
     warn "USER-AGENTS.md missing delegated-worker routing-gate exemption: $f"
   fi
 
+  # shellcheck disable=SC2016 # literal '$HOME' text in instructions
   if grep -q '\$HOME/AGENTS.md' "$f"; then
     ok "USER-AGENTS.md loads optional \$HOME/AGENTS.md after the routing gate: $f"
   else
