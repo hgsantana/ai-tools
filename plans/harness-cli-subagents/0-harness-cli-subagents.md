@@ -8,7 +8,7 @@
 | 3-harness-cli-subagents.md | F | implementer Gemini 3.8 Flash (High) |
 | 4-harness-cli-subagents.md | F | implementer Gemini 3.8 Flash (High) |
 | 5-harness-cli-subagents.md | F | implementer Gemini 3.8 Flash (High) |
-| 6-harness-cli-subagents.md | | |
+| 6-harness-cli-subagents.md | F | implementer Gemini 3.8 Flash (High) |
 
 ## Goal
 Restructure `ai-tools` to support CLI-based subagent dispatch for exactly four harnesses (`agy`, `claude`, `codex`, `copilot`), create dedicated `*-ai-tools` skills for each with model and reasoning effort control, and remove support for unlisted harnesses (`grok`, `cursor`).
