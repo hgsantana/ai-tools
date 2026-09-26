@@ -2,8 +2,8 @@
   "harnesses": {
     "antigravity": {
       "junior": { "model": "gemini-3.8-flash", "effort": "low" },
-      "mid": { "model": "gemini-3.8-flash", "effort": "high" },
-      "senior": { "model": "gemini-3.1-pro", "effort": "high" }
+      "mid": { "model": "gemini-3.8-flash", "effort": "medium" },
+      "senior": { "model": "gemini-3.8-flash", "effort": "high" }
     },
     "claude-code": {
       "junior": { "model": "haiku", "effort": "medium" },
@@ -11,9 +11,9 @@
       "senior": { "model": "opus", "effort": "high" }
     },
     "copilot": {
-      "junior": { "model": "gemini-2.5-pro", "effort": "low" },
-      "mid": { "model": "gpt-5.4", "effort": "medium" },
-      "senior": { "model": "o3", "effort": "high" }
+      "junior": { "model": "gpt-6-luna", "effort": "high" },
+      "mid": { "model": "gemini-3.8-flash", "effort": "medium" },
+      "senior": { "model": "grok-4.7", "effort": "high" }
     }
   }
 }
