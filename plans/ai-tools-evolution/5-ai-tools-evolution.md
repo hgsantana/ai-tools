@@ -49,3 +49,17 @@ feat(planning): incorporate structured grill-me protocol into plan-ai-tools
 
 ## Implementation log
 
+- Updated `skills/plan-ai-tools/SKILL.md`:
+  - Refactored frontmatter description (319 chars) and `<overview>` to reflect structured grill-me inquiry along the design tree.
+  - Refactored `<step id="2" name="user_alignment">` into an explicit Grill-me protocol assuming an adversarial, inquisitive stance probing unstated assumptions, edge cases, failure modes, harness compatibility, and architectural trade-offs; asking questions one at a time via USER-AGENTS `<user_interaction>` with technical rationales and recommended options; and concluding only when all design tree branches are resolved and no critical uncertainties remain.
+  - Refactored `<rule id="design-interview">` to `<rule id="grill-me-interview">` in `<boundaries>` to mandate proactive grill-me stress-testing.
+- Updated `skills/vibe-ai-tools/SKILL.md`:
+  - Updated `<overview>` and `<step id="1" name="interactive_planning">` to cite `plan-ai-tools`'s grill-me planning workflow.
+  - Refactored `<rule id="design-interview">` to `<rule id="grill-me-interview">` citing `plan-ai-tools` `<rule id="grill-me-interview">`.
+- Updated documentation in `README.md` and `docs/USAGE.md`:
+  - Documented `plan-ai-tools` structured grill-me design interview in `README.md` rule 23 and `docs/USAGE.md` delivery workflows.
+  - Updated `vibe-ai-tools` documentation in `README.md` rule 24 and `docs/USAGE.md` to reference the grill-me protocol.
+- Maintained all skill descriptions strictly <= 500 characters.
+- Verification results:
+  - `./scripts/lint.sh`: exit 0 (614 ok, 1 skipped, 0 warnings).
+  - `./scripts/test.sh`: exit 0 (340 ok, 0 skipped, 0 warnings).

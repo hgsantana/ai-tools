@@ -13,14 +13,14 @@ argument-hint: "[the change to deliver]"
 
 <skill name="vibe-ai-tools">
   <overview>
-    Interview the user along the design tree and plan a change under plans/{SLUG}/, then the session delivers it.
+    Grill the user along the design tree and plan a change under plans/{SLUG}/, then the session delivers it.
     The session plans, asks the implementer model, judges each stage, commits, and opens the pull request; implementers write stage code; tests go to a default worker when that spawn works.
   </overview>
 
   <session_workflow>
     <step id="1" name="interactive_planning">
       Run plan-ai-tools `<step id="1">` to record {BASE_BRANCH}.
-      Run plan-ai-tools `<step id="2">` to interview the user along the design tree, resolve scope boundaries, architecture, and trade-offs, and derive a kebab-case {SLUG}.
+      Run plan-ai-tools `<step id="2">` to execute the grill-me interview along the design tree, resolve scope boundaries, architecture, and trade-offs, and derive a kebab-case {SLUG}.
       Run plan-ai-tools `<step id="3">` to write the plan under plans/{SLUG}/ per plan-ai-tools `<plan_file_format>`.
       Skip the standalone `/dev-ai-tools` offer once the plan is on disk.
     </step>
@@ -103,7 +103,7 @@ argument-hint: "[the change to deliver]"
 
   <boundaries>
     <rule id="session-owns-delivery">The session owns user alignment, planning, the implementer question, in-scope decisions, judgment, commits, archival, the pull request, and reporting from disk paths.</rule>
-    <rule id="design-interview">Conduct the planning interview per plan-ai-tools `<rule id="design-interview">`.</rule>
+    <rule id="grill-me-interview">Conduct the planning interview per plan-ai-tools `<rule id="grill-me-interview">`.</rule>
     <rule id="one-model-question">Ask the implementer model question once per run, after the plan is on disk; reuse the answer for every stage and rework.</rule>
     <rule id="spawn-apis">Per USER-AGENTS `<execution_protocol>`: `<template role="stage-implementer">` runs as `executor="implementer"` with the recorded {IMPLEMENTER_MODEL}; dev-ai-tools `<template role="stage-verifier">` runs as `executor="default-worker"`; `<template role="stage-judge">` runs as `executor="session-subagent"` on the session model.</rule>
     <rule id="no-implementer-fallback">If `<template role="stage-implementer">` cannot be spawned, do not implement that stage in the session: end as `<signal code="BLOCKED">` naming the missing spawn.</rule>
