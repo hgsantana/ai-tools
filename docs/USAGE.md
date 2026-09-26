@@ -23,6 +23,7 @@ Invoke a skill by leading with its slash name and optional request:
 | `/az-ai-tools` | Inspect or manage Azure resources, subscriptions, infrastructure, and costs with `az` | `/az-ai-tools list costly idle resources` |
 | `/gc-ai-tools` | Inspect or manage Google Cloud projects, infrastructure, and costs with `gcloud` | `/gc-ai-tools show resources in project-x` |
 | `/gh-ai-tools` | Inspect or manage GitHub accounts, repository administration, environments, Actions/builds, issues, and releases | `/gh-ai-tools show failing Actions runs` |
+| `/models-ai-tools` | Inspect available models and configure preferred models per tier (`junior`, `mid`, `senior`) for installed CLI harnesses | `/models-ai-tools agy` |
 | `/update-ai-tools` | Remove current-version artifacts, reset the clone, and install from origin/master | `/update-ai-tools all detected harnesses` |
 | `/remove-ai-tools` | Remove installed ai-tools artifacts from selected harnesses | `/remove-ai-tools claude-code and copilot` |
 
@@ -88,6 +89,10 @@ To request a clean stop while it is running, say `Stop after the current plan.` 
 `/az-ai-tools`, `/gc-ai-tools`, and `/gh-ai-tools` run read-only queries freely. Every mutation is presented separately with its target, reason, and cost or blast-radius impact, and requires explicit approval for that action.
 
 `/gh-ai-tools` is for GitHub-hosted state and administration: accounts, organizations, repository settings and access, environments, secrets and variables, Actions, builds, artifacts, issues, and releases. Repository code work—commits, branches, tags, cherry-picks, rebases, merges, fetches, pulls, pushes, code review, and pull-request creation, updates, review, or merge—runs directly in the session without this skill. Platform policy such as rulesets, required checks, and pull-request settings remains in scope for the skill.
+
+### Model configuration
+
+`/models-ai-tools` interactively inspects available models and configures preferred models per tier (`junior`, `mid`, `senior`) for installed CLI harnesses (`agy`, `claude`, `copilot`). Selections are saved to `$HOME/.ai-tools/config.local.json` under `"models"`, allowing users to customize agent model dispatch without modifying repository code or version-controlled defaults in `config/agents.json`. When invoked with an optional harness argument (e.g., `/models-ai-tools agy`), it limits configuration to that specific harness.
 
 ### Maintenance
 

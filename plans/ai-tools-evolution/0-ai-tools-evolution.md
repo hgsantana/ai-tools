@@ -9,7 +9,7 @@
 | 3 | F | implementer |
 | 4 | F | implementer |
 | 5 | F | implementer |
-| 6 | | |
+| 6 | F | implementer |
 | 7 | | |
 
 ## Goal
