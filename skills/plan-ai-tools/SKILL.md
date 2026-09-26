@@ -35,7 +35,7 @@ argument-hint: "[description of the change, feature, or fix to plan]"
     <step id="3" name="plan_writing">
       Read the repository README.md, AGENTS.md if present, docs, and relevant code paths.
       Send broad read-only discovery to `<template role="repo-discovery">` from `<dispatch_templates>`, substituting {QUESTIONS} and {TOPIC}; read or grep directly for pinpoint lookups.
-      Split delivery into isolated stages, one Conventional Commit per stage, and write `plans/{SLUG}/0-{SLUG}.md` plus one numbered stage file per stage per `<plan_file_format>`.
+      Split delivery into isolated stages, one Conventional Commit per stage, and write the base plan `plans/{SLUG}/0-{SLUG}.md` containing succinct outlines for all stages per `<plan_file_format>`. Detailed stage files are not created during initial planning; each stage is planned in detail on demand during execution.
       Write the plan only under plans/{SLUG}/, leave product and test code unchanged, and leave the Status table's Status and Executor cells empty.
     </step>
     <step id="4" name="report_and_handover">
@@ -70,13 +70,13 @@ argument-hint: "[description of the change, feature, or fix to plan]"
     <structure>
 plans/
   {SLUG}/
-    0-{SLUG}.md       # Base plan
-    1-{SLUG}.md       # Stage 1 (Single Conventional Commit boundary)
-    2-{SLUG}.md       # Stage 2
+    0-{SLUG}.md       # Base plan with succinct stage outlines (initial deliverable)
+    1-{SLUG}.md       # Stage 1 (planned on demand during execution before implementation)
+    2-{SLUG}.md       # Stage 2 (planned on demand after Stage 1 finishes)
     F1-{SLUG}.md      # Fix file (added during corrections if needed)
     </structure>
-    Base plan sections: Status table (Stage, Status, Executor), Goal, Base branch, Execution graph, Stages index, and Open questions and risks when any.
-    Stage file sections: Objective, Files (Create/Modify/Remove), Steps, Tests, Acceptance criteria, Commit message, Dependencies, Implementation log.
+    Base plan sections: Status table (Stage, Status, Executor), Goal, Base branch, Execution graph, Stages outline, and Open questions and risks when any.
+    Stage file sections: Objective, Decisions, Files (Create/Modify/Remove), Steps, Tests, Acceptance criteria, Commit message, Dependencies, Implementation log.
   </plan_file_format>
 
   <boundaries>
