@@ -222,20 +222,16 @@ case_install_all_includes_undetected_harnesses() {
   t_fixture
   root="$T_ROOT"
   home="$root/home"
-  rm -rf "$home/.claude" "$home/.grok" "$home/.codex" "$home/.copilot" "$home/.cursor" "$home/.gemini"
+  rm -rf "$home/.claude" "$home/.codex" "$home/.copilot" "$home/.gemini"
 
   t_install "$root" --harnesses all
   t_assert_exit 0
   t_assert_regular_directory "$home/.claude/skills/plan-ai-tools"
-  t_assert_regular_directory "$home/.grok/skills/plan-ai-tools"
   t_assert_regular_directory "$home/.codex/skills/plan-ai-tools"
   t_assert_regular_directory "$home/.copilot/skills/plan-ai-tools"
-  t_assert_regular_directory "$home/.cursor/skills/plan-ai-tools"
   t_assert_regular_directory "$home/.gemini/config/skills/plan-ai-tools"
   t_assert_regular_file "$home/.copilot/instructions/ai-tools.instructions.md"
   t_assert_same_content "$home/.copilot/instructions/ai-tools.instructions.md" "$home/.ai-tools/USER-AGENTS.md"
-  t_assert_regular_file "$home/.cursor/rules/ai-tools.mdc"
-  t_assert_same_content "$home/.cursor/rules/ai-tools.mdc" "$home/.ai-tools/USER-AGENTS.md"
 
   t_cleanup "$root"
 }
@@ -253,24 +249,6 @@ case_install_copilot_instructions_frontmatter() {
   t_assert_same_content "$dest" "$root/home/.ai-tools/USER-AGENTS.md"
   t_assert_content "$dest" 'applyTo: "**"'
   t_assert_no_line "no global instructions destination: copilot"
-
-  t_cleanup "$root"
-}
-
-case_install_cursor_instructions() {
-  # Cursor machine-local user rules: ~/.cursor/rules/*.mdc with alwaysApply.
-  local root dest
-  t_fixture
-  root="$T_ROOT"
-
-  t_install "$root" --harnesses cursor
-  t_assert_exit 0
-  dest="$root/home/.cursor/rules/ai-tools.mdc"
-  t_assert_regular_file "$dest"
-  t_assert_same_content "$dest" "$root/home/.ai-tools/USER-AGENTS.md"
-  t_assert_content "$dest" "alwaysApply: true"
-  t_assert_no_line "no global instructions destination: cursor"
-  t_assert_regular_directory "$root/home/.cursor/skills/plan-ai-tools"
 
   t_cleanup "$root"
 }
