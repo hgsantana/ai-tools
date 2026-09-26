@@ -167,7 +167,6 @@ case_reinstall_all_harnesses() {
   t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses all
   t_assert_exit 0
   t_assert_regular_directory "$home/.claude/skills/plan-ai-tools"
-  t_assert_regular_directory "$home/.codex/skills/plan-ai-tools"
   t_assert_regular_directory "$home/.copilot/skills/plan-ai-tools"
   t_assert_regular_directory "$home/.gemini/config/skills/plan-ai-tools"
 

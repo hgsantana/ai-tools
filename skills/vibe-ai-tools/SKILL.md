@@ -13,20 +13,21 @@ argument-hint: "[the change to deliver]"
 
 <skill name="vibe-ai-tools">
   <overview>
-    Interview the user along the design tree and plan a change under plans/{SLUG}/, then the session delivers it.
+    Grill the user along the design tree and plan a change under plans/{SLUG}/, then the session delivers it.
     The session plans, asks the implementer model, judges each stage, commits, and opens the pull request; implementers write stage code; tests go to a default worker when that spawn works.
   </overview>
 
   <session_workflow>
     <step id="1" name="interactive_planning">
       Run plan-ai-tools `<step id="1">` to record {BASE_BRANCH}.
-      Run plan-ai-tools `<step id="2">` to interview the user along the design tree, resolve scope boundaries, architecture, and trade-offs, and derive a kebab-case {SLUG}.
+      Run plan-ai-tools `<step id="2">` to execute the grill-me interview along the design tree, resolve scope boundaries, architecture, and trade-offs, and derive a kebab-case {SLUG}.
       Run plan-ai-tools `<step id="3">` to write the plan under plans/{SLUG}/ per plan-ai-tools `<plan_file_format>`.
       Skip the standalone `/dev-ai-tools` offer once the plan is on disk.
     </step>
 
     <step id="2" name="implementer_model">
-      With the plan on disk and before execution, ask the user exactly one question through USER-AGENTS `<user_interaction>`: which model implements this plan's stages, with 1-3 options chosen per `<implementer_job>`.
+      Check `$HOME/.ai-tools/config.local.json`: if `ask_implementer_model` under `"behavior"` is set to false, skip prompting the user and resolve {IMPLEMENTER_MODEL} directly from the configured tier model in `$HOME/.ai-tools/config.local.json` under `"models"` or `config/agents.json` default for `mid` tier.
+      Otherwise, with the plan on disk and before execution, ask the user exactly one question through USER-AGENTS `<user_interaction>`: which model implements this plan's stages, with 1-3 options chosen per `<implementer_job>`.
       Record the answer as {IMPLEMENTER_MODEL} in plans/{SLUG}/vibe-decisions.md; ask nothing else before delivery.
     </step>
 
@@ -36,9 +37,9 @@ argument-hint: "[the change to deliver]"
       For each unfinished stage in dependency order, following dev-ai-tools `<status_protocol>`:
         1. Set W and record Executor as implementer plus {IMPLEMENTER_MODEL} in the base plan Status table.
         2. Spawn `<template role="stage-implementer">` from `<dispatch_templates>` as executor="implementer" with {IMPLEMENTER_MODEL}, substituting {STAGE_FILE} and {SLUG}; if that spawn is rejected only for the recorded model, retry once with the harness default and use that model for remaining stages; if the spawn fails, treat the unit as `<signal code="BLOCKED">` without implementing the stage in the session.
-        3. Review the working-tree diff against the stage objective, declared files, and acceptance criteria. Decide in-scope questions from code evidence; append each decision to plans/{SLUG}/vibe-decisions.md.
-        4. On passing evidence and met criteria: stage path by path, commit with the stage's Conventional Commit message, and set F.
-        5. Otherwise: append concrete correction tasks to the stage log, set R1..R3, and retry up to three times, then set E.
+        3. Spawn `<template role="stage-judge">` from `<dispatch_templates>` as executor="session-subagent", substituting {STAGE_FILE}, {SLUG}, and kebab-case {TOPIC} to review the working-tree diff and test evidence; if that spawn fails, treat the unit as `<signal code="BLOCKED">` without judging in the session. Decide in-scope questions from code evidence; append each decision to plans/{SLUG}/vibe-decisions.md.
+        4. On `<signal code="ACCEPT">`: stage path by path, commit with the stage's Conventional Commit message, and set F.
+        5. On `<signal code="REWORK">`: append feedback to the stage log, set R1..R3, and retry up to three times, then set E.
       On E: stop remaining stages, retain the work unit, and go to `<step id="4">` as blocked. Do not start a dependent stage.
       Successful completion is every required stage F. Only then: copy the unit to ${TMPDIR:-/tmp}/ai-tools/finished/{SLUG}, remove it with `git rm -r plans/{SLUG}`, commit `chore(plans): archive {SLUG}`, push `plan/{SLUG}`, open a pull request targeting {BASE_BRANCH} with `gh pr create` or write ${TMPDIR:-/tmp}/ai-tools/{SLUG}-review.patch when no host is available, write ${TMPDIR:-/tmp}/ai-tools/{SLUG}-report.md, and treat the outcome as `<signal code="DELIVERED">`.
       If any required stage is E, an implementer spawn is missing, or a reserved approval is pending: retain the unit, do not archive, push, or open a pull request, write evidence to ${TMPDIR:-/tmp}/ai-tools/{SLUG}-blocked.md, and treat the outcome as `<signal code="BLOCKED">`. Partial delivery is not authorized.
@@ -77,18 +78,35 @@ argument-hint: "[the change to deliver]"
         <constraint>Do not commit or push; leave changes in the working tree for session review.</constraint>
       </constraints>
     </template>
+
+    <template role="stage-judge" executor="session-subagent">
+      <job>High-tier judge: evaluate working-tree diff, test output, and acceptance criteria to deliver an objective verdict.</job>
+      <input>
+        <stage_file>{STAGE_FILE}</stage_file>
+        <slug>{SLUG}</slug>
+        <topic>{TOPIC}</topic>
+      </input>
+      <instructions>
+        Read {STAGE_FILE} of plans/{SLUG}/ and repository rules. Inspect the working-tree git diff and verification logs in ${TMPDIR:-/tmp}/ai-tools/{TOPIC}-output.log. Write detailed verdict rationale and any required corrections to ${TMPDIR:-/tmp}/ai-tools/{TOPIC}-verdict.md. Return either `<signal code="ACCEPT">` or `<signal code="REWORK">`.
+      </instructions>
+      <constraints>
+        <constraint>Do not modify production code or tests.</constraint>
+      </constraints>
+    </template>
   </dispatch_templates>
 
   <return_protocol>
+    <signal code="ACCEPT">ACCEPT {STAGE_FILE} {VERDICT_PATH}</signal>
+    <signal code="REWORK">REWORK {STAGE_FILE} {VERDICT_PATH}</signal>
     <signal code="DELIVERED">DELIVERED {REPORT_PATH} {PR_OR_PATCH} {IMPLEMENTER_MODEL}</signal>
     <signal code="BLOCKED">BLOCKED {REASON} {EVIDENCE_PATH}</signal>
   </return_protocol>
 
   <boundaries>
     <rule id="session-owns-delivery">The session owns user alignment, planning, the implementer question, in-scope decisions, judgment, commits, archival, the pull request, and reporting from disk paths.</rule>
-    <rule id="design-interview">Conduct the planning interview per plan-ai-tools `<rule id="design-interview">`.</rule>
+    <rule id="grill-me-interview">Conduct the planning interview per plan-ai-tools `<rule id="grill-me-interview">`.</rule>
     <rule id="one-model-question">Ask the implementer model question once per run, after the plan is on disk; reuse the answer for every stage and rework.</rule>
-    <rule id="spawn-apis">Per USER-AGENTS `<execution_protocol>`: `<template role="stage-implementer">` runs as `executor="implementer"` with the recorded {IMPLEMENTER_MODEL}; dev-ai-tools `<template role="stage-verifier">` runs as `executor="default-worker"`.</rule>
+    <rule id="spawn-apis">Per USER-AGENTS `<execution_protocol>`: `<template role="stage-implementer">` runs as `executor="implementer"` with the recorded {IMPLEMENTER_MODEL}; dev-ai-tools `<template role="stage-verifier">` runs as `executor="default-worker"`; `<template role="stage-judge">` runs as `executor="session-subagent"` on the session model.</rule>
     <rule id="no-implementer-fallback">If `<template role="stage-implementer">` cannot be spawned, do not implement that stage in the session: end as `<signal code="BLOCKED">` naming the missing spawn.</rule>
     <rule id="worker-fallback">If a default-worker spawn fails, the spawning context runs those commands itself per USER-AGENTS `<rule id="spawn-fallback">`.</rule>
     <rule id="completion-is-f">Archive, push, and pull-request creation run only when every required stage is F. An E stage is BLOCKED and retains the work unit.</rule>

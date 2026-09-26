@@ -1,2 +1,4 @@
 # Plans are versioned under plans/; generated state lives in OS temp.
 .vscode/
+config.local.json
+*.local.json

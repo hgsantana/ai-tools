@@ -222,12 +222,11 @@ case_install_all_includes_undetected_harnesses() {
   t_fixture
   root="$T_ROOT"
   home="$root/home"
-  rm -rf "$home/.claude" "$home/.codex" "$home/.copilot" "$home/.gemini"
+  rm -rf "$home/.claude" "$home/.copilot" "$home/.gemini"
 
   t_install "$root" --harnesses all
   t_assert_exit 0
   t_assert_regular_directory "$home/.claude/skills/plan-ai-tools"
-  t_assert_regular_directory "$home/.codex/skills/plan-ai-tools"
   t_assert_regular_directory "$home/.copilot/skills/plan-ai-tools"
   t_assert_regular_directory "$home/.gemini/config/skills/plan-ai-tools"
   t_assert_regular_file "$home/.copilot/instructions/ai-tools.instructions.md"
@@ -350,7 +349,7 @@ case_bootstrap_rejects_non_clone() {
 }
 
 case_install_parent_symlink_protects_agents_md() {
-  # Rule 17: a harness directory that aliases $HOME must not let --overwrite
+  # Rule 17: a harness destination that aliases $HOME/AGENTS.md must not let --overwrite
   # replace $HOME/AGENTS.md (resolved destination, including parent symlinks).
   local root home
   t_fixture
@@ -358,14 +357,15 @@ case_install_parent_symlink_protects_agents_md() {
   home="$root/home"
 
   printf 'user overrides\n' > "$home/AGENTS.md"
-  rm -rf "$home/.codex"
-  ln -s "$home" "$home/.codex" || fatal "$T_CASE: cannot alias .codex to HOME"
+  rm -rf "$home/.claude"
+  mkdir -p "$home/.claude"
+  ln -s "$home/AGENTS.md" "$home/.claude/CLAUDE.md" || fatal "$T_CASE: cannot alias CLAUDE.md to AGENTS.md"
 
-  t_install "$root" --harnesses codex --overwrite
+  t_install "$root" --harnesses claude-code --overwrite
   t_assert_exit 2
   t_assert_line "refusing \$HOME/AGENTS.md alias:"
   t_assert_content "$home/AGENTS.md" "user overrides"
-  t_assert_regular_directory "$home/.codex/skills/plan-ai-tools"
+  t_assert_regular_directory "$home/.claude/skills/plan-ai-tools"
 
   t_cleanup "$root"
 }

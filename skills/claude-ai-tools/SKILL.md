@@ -19,11 +19,20 @@ argument-hint: "[[model] [effort] | [effort]] <task description>"
   <session_workflow>
     <step id="1" name="intake_and_parameter_resolution">
       Parse request arguments to resolve {MODEL}, {EFFORT}, and {TASK_PROMPT}. Derive a kebab-case {TOPIC}.
+      Supported models:
+      | Model | Target Identifier | Aliases |
+      |---|---|---|
+      | `sonnet` | `claude-sonnet-4-6` | `sonnet` |
+      | `opus` | `claude-opus-4-6-thinking` | `opus` |
+      | `haiku` | `haiku` | `haiku` |
+      | `fable` | `fable` | `fable` |
+
       Resolution rules:
       - Only effort specified: model defaults to `sonnet` with the requested effort (e.g. `high` -> `sonnet`, `high`).
       - Model aliases: `sonnet` -> `sonnet`, `opus` -> `opus`, `haiku` -> `haiku`, `fable` -> `fable`, or full model names (e.g. `claude-sonnet-4-6`, `claude-opus-4-6-thinking`).
       - Effort aliases: `low` -> `low`, `medium` / `med` -> `medium`, `high` / `hi` -> `high`, `xhigh` / `extra-high` -> `xhigh`, `max` -> `max`.
       - Defaults when omitted: model `sonnet`, effort `medium`.
+      - Dynamic fallback: when a model is not recognized in the table, inspect available CLI options/flags (`claude --help` or validation probe) to determine if it is recognized before rejecting.
       - Workspace directory: resolve via `git rev-parse --show-toplevel` or `.`.
     </step>
 

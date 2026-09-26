@@ -19,11 +19,23 @@ argument-hint: "[[model] [effort] | [effort]] <task description>"
   <session_workflow>
     <step id="1" name="intake_and_parameter_resolution">
       Parse request arguments to resolve {MODEL}, {EFFORT}, and {TASK_PROMPT}. Derive a kebab-case {TOPIC}.
+      Supported models:
+      | Model | Aliases |
+      |---|---|
+      | `gpt-5.4` | `gpt`, `gpt-5` |
+      | `claude-sonnet-4-6` | `claude`, `sonnet` |
+      | `claude-opus-4-6` | `opus` |
+      | `o3` | `o3` |
+      | `o1` | `o1` |
+      | `gemini-2.5-pro` | `gemini` |
+      | `auto` | `auto` |
+
       Resolution rules:
       - Only effort specified: model defaults to `gpt-5.4` with the requested effort (e.g. `high` -> `gpt-5.4`, `high`).
       - Model aliases: `claude` / `sonnet` -> `claude-sonnet-4-6`, `opus` -> `claude-opus-4-6`, `gpt` / `gpt-5` -> `gpt-5.4`, `o3` -> `o3`, `o1` -> `o1`, `gemini` -> `gemini-2.5-pro`, `auto` -> `auto`, or full model names.
       - Effort aliases: `none` -> `none`, `minimal` / `min` -> `minimal`, `low` -> `low`, `medium` / `med` -> `medium`, `high` / `hi` -> `high`, `xhigh` / `extra-high` -> `xhigh`, `max` -> `max`.
       - Defaults when omitted: model `gpt-5.4`, effort `medium`.
+      - Dynamic fallback: inspect `copilot --help` or probe flags before rejecting unrecognized model inputs.
       - Workspace directory: resolve via `git rev-parse --show-toplevel` or `.`.
     </step>
 

@@ -88,6 +88,8 @@ Checks:
   harness table     lib.sh harness keys, skills roots, and instructions
                     destinations appear in the README Scope bullet and
                     Supported harnesses table (rule 19)
+  agents manifest   config/agents.json exists, is valid JSON, and defines
+                    junior, mid, and senior for all 3 supported harnesses
 
 --base <ref>  commit-ish to diff shipped content against for the version
               bump check. Without it, that check is skipped. The lint
@@ -205,7 +207,7 @@ check_skill_name_match() {
 
 check_skill_layout() {
   local f d name rid
-  local gated="vibe-ai-tools plan-ai-tools dev-ai-tools campaign-ai-tools az-ai-tools gc-ai-tools gh-ai-tools agy-ai-tools"
+  local gated="vibe-ai-tools plan-ai-tools dev-ai-tools campaign-ai-tools az-ai-tools gc-ai-tools gh-ai-tools agy-ai-tools models-ai-tools config-ai-tools"
   local maintainer="update-ai-tools remove-ai-tools"
 
   f="$AI_TOOLS/skills/SKILL-CONTRACT.md"
@@ -996,6 +998,44 @@ EOF
   [ "$clean" = 1 ] && ok "Supported harnesses match lib.sh ($n harnesses)"
 }
 
+# --- Check: agents manifest ---------------------------------------------------
+# config/agents.json exists, is valid JSON, and defines junior, mid, and senior
+# for all 3 supported harnesses (antigravity, claude-code, copilot).
+
+check_agents_manifest() {
+  local f="$AI_TOOLS/config/agents.json"
+  local h tier model
+  if [ ! -f "$f" ]; then
+    warn "missing agents manifest: $f"
+    return
+  fi
+  ok "agents manifest present: $f"
+
+  if command -v python3 >/dev/null 2>&1; then
+    if ! python3 -m json.tool "$f" >/dev/null 2>&1; then
+      warn "agents manifest is not valid JSON: $f"
+      return
+    fi
+  elif command -v node >/dev/null 2>&1; then
+    if ! node -e "JSON.parse(require('fs').readFileSync(process.argv[1]))" "$f" >/dev/null 2>&1; then
+      warn "agents manifest is not valid JSON: $f"
+      return
+    fi
+  fi
+  ok "agents manifest valid JSON: $f"
+
+  for h in $ALL_HARNESSES; do
+    for tier in junior mid senior; do
+      model=$(agent_tier_model "$h" "$tier" 2>/dev/null || true)
+      if [ -n "$model" ]; then
+        ok "agents manifest defines $h $tier model: $model"
+      else
+        warn "agents manifest missing $h $tier definition: $f"
+      fi
+    done
+  done
+}
+
 # --- Run -----------------------------------------------------------------------
 
 check_naming
@@ -1018,5 +1058,6 @@ check_spawn_protocol_citation
 check_version_bump
 check_rule_citations
 check_harness_table
+check_agents_manifest
 
 finish

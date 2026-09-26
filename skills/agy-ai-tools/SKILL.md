@@ -19,11 +19,23 @@ argument-hint: "[[model] [effort] | [effort]] <task description>"
   <session_workflow>
     <step id="1" name="intake_and_parameter_resolution">
       Parse request arguments to resolve {MODEL}, {EFFORT}, and {TASK_PROMPT}. Derive a kebab-case {TOPIC}.
+      Supported models:
+      | Model | Supported Effort | Aliases |
+      |---|---|---|
+      | `gemini-3.8-flash` | low, medium, high | `flash`, `flash-3.8` |
+      | `gemini-3.7-flash` | low, medium, high | `flash-3.7` |
+      | `gemini-3.6-flash` | low, medium, high | `flash-3.6` |
+      | `gemini-3.1-pro` | low, high | `pro`, `pro-3.1` |
+      | `claude-sonnet-4-6` | default | `sonnet` |
+      | `claude-opus-4-6-thinking` | default | `opus` |
+      | `gpt-oss-120b-medium` | default | `gpt-oss` |
+
       Resolution rules:
       - Only effort specified: model defaults to `gemini-3.8-flash` with the requested effort (e.g. `high` -> `gemini-3.8-flash`, `high`).
       - Model aliases: `flash` / `flash-3.8` -> `gemini-3.8-flash`, `flash-3.7` -> `gemini-3.7-flash`, `flash-3.6` -> `gemini-3.6-flash`, `pro` / `pro-3.1` -> `gemini-3.1-pro`, `sonnet` -> `claude-sonnet-4-6`, `opus` -> `claude-opus-4-6-thinking`, `gpt-oss` -> `gpt-oss-120b-medium`.
       - Effort aliases: `low` -> `low`, `medium` / `med` -> `medium`, `high` / `hi` -> `high`.
       - Defaults when omitted: model `gemini-3.8-flash`, effort `medium`.
+      - Dynamic fallback: if the requested model does not match the static table or aliases, dynamically execute `agy models` to check if the requested identifier is available before rejecting.
       - Workspace directory: resolve via `git rev-parse --show-toplevel` or `.`.
     </step>
 
