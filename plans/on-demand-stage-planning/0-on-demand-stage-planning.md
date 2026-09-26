@@ -6,7 +6,7 @@
 |---|---|---|
 | 1 | F | implementer flash |
 | 2 | F | implementer flash |
-| 3 | | |
+| 3 | F | implementer flash |
 
 ## Goal
 
