@@ -628,7 +628,9 @@ sweep_stale_links() {
     [ -d "$root" ] || continue
     while IFS= read -r p; do
       [ -n "$p" ] || continue
-      is_ai_tools_link "$p" && safe_unlink "$p" || true
+      if is_ai_tools_link "$p"; then
+        safe_unlink "$p" || true
+      fi
     done < <(find "$root" -maxdepth 1 -type l 2>/dev/null)
   done < <(each_scoped_root)
   # Retired Gemini CLI skills root (not a harness). Do not touch Antigravity's
@@ -637,7 +639,9 @@ sweep_stale_links() {
   if [ -d "$root" ]; then
     while IFS= read -r p; do
       [ -n "$p" ] || continue
-      is_ai_tools_link "$p" && safe_unlink "$p" || true
+      if is_ai_tools_link "$p"; then
+        safe_unlink "$p" || true
+      fi
     done < <(find "$root" -maxdepth 1 -type l 2>/dev/null)
   fi
   return 0
