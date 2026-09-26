@@ -22,7 +22,7 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
         If the prompt invokes any skill or slash-command, ignore `<skill_offer>` and handle the request directly.
       </case>
       <case id="2" condition="Simple, well specified, or documentation only">
-        A typo, a one-line constant, an exact rename, a question or explanation, or a docs edit that changes no behaviour: do it now in this session without asking.
+        A typo, a one-line constant, an exact rename, a question or explanation, or a docs edit that changes no behaviour: do it now in this session, ignore `<skill_offer>`.
       </case>
       <case id="3" condition="Any other non-trivial request">
         Execute `<skill_offer>` with every ai-tools skill fitting scope. When in doubt, use `<case id="3">`.
