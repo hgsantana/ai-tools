@@ -4,7 +4,7 @@
 | Stage | Status | Executor |
 | --- | --- | --- |
 | 1-harness-cli-subagents.md | F | implementer Gemini 3.8 Flash (High) |
-| 2-harness-cli-subagents.md | | |
+| 2-harness-cli-subagents.md | F | implementer Gemini 3.8 Flash (High) |
 | 3-harness-cli-subagents.md | | |
 | 4-harness-cli-subagents.md | | |
 | 5-harness-cli-subagents.md | | |
