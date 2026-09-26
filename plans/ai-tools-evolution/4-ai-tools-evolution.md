@@ -53,3 +53,20 @@ feat(execution): introduce high-tier judge agent for dev and vibe task execution
 
 ## Implementation log
 
+- Updated `skills/dev-ai-tools/SKILL.md`:
+  - Added `<template role="stage-judge" executor="session-subagent">` in `<dispatch_templates>` to evaluate working-tree diff, test output, and acceptance criteria and write verdict to `${TMPDIR:-/tmp}/ai-tools/{TOPIC}-verdict.md`.
+  - Declared `<signal code="ACCEPT">` and `<signal code="REWORK">` in `<return_protocol>`.
+  - Updated `<step id="3" name="stage_loop">`: spawns `stage-judge` after `stage-verifier` runs, committing on `ACCEPT` and retrying up to three times on `REWORK`.
+  - Updated `<rule id="spawn-apis">` in `<boundaries>` to declare `stage-judge` as `session-subagent` on the session model.
+- Updated `skills/vibe-ai-tools/SKILL.md`:
+  - Added matching `<template role="stage-judge" executor="session-subagent">` in `<dispatch_templates>`.
+  - Declared `<signal code="ACCEPT">` and `<signal code="REWORK">` in `<return_protocol>`.
+  - Replaced informal session inspection in `<step id="3" name="unattended_execution">` with spawning `stage-judge` to review working-tree diff and test evidence before commit or rework.
+  - Updated `<rule id="spawn-apis">` in `<boundaries>` to declare `stage-judge` as `session-subagent`.
+- Preserved skill descriptions in both `dev-ai-tools` (407 chars) and `vibe-ai-tools` (429 chars) within the <= 500 characters cap matching rule 6.
+- Updated `README.md`:
+  - Documented high-tier judge task stage evaluation under Session-first skills overview.
+  - Updated rule 24 documenting high-tier judge diff and evidence evaluation and `ACCEPT`/`REWORK` verdict loop in `dev-ai-tools` and `vibe-ai-tools`.
+- Verification results:
+  - `./scripts/lint.sh`: exit 0 (613 ok, 1 skipped, 0 warnings).
+  - `./scripts/test.sh`: exit 0 (340 ok, 0 skipped, 0 warnings).

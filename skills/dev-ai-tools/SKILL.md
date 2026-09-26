@@ -34,9 +34,9 @@ argument-hint: "[plan paths, or the task to implement]"
       For each unfinished stage in dependency order (a task is one stage), following `<status_protocol>`:
         1. Set W and record the stage's Executor in the base plan Status table.
         2. Task mode: the session implements the stage (code and behaviour tests within its declared files, matching surrounding style, with factual notes in its Implementation log) and sets V, then spawns `<template role="stage-verifier">` as executor="default-worker" with the stage's commands and a kebab-case topic; if that spawn fails, the session runs the commands itself. Specified and queue: spawn `<template role="stage-implementer">` from `<dispatch_templates>` as executor="implementer" with the harness default model, substituting {STAGE_FILE} and {SLUG}; if that spawn fails, treat the unit as `<signal code="BLOCKED">` without implementing the stage in the session.
-        3. Review the working-tree diff against the stage objective, declared files, and acceptance criteria.
-        4. On passing evidence and met criteria: stage path by path, commit with the stage's Conventional Commit message, and set F.
-        5. Otherwise: append concrete correction tasks to the stage log, set R1..R3, and retry up to three times, then set E.
+        3. After `<template role="stage-verifier">` runs, spawn `<template role="stage-judge">` from `<dispatch_templates>` as executor="session-subagent", substituting {STAGE_FILE}, {SLUG}, and kebab-case {TOPIC}; if that spawn fails, treat the unit as `<signal code="BLOCKED">` without judging in the session.
+        4. On `<signal code="ACCEPT">`: stage path by path, commit with the stage's Conventional Commit message, and set F.
+        5. On `<signal code="REWORK">`: append the judge's feedback tasks to the stage log, set R1..R3, and retry the implementer spawn up to three times, then set E.
       On E: stop remaining stages, retain the work unit, and go to `<step id="4">` as blocked. Do not start a dependent stage.
       Interrupt the user only for a blocker, a decision uncovered by implementation, or an approval reserved by USER-AGENTS `<security_guardrails>`.
     </step>
@@ -87,9 +87,26 @@ argument-hint: "[plan paths, or the task to implement]"
         <constraint>Do not modify production or test code unless explicitly passed as a patch.</constraint>
       </constraints>
     </template>
+
+    <template role="stage-judge" executor="session-subagent">
+      <job>High-tier judge: evaluate working-tree diff, test output, and acceptance criteria to deliver an objective verdict.</job>
+      <input>
+        <stage_file>{STAGE_FILE}</stage_file>
+        <slug>{SLUG}</slug>
+        <topic>{TOPIC}</topic>
+      </input>
+      <instructions>
+        Read {STAGE_FILE} of plans/{SLUG}/ and repository rules. Inspect the working-tree git diff and verification logs in ${TMPDIR:-/tmp}/ai-tools/{TOPIC}-output.log. Write detailed verdict rationale and any required corrections to ${TMPDIR:-/tmp}/ai-tools/{TOPIC}-verdict.md. Return either `<signal code="ACCEPT">` or `<signal code="REWORK">`.
+      </instructions>
+      <constraints>
+        <constraint>Do not modify production code or tests.</constraint>
+      </constraints>
+    </template>
   </dispatch_templates>
 
   <return_protocol>
+    <signal code="ACCEPT">ACCEPT {STAGE_FILE} {VERDICT_PATH}</signal>
+    <signal code="REWORK">REWORK {STAGE_FILE} {VERDICT_PATH}</signal>
     <signal code="DELIVERED">DELIVERED {REPORT_PATH} {PR_OR_PATCH}</signal>
     <signal code="BLOCKED">BLOCKED {REASON} {EVIDENCE_PATH}</signal>
   </return_protocol>
@@ -118,6 +135,6 @@ argument-hint: "[plan paths, or the task to implement]"
     <rule id="preserve-history">Preserve history predating this work; never force-push or rebase pre-existing commits.</rule>
     <rule id="protocol-source">When USER-AGENTS `<execution_protocol>`, `<user_interaction>`, or `<security_guardrails>` are not already loaded, read `$HOME/.ai-tools/USER-AGENTS.md` before the first spawn or approval. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
     <rule id="reserved-approvals">Mutations to cloud resources or destructive operations require explicit user approval per USER-AGENTS `<security_guardrails>`.</rule>
-    <rule id="spawn-apis">Per USER-AGENTS `<execution_protocol>`: `<template role="stage-implementer">` runs as `executor="implementer"` with the harness default model; `<template role="stage-verifier">` runs as `executor="default-worker"`.</rule>
+    <rule id="spawn-apis">Per USER-AGENTS `<execution_protocol>`: `<template role="stage-implementer">` runs as `executor="implementer"` with the harness default model; `<template role="stage-verifier">` runs as `executor="default-worker"`; `<template role="stage-judge">` runs as `executor="session-subagent"` on the session model.</rule>
   </boundaries>
 </skill>
