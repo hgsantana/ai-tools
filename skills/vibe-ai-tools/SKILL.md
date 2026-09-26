@@ -26,7 +26,8 @@ argument-hint: "[the change to deliver]"
     </step>
 
     <step id="2" name="implementer_model">
-      With the plan on disk and before execution, ask the user exactly one question through USER-AGENTS `<user_interaction>`: which model implements this plan's stages, with 1-3 options chosen per `<implementer_job>`.
+      Check `$HOME/.ai-tools/config.local.json`: if `ask_implementer_model` under `"behavior"` is set to false, skip prompting the user and resolve {IMPLEMENTER_MODEL} directly from the configured tier model in `$HOME/.ai-tools/config.local.json` under `"models"` or `config/agents.json` default for `mid` tier.
+      Otherwise, with the plan on disk and before execution, ask the user exactly one question through USER-AGENTS `<user_interaction>`: which model implements this plan's stages, with 1-3 options chosen per `<implementer_job>`.
       Record the answer as {IMPLEMENTER_MODEL} in plans/{SLUG}/vibe-decisions.md; ask nothing else before delivery.
     </step>
 

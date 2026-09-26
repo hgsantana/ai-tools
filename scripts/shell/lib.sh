@@ -217,6 +217,47 @@ agent_tier_effort() {
   ' "$manifest"
 }
 
+# --- Configuration & behavior preferences -----------------------------------
+
+config_behavior_value() {
+  # usage: config_behavior_value <key>
+  local key="$1" config
+  config="$(source_root)/config.local.json"
+  [ -f "$config" ] || config="$AI_TOOLS/config.local.json"
+  [ -f "$config" ] || config="$HOME/.ai-tools/config.local.json"
+  [ -f "$config" ] || return 1
+  awk -v k="$key" '
+    BEGIN { in_beh = 0; found = 0 }
+    /"behavior"[ \t]*:[ \t]*\{/ { in_beh = 1; next }
+    in_beh && $0 ~ "\"" k "\"[ \t]*:" {
+      val = $0
+      sub(/.*"[^"]+"[ \t]*:[ \t]*/, "", val)
+      sub(/,[ \t]*$/, "", val)
+      gsub(/^[ \t]*"?|"?[ \t]*$/, "", val)
+      print val
+      found = 1
+      exit 0
+    }
+    in_beh && /^[ \t]*\},?[ \t]*$/ { in_beh = 0 }
+    END { if (!found) exit 1 }
+  ' "$config"
+}
+
+compiled_instructions() {
+  # usage: compiled_instructions <source-file>
+  # Returns path to source-file, or a compiled temp file reflecting config.local.json behavior.
+  local src="$1" offer
+  offer=$(config_behavior_value "offer_skills" 2>/dev/null || echo "true")
+  if [ "$offer" = "false" ]; then
+    local tmp
+    tmp=$(mktemp "${TMPDIR:-/tmp}/ai-tools-user-agents.XXXXXX") || { printf '%s' "$src"; return 0; }
+    sed 's/Execute `<skill_offer>` with every ai-tools skill fitting scope\./Handle the request directly in this session without `<skill_offer>`\./' "$src" > "$tmp"
+    printf '%s' "$tmp"
+  else
+    printf '%s' "$src"
+  fi
+}
+
 # --- Discovery ---------------------------------------------------------------
 
 has_extension() {
@@ -590,14 +631,34 @@ update_source() {
 
 # --- Install steps -----------------------------------------------------------
 
-install_instructions() {
-  local h dest src
+sync_instructions() {
+  # usage: sync_instructions
+  # Synchronizes USER-AGENTS.md into installed harness instructions destinations,
+  # respecting behavior settings from config.local.json.
+  local h dest src compiled tmp=""
   src="$(source_root)/USER-AGENTS.md"
+  compiled=$(compiled_instructions "$src")
+  [ "$compiled" != "$src" ] && tmp="$compiled"
   for h in $SCOPE; do
     dest=$(instructions_dest "$h")
     [ -n "$dest" ] || { info "no global instructions destination: $h"; continue; }
-    safe_copy "$src" "$dest" || true
+    OVERWRITE=1 safe_copy "$compiled" "$dest" || true
   done
+  [ -n "$tmp" ] && rm -f "$tmp"
+  return 0
+}
+
+install_instructions() {
+  local h dest src compiled tmp=""
+  src="$(source_root)/USER-AGENTS.md"
+  compiled=$(compiled_instructions "$src")
+  [ "$compiled" != "$src" ] && tmp="$compiled"
+  for h in $SCOPE; do
+    dest=$(instructions_dest "$h")
+    [ -n "$dest" ] || { info "no global instructions destination: $h"; continue; }
+    safe_copy "$compiled" "$dest" || true
+  done
+  [ -n "$tmp" ] && rm -f "$tmp"
   return 0
 }
 
@@ -722,18 +783,26 @@ sweep_stale_links() {
 
 remove_instructions() {
   # Remove legacy ai-tools links or exact physical copies. Never $HOME/AGENTS.md.
-  local h dest
+  local h dest src exp tmp_exp=""
+  src="$AI_TOOLS/USER-AGENTS.md"
+  exp=$(compiled_instructions "$src")
+  [ "$exp" != "$src" ] && tmp_exp="$exp"
   for h in $SCOPE; do
     dest=$(instructions_dest "$h")
     [ -n "$dest" ] || continue
     if [ -L "$dest" ]; then
       safe_unlink "$dest" || true
     elif [ -e "$dest" ]; then
-      safe_uninstall_copy "$dest" "$AI_TOOLS/USER-AGENTS.md" || true
+      if same_content "$dest" "$exp"; then
+        safe_uninstall_copy "$dest" "$exp" || true
+      else
+        safe_uninstall_copy "$dest" "$src" || true
+      fi
     else
       ok "absent: $dest"
     fi
   done
+  [ -n "$tmp_exp" ] && rm -f "$tmp_exp"
 }
 
 purge_clone() {
@@ -804,11 +873,15 @@ refresh_copies() {
   local include_instructions="${1:-1}" h root dest p name src
   src=$(source_root)
   if [ "$include_instructions" = 1 ]; then
+    local exp tmp_exp=""
+    exp=$(compiled_instructions "$src/USER-AGENTS.md")
+    [ "$exp" != "$src/USER-AGENTS.md" ] && tmp_exp="$exp"
     for h in $SCOPE; do
       dest=$(instructions_dest "$h")
       [ -n "$dest" ] || continue
-      refresh_one_copy "$src/USER-AGENTS.md" "$dest" "USER-AGENTS.md"
+      refresh_one_copy "$exp" "$dest" "USER-AGENTS.md"
     done
+    [ -n "$tmp_exp" ] && rm -f "$tmp_exp"
   fi
   for h in $SCOPE; do
     root=$(skills_root "$h")
@@ -840,12 +913,15 @@ verify_install() {
   done
 
   if [ "$check_instr" = 1 ]; then
+    local exp tmp_exp=""
+    exp=$(compiled_instructions "$src/USER-AGENTS.md")
+    [ "$exp" != "$src/USER-AGENTS.md" ] && tmp_exp="$exp"
     for h in $SCOPE; do
       dest=$(instructions_dest "$h")
       [ -n "$dest" ] || continue
       if [ -L "$dest" ]; then
         warn "instructions must be a physical copy, not a symlink: $dest -> $(readlink "$dest")"
-      elif [ -f "$dest" ] && cmp -s "$dest" "$src/USER-AGENTS.md"; then
+      elif [ -f "$dest" ] && cmp -s "$dest" "$exp"; then
         ok "instructions copy: $dest"
       elif [ -e "$dest" ]; then
         warn "instructions differ from source: $dest"
@@ -853,6 +929,7 @@ verify_install() {
         warn "instructions missing: $dest"
       fi
     done
+    [ -n "$tmp_exp" ] && rm -f "$tmp_exp"
   fi
 
   for h in $SCOPE; do

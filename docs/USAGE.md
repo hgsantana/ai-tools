@@ -24,6 +24,7 @@ Invoke a skill by leading with its slash name and optional request:
 | `/gc-ai-tools` | Inspect or manage Google Cloud projects, infrastructure, and costs with `gcloud` | `/gc-ai-tools show resources in project-x` |
 | `/gh-ai-tools` | Inspect or manage GitHub accounts, repository administration, environments, Actions/builds, issues, and releases | `/gh-ai-tools show failing Actions runs` |
 | `/models-ai-tools` | Inspect available models and configure preferred models per tier (`junior`, `mid`, `senior`) for installed CLI harnesses | `/models-ai-tools agy` |
+| `/config-ai-tools` | Configure global behavioral preferences: skill offer gate, default CLI, and implementer model prompts | `/config-ai-tools offer_skills` |
 | `/update-ai-tools` | Remove current-version artifacts, reset the clone, and install from origin/master | `/update-ai-tools all detected harnesses` |
 | `/remove-ai-tools` | Remove installed ai-tools artifacts from selected harnesses | `/remove-ai-tools claude-code and copilot` |
 
@@ -93,6 +94,13 @@ To request a clean stop while it is running, say `Stop after the current plan.` 
 ### Model configuration
 
 `/models-ai-tools` interactively inspects available models and configures preferred models per tier (`junior`, `mid`, `senior`) for installed CLI harnesses (`agy`, `claude`, `copilot`). Selections are saved to `$HOME/.ai-tools/config.local.json` under `"models"`, allowing users to customize agent model dispatch without modifying repository code or version-controlled defaults in `config/agents.json`. When invoked with an optional harness argument (e.g., `/models-ai-tools agy`), it limits configuration to that specific harness.
+
+### Behavioral configuration
+
+`/config-ai-tools` configures global behavioral preferences across the `ai-tools` ecosystem, persisting settings in `$HOME/.ai-tools/config.local.json` under `"behavior"`. Key settings include:
+- **Skill offer gate** (`offer_skills`): whether `USER-AGENTS.md` displays the interactive skill offer table on non-trivial requests or routes directly to execution. When modified, instructions are automatically recompiled and synchronized into installed harness configurations.
+- **Default CLI harness** (`default_cli`): preferred CLI harness (`agy`, `claude`, `copilot`) for autonomous execution and tool invocations.
+- **Implementer model prompt** (`ask_implementer_model`): whether skills like `/vibe-ai-tools` and `/campaign-ai-tools` ask for an implementer model before execution or proceed directly with configured tier defaults.
 
 ### Maintenance
 

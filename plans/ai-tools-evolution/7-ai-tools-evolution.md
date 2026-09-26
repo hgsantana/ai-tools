@@ -66,3 +66,29 @@ feat(skills): introduce config-ai-tools skill for global behavioral preferences
 
 ## Implementation log
 
+- Created `skills/config-ai-tools/SKILL.md`:
+  - Defined frontmatter with name `config-ai-tools`, description (260 chars, <= 500 chars limit), and argument hint `"[setting to configure]"`.
+  - Structured semantic XML with root `<skill name="config-ai-tools">`, `<overview>`, `<session_workflow>`, `<dispatch_templates>`, and `<boundaries>`.
+  - Implemented session workflow steps:
+    - `<step id="1" name="intake_and_interview">`: Queries existing `$HOME/.ai-tools/config.local.json` under `"behavior"` and interviews user via USER-AGENTS `<user_interaction>` on `offer_skills`, `default_cli`, and `ask_implementer_model`.
+    - `<step id="2" name="persist_settings">`: Merges and persists behavioral preferences into `$HOME/.ai-tools/config.local.json` under `"behavior"`.
+    - `<step id="3" name="sync_instructions">`: Dispatches `<template role="instruction-syncer">` (default-worker) or runs installer synchronization helper to recompile and synchronize `USER-AGENTS.md` into installed harness configurations.
+    - `<step id="4" name="report">`: Reports active settings table, configuration file path, and synchronization status.
+  - Defined `<dispatch_templates>` with `<template role="instruction-syncer" executor="default-worker">`.
+  - Defined `<boundaries>` citing USER-AGENTS `<execution_protocol>`, `<user_interaction>`, `<security_guardrails>`, and `<rule id="payload-assembly">`.
+- Updated `scripts/shell/lib.sh`:
+  - Added `config_behavior_value` helper to query behavioral preferences from `config.local.json`.
+  - Added `compiled_instructions` helper to recompile `USER-AGENTS.md` reflecting `"offer_skills"` setting (`false` routes directly without skill offer gate).
+  - Added `sync_instructions` helper and updated `install_instructions`, `remove_instructions`, `refresh_copies`, and `verify_install` to support compiled instructions and synchronize destinations.
+- Updated `skills/vibe-ai-tools/SKILL.md`:
+  - Added check in `<step id="2" name="implementer_model">` for `ask_implementer_model` in `config.local.json`, skipping prompt and using configured mid-tier model when false.
+- Updated `skills/campaign-ai-tools/SKILL.md`:
+  - Added check in `<step id="1" name="campaign_initialization">` for `ask_implementer_model` in `config.local.json`, skipping prompt and using configured mid-tier model when false.
+- Updated `scripts/lint.sh`:
+  - Registered `config-ai-tools` in `gated` shipped skills list.
+- Updated documentation:
+  - Documented `/config-ai-tools` in `README.md` under Behavioral configuration.
+  - Documented `/config-ai-tools` in `docs/USAGE.md` skills table and added dedicated Behavioral configuration section.
+- Verification results:
+  - `./scripts/lint.sh`: exit 0 (680 ok, 1 skipped, 0 warnings).
+  - `./scripts/test.sh`: exit 0 (344 ok, 0 skipped, 0 warnings).
