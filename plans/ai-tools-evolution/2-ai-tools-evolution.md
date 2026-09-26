@@ -64,3 +64,16 @@ feat(harnesses): add static model tables and dynamic cli query fallback
 
 ## Implementation log
 
+- Updated `skills/agy-ai-tools/SKILL.md`:
+  - Added supported models table under parameter resolution step (`gemini-3.8-flash`, `gemini-3.7-flash`, `gemini-3.6-flash`, `gemini-3.1-pro`, `claude-sonnet-4-6`, `claude-opus-4-6-thinking`, `gpt-oss-120b-medium`).
+  - Added dynamic query fallback rule executing `agy models` to check availability before rejecting unrecognized model inputs.
+- Updated `skills/claude-ai-tools/SKILL.md`:
+  - Added supported models table under parameter resolution step (`sonnet` / `claude-sonnet-4-6`, `opus` / `claude-opus-4-6-thinking`, `haiku`, `fable`).
+  - Added dynamic CLI query fallback inspecting `claude --help` or validation probe before rejecting unrecognized model inputs.
+- Updated `skills/copilot-ai-tools/SKILL.md`:
+  - Added supported models table under parameter resolution step (`gpt-5.4`, `claude-sonnet-4-6`, `claude-opus-4-6`, `o3`, `o1`, `gemini-2.5-pro`, `auto`).
+  - Added dynamic CLI query fallback inspecting `copilot --help` or probe flags before rejecting unrecognized model inputs.
+- Verified description budgets (all <= 500 chars), XML tag balancing, and semantic XML rules.
+- Test and verification results:
+  - `./scripts/lint.sh`: exit 0 (585 ok, 1 skipped, 0 warnings).
+  - `./scripts/test.sh`: exit 0 (340 ok, 0 skipped, 0 warnings).

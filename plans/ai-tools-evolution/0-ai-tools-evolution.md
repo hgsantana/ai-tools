@@ -5,7 +5,7 @@
 | Stage | Status | Executor |
 |---|---|---|
 | 1 | F | implementer |
-| 2 | | |
+| 2 | F | implementer |
 | 3 | | |
 | 4 | | |
 | 5 | | |
