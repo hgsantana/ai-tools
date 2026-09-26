@@ -137,6 +137,86 @@ instructions_dest() {
   esac
 }
 
+# --- Agent manifest & tiers --------------------------------------------------
+
+agent_tier_model() {
+  # usage: agent_tier_model <harness> <tier>
+  local harness="$1" tier="$2" manifest
+  manifest="$(source_root)/config/agents.json"
+  [ -f "$manifest" ] || manifest="$AI_TOOLS/config/agents.json"
+  [ -f "$manifest" ] || return 1
+  awk -v h="$harness" -v t="$tier" '
+    BEGIN { inh = 0; intier = 0; found = 0 }
+    $0 ~ "\"" h "\"[ \t]*:" { inh = 1; next }
+    inh && $0 ~ "\"" t "\"[ \t]*:" {
+      if (match($0, /"model"[ \t]*:[ \t]*"[^"]+"/)) {
+        m = substr($0, RSTART, RLENGTH)
+        sub(/^"model"[ \t]*:[ \t]*"/, "", m)
+        sub(/"$/, "", m)
+        print m
+        found = 1
+        exit 0
+      }
+      intier = 1
+      next
+    }
+    inh && intier {
+      if (match($0, /"model"[ \t]*:[ \t]*"[^"]+"/)) {
+        m = substr($0, RSTART, RLENGTH)
+        sub(/^"model"[ \t]*:[ \t]*"/, "", m)
+        sub(/"$/, "", m)
+        print m
+        found = 1
+        exit 0
+      }
+    }
+    inh && /^[ \t]*\},?[ \t]*$/ {
+      if (intier) { intier = 0 }
+      else { inh = 0 }
+    }
+    END { if (!found) exit 1 }
+  ' "$manifest"
+}
+
+agent_tier_effort() {
+  # usage: agent_tier_effort <harness> <tier>
+  local harness="$1" tier="$2" manifest
+  manifest="$(source_root)/config/agents.json"
+  [ -f "$manifest" ] || manifest="$AI_TOOLS/config/agents.json"
+  [ -f "$manifest" ] || return 1
+  awk -v h="$harness" -v t="$tier" '
+    BEGIN { inh = 0; intier = 0; found = 0 }
+    $0 ~ "\"" h "\"[ \t]*:" { inh = 1; next }
+    inh && $0 ~ "\"" t "\"[ \t]*:" {
+      if (match($0, /"effort"[ \t]*:[ \t]*"[^"]+"/)) {
+        e = substr($0, RSTART, RLENGTH)
+        sub(/^"effort"[ \t]*:[ \t]*"/, "", e)
+        sub(/"$/, "", e)
+        print e
+        found = 1
+        exit 0
+      }
+      intier = 1
+      next
+    }
+    inh && intier {
+      if (match($0, /"effort"[ \t]*:[ \t]*"[^"]+"/)) {
+        e = substr($0, RSTART, RLENGTH)
+        sub(/^"effort"[ \t]*:[ \t]*"/, "", e)
+        sub(/"$/, "", e)
+        print e
+        found = 1
+        exit 0
+      }
+    }
+    inh && /^[ \t]*\},?[ \t]*$/ {
+      if (intier) { intier = 0 }
+      else { inh = 0 }
+    }
+    END { if (!found) exit 1 }
+  ' "$manifest"
+}
+
 # --- Discovery ---------------------------------------------------------------
 
 has_extension() {

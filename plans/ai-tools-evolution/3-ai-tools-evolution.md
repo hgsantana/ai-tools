@@ -73,3 +73,22 @@ feat(agents): define central agents manifest and junior mid senior tiers
 
 ## Implementation log
 
+- Created `config/agents.json`:
+  - Defined central manifest mapping `junior`, `mid`, and `senior` tiers across all 3 supported harnesses (`antigravity`, `claude-code`, `copilot`) with default models and reasoning effort tiers.
+- Updated `USER-AGENTS.md`:
+  - Added `<rule id="agent-tiers">` defining the 3 agent tiers: `junior` (default-worker for mechanical tasks, tests, builds, and read-only fact collection), `mid` (implementer for stage code editing, bug fixes, and unit tests), and `senior` (high-level planner, judge, and architectural evaluation).
+  - Explicitly mapped `default-worker` (`junior`), `implementer` (`mid`), and `session-subagent` (`senior`).
+  - Tightened routing gate prose to maintain strict character cap compliance (7,651 chars, well under 8,000 cap).
+- Updated `scripts/shell/lib.sh`:
+  - Added `agent_tier_model <harness> <tier>` helper function to query model for a given harness and tier from `config/agents.json`.
+  - Added `agent_tier_effort <harness> <tier>` helper function to query reasoning effort tier.
+- Updated `scripts/lint.sh`:
+  - Added `check_agents_manifest` verifying that `config/agents.json` exists, is valid JSON, and defines `junior`, `mid`, and `senior` for all 3 supported harnesses.
+  - Registered `agents manifest` in `usage()`.
+- Updated `README.md`:
+  - Added `config/agents.json` to Contents table.
+  - Documented 3 agent tiers and central manifest under Semantic XML grammar.
+  - Registered `agents manifest` in Development checks family list.
+- Verification results:
+  - `./scripts/lint.sh`: exit 0 (596 ok, 1 skipped, 0 warnings).
+  - `./scripts/test.sh`: exit 0 (340 ok, 0 skipped, 0 warnings).

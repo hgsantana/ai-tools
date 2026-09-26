@@ -23,6 +23,7 @@ How it operates:
 | [`USER-AGENTS.md`](USER-AGENTS.md) | User-wide routing after install: skill-offer gate, execution protocol, language, native question tool, and security. Copied to each harness's global instructions destination. Workflows live in skills |
 | [`docs/USAGE.md`](docs/USAGE.md) | Harness-agnostic invocation guide for every shipped skill |
 | [`skills/`](skills/) | Each `skills/<name>/SKILL.md` has a semantic XML body. Harnesses list frontmatter; the session executes the workflow |
+| [`config/agents.json`](config/agents.json) | Central manifest declaring default model and reasoning effort for junior, mid, and senior agent tiers across supported harnesses |
 | [`scripts/`](scripts/) | `scripts/shell/` install processes ([Scripts](#scripts); rules 18–21); `lint.sh`, `test.sh`, and its sourced `scripts/test/` case files ([Development checks](#development-checks)). Windows: WSL or Git Bash |
 | `plans/` | Plans, tasks, and campaigns in progress (rule 22) |
 
@@ -75,6 +76,7 @@ The semantic-XML bodies (`USER-AGENTS.md` and every `SKILL.md`) follow one gramm
 - **References** carrying an attribute (`role`, `id`, `code`, `type`) resolve to a definition in the same file, or in the file named by the word before the backtick: `` dev-ai-tools `<status_protocol>` ``, `` USER-AGENTS `<security_guardrails>` ``. Qualifiers are `USER-AGENTS` or a skill name. A bare reference names a vocabulary tag.
 - **Identity**: every `<rule>` carries a kebab-case `id`, unique in its file; every `<template>` carries a functional `role` and an `executor`; `<step>` ids are numeric per workflow; `<case>`, `<response>`, `<signal>`, and `<state>` carry `id`, `type`, or `code`.
 - **Executors**: USER-AGENTS `<execution_protocol>` defines the three valid `executor` values (`default-worker`, `implementer`, `session-subagent`) and where each runs, the harness's native subagent API list, the payload rule (populated payload and file paths, never conversation context), the spawn announcement, the spawn-failure fallback (the spawning context runs a failed default-worker payload; the session does not take an implementer or session-subagent role), and the parallelism rule for concurrent subagents. Work the session does itself is a `<step>`, never a template.
+- **Agent tiers**: Workloads classify into three standardized tiers backed by `config/agents.json`: `junior` (default-worker for mechanical tasks, tests, builds, and read-only fact collection), `mid` (implementer for stage code editing, bug fixes, and unit tests), and `senior` (planning, judge, and architectural evaluation). The central manifest `config/agents.json` defines default models and reasoning tiers across supported harnesses (`claude-code`, `copilot`, `antigravity`).
 - **Protocol** is a block, not prose: return tokens live in `<return_protocol>`/`<signal>` and stage states in `<status_protocol>`/`<state>`. A template whose outcome the caller branches on ends with one cited `<signal>`; any other template returns a one-line outcome with paths.
 
 Vocabulary. A new tag is registered here and in `scripts/lint.sh` (`XML_VOCAB`) in the same commit; children of `<input>` are free payload fields and need no registration.
@@ -168,6 +170,7 @@ Check families:
 - **version bump** — only with `--base <ref>`: `<ref>` must be a commit (an invalid or unavailable base is a finding, not a skip); when `skills/`, `scripts/`, or `USER-AGENTS.md` changed between `<ref>` and `HEAD`, the README version line must differ from `<ref>`'s (rule 4)
 - **rule citations** — Repository rules are numbered 1..N without gaps, and every `rule N` citation in `README.md`, `docs/USAGE.md`, `.gitattributes`, and `scripts/` names an existing rule (rule 1)
 - **harness table** — `lib.sh` harness keys, skills roots, and instructions destinations appear in the README Scope bullet and Supported harnesses table (rule 19)
+- **agents manifest** — `config/agents.json` exists, is valid JSON, and defines `junior`, `mid`, and `senior` tiers for all supported harnesses
 
 Exit codes: `0` clean, `1` aborted on a precondition (unknown flag, `--base` without a value), `2` finished with findings. CI (`.github/workflows/ci.yml`) runs two jobs on `ubuntu-latest` for every push and pull request. `lint` runs `scripts/lint.sh`, adding `--base` with the pull request's base SHA on pull requests, then `shellcheck -x -P scripts/shell -P scripts/test scripts/shell/*.sh scripts/*.sh scripts/test/*.sh`. `test-shell` runs `scripts/test.sh`.
 

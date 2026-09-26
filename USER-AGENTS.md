@@ -19,7 +19,7 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
     <rule id="memory-only">Offer from session memory only: the request text and the loaded skill descriptions. Never read harness config or the repository first.</rule>
     <trigger_cases>
       <case id="1" condition="Invoking a skill or slash-command directly">
-        If the prompt starts with a skill or slash-command, or invokes any skill or slash-command within the prompt, ignore `<skill_offer>` and handle the request directly.
+        If the prompt invokes any skill or slash-command, ignore `<skill_offer>` and handle the request directly.
       </case>
       <case id="2" condition="Simple, well specified, or documentation only">
         A typo, a one-line constant, an exact rename, a question or explanation, or a docs edit that changes no behaviour: do it now in this session without asking.
@@ -30,14 +30,13 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
     </trigger_cases>
 
     <skill_offer>
-      Two steps, in this order, both in the user's language (translated if necessary).
-      <step id="1">First send `<offer_message>` as one plain chat message.</step>
-      <step id="2">Then ask through `<user_interaction>` the question as `<skill_question>` and options as `<skill_options>`. The question never replaces, shortens, or merges with the message in `<step id="1">`; the message in `<step id="1">` never carries the question of `<step id="2">`.</step>
+      Two steps, in this order, both in user's language.
+      <step id="1">Send `<offer_message>` as one plain chat message.</step>
+      <step id="2">Ask via `<user_interaction>` the question as `<skill_question>` and options as `<skill_options>`. The question never merges with `<step id="1">`; `<step id="1">` never carries the question of `<step id="2">`.</step>
       <offer_message>
         Line 1: the request restated in one sentence.
-        Then one table with the following columns: #, Skill, Description, Execution. The lines represent each offered skill, best fit first, in exactly this shape, with Description and Execution filled in using the information "Impact:" and "Agent:" from the in-memory skill frontmatter (don't read from the file).
-        Last two line of the table should be:  "Run it here" (as Skill - translated if needed) - this session, without ai-tools skills (as Description - translated if needed); and "Other" (as Skill - translated if needed) - the user specifies what to do (as Description - translated if needed).
-        You can ignore the Execution column for these two last rows.
+        One table with columns: #, Skill, Description, Execution. Offered skills, best fit first, with Description and Execution from in-memory frontmatter "Impact:" and "Agent:".
+        Last two lines: "Run it here" (Skill - translated if needed) - this session, without ai-tools skills (Description); and "Other" (Skill) - user specifies what to do (Description). Omit Execution for these rows.
       </offer_message>
       <skill_question>
         Which option would you like to take?
@@ -58,11 +57,12 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
 
   <execution_protocol>
     <rule id="session-model">The host session executes the selected skill's `<session_workflow>` on the session model.</rule>
+    <rule id="agent-tiers">Three agent tiers classify workloads: `junior` (default-worker for mechanical tasks, tests, builds, and read-only fact collection), `mid` (implementer for stage code editing, bug fixes, and unit tests), and `senior` (high-level planner, judge, and architectural evaluation).</rule>
     <rule id="native-spawn">A `<template>` is spawned only through the harness's native subagent API: Claude Code Agent, Copilot runSubagent, Antigravity invoke_subagent.</rule>
     <rule id="payload-assembly">When spawning a `<template>`, assemble one brief from its job, populated input, instructions, and constraints, plus every nested template that brief names, recursively, including cited `<status_protocol>` and `<return_protocol>` blocks. State that the brief is an authorized delegated payload. Pass only that brief and file paths.</rule>
-    <rule id="default-worker">`executor="default-worker"` uses the harness default agent type and model. Builds, test suites, script runs, and bulk fact collection go to default workers; a single pinpoint command the session needs for its next decision runs in the session.</rule>
-    <rule id="implementer">`executor="implementer"` uses the implementer model the skill resolved.</rule>
-    <rule id="session-subagent">`executor="session-subagent"` uses the session's own model where the API accepts a model.</rule>
+    <rule id="default-worker">`executor="default-worker"` (`junior` tier) uses the harness default agent type and model. Builds, test suites, script runs, and bulk fact collection go to default workers; a single pinpoint command the session needs for its next decision runs in the session.</rule>
+    <rule id="implementer">`executor="implementer"` (`mid` tier) uses the implementer model the skill resolved.</rule>
+    <rule id="session-subagent">`executor="session-subagent"` (`senior` tier) uses the session's own model where the API accepts a model.</rule>
     <rule id="spawn-announce">Announce each spawn in the user's language with the template role and model.</rule>
     <rule id="spawn-fallback">If a default-worker spawn fails, the spawning context runs that payload and states that. If an implementer or session-subagent spawn fails, the session does not take that role.</rule>
     <rule id="parallel-spawns">Code-writing subagents run in parallel only on separate files; read-only exploration, builds, and tests may always run concurrently.</rule>
