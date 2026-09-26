@@ -6,7 +6,7 @@
 | 1-harness-cli-subagents.md | F | implementer Gemini 3.8 Flash (High) |
 | 2-harness-cli-subagents.md | F | implementer Gemini 3.8 Flash (High) |
 | 3-harness-cli-subagents.md | F | implementer Gemini 3.8 Flash (High) |
-| 4-harness-cli-subagents.md | | |
+| 4-harness-cli-subagents.md | F | implementer Gemini 3.8 Flash (High) |
 | 5-harness-cli-subagents.md | | |
 | 6-harness-cli-subagents.md | | |
 
