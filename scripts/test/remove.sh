@@ -256,20 +256,6 @@ case_remove_antigravity_instructions() {
   t_cleanup "$root"
 }
 
-case_remove_cursor_instructions() {
-  local root dest
-  t_fixture
-  root="$T_ROOT"
-  dest="$root/home/.cursor/rules/ai-tools.mdc"
-
-  t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses cursor
-  t_assert_regular_file "$dest"
-  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses cursor --instructions
-  t_assert_absent "$dest"
-
-  t_cleanup "$root"
-}
-
 case_remove_copilot_instructions() {
   local root dest
   t_fixture
@@ -400,10 +386,8 @@ case_remove_all_harnesses() {
   t_run "$root" "$home/.ai-tools/scripts/shell/remove.sh" --harnesses all
   t_assert_exit 0
   t_assert_absent "$home/.claude/skills/plan-ai-tools"
-  t_assert_absent "$home/.grok/skills/plan-ai-tools"
   t_assert_absent "$home/.codex/skills/plan-ai-tools"
   t_assert_absent "$home/.copilot/skills/plan-ai-tools"
-  t_assert_absent "$home/.cursor/skills/plan-ai-tools"
   t_assert_absent "$home/.gemini/config/skills/plan-ai-tools"
 
   t_cleanup "$root"
@@ -547,7 +531,7 @@ case_remove_purge_rejects_foreign_ai_tools() {
   printf 'keep\n' > "$foreign/keep.txt"
 
   t_run_at "$root" "$home" "$foreign" \
-    "$home/.ai-tools/scripts/shell/remove.sh" --harnesses cursor --purge --yes
+    "$home/.ai-tools/scripts/shell/remove.sh" --harnesses copilot --purge --yes
   t_assert_exit 1
   t_assert_line "AI_TOOLS must be"
   t_assert_regular_file "$foreign/keep.txt"

@@ -18,7 +18,7 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
 
   <session_workflow>
     <step id="1" name="campaign_initialization">
-      Resolve {CAMPAIGN} from the user request (kebab-case), plus {PRIORITIES} and {EXCLUSIONS}, iterating scope with the user until those are recorded.
+      Resolve {CAMPAIGN} from the user request (kebab-case), plus {PRIORITIES} and {EXCLUSIONS}, exploring the codebase before asking and interviewing the user through USER-AGENTS `<user_interaction>` one question at a time with recommended answers, resolving campaign scope boundaries until those are recorded.
       Verify repository root with `git rev-parse --show-toplevel`.
       Before any mutation, run the recovery check: if `plans/improve/{CAMPAIGN}/campaign.md` exists on `improve/{CAMPAIGN}` or can be restored from that branch, resume it. Record the branch, last accepted stage, last iteration number, and recorded implementer model. Preserve accepted commits and a dirty worktree from an unfinished stage. Choose the next iteration as last + 1. A planner PLAN spawn may return `<signal code="RESUME">` only for a unit this check found. If the name is new, check out `improve/{CAMPAIGN}` from a clean default/base branch and initialize `plans/improve/{CAMPAIGN}/campaign.md` with goals, priorities, exclusions, and active status.
       Resolve {IMPLEMENTER_MODEL}: reuse the implementer model recorded in campaign.md; when none is recorded, ask the user exactly one question through USER-AGENTS `<user_interaction>`, which model implements this campaign's stages, with 1-3 options chosen per `<implementer_job>`, and record the answer in campaign.md.
@@ -120,6 +120,7 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
 
   <boundaries>
     <rule id="session-mediates">The session iterates scope, owns the implementer question, commits, archives, and names disk paths in chat. It does not judge a stage diff; VALIDATE does.</rule>
+    <rule id="scope-interview">In campaign initialization, align on scope, priorities, and exclusions through USER-AGENTS `<user_interaction>` one question at a time with recommendations after exploring the codebase.</rule>
     <rule id="signals-only">After each spawn, the session stores only the `<signal>` line and its fields. It does not read the plan, the iteration file, campaign.md, decisions.md, or the VALIDATE verdict body.</rule>
     <rule id="brief-not-skills">Each spawn receives its job in the payload, including nested spawn payloads assembled per USER-AGENTS `<rule id="payload-assembly">`. Spawned contexts do not read sibling skill files.</rule>
     <rule id="one-model-question">Ask the implementer model question at most once per campaign; reuse the model recorded in campaign.md for every iteration and on resume.</rule>

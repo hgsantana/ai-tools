@@ -7,7 +7,7 @@ set -u
 
 AI_TOOLS="${AI_TOOLS:-$HOME/.ai-tools}"
 REPO_URL="https://github.com/hgsantana/ai-tools.git"
-ALL_HARNESSES="claude-code grok codex copilot cursor antigravity"
+ALL_HARNESSES="claude-code codex copilot antigravity"
 
 DRY_RUN=0
 OVERWRITE=0
@@ -124,10 +124,8 @@ assert_supported_clone_path() {
 skills_root() {
   case "$1" in
     claude-code) echo "$HOME/.claude/skills" ;;
-    grok)        echo "$HOME/.grok/skills" ;;
     codex)       echo "$HOME/.codex/skills" ;;
     copilot)     echo "$HOME/.copilot/skills" ;;
-    cursor)      echo "$HOME/.cursor/skills" ;;
     antigravity) echo "$HOME/.gemini/config/skills" ;;
   esac
 }
@@ -135,11 +133,9 @@ skills_root() {
 instructions_dest() {
   case "$1" in
     claude-code) echo "$HOME/.claude/CLAUDE.md" ;;
-    grok)        echo "$HOME/.grok/AGENTS.md" ;;
     codex)       echo "$HOME/.codex/AGENTS.md" ;;
     copilot)     echo "$HOME/.copilot/instructions/ai-tools.instructions.md" ;;
     antigravity) echo "$HOME/.gemini/GEMINI.md" ;;
-    cursor)      echo "$HOME/.cursor/rules/ai-tools.mdc" ;;
   esac
 }
 
@@ -158,10 +154,8 @@ has_extension() {
 harness_detected() {
   case "$1" in
     claude-code) [ -d "$HOME/.claude" ] || has_extension anthropic.claude-code- ;;
-    grok)        [ -d "$HOME/.grok" ] || command -v grok >/dev/null 2>&1 ;;
     codex)       [ -d "$HOME/.codex" ] || command -v codex >/dev/null 2>&1 || has_extension openai.chatgpt- ;;
     copilot)     [ -d "$HOME/.copilot" ] || command -v copilot >/dev/null 2>&1 || has_extension github.copilot-chat- ;;
-    cursor)      [ -d "$HOME/.cursor" ] ;;
     antigravity) [ -d "$HOME/.gemini/config" ] || command -v antigravity >/dev/null 2>&1 ;;
     *) return 1 ;;
   esac
@@ -634,7 +628,9 @@ sweep_stale_links() {
     [ -d "$root" ] || continue
     while IFS= read -r p; do
       [ -n "$p" ] || continue
-      is_ai_tools_link "$p" && safe_unlink "$p" || true
+      if is_ai_tools_link "$p"; then
+        safe_unlink "$p" || true
+      fi
     done < <(find "$root" -maxdepth 1 -type l 2>/dev/null)
   done < <(each_scoped_root)
   # Retired Gemini CLI skills root (not a harness). Do not touch Antigravity's
@@ -643,7 +639,9 @@ sweep_stale_links() {
   if [ -d "$root" ]; then
     while IFS= read -r p; do
       [ -n "$p" ] || continue
-      is_ai_tools_link "$p" && safe_unlink "$p" || true
+      if is_ai_tools_link "$p"; then
+        safe_unlink "$p" || true
+      fi
     done < <(find "$root" -maxdepth 1 -type l 2>/dev/null)
   fi
   return 0

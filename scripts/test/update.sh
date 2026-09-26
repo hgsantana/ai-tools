@@ -51,7 +51,7 @@ case_update_reset_guard_ahead_on_master_while_detached() {
   git -C "$home/.ai-tools" checkout -q other
   head_before=$(git -C "$home/.ai-tools" rev-parse HEAD)
 
-  t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses cursor
+  t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses copilot
   t_assert_exit 1
   t_assert_line "local master commits ahead of origin/master:"
   if [ "$(git -C "$home/.ai-tools" rev-parse HEAD)" = "$head_before" ]; then
@@ -314,7 +314,7 @@ case_update_all_harnesses_alias() {
 
   t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses all --dry-run
   t_assert_exit 0
-  t_assert_line "info: scope: claude-code grok codex copilot cursor antigravity"
+  t_assert_line "info: scope: claude-code codex copilot antigravity"
 
   t_cleanup "$root"
 }
