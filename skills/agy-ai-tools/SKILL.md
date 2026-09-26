@@ -1,19 +1,19 @@
 ---
 name: agy-ai-tools
 description: >
-  Dispatch autonomous coding, analysis, and execution tasks to the Antigravity
-  CLI (agy) with explicit model and reasoning effort control. Use for
-  /agy-ai-tools or targeted model/effort tasks. Impact: executes local CLI tasks
-  that can modify workspace files and consume model quota; destructive actions
-  require explicit approval. Agent: session.
+  Dispatch autonomous subagents to the Antigravity CLI (agy) for coding,
+  analysis, and execution tasks with explicit model and reasoning effort
+  control. Use for /agy-ai-tools or targeted model/effort tasks. Impact: executes
+  local CLI subagents that can modify workspace files and consume model quota;
+  destructive actions require explicit approval. Agent: session.
 argument-hint: "[[model] [effort] | [effort]] <task description>"
 ---
 
 <skill name="agy-ai-tools">
   <overview>
-    Dispatch autonomous coding, analysis, and execution tasks through the Antigravity CLI (`agy`),
+    Dispatch autonomous subagents through the Antigravity CLI (`agy`) for coding, analysis, and execution tasks,
     enabling explicit control over model family and reasoning effort tier.
-    Session resolves arguments and executes tasks, sending model discovery and log collection to a default worker.
+    Session resolves arguments and executes subagents, sending model discovery and log collection to a default worker.
   </overview>
 
   <session_workflow>

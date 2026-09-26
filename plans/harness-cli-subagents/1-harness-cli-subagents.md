@@ -25,3 +25,6 @@ Update `skills/agy-ai-tools/SKILL.md` to feature an agnostic, standardized descr
 None
 
 ## Implementation log
+- Updated `skills/agy-ai-tools/SKILL.md` frontmatter description to focus on dispatching autonomous subagents to the Antigravity CLI (`agy`) with explicit model and reasoning effort control, retaining mandatory `Impact:` and `Agent: session` fields under the 500-character cap (341 characters).
+- Updated `<overview>` in `skills/agy-ai-tools/SKILL.md` to describe dispatching autonomous subagents through `agy` for coding, analysis, and execution tasks.
+- Executed `./scripts/lint.sh` and verified all repository rules and semantic XML grammar checks pass (511 ok, 1 skipped, 0 warnings).
