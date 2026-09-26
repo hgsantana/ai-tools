@@ -1,17 +1,18 @@
 ---
 name: plan-ai-tools
 description: >
-  Explore the repository and write a multi-file implementation plan under
-  plans/. Use for /plan-ai-tools or when a non-trivial change needs planning
-  first. Impact: writes only planning files under plans/; product code, commits,
-  and remote state remain unchanged. Agent: session.
+  Explore the repository, interview the user along the design tree, and write
+  a multi-file implementation plan under plans/. Use for /plan-ai-tools or when a
+  non-trivial change needs planning first. Impact: writes only planning files
+  under plans/; product code, commits, and remote state remain unchanged. Agent:
+  session.
 argument-hint: "[description of the change, feature, or fix to plan]"
 ---
 
 <skill name="plan-ai-tools">
   <overview>
-    Explore a change and write its canonical multi-file implementation plan under plans/{SLUG}/.
-    The session aligns with the user, designs, and writes the plan itself; broad discovery goes to a default worker.
+    Explore a change, interview the user along the design tree, and write its canonical multi-file implementation plan under plans/{SLUG}/.
+    The session explores the codebase, interviews the user, designs, and writes the plan itself; broad discovery goes to a default worker.
   </overview>
 
   <session_workflow>
@@ -21,8 +22,12 @@ argument-hint: "[description of the change, feature, or fix to plan]"
       If HEAD is detached, ask the user to choose and check out a branch before continuing.
     </step>
     <step id="2" name="user_alignment">
-      In the user's language, clarify scope boundaries, present trade-offs and alternative approaches,
-      and resolve open architectural questions before drafting the plan structure.
+      In the user's language, interview the user about every aspect of the change until reaching a shared understanding, walking down each branch of the design tree and resolving dependencies between decisions one-by-one.
+      Apply the design interview rules:
+        - If a question can be answered by exploring the codebase, explore the codebase instead of asking (reading docs, pinpoint grep/reads, or sending broad read-only discovery to `<template role="repo-discovery">` from `<dispatch_templates>`).
+        - Ask questions one at a time through USER-AGENTS `<user_interaction>`, never batching questions in plain chat.
+        - For each question, provide a recommended answer with its technical rationale, formatting options from the user's perspective.
+        - Clarify scope boundaries, present trade-offs and alternative approaches, and resolve open architectural questions before drafting the plan structure.
       When the change is small enough for one commit, present `dev-ai-tools` Task mode: state its Impact and Agent from that skill description and obtain acceptance before invoking `/dev-ai-tools` in Task mode. Apply that handoff without re-entering USER-AGENTS `<routing_gate>`. On refusal, end with a short planning assessment and write no plan files.
       Derive a kebab-case {SLUG}.
     </step>
@@ -77,6 +82,7 @@ plans/
     <rule id="write-under-slug">Write the plan only under plans/{SLUG}/; the discovery report may write only ${TMPDIR:-/tmp}/ai-tools/{TOPIC}.md; dev-ai-tools owns archival under ${TMPDIR:-/tmp}/ai-tools/finished/.</rule>
     <rule id="planning-only">Limit this workflow to planning: leave product code and builds unchanged.</rule>
     <rule id="plan-is-deliverable">Treat the saved plan as the deliverable until the user accepts the /dev-ai-tools offer.</rule>
+    <rule id="design-interview">Interview the user through the design tree one question at a time through USER-AGENTS `<user_interaction>`, explore the codebase before asking, and provide a recommended answer with rationale for each decision.</rule>
     <rule id="task-mode-acceptance">A one-commit route into dev-ai-tools Task mode requires stating that skill's Impact and Agent and obtaining acceptance first; refusal ends this skill with a short planning assessment.</rule>
     <rule id="protocol-source">When USER-AGENTS `<execution_protocol>`, `<user_interaction>`, or `<security_guardrails>` are not already loaded, read `$HOME/.ai-tools/USER-AGENTS.md` before the first spawn or approval. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
     <rule id="default-worker">Spawn each `<template executor="default-worker">` per USER-AGENTS `<execution_protocol>`, assembling nested payloads per USER-AGENTS `<rule id="payload-assembly">`.</rule>

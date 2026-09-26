@@ -1,7 +1,7 @@
 ---
 name: vibe-ai-tools
 description: >
-  Plan a change under plans/, then the session delivers it with implementers
+  Align the design tree and plan under plans/, then deliver with implementers
   per stage, deciding in-scope implementation questions. Use for
   /vibe-ai-tools. Impact: after the plan is on disk, edits on a dedicated
   branch, commits, pushes, and opens a pull request unattended; edits and
@@ -13,14 +13,14 @@ argument-hint: "[the change to deliver]"
 
 <skill name="vibe-ai-tools">
   <overview>
-    Plan a change under plans/{SLUG}/ interactively with the user, then the session delivers it.
+    Interview the user along the design tree and plan a change under plans/{SLUG}/, then the session delivers it.
     The session plans, asks the implementer model, judges each stage, commits, and opens the pull request; implementers write stage code; tests go to a default worker when that spawn works.
   </overview>
 
   <session_workflow>
     <step id="1" name="interactive_planning">
       Run plan-ai-tools `<step id="1">` to record {BASE_BRANCH}.
-      Refine scope, architecture, and trade-offs interactively with the user in chat, and derive a kebab-case {SLUG}.
+      Run plan-ai-tools `<step id="2">` to interview the user along the design tree, resolve scope boundaries, architecture, and trade-offs, and derive a kebab-case {SLUG}.
       Run plan-ai-tools `<step id="3">` to write the plan under plans/{SLUG}/ per plan-ai-tools `<plan_file_format>`.
       Skip the standalone `/dev-ai-tools` offer once the plan is on disk.
     </step>
@@ -86,6 +86,7 @@ argument-hint: "[the change to deliver]"
 
   <boundaries>
     <rule id="session-owns-delivery">The session owns user alignment, planning, the implementer question, in-scope decisions, judgment, commits, archival, the pull request, and reporting from disk paths.</rule>
+    <rule id="design-interview">Conduct the planning interview per plan-ai-tools `<rule id="design-interview">`.</rule>
     <rule id="one-model-question">Ask the implementer model question once per run, after the plan is on disk; reuse the answer for every stage and rework.</rule>
     <rule id="spawn-apis">Per USER-AGENTS `<execution_protocol>`: `<template role="stage-implementer">` runs as `executor="implementer"` with the recorded {IMPLEMENTER_MODEL}; dev-ai-tools `<template role="stage-verifier">` runs as `executor="default-worker"`.</rule>
     <rule id="no-implementer-fallback">If `<template role="stage-implementer">` cannot be spawned, do not implement that stage in the session: end as `<signal code="BLOCKED">` naming the missing spawn.</rule>
