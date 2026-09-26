@@ -386,7 +386,6 @@ case_remove_all_harnesses() {
   t_run "$root" "$home/.ai-tools/scripts/shell/remove.sh" --harnesses all
   t_assert_exit 0
   t_assert_absent "$home/.claude/skills/plan-ai-tools"
-  t_assert_absent "$home/.codex/skills/plan-ai-tools"
   t_assert_absent "$home/.copilot/skills/plan-ai-tools"
   t_assert_absent "$home/.gemini/config/skills/plan-ai-tools"
 
@@ -455,12 +454,12 @@ case_remove_parent_symlink_protects_agents_md() {
   home="$root/home"
 
   printf 'user overrides\n' > "$home/AGENTS.md"
-  rm -rf "$home/.codex"
-  ln -s "$home" "$home/.codex" || fatal "$T_CASE: cannot alias .codex to HOME"
-  mkdir -p "$home/.codex/skills" || fatal "$T_CASE: cannot create aliased skills root"
+  rm -rf "$home/.claude"
+  mkdir -p "$home/.claude/skills" || fatal "$T_CASE: cannot create skills root"
+  ln -s "$home/AGENTS.md" "$home/.claude/CLAUDE.md" || fatal "$T_CASE: cannot alias CLAUDE.md to AGENTS.md"
 
   t_run "$root" "$home/.ai-tools/scripts/shell/remove.sh" \
-    --harnesses codex --instructions --force
+    --harnesses claude-code --instructions --force
   t_assert_exit 2
   t_assert_line "refusing \$HOME/AGENTS.md alias:"
   t_assert_content "$home/AGENTS.md" "user overrides"

@@ -4,7 +4,7 @@
 
 ## Overview
 
-A toolkit of **skills** and **user-wide instructions** for Claude Code, OpenAI Codex, GitHub Copilot, and Google Antigravity.
+A toolkit of **skills** and **user-wide instructions** for Claude Code, GitHub Copilot, and Google Antigravity.
 
 This repository is the source of those tools. It is installed on the user's machine at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Installation copies artifacts into each harness's user configuration.
 
@@ -59,7 +59,7 @@ Normative for every human and every AI maintaining this repository.
 ### Structure and authoring
 
 5. Skills are harness-agnostic and live entirely in `skills/<name>/SKILL.md`, with frontmatter defined by rule 6 and bodies structured in semantic XML tags (`<skill>`, `<session_workflow>`, `<dispatch_templates>`). They use no per-harness copies, separate skill contracts or bases, root-level `skills/<name>.md`, `SKILL-CONTRACT.md`, or `MAINTAINER.md`; required maintainer text is duplicated. Descriptions contain three parts and at most 500 characters (rule 6); bodies have no character cap but follow rule 8. Skills contain neither **Stake** nor **Continue?** headings. Harnesses retain frontmatter without loading the body. `USER-AGENTS.md` offers skills from that in-memory description (the only USER-AGENTS.md gate); the host session executes the `<session_workflow>`. Skills run on the session model; a `<template>`'s `executor` decides where its payload runs ([Semantic XML grammar](#semantic-xml-grammar)). Specified and queued `dev-ai-tools`, `vibe-ai-tools`, and `campaign-ai-tools` spawn implementers; vibe and campaign ask one implementer-model question guided by `<implementer_job>`, and `dev-ai-tools` uses the harness default. Optional blocks `<status_protocol>`, `<return_protocol>`, `<plan_file_format>`, and `<implementer_job>` hold protocol that steps and templates cite ([Semantic XML grammar](#semantic-xml-grammar)). `gh-ai-tools` covers GitHub-hosted resources and administration; repository code work such as commits, branches, rebases, merges, pushes, code review, and pull-request delivery bypasses it and runs directly.
-6. Skill frontmatter uses universally accepted `name` and `description`, plus optional keys supported by every harness, such as `argument-hint`. The `description`, which harnesses retain without loading the body, states in order: (1) what the skill does and when to use it, including `/name`; (2) `Impact:` plus what can be billed, deleted, committed, pushed, or otherwise changed—or that impact is absent; (3) `Agent:` with `session` when the skill never spawns implementers; `session + implementer` when it defines a `<template executor="implementer">` and no implementer-model question (`dev-ai-tools`); or `session + implementer (model asked once)` when it defines `<implementer_job>` and that template (`vibe-ai-tools`, `campaign-ai-tools`); the skill offer's Execution column shows this value. Keep it within **500 characters** because harnesses budget the skill list: Codex caps it at 2% of context or 8,000 characters, and Claude Code truncates it at 1,536.
+6. Skill frontmatter uses universally accepted `name` and `description`, plus optional keys supported by every harness, such as `argument-hint`. The `description`, which harnesses retain without loading the body, states in order: (1) what the skill does and when to use it, including `/name`; (2) `Impact:` plus what can be billed, deleted, committed, pushed, or otherwise changed—or that impact is absent; (3) `Agent:` with `session` when the skill never spawns implementers; `session + implementer` when it defines a `<template executor="implementer">` and no implementer-model question (`dev-ai-tools`); or `session + implementer (model asked once)` when it defines `<implementer_job>` and that template (`vibe-ai-tools`, `campaign-ai-tools`); the skill offer's Execution column shows this value. Keep it within **500 characters** because harnesses budget the skill list: Claude Code truncates it at 1,536.
 7. Every installed skill directory, slash command, and frontmatter `name:` ends in `-ai-tools`; bare names such as `plan` and `az` remain uninstalled.
 8. Use extreme concision: remove ambiguity and redundancy while preserving every instruction, rule, and intention.
 9. Skills and `USER-AGENTS.md` state what to do in the [Semantic XML grammar](#semantic-xml-grammar): every cross-reference is a backticked tag reference that resolves (`<skill_offer>`, `<template role="...">`, `<step id="...">`), every variable is a `{PLACEHOLDER}`, every `<rule>` has an `id`, and every `<template>` names its `role` and `executor`. A skill with a `<template>` cites USER-AGENTS `<execution_protocol>` for spawning and never restates the harness native subagent API list. Prose citations of this README use section anchors, never rule numbers. A negative (`never`, `do not`) is used only when it reinforces an essential positive, or when the positive phrasing would lose force or not make sense.
@@ -132,7 +132,7 @@ Processes: `install-bash` / `install-zsh` (first clone), `install`, `remove`, `u
 
 On top of rules 18–20:
 
-- **Scope** — `--harnesses <list>` accepts comma- or space-separated harness keys (`claude-code`, `codex`, `copilot`, `antigravity`). Omit the flag to select detected harnesses (the script aborts with exit `1` when none is detected); pass `--harnesses all` to select all four supported harnesses, including those not detected yet. An AI running a mutating script asks for scope first and passes the explicit answer.
+- **Scope** — `--harnesses <list>` accepts comma- or space-separated harness keys (`claude-code`, `copilot`, `antigravity`). Omit the flag to select detected harnesses (the script aborts with exit `1` when none is detected); pass `--harnesses all` to select all three supported harnesses, including those not detected yet. An AI running a mutating script asks for scope first and passes the explicit answer.
 - **Legacy Gemini sweep** — the stale-link sweep still examines the retired Gemini CLI root `$HOME/.gemini/skills` regardless of the selected harnesses; `--no-sweep` skips that too.
 - **Dry run** — `--dry-run` reports proposed harness actions without installing, removing, resetting, or purging, and supplies the findings and approval report for unattended runs. Update still runs `git fetch origin` (remote-tracking refs and `FETCH_HEAD` may change). Removal planning uses the current checkout; installation planning uses an archive of `origin/master`, so incoming skills are listed. The finish line notes that Git metadata may have been updated.
 - **Destructive flags** — `--overwrite` on install and update (replace conflicting artifact destinations and prune orphan `*-ai-tools` artifacts in the selected harnesses), `--discard-local` (reset discarding local work in the clone), `--instructions` (remove global instructions on removal), `--force` (remove known regular-file or directory destinations and orphan paths even when contents no longer match; never unlinks a symlink whose target is outside ai-tools), and `--purge` (delete the clone). Without the flag the script refuses or skips; it never guesses.
@@ -180,7 +180,7 @@ When a rule in this README becomes mechanically verifiable, add its check to `sc
 "$HOME/.ai-tools/scripts/test.sh" --case install --keep   # one case file, keep the sandbox
 ```
 
-Each case builds its own fixture: a harness layout for all four harnesses and a local `origin` git remote so no run reaches the network, plus, per case, a foreign skill or instructions file, a locally modified copy, a stale link from an older layout, or a symlink pointing outside the clone. Against it, the suites assert:
+Each case builds its own fixture: a harness layout for all three harnesses and a local `origin` git remote so no run reaches the network, plus, per case, a foreign skill or instructions file, a locally modified copy, a stale link from an older layout, or a symlink pointing outside the clone. Against it, the suites assert:
 
 - physical copies only, including migration from legacy ai-tools symlinks (rule 12)
 - no overwrite by default and selected-harness overwrite with the explicit flag (rule 13)
@@ -209,7 +209,6 @@ One row per harness: global instructions destination and skills root.
 | Harness | Global instructions destination | Skills root |
 |---|---|---|
 | Claude Code | `$HOME/.claude/CLAUDE.md` | `$HOME/.claude/skills/` |
-| OpenAI Codex | `$HOME/.codex/AGENTS.md` | `$HOME/.codex/skills/` |
 | GitHub Copilot | `$HOME/.copilot/instructions/ai-tools.instructions.md` | `$HOME/.copilot/skills/` |
 | Google Antigravity | `$HOME/.gemini/GEMINI.md` | `$HOME/.gemini/config/skills/` |
 
@@ -217,7 +216,6 @@ Notes:
 
 - **Antigravity lives under `$HOME/.gemini`**: instructions at `GEMINI.md`, skills at `config/skills/`. Do not install into `$HOME/.gemini/skills/` (retired Gemini CLI root). The stale-link sweep always unlinks leftover ai-tools links there, even when Gemini is not in `--harnesses`; `--no-sweep` skips it. The sweep does not touch `config/`.
 - **Antigravity limits rules files to 12,000 characters.** The repository's stricter self-imposed 8,000-character cap governs `USER-AGENTS.md` (rule 3); Antigravity truncates or rejects files above its own limit.
-- **Codex** reads `~/.codex/AGENTS.override.md` first if it exists; otherwise, it reads `~/.codex/AGENTS.md`. Never create, edit, or remove an existing `AGENTS.override.md` — it is user-authored and out of scope.
 - **Copilot** user-level `*.instructions.md` files apply automatically only with YAML `applyTo`. The shared copy starts with `applyTo: "**"` (all files). File equality is not activation; confirm Chat diagnostics after install.
 - **Never install into `$HOME/.agents/`.** Several harnesses discover it; copying there as well as into each harness root would double-register every skill.
 
@@ -234,8 +232,8 @@ The bootstrap script is self-contained: it requires `git`, clones `https://githu
 Every `install.sh` step is idempotent and reports conflicts it skips.
 
 1. **Preconditions** — the clone at `$HOME/.ai-tools` exists and validates; `install.sh` clones it when missing, except under `--dry-run` (rule 16; move any existing clone there — no other location is recoverable by configuration).
-2. **Discovery and scope** — report each detected harness from its configuration directory, CLI, or known IDE extension, plus possible AI extensions outside scope. Omitted `--harnesses` selects those detected harnesses; `--harnesses all` selects all four and creates their skill roots as needed. Report `$HOME/.agents` while leaving it untouched.
-3. **Instructions** — copy `USER-AGENTS.md` to each scoped harness's global instructions destination (`--no-instructions` skips). Antigravity uses `$HOME/.gemini/GEMINI.md`; an existing `~/.codex/AGENTS.override.md` is reported, never touched.
+2. **Discovery and scope** — report each detected harness from its configuration directory, CLI, or known IDE extension, plus possible AI extensions outside scope. Omitted `--harnesses` selects those detected harnesses; `--harnesses all` selects all three and creates their skill roots as needed. Report `$HOME/.agents` while leaving it untouched.
+3. **Instructions** — copy `USER-AGENTS.md` to each scoped harness's global instructions destination (`--no-instructions` skips). Antigravity uses `$HOME/.gemini/GEMINI.md`.
 4. **Skills** — recursively copy each `skills/*-ai-tools` directory into every scoped skills root (rules 5–6). Harnesses list frontmatter; the host session reads the body only when it runs the skill. With `--overwrite`, orphan `*-ai-tools` skills no longer in the tree are pruned from the scoped roots.
 5. **Verify** — every installed instruction and skill is a physical copy matching its source; `USER-AGENTS.md` fits the repository's 8,000-character cap (rule 3); every shipped `skills/<name>/SKILL.md` exists. Any installation symlink or an orphan `*-ai-tools` skill is a finding. Skipped under `--dry-run`; re-run anytime with `verify`.
 

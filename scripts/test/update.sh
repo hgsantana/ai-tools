@@ -314,7 +314,7 @@ case_update_all_harnesses_alias() {
 
   t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses all --dry-run
   t_assert_exit 0
-  t_assert_line "info: scope: claude-code codex copilot antigravity"
+  t_assert_line "info: scope: claude-code copilot antigravity"
 
   t_cleanup "$root"
 }

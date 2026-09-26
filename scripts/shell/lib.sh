@@ -7,7 +7,7 @@ set -u
 
 AI_TOOLS="${AI_TOOLS:-$HOME/.ai-tools}"
 REPO_URL="https://github.com/hgsantana/ai-tools.git"
-ALL_HARNESSES="claude-code codex copilot antigravity"
+ALL_HARNESSES="claude-code copilot antigravity"
 
 DRY_RUN=0
 OVERWRITE=0
@@ -124,7 +124,6 @@ assert_supported_clone_path() {
 skills_root() {
   case "$1" in
     claude-code) echo "$HOME/.claude/skills" ;;
-    codex)       echo "$HOME/.codex/skills" ;;
     copilot)     echo "$HOME/.copilot/skills" ;;
     antigravity) echo "$HOME/.gemini/config/skills" ;;
   esac
@@ -133,7 +132,6 @@ skills_root() {
 instructions_dest() {
   case "$1" in
     claude-code) echo "$HOME/.claude/CLAUDE.md" ;;
-    codex)       echo "$HOME/.codex/AGENTS.md" ;;
     copilot)     echo "$HOME/.copilot/instructions/ai-tools.instructions.md" ;;
     antigravity) echo "$HOME/.gemini/GEMINI.md" ;;
   esac
@@ -154,7 +152,6 @@ has_extension() {
 harness_detected() {
   case "$1" in
     claude-code) [ -d "$HOME/.claude" ] || has_extension anthropic.claude-code- ;;
-    codex)       [ -d "$HOME/.codex" ] || command -v codex >/dev/null 2>&1 || has_extension openai.chatgpt- ;;
     copilot)     [ -d "$HOME/.copilot" ] || command -v copilot >/dev/null 2>&1 || has_extension github.copilot-chat- ;;
     antigravity) [ -d "$HOME/.gemini/config" ] || command -v antigravity >/dev/null 2>&1 ;;
     *) return 1 ;;
@@ -519,10 +516,6 @@ install_instructions() {
   for h in $SCOPE; do
     dest=$(instructions_dest "$h")
     [ -n "$dest" ] || { info "no global instructions destination: $h"; continue; }
-    if [ "$h" = codex ] && [ -f "$HOME/.codex/AGENTS.override.md" ]; then
-      # shellcheck disable=SC2088 # literal "~" in user-facing prose, not a path to expand
-      info "~/.codex/AGENTS.override.md exists and takes precedence while present (never touched)"
-    fi
     safe_copy "$src" "$dest" || true
   done
   return 0

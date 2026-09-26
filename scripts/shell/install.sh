@@ -11,7 +11,7 @@ usage: install.sh [--harnesses <list>] [--overwrite] [--no-instructions]
                   [--dry-run]
 
   --harnesses <list>   comma-separated harnesses to install into
-                       (claude-code,codex,copilot,antigravity);
+                       (claude-code,copilot,antigravity);
                        omitted selects detected harnesses; "all" selects every
                        supported harness, whether detected or not
   --overwrite          replace conflicting or locally modified installed copies

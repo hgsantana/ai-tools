@@ -58,7 +58,7 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
 
   <execution_protocol>
     <rule id="session-model">The host session executes the selected skill's `<session_workflow>` on the session model.</rule>
-    <rule id="native-spawn">A `<template>` is spawned only through the harness's native subagent API: Claude Code Agent, Copilot runSubagent, Codex spawn_agent, Antigravity invoke_subagent.</rule>
+    <rule id="native-spawn">A `<template>` is spawned only through the harness's native subagent API: Claude Code Agent, Copilot runSubagent, Antigravity invoke_subagent.</rule>
     <rule id="payload-assembly">When spawning a `<template>`, assemble one brief from its job, populated input, instructions, and constraints, plus every nested template that brief names, recursively, including cited `<status_protocol>` and `<return_protocol>` blocks. State that the brief is an authorized delegated payload. Pass only that brief and file paths.</rule>
     <rule id="default-worker">`executor="default-worker"` uses the harness default agent type and model. Builds, test suites, script runs, and bulk fact collection go to default workers; a single pinpoint command the session needs for its next decision runs in the session.</rule>
     <rule id="implementer">`executor="implementer"` uses the implementer model the skill resolved.</rule>
@@ -74,7 +74,7 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
   </language_rules>
 
   <user_interaction>
-    <default>Ask questions and offer alternatives through the harness's native tool, never plain chat: Claude Code AskUserQuestion, Copilot vscode_askQuestions, Codex request_user_input, Antigravity ask_question.
+    <default>Ask questions and offer alternatives through the harness's native tool, never plain chat: Claude Code AskUserQuestion, Copilot vscode_askQuestions, Antigravity ask_question.
       A subagent asks directly when it holds that tool; else it returns the question and options to the session, which asks through it and relays the answer.</default>
     <fallback>Tool missing or refused: ask in one chat message, the question then numbered options. Silence is not consent.</fallback>
   </user_interaction>

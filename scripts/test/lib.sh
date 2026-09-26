@@ -28,7 +28,6 @@ T_EXTERNAL_SYMLINK_PATH=""
 
 T_HARNESS_DIRS="
 .claude/skills
-.codex/skills
 .copilot/skills
 .copilot/instructions
 .gemini/config/skills

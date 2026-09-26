@@ -71,3 +71,32 @@ chore(codex): remove codex harness support and legacy references
 
 ## Implementation log
 
+- Removed `skills/codex-ai-tools/` and `skills/codex-ai-tools/SKILL.md`.
+- Updated `scripts/shell/lib.sh`:
+  - `ALL_HARNESSES` set to `"claude-code copilot antigravity"`.
+  - Removed `codex)` case from `skills_root()`, `instructions_dest()`, and `harness_detected()`.
+  - Removed `~/.codex/AGENTS.override.md` warning check from `install_instructions()`.
+- Updated `USER-AGENTS.md`:
+  - Removed `Codex spawn_agent` from `<rule id="native-spawn">`.
+  - Removed `Codex request_user_input` from `<user_interaction>`.
+  - Verified character count: 7,737 chars (strictly below 8,000 char cap).
+- Updated `README.md`:
+  - Removed OpenAI Codex from repository overview.
+  - Removed Codex context budget clause from rule 6.
+  - Updated harness scope list and counts from 4 to 3 in Scope bullet, fixture description, and installation step 2.
+  - Removed OpenAI Codex from Supported harnesses table and removed Codex notes bullet.
+  - Removed `AGENTS.override.md` mention from installation step 3.
+- Updated `scripts/shell/install.sh`:
+  - Updated `--harnesses` usage text list to 3 harnesses.
+- Updated `scripts/test/lib.sh`:
+  - Removed `.codex/skills` from `T_HARNESS_DIRS`.
+- Updated test cases in `scripts/test/install.sh`, `scripts/test/remove.sh`, `scripts/test/reinstall.sh`, `scripts/test/update.sh`:
+  - Removed codex assertions in all-harnesses tests.
+  - Adapted `case_install_parent_symlink_protects_agents_md` and `case_remove_parent_symlink_protects_agents_md` to test `$HOME/AGENTS.md` alias protection against surviving harnesses (`claude-code`).
+  - Updated expected scope assertion in `case_update_all_harnesses_alias`.
+- Updated `plans/ai-tools-evolution/0-ai-tools-evolution.md`:
+  - Updated Stage 1 Status cell from `W` to `V`.
+- Verification results:
+  - `git grep -in "codex" -- ':!plans'`: 0 occurrences outside plans.
+  - `./scripts/lint.sh`: exit 0 (585 ok, 1 skipped, 0 warnings).
+  - `./scripts/test.sh`: exit 0 (340 ok, 0 skipped, 0 warnings).
