@@ -32,11 +32,12 @@ argument-hint: "[plan paths, or the task to implement]"
 
     <step id="3" name="stage_loop">
       For each unfinished stage in dependency order (a task is one stage), following `<status_protocol>`:
-        1. Set W and record the stage's Executor in the base plan Status table.
-        2. Task mode: the session implements the stage (code and behaviour tests within its declared files, matching surrounding style, with factual notes in its Implementation log) and sets V, then spawns `<template role="stage-verifier">` as executor="default-worker" with the stage's commands and a kebab-case topic; if that spawn fails, the session runs the commands itself. Specified and queue: spawn `<template role="stage-implementer">` from `<dispatch_templates>` as executor="implementer" with the harness default model, substituting {STAGE_FILE} and {SLUG}; if that spawn fails, treat the unit as `<signal code="BLOCKED">` without implementing the stage in the session.
-        3. After `<template role="stage-verifier">` runs, spawn `<template role="stage-judge">` from `<dispatch_templates>` as executor="session-subagent", substituting {STAGE_FILE}, {SLUG}, and kebab-case {TOPIC}; if that spawn fails, treat the unit as `<signal code="BLOCKED">` without judging in the session.
-        4. On `<signal code="ACCEPT">`: stage path by path, commit with the stage's Conventional Commit message, and set F.
-        5. On `<signal code="REWORK">`: append the judge's feedback tasks to the stage log, set R1..R3, and retry the implementer spawn up to three times, then set E.
+        1. In specified and queue modes: if the stage is not yet planned (status empty or resumed at P): set P in the base plan Status table, spawn `<template role="stage-planner">` from `<dispatch_templates>` as executor="session-subagent", substituting {STAGE_FILE} and {SLUG}; if that spawn fails, treat the unit as `<signal code="BLOCKED">`. The planner writes {STAGE_FILE} with detailed steps, tests, and acceptance criteria, sets PF in the Status table, and returns `<signal code="PLANNED">`. (In Task mode, planning is already complete in `plans/{SLUG}.md`.)
+        2. Set W and record the stage's Executor in the base plan Status table.
+        3. Task mode: the session implements the stage (code and behaviour tests within its declared files, matching surrounding style, with factual notes in its Implementation log) and sets V, then spawns `<template role="stage-verifier">` as executor="default-worker" with the stage's commands and a kebab-case topic; if that spawn fails, the session runs the commands itself. Specified and queue: spawn `<template role="stage-implementer">` from `<dispatch_templates>` as executor="implementer" with the harness default model, substituting {STAGE_FILE} and {SLUG}; if that spawn fails, treat the unit as `<signal code="BLOCKED">` without implementing the stage in the session.
+        4. After `<template role="stage-verifier">` runs, spawn `<template role="stage-judge">` from `<dispatch_templates>` as executor="session-subagent", substituting {STAGE_FILE}, {SLUG}, and kebab-case {TOPIC}; if that spawn fails, treat the unit as `<signal code="BLOCKED">` without judging in the session.
+        5. On `<signal code="ACCEPT">`: stage path by path, commit with the stage's Conventional Commit message, and set F.
+        6. On `<signal code="REWORK">`: append the judge's feedback tasks to the stage log, set R1..R3, and retry the implementer spawn up to three times, then set E.
       On E: stop remaining stages, retain the work unit, and go to `<step id="4">` as blocked. Do not start a dependent stage.
       Interrupt the user only for a blocker, a decision uncovered by implementation, or an approval reserved by USER-AGENTS `<security_guardrails>`.
     </step>
@@ -52,6 +53,26 @@ argument-hint: "[plan paths, or the task to implement]"
   </session_workflow>
 
   <dispatch_templates>
+    <template role="stage-planner" executor="session-subagent">
+      <job>Stage planner: inspect repository state and write detailed stage file for one stage.</job>
+      <input>
+        <stage_file>{STAGE_FILE}</stage_file>
+        <slug>{SLUG}</slug>
+      </input>
+      <instructions>
+        This payload is the brief; do not read sibling skill files.
+        Read base plan plans/{SLUG}/0-{SLUG}.md and the repository rules (README.md, AGENTS.md if present).
+        Inspect the working tree and commit history after previous stages. Expand {STAGE_FILE}'s succinct outline from the base plan into a detailed stage file under plans/{SLUG}/{STAGE_FILE}: Objective, Decisions, Files (Create/Modify/Remove), Steps, Tests, Acceptance criteria, Commit message, Dependencies, and Implementation log.
+        Resolve in-scope design decisions from repository evidence and base plan intent without conducting user interviews; record decisions in the stage file.
+        Set that stage's Status cell to PF in plans/{SLUG}/0-{SLUG}.md.
+        End with `<signal code="PLANNED">` or `<signal code="BLOCKED">`.
+      </instructions>
+      <constraints>
+        <constraint>Do not modify product or test code.</constraint>
+        <constraint>Edit only {STAGE_FILE} and that stage's Status cell in plans/{SLUG}/0-{SLUG}.md.</constraint>
+      </constraints>
+    </template>
+
     <template role="stage-implementer" executor="implementer">
       <job>Implementer: write and edit code and behaviour tests for one plan stage.</job>
       <input>
@@ -105,6 +126,7 @@ argument-hint: "[plan paths, or the task to implement]"
   </dispatch_templates>
 
   <return_protocol>
+    <signal code="PLANNED">PLANNED {STAGE_FILE}</signal>
     <signal code="ACCEPT">ACCEPT {STAGE_FILE} {VERDICT_PATH}</signal>
     <signal code="REWORK">REWORK {STAGE_FILE} {VERDICT_PATH}</signal>
     <signal code="DELIVERED">DELIVERED {REPORT_PATH} {PR_OR_PATCH}</signal>
@@ -112,9 +134,11 @@ argument-hint: "[plan paths, or the task to implement]"
   </return_protocol>
 
   <status_protocol>
-    The session owns every state except V. The implementer sets V once the stage is ready for review; in Task mode the session sets V after it implements. In campaign-ai-tools, the session applies F, R1..R3, and E from the campaign-planner VALIDATE `<signal>` without judging the diff.
-    Successful completion requires every required stage F. E is a blocked outcome: retain the unit, skip archive and delivery, stop dependent stages, and return `<signal code="BLOCKED">`. Queue mode does not advance on E.
+    The session owns every state except PF and V. The session sets P before stage planning and W before implementation starts. The planner sets PF once {STAGE_FILE} is written. The implementer sets V once the stage is ready for review; in Task mode the session sets V after it implements. In campaign-ai-tools, the session applies F, R1..R3, and E from the campaign-planner VALIDATE `<signal>` without judging the diff.
+    On resume: a stage at P resumes with `<template role="stage-planner">`; a stage at PF or W resumes with `<template role="stage-implementer">`.
     <states>
+      <state code="P">Planning - set by the session before detailed stage planning starts</state>
+      <state code="PF">Planning Finished - set by the planner once the detailed stage file is written</state>
       <state code="W">Working - set by the session before implementation starts</state>
       <state code="V">Validating - set by whoever implemented the stage once it is ready for review</state>
       <state code="R1..R3">Rework - corrections after review</state>
@@ -128,13 +152,13 @@ argument-hint: "[plan paths, or the task to implement]"
     <rule id="session-owns-delivery">The session owns intake, judgment, commits, archival, the pull request, and reporting from disk paths.</rule>
     <rule id="task-interview">In Task mode, resolve scope and design decisions with the user one question at a time through USER-AGENTS `<user_interaction>`, exploring the codebase before asking and providing recommended answers.</rule>
     <rule id="task-is-one-commit">Task mode implements in the session only when the work fits one Conventional Commit; larger work is offered to plan-ai-tools or vibe-ai-tools.</rule>
-    <rule id="no-implementer-fallback">If `<template role="stage-implementer">` cannot be spawned, specified and queue modes do not implement that stage in the session: they end as `<signal code="BLOCKED">` naming the missing spawn.</rule>
+    <rule id="no-implementer-fallback">If `<template role="stage-planner">` or `<template role="stage-implementer">` cannot be spawned, specified and queue modes do not plan or implement that stage in the session: they end as `<signal code="BLOCKED">` naming the missing spawn.</rule>
     <rule id="worker-fallback">If `<template role="stage-verifier">` cannot be spawned, the spawning context runs those commands itself per USER-AGENTS `<rule id="spawn-fallback">`.</rule>
     <rule id="completion-is-f">Archive, push, and pull-request creation run only when every required stage is F. An E stage is BLOCKED and retains the work unit.</rule>
     <rule id="substance-on-disk">Write substance to the unit's files or OS temp (${TMPDIR:-/tmp}/ai-tools); chat carries paths and outcomes.</rule>
     <rule id="preserve-history">Preserve history predating this work; never force-push or rebase pre-existing commits.</rule>
     <rule id="protocol-source">When USER-AGENTS `<execution_protocol>`, `<user_interaction>`, or `<security_guardrails>` are not already loaded, read `$HOME/.ai-tools/USER-AGENTS.md` before the first spawn or approval. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
     <rule id="reserved-approvals">Mutations to cloud resources or destructive operations require explicit user approval per USER-AGENTS `<security_guardrails>`.</rule>
-    <rule id="spawn-apis">Per USER-AGENTS `<execution_protocol>`: `<template role="stage-implementer">` runs as `executor="implementer"` with the harness default model; `<template role="stage-verifier">` runs as `executor="default-worker"`; `<template role="stage-judge">` runs as `executor="session-subagent"` on the session model.</rule>
+    <rule id="spawn-apis">Per USER-AGENTS `<execution_protocol>`: `<template role="stage-planner">` and `<template role="stage-judge">` run as `executor="session-subagent"` on the session model; `<template role="stage-implementer">` runs as `executor="implementer"` with the harness default model; `<template role="stage-verifier">` runs as `executor="default-worker"`.</rule>
   </boundaries>
 </skill>
