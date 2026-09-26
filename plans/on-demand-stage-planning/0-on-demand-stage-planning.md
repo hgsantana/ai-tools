@@ -5,7 +5,7 @@
 | Stage | Status | Executor |
 |---|---|---|
 | 1 | F | implementer flash |
-| 2 | | |
+| 2 | F | implementer flash |
 | 3 | | |
 
 ## Goal
