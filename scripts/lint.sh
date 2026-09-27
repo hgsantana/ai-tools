@@ -77,7 +77,7 @@ Checks:
                     the same tags (rule 9)
   rule anchors      no SKILL.md or USER-AGENTS.md cites a README rule number
                     (rule 9)
-  spawn protocol    every SKILL.md with a <template> cites USER-AGENTS
+  spawn protocol    every SKILL.md with a <template> cites
   citation          <execution_protocol>, and no SKILL.md duplicates the
                     harness native subagent API list (Copilot runSubagent)
   rule citations    README rules numbered 1..N without gaps; every rule N
@@ -709,6 +709,8 @@ EOF
       if [ -n "$attr" ]; then
         if xml_body "$target" | grep -q "<${name}[^>]* ${attr}=\"${val}\""; then
           ok "reference resolves: <$name $attr=\"$val\"> in $f"
+        elif [ -z "$q" ] && xml_body "$AI_TOOLS/USER-AGENTS.md" | grep -q "<${name}[^>]* ${attr}=\"${val}\""; then
+          ok "reference resolves: <$name $attr=\"$val\"> in $f"
         else
           warn "unresolved reference <$name $attr=\"$val\"> in $f (looked in $target)"
         fi
@@ -794,10 +796,10 @@ check_spawn_protocol_citation() {
     [ -f "$f" ] || continue
     if grep -q '<template' "$f"; then
       # shellcheck disable=SC2016 # literal backticked citation text, not command substitution
-      if grep -qF 'USER-AGENTS `<execution_protocol>`' "$f"; then
-        ok "cites USER-AGENTS execution_protocol: $f"
+      if grep -qF '`<execution_protocol>`' "$f"; then
+        ok "cites execution_protocol: $f"
       else
-        warn "SKILL.md has a <template> but does not cite USER-AGENTS \`<execution_protocol>\`: $f"
+        warn "SKILL.md has a <template> but does not cite \`<execution_protocol>\`: $f"
       fi
     fi
     if grep -qF 'Copilot runSubagent' "$f"; then

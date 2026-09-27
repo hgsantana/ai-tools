@@ -48,7 +48,7 @@ argument-hint: "[[model] [effort] | [effort]] <task description>"
 
     <step id="3" name="execution_guardrail">
       Verify if the requested task involves destructive operations (e.g. dropping database tables, force-pushing, removing uncommitted work).
-      Present every destructive action as an explicit approval request to the user per USER-AGENTS `<security_guardrails>`:
+      Present every destructive action as an explicit approval request to the user per `<security_guardrails>`:
       - State exact command, scope of change, reason, and blast-radius impact.
       - Execute only after explicit affirmative user approval.
     </step>
@@ -96,7 +96,7 @@ argument-hint: "[[model] [effort] | [effort]] <task description>"
     <rule id="unbiased-reasoning">State goals and constraints plainly; allow the effort parameter to regulate thinking depth naturally.</rule>
     <rule id="destructive-guardrail">Destructive operations require explicit affirmative user approval before execution.</rule>
     <rule id="outputs-on-disk">Save command outputs, run transcripts, and logs to ${TMPDIR:-/tmp}/ai-tools/ rather than flooding session context.</rule>
-    <rule id="protocol-source">When USER-AGENTS `<execution_protocol>`, `<user_interaction>`, or `<security_guardrails>` are not already loaded, read `$HOME/.ai-tools/USER-AGENTS.md` before the first spawn or approval. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
-    <rule id="default-worker">Spawn each `<template executor="default-worker">` per USER-AGENTS `<execution_protocol>`, assembling nested payloads per USER-AGENTS `<rule id="payload-assembly">`.</rule>
+    <rule id="protocol-source">Follow user-wide `<execution_protocol>`, `<user_interaction>`, and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
+    <rule id="default-worker">Spawn each `<template executor="default-worker">` per `<execution_protocol>`, assembling nested payloads per `<rule id="payload-assembly">`.</rule>
   </boundaries>
 </skill>

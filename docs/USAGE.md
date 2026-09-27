@@ -10,7 +10,7 @@ Invoke a skill explicitly by leading with its slash name and optional request:
 /vibe-ai-tools add resumable uploads
 ```
 
-Skills provide session-directed workflows. `USER-AGENTS.md` provides global planning, implementation, and execution protocols across supported harnesses.
+Skills provide session-directed workflows. Global planning, implementation, and execution protocols are provided across supported harnesses via user-wide instructions.
 
 ## Skills
 
@@ -34,7 +34,7 @@ Every skill runs on the session's model. The session handles user alignment, jud
 
 ### Delivery workflows
 
-`/vibe-ai-tools` is the end-to-end choice for delivering a feature or fix. It executes the centralized grill-me design interview (`USER-AGENTS.md`) to stress-test assumptions and align scope interactively, writing the agreed base plan to disk (`plans/<slug>/0-<slug>.md`). It then asks which model implements the stages (if not configured). The session delivers: on-demand stage planning expands stage details before implementation, implementer subagents write stage code, and the session reviews diffs and test evidence before committing and opening the pull request. Chat names the report path and a one-line outcome. In-scope decisions are recorded in `plans/<slug>/vibe-decisions.md`.
+`/vibe-ai-tools` is the end-to-end choice for delivering a feature or fix. It executes the centralized grill-me design interview (`<planning_protocol>`) to stress-test assumptions and align scope interactively, writing the agreed base plan to disk (`plans/<slug>/0-<slug>.md`). It then asks which model implements the stages (if not configured). The session delivers: on-demand stage planning expands stage details before implementation, implementer subagents write stage code, and the session reviews diffs and test evidence before committing and opening the pull request. Chat names the report path and a one-line outcome. In-scope decisions are recorded in `plans/<slug>/vibe-decisions.md`.
 
 ### Continuous improvement campaign
 

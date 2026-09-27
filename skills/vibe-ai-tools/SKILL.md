@@ -19,33 +19,33 @@ argument-hint: "[the change to deliver]"
 
   <session_workflow>
     <step id="1" name="interactive_planning">
-      Execute USER-AGENTS `<planning_protocol>`: verify repository root, record {BASE_BRANCH}, conduct the grill-me interview to resolve scope, architecture, and trade-offs, derive kebab-case {SLUG}, and write the base plan under `plans/{SLUG}/0-{SLUG}.md`.
+      Execute `<planning_protocol>`: verify repository root, record {BASE_BRANCH}, conduct the grill-me interview to resolve scope, architecture, and trade-offs, derive kebab-case {SLUG}, and write the base plan under `plans/{SLUG}/0-{SLUG}.md`.
     </step>
 
     <step id="2" name="implementer_model">
       Check `$HOME/.ai-tools/config.local.json`: if `ask_implementer_model` under `"behavior"` is set to false, skip prompting the user and resolve {IMPLEMENTER_MODEL} directly from the configured tier model in `$HOME/.ai-tools/config.local.json` under `"models"` or `config/agents.json` default for `mid` tier.
-      Otherwise, with the plan on disk and before execution, ask the user exactly one question through USER-AGENTS `<user_interaction>`: which model implements this plan's stages, with 1-3 options chosen per `<implementer_job>`.
+      Otherwise, with the plan on disk and before execution, ask the user exactly one question through `<user_interaction>`: which model implements this plan's stages, with 1-3 options chosen per `<implementer_job>`.
       Record the answer as {IMPLEMENTER_MODEL} in plans/{SLUG}/vibe-decisions.md; ask nothing else before delivery.
     </step>
 
     <step id="3" name="unattended_execution">
       Read the base plan and repository rules (README.md, AGENTS.md if present).
       Check out `plan/{SLUG}` from {BASE_BRANCH} and commit the plan first: `chore(plans): plan {SLUG}`.
-      For each unfinished stage in dependency order, following USER-AGENTS `<status_protocol>`:
+      For each unfinished stage in dependency order, following `<status_protocol>`:
         1. If the stage is not yet planned (status empty or resumed at P): set P in the base plan Status table, spawn `<template role="stage-planner">` from `<dispatch_templates>` as executor="session-subagent", substituting {STAGE_FILE} and {SLUG}; if that spawn fails, treat the unit as `<signal code="BLOCKED">` without implementing in the session.
         2. Set W and record Executor as implementer plus {IMPLEMENTER_MODEL} in the base plan Status table.
         3. Spawn `<template role="stage-implementer">` from `<dispatch_templates>` as executor="implementer" with {IMPLEMENTER_MODEL}, substituting {STAGE_FILE} and {SLUG}; if that spawn is rejected only for the recorded model, retry once with the harness default and use that model for remaining stages; if the spawn fails, treat the unit as `<signal code="BLOCKED">` without implementing the stage in the session.
-        4. Review the working-tree diff against the stage objective, declared files, and acceptance criteria per USER-AGENTS `<implementation_protocol>`. Decide in-scope questions from code evidence; append each decision to plans/{SLUG}/vibe-decisions.md.
+        4. Review the working-tree diff against the stage objective, declared files, and acceptance criteria per `<implementation_protocol>`. Decide in-scope questions from code evidence; append each decision to plans/{SLUG}/vibe-decisions.md.
         5. On passing evidence and met criteria: stage path by path, commit with the stage's Conventional Commit message, and set F.
         6. Otherwise: append concrete correction tasks to the stage log, set R1..R3, and retry up to three times, then set E.
       On E: stop remaining stages, retain the work unit, and go to `<step id="4">` as blocked. Do not start a dependent stage.
-      Execute delivery lifecycle per USER-AGENTS `<implementation_protocol>`: on all stages F, copy to ${TMPDIR:-/tmp}/ai-tools/finished/{SLUG}, remove with `git rm -r plans/{SLUG}`, commit `chore(plans): archive {SLUG}`, push `plan/{SLUG}`, open a pull request targeting {BASE_BRANCH} with `gh pr create` or write ${TMPDIR:-/tmp}/ai-tools/{SLUG}-review.patch when no host is available, write ${TMPDIR:-/tmp}/ai-tools/{SLUG}-report.md, and treat the outcome as `<signal code="DELIVERED">`.
+      Execute delivery lifecycle per `<implementation_protocol>`: on all stages F, copy to ${TMPDIR:-/tmp}/ai-tools/finished/{SLUG}, remove with `git rm -r plans/{SLUG}`, commit `chore(plans): archive {SLUG}`, push `plan/{SLUG}`, open a pull request targeting {BASE_BRANCH} with `gh pr create` or write ${TMPDIR:-/tmp}/ai-tools/{SLUG}-review.patch when no host is available, write ${TMPDIR:-/tmp}/ai-tools/{SLUG}-report.md, and treat the outcome as `<signal code="DELIVERED">`.
       If blocked: retain unit without push or PR, write evidence to ${TMPDIR:-/tmp}/ai-tools/{SLUG}-blocked.md, and treat outcome as `<signal code="BLOCKED">`. Partial delivery is not authorized.
     </step>
 
     <step id="4" name="report">
       In chat (user's language), provide the report or evidence path, a one-line outcome, the implementer model actually used, and the PR URL or review patch path.
-      Interrupt the user only for `<signal code="BLOCKED">` or an approval reserved by USER-AGENTS `<security_guardrails>`.
+      Interrupt the user only for `<signal code="BLOCKED">` or an approval reserved by `<security_guardrails>`.
     </step>
   </session_workflow>
 
@@ -83,7 +83,7 @@ argument-hint: "[the change to deliver]"
         <slug>{SLUG}</slug>
       </input>
       <instructions>
-        This payload is the brief; do not read sibling skill files. Nested spawn payloads are assembled here per USER-AGENTS `<rule id="payload-assembly">`. Include `<template role="stage-verifier">` from this file in the brief.
+        This payload is the brief; do not read sibling skill files. Nested spawn payloads are assembled here per `<rule id="payload-assembly">`. Include `<template role="stage-verifier">` from this file in the brief.
         Read {STAGE_FILE} of plans/{SLUG}/ and the repository rules (README.md, AGENTS.md if present). Implement only that stage.
         Match surrounding style, keep product and test edits within the declared files, and write behaviour tests for delivered changes.
         Spawn `<template role="stage-verifier">` as executor="default-worker" with the stage's commands and a kebab-case topic. If that spawn fails, run the commands yourself and write the same log.
@@ -122,13 +122,13 @@ argument-hint: "[the change to deliver]"
   <boundaries>
     <rule id="session-owns-delivery">The session owns user alignment, planning, the implementer question, in-scope decisions, judgment, commits, archival, the pull request, and reporting from disk paths.</rule>
     <rule id="one-model-question">Ask the implementer model question once per run, after the plan is on disk; reuse the answer for every stage and rework.</rule>
-    <rule id="spawn-apis">Per USER-AGENTS `<execution_protocol>`: `<template role="stage-planner">` runs as `executor="session-subagent"`; `<template role="stage-implementer">` runs as `executor="implementer"` with the recorded {IMPLEMENTER_MODEL}; `<template role="stage-verifier">` runs as `executor="default-worker"`.</rule>
+    <rule id="spawn-apis">Per `<execution_protocol>`: `<template role="stage-planner">` runs as `executor="session-subagent"`; `<template role="stage-implementer">` runs as `executor="implementer"` with the recorded {IMPLEMENTER_MODEL}; `<template role="stage-verifier">` runs as `executor="default-worker"`.</rule>
     <rule id="no-implementer-fallback">If `<template role="stage-planner">` or `<template role="stage-implementer">` cannot be spawned, do not plan or implement that stage in the session: end as `<signal code="BLOCKED">` naming the missing spawn.</rule>
-    <rule id="worker-fallback">If a default-worker spawn fails, the spawning context runs those commands itself per USER-AGENTS `<rule id="spawn-fallback">`.</rule>
+    <rule id="worker-fallback">If a default-worker spawn fails, the spawning context runs those commands itself per `<rule id="spawn-fallback">`.</rule>
     <rule id="completion-is-f">Archive, push, and pull-request creation run only when every required stage is F. An E stage is BLOCKED and retains the work unit.</rule>
-    <rule id="protocol-source">When USER-AGENTS `<execution_protocol>`, `<user_interaction>`, or `<security_guardrails>` are not already loaded, read `$HOME/.ai-tools/USER-AGENTS.md` before the first spawn or approval. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
+    <rule id="protocol-source">Follow user-wide `<execution_protocol>`, `<user_interaction>`, and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
     <rule id="stay-in-repo">Stay inside the working repository. Preserve pre-existing commit history.</rule>
     <rule id="log-decisions">Log in-scope decisions to plans/{SLUG}/vibe-decisions.md for PR reviewer audit.</rule>
-    <rule id="reserved-approvals">Never bypass approvals reserved by USER-AGENTS `<security_guardrails>` for cloud mutations or destructive operations.</rule>
+    <rule id="reserved-approvals">Never bypass approvals reserved by `<security_guardrails>` for cloud mutations or destructive operations.</rule>
   </boundaries>
 </skill>

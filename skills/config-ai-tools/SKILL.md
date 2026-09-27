@@ -19,7 +19,7 @@ argument-hint: "[setting to configure]"
       - `default_cli` (default `agy` or first detected harness): preferred CLI harness (`agy`, `claude`, `copilot`).
       - `ask_implementer_model` (default `true`): whether skills like `vibe-ai-tools` and `campaign-ai-tools` prompt the user for an implementer model or use pre-configured defaults directly.
       Parse optional request argument {SETTING} to focus configuration on a single preference if provided.
-      Interview the user through USER-AGENTS `<user_interaction>` on settings to configure, offering current or recommended defaults:
+      Interview the user through `<user_interaction>` on settings to configure, offering current or recommended defaults:
       1. Preferred CLI harness: `agy` (Google Antigravity), `claude` (Claude Code), or `copilot` (GitHub Copilot).
       2. Implementer model prompt: ask for model each run (`true`, recommended) or use configured defaults directly (`false`).
     </step>
@@ -65,7 +65,7 @@ argument-hint: "[setting to configure]"
 
   <boundaries>
     <rule id="local-config-only">Writes solely to $HOME/.ai-tools/config.local.json; never modifies repository code, commits, or tracked files.</rule>
-    <rule id="protocol-source">When USER-AGENTS `<execution_protocol>`, `<user_interaction>`, or `<security_guardrails>` are not already loaded, read `$HOME/.ai-tools/USER-AGENTS.md` before the first spawn or question. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
-    <rule id="default-worker">Spawn each `<template executor="default-worker">` per USER-AGENTS `<execution_protocol>`, assembling nested payloads per USER-AGENTS `<rule id="payload-assembly">`.</rule>
+    <rule id="protocol-source">Follow user-wide `<execution_protocol>`, `<user_interaction>`, and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
+    <rule id="default-worker">Spawn each `<template executor="default-worker">` per `<execution_protocol>`, assembling nested payloads per `<rule id="payload-assembly">`.</rule>
   </boundaries>
 </skill>

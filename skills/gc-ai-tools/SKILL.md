@@ -30,7 +30,7 @@ argument-hint: "[what to inspect or change in Google Cloud]"
 
     <step id="3" name="mutation_guardrail">
       Identify if the command creates billable assets, mutates configurations, or deletes cloud resources.
-      Present each mutation as an explicit approval request to the user per USER-AGENTS `<security_guardrails>`:
+      Present each mutation as an explicit approval request to the user per `<security_guardrails>`:
       - State exact command, target project/resource, reason, and cost or blast-radius impact.
       - Execute only after explicit affirmative user approval.
     </step>
@@ -63,7 +63,7 @@ argument-hint: "[what to inspect or change in Google Cloud]"
     <rule id="reads-free-mutations-approved">Read-only queries run freely; every mutation requires separate user approval.</rule>
     <rule id="state-cost">State cost impact (SKU, ongoing cost, billable status) before any resource creation.</rule>
     <rule id="outputs-on-disk">Save large outputs and logs to ${TMPDIR:-/tmp}/ai-tools/ rather than flooding session context.</rule>
-    <rule id="protocol-source">When USER-AGENTS `<execution_protocol>`, `<user_interaction>`, or `<security_guardrails>` are not already loaded, read `$HOME/.ai-tools/USER-AGENTS.md` before the first spawn or approval. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
-    <rule id="default-worker">Spawn each `<template executor="default-worker">` per USER-AGENTS `<execution_protocol>`, assembling nested payloads per USER-AGENTS `<rule id="payload-assembly">`.</rule>
+    <rule id="protocol-source">Follow user-wide `<execution_protocol>`, `<user_interaction>`, and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
+    <rule id="default-worker">Spawn each `<template executor="default-worker">` per `<execution_protocol>`, assembling nested payloads per `<rule id="payload-assembly">`.</rule>
   </boundaries>
 </skill>

@@ -63,8 +63,8 @@ argument-hint: "[optional: harnesses in scope, or extra instructions]"
     <rule id="scope-roots">Touch only $AI_TOOLS and declared harness destination roots.</rule>
     <rule id="canonical-script">Resolve `$HOME/.ai-tools` first and invoke `"$HOME/.ai-tools/scripts/shell/update.sh"`; do not run a relative `scripts/shell/update.sh` from the caller's project.</rule>
     <rule id="home-agents-untouched">Never touch $HOME/AGENTS.md.</rule>
-    <rule id="protocol-source">When USER-AGENTS `<execution_protocol>`, `<user_interaction>`, or `<security_guardrails>` are not already loaded, read `$HOME/.ai-tools/USER-AGENTS.md` before the first spawn or approval. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
+    <rule id="protocol-source">Follow user-wide `<execution_protocol>`, `<user_interaction>`, and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
     <rule id="separate-approvals">Destructive steps require explicit separate approval; never bypass safety flags.</rule>
-    <rule id="default-worker">Spawn each `<template executor="default-worker">` per USER-AGENTS `<execution_protocol>`, assembling nested payloads per USER-AGENTS `<rule id="payload-assembly">`.</rule>
+    <rule id="default-worker">Spawn each `<template executor="default-worker">` per `<execution_protocol>`, assembling nested payloads per `<rule id="payload-assembly">`.</rule>
   </boundaries>
 </skill>

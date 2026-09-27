@@ -42,7 +42,7 @@ argument-hint: "[optional harness name]"
 
     <step id="3" name="tier_configuration">
       Read existing `$HOME/.ai-tools/config.local.json` if present to load previously chosen model preferences.
-      For each detected harness, prompt the user via USER-AGENTS `<user_interaction>` to select the preferred model for each agent tier (`junior`, `mid`, `senior`):
+      For each detected harness, prompt the user via `<user_interaction>` to select the preferred model for each agent tier (`junior`, `mid`, `senior`):
       - Offer discovered options with the current setting or `config/agents.json` default marked as recommended.
       - Allow the user to select or confirm reasoning effort tiers (`low`, `medium`, `high`, `default`) where supported.
     </step>
@@ -91,7 +91,7 @@ argument-hint: "[optional harness name]"
 
   <boundaries>
     <rule id="local-config-only">Writes solely to $HOME/.ai-tools/config.local.json; never modifies repository code, commits, or tracked files.</rule>
-    <rule id="protocol-source">When USER-AGENTS `<execution_protocol>`, `<user_interaction>`, or `<security_guardrails>` are not already loaded, read `$HOME/.ai-tools/USER-AGENTS.md` before the first spawn or question. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
-    <rule id="default-worker">Spawn each `<template executor="default-worker">` per USER-AGENTS `<execution_protocol>`, assembling nested payloads per USER-AGENTS `<rule id="payload-assembly">`.</rule>
+    <rule id="protocol-source">Follow user-wide `<execution_protocol>`, `<user_interaction>`, and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
+    <rule id="default-worker">Spawn each `<template executor="default-worker">` per `<execution_protocol>`, assembling nested payloads per `<rule id="payload-assembly">`.</rule>
   </boundaries>
 </skill>
