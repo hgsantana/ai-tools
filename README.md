@@ -6,13 +6,13 @@
 
 A toolkit of **skills** and **user-wide instructions** for Claude Code, GitHub Copilot, and Google Antigravity.
 
-This repository is the source of those tools. It is installed on the user's machine at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Installation copies artifacts into each harness's user configuration.
+This repository is the source of those tools. It is installed on the user's machine at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Installation links artifacts (falling back to copies when symlinks are unavailable) into each harness's user configuration.
 
 How it operates:
 
 1. **A harness toolkit.** Skills and `USER-AGENTS.md` are what the supported harnesses load after install.
 2. **Machine-local install.** `$HOME/.ai-tools` is the only supported clone. Installed instructions and skills reference that path.
-3. **User-wide instructions.** [`USER-AGENTS.md`](USER-AGENTS.md) is copied as the global instructions file for every supported harness. After install it provides global planning, implementation, and execution protocols; it is not this repository's rule file (rule 3). The copy includes Copilot `applyTo: "**"` and Cursor `alwaysApply: true` so those destinations attach automatically.
+3. **User-wide instructions.** [`USER-AGENTS.md`](USER-AGENTS.md) is linked (or fallback-copied) as the global instructions file for every supported harness. After install it provides global planning, implementation, and execution protocols; it is not this repository's rule file (rule 3). The copy includes Copilot `applyTo: "**"` and Cursor `alwaysApply: true` so those destinations attach automatically.
 4. **Session-first skills.** Skills provide session-directed workflows in semantic XML. The host session executes them on its own model, interacts with the user, and delivers multi-stage work in that session. Builds, tests, script runs, and bulk fact collection go to the harness's default subagent. `vibe-ai-tools` and `campaign-ai-tools` spawn implementers per stage, picking that model from one question or config defaults. Campaign planning and stage validation run as session-subagents.
 5. **Frontmatter only in the host session.** Harnesses keep skill `name` and `description` in the skill list without loading the body. Skills are invoked explicitly by slash-command or skill name.
 
@@ -20,7 +20,7 @@ How it operates:
 
 | Path | What it is |
 |---|---|
-| [`USER-AGENTS.md`](USER-AGENTS.md) | User-wide instructions after install: planning and implementation protocols, execution protocol, language, native question tool, and security. Copied to each harness's global instructions destination. Workflows live in skills |
+| [`USER-AGENTS.md`](USER-AGENTS.md) | User-wide instructions after install: planning and implementation protocols, execution protocol, language, native question tool, and security. Linked (or fallback-copied) to each harness's global instructions destination. Workflows live in skills |
 | [`docs/USAGE.md`](docs/USAGE.md) | Harness-agnostic invocation guide for every shipped skill |
 | [`skills/`](skills/) | Each `skills/<name>/SKILL.md` has a semantic XML body. Harnesses list frontmatter; the session executes the workflow |
 | [`config/agents.json`](config/agents.json) | Central manifest declaring default model and reasoning effort for junior, mid, and senior agent tiers across supported harnesses |
@@ -100,7 +100,7 @@ Vocabulary. A new tag is registered here and in `scripts/lint.sh` (`XML_VOCAB`) 
 
 ### Installation contract
 
-12. Install global instructions and skill directories as **physical copies**. Never create an installation symlink; migrate a legacy symlink resolving into `$HOME/.ai-tools` to a copy.
+12. Install global instructions and skill directories as **symbolic links**. Fall back to physical copies only when the OS or filesystem refuses symlinks, and report every copy.
 13. Never overwrite a conflicting or locally modified destination by default. `--overwrite` explicitly replaces installed artifact paths for the selected harnesses; it never applies to `$HOME/AGENTS.md` or unrelated harness configuration.
 14. Never remove anything ai-tools did not create. Removal drops only legacy ai-tools links and copies that still match their source. `--force` also drops those same known regular-file or directory destinations when contents differ; it never unlinks a foreign symlink and never applies to `$HOME/AGENTS.md` or unrelated harness configuration.
 15. Every install/remove/update step is idempotent; on conflict, skip and report unless the user passed the process's explicit replacement or forced-removal flag.
@@ -137,7 +137,7 @@ On top of rules 18–20:
 - **Legacy Gemini sweep** — the stale-link sweep still examines the retired Gemini CLI root `$HOME/.gemini/skills` regardless of the selected harnesses; `--no-sweep` skips that too.
 - **Dry run** — `--dry-run` reports proposed harness actions without installing, removing, resetting, or purging, and supplies the findings and approval report for unattended runs. Update still runs `git fetch origin` (remote-tracking refs and `FETCH_HEAD` may change). Removal planning uses the current checkout; installation planning uses an archive of `origin/master`, so incoming skills are listed. The finish line notes that Git metadata may have been updated.
 - **Destructive flags** — `--overwrite` on install and update (replace conflicting artifact destinations and prune orphan `*-ai-tools` artifacts in the selected harnesses), `--discard-local` (reset discarding local work in the clone), `--instructions` (remove global instructions on removal), `--force` (remove known regular-file or directory destinations and orphan paths even when contents no longer match; never unlinks a symlink whose target is outside ai-tools), and `--purge` (delete the clone). Without the flag the script refuses or skips; it never guesses.
-- **Physical copies** — instructions and skills are always copied. Update removes current-version artifacts, then installs from `origin/master`; `--overwrite` is required for conflicting or locally modified installed artifacts.
+- **Symbolic links** — instructions and skills are installed as symbolic links; physical copies are used only as a fallback when the OS or filesystem refuses symlinks. Update removes current-version artifacts, then installs from `origin/master`; `--overwrite` is required for conflicting or locally modified installed artifacts.
 
 ## Development checks
 
@@ -184,7 +184,7 @@ When a rule in this README becomes mechanically verifiable, add its check to `sc
 
 Each case builds its own fixture: a harness layout for all three harnesses and a local `origin` git remote so no run reaches the network, plus, per case, a foreign skill or instructions file, a locally modified copy, a stale link from an older layout, or a symlink pointing outside the clone. Against it, the suites assert:
 
-- physical copies only, including migration from legacy ai-tools symlinks (rule 12)
+- symbolic links by default with fallback to copies when symlinks are unavailable (rule 12)
 - no overwrite by default and selected-harness overwrite with the explicit flag (rule 13)
 - never remove what ai-tools did not create (rule 14)
 - idempotency and skip-and-report on conflict (rule 15)
@@ -202,7 +202,7 @@ These bind the scripts and any human or AI intervening manually in [Installation
 - Never touch unrelated user skills, a repository's own `AGENTS.md` (that application's architecture), or `$HOME/AGENTS.md` (rule 17).
 - An AI operating the scripts asks which harnesses are in scope and reports discovery before a mutating run; the scripts themselves default to every detected harness.
 
-The safe-copy, legacy-link-removal, and copy-removal primitives are implemented once in [`scripts/shell/lib.sh`](scripts/shell/lib.sh). Scripts refuse unsafe paths, including `$HOME/AGENTS.md` reached through a parent-directory symlink, an `AI_TOOLS` override that is not `$HOME/.ai-tools`, and empty/root/home clone targets; manual intervention must honour the same rules.
+The safe-link, link-or-copy, and copy-removal primitives are implemented once in [`scripts/shell/lib.sh`](scripts/shell/lib.sh). Scripts refuse unsafe paths, including `$HOME/AGENTS.md` reached through a parent-directory symlink, an `AI_TOOLS` override that is not `$HOME/.ai-tools`, and empty/root/home clone targets; manual intervention must honour the same rules.
 
 ## Supported harnesses
 
@@ -235,9 +235,9 @@ Every `install.sh` step is idempotent and reports conflicts it skips.
 
 1. **Preconditions** — the clone at `$HOME/.ai-tools` exists and validates; `install.sh` clones it when missing, except under `--dry-run` (rule 16; move any existing clone there — no other location is recoverable by configuration).
 2. **Discovery and scope** — report each detected harness from its configuration directory, CLI, or known IDE extension, plus possible AI extensions outside scope. Omitted `--harnesses` selects those detected harnesses; `--harnesses all` selects all three and creates their skill roots as needed. Report `$HOME/.agents` while leaving it untouched.
-3. **Instructions** — copy `USER-AGENTS.md` to each scoped harness's global instructions destination (`--no-instructions` skips). Antigravity uses `$HOME/.gemini/GEMINI.md`.
-4. **Skills** — recursively copy each `skills/*-ai-tools` directory into every scoped skills root (rules 5–6). Harnesses list frontmatter; the host session reads the body only when it runs the skill. With `--overwrite`, orphan `*-ai-tools` skills no longer in the tree are pruned from the scoped roots.
-5. **Verify** — every installed instruction and skill is a physical copy matching its source; `USER-AGENTS.md` fits the repository's 8,000-character cap (rule 3); every shipped `skills/<name>/SKILL.md` exists. Any installation symlink or an orphan `*-ai-tools` skill is a finding. Skipped under `--dry-run`; re-run anytime with `verify`.
+3. **Instructions** — link `USER-AGENTS.md` into each scoped harness's global instructions destination (`--no-instructions` skips), with fallback to copy if symlinks are unavailable. Antigravity uses `$HOME/.gemini/GEMINI.md`.
+4. **Skills** — link each `skills/*-ai-tools` directory into every scoped skills root (rules 5–6), falling back to copy if symlinks are unavailable. Harnesses list frontmatter; the host session reads the body only when it runs the skill. With `--overwrite`, orphan `*-ai-tools` skills no longer in the tree are pruned from the scoped roots.
+5. **Verify** — every installed instruction and skill is an ai-tools symlink or matching copy fallback; `USER-AGENTS.md` fits the repository's 8,000-character cap (rule 3); every shipped `skills/<name>/SKILL.md` exists. Skipped under `--dry-run`; re-run anytime with `verify`.
 
 Then restart or reload any harness that caches skills at startup. Confirm a slash command for every shipped skill.
 
@@ -290,6 +290,7 @@ Then restart or reload the harness and confirm a slash command for every shipped
 - **Copilot ignores installed instructions:** `verify` checks file equality, not activation. Copilot needs `applyTo` in `~/.copilot/instructions/*.instructions.md`. Restart the IDE, then use Chat diagnostics (Copilot). A prompt with no file open still depends on those headers. Confirm on a fresh profile: ordinary request with no file open, explicit `/skill`, a delegated default-worker that must not re-offer skills, missing native question tool (chat fallback), and a `$HOME/AGENTS.md` sentinel from an unrelated repository.
 - **Legacy or dangling ai-tools links:** [Update](#update) sweeps stale links after removing current-version artifacts.
 - **Installed copies out of date:** copies do not track `git pull` — use [Update](#update).
+- **`copied (will not track updates)`:** the OS refused symlinks (on Windows: Developer Mode or an elevated shell, then reinstall converts copies to links). Until then, [Update](#update) after every upstream change on that machine.
 - **A conflicting or locally modified installed artifact should be replaced:** rerun install or update with `--overwrite` and an explicit `--harnesses` scope. The flag affects only known artifact destinations in that scope.
 - **A locally modified installed artifact should be removed:** rerun remove with `--force` and an explicit `--harnesses` scope. The flag affects known regular-file or directory destinations and orphan `*-ai-tools` skills in that scope; foreign symlinks stay.
 - **A copied artifact was edited locally:** preserve the edit elsewhere before `--overwrite` or `--force`; installed copies are managed deployment artifacts, while `$HOME/AGENTS.md` remains the supported place for personal instructions.

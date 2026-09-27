@@ -200,6 +200,39 @@ t_run() {
   t_run_at "$root" "$root/home" "$root/home/.ai-tools" "$script" "$@"
 }
 
+t_run_no_symlink() {
+  # usage: t_run_no_symlink <root> <script> [args...]
+  # Same as t_run, with a shim directory prepended to PATH containing an
+  # `ln` that always fails, forcing safe_link to return 2 and link_or_copy
+  # to fall back to a copy.
+  local root="$1" script="$2" home ai_tools out shim
+  shift 2
+  home="$root/home"
+  ai_tools="$root/home/.ai-tools"
+  t_sandbox_guard "$root" "$home" "$ai_tools"
+  shim="$root/.shim"
+  mkdir -p "$shim" || fatal "t_run_no_symlink: cannot create shim dir: $shim"
+  cat > "$shim/ln" <<'EOF'
+#!/bin/sh
+exit 1
+EOF
+  chmod +x "$shim/ln" || fatal "t_run_no_symlink: cannot chmod shim ln"
+  out=$(mktemp "${TMPDIR:-/tmp}/ai-tools-test-out.XXXXXX") || fatal "t_run_no_symlink: mktemp failed"
+  env -i \
+    PATH="$shim:$PATH" \
+    HOME="$home" \
+    USERPROFILE="$home" \
+    AI_TOOLS="$ai_tools" \
+    GIT_TERMINAL_PROMPT=0 \
+    GIT_CONFIG_NOSYSTEM=1 \
+    TERM="${TERM:-dumb}" \
+    LANG="${LANG:-C}" \
+    "$script" "$@" >"$out" 2>&1
+  T_LAST_EXIT=$?
+  T_LAST_OUTPUT=$(cat "$out")
+  rm -f "$out"
+}
+
 t_run_stdin() {
   # usage: t_run_stdin <root> <stdin-string> <script> [args...]
   # Same as t_run, feeding <stdin-string> plus a trailing newline on stdin

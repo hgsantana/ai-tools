@@ -11,7 +11,7 @@ t_install() {
 }
 
 case_install_fresh() {
-  # Rule 12: fresh install physically copies every skill and instructions.
+  # Rule 12: fresh install symlinks every skill and instructions.
   local root f base
   t_fixture
   root="$T_ROOT"
@@ -22,13 +22,11 @@ case_install_fresh() {
   for f in "$root/home/.ai-tools/skills"/*-ai-tools; do
     [ -d "$f" ] || continue
     base=$(basename "$f")
-    t_assert_regular_directory "$root/home/.claude/skills/$base"
-    t_assert_same_content "$root/home/.claude/skills/$base" "$f"
+    t_assert_symlink "$root/home/.claude/skills/$base" "$root/home/.ai-tools"
   done
 
-  t_assert_regular_file "$root/home/.claude/CLAUDE.md"
-  t_assert_same_content "$root/home/.claude/CLAUDE.md" "$root/home/.ai-tools/USER-AGENTS.md"
-  t_assert_line "copied:"
+  t_assert_symlink "$root/home/.claude/CLAUDE.md" "$root/home/.ai-tools"
+  t_assert_line "linked:"
   t_assert_no_line "WARN:"
 
   t_cleanup "$root"
@@ -46,7 +44,7 @@ case_install_idempotent() {
   before=$(t_snapshot "$root/home/.claude")
   t_install "$root" --harnesses claude-code
   t_assert_exit 0
-  t_assert_line "copy up to date:"
+  t_assert_line "already linked:"
   t_assert_no_line "SKIP:"
   t_assert_no_line "WARN:"
   t_assert_unchanged "$root/home/.claude" "$before"
@@ -66,7 +64,7 @@ case_install_foreign_file_skipped() {
   t_assert_exit 2
   t_assert_line "SKIP: exists, not overwriting: $T_FOREIGN_SKILL_PATH"
   t_assert_content "$T_FOREIGN_SKILL_PATH/SKILL.md" "not an ai-tools file"
-  t_assert_regular_directory "$root/home/.claude/skills/gh-ai-tools"
+  t_assert_symlink "$root/home/.claude/skills/gh-ai-tools" "$root/home/.ai-tools"
 
   t_cleanup "$root"
 }
@@ -104,12 +102,9 @@ case_install_overwrite_conflicts() {
 
   t_install "$root" --harnesses claude-code --overwrite
   t_assert_exit 0
-  t_assert_regular_directory "$T_FOREIGN_SKILL_PATH"
-  t_assert_same_content "$T_FOREIGN_SKILL_PATH" "$root/home/.ai-tools/skills/vibe-ai-tools"
-  t_assert_regular_directory "$root/home/.claude/skills/az-ai-tools"
-  t_assert_same_content "$root/home/.claude/skills/az-ai-tools" "$root/home/.ai-tools/skills/az-ai-tools"
-  t_assert_regular_file "$T_FOREIGN_INSTRUCTIONS_PATH"
-  t_assert_same_content "$T_FOREIGN_INSTRUCTIONS_PATH" "$root/home/.ai-tools/USER-AGENTS.md"
+  t_assert_symlink "$T_FOREIGN_SKILL_PATH" "$root/home/.ai-tools"
+  t_assert_symlink "$root/home/.claude/skills/az-ai-tools" "$root/home/.ai-tools"
+  t_assert_symlink "$T_FOREIGN_INSTRUCTIONS_PATH" "$root/home/.ai-tools"
   t_assert_content "$external_target/SKILL.md" "external target stays intact"
 
   t_cleanup "$root"
@@ -156,7 +151,7 @@ case_install_dry_run() {
   before=$(t_snapshot "$root/home")
   t_install "$root" --harnesses claude-code --dry-run
   t_assert_exit 0
-  t_assert_line "would copy:"
+  t_assert_line "would link:"
   t_assert_line "(dry-run: nothing was changed)"
   t_assert_line "info: dry-run: verification skipped"
   t_assert_unchanged "$root/home" "$before"
@@ -165,20 +160,42 @@ case_install_dry_run() {
   t_cleanup "$root"
 }
 
-case_install_legacy_symlinks_migrated() {
-  # Rule 12: legacy links into ai-tools migrate to physical copies without --overwrite.
+case_install_copies_migrated_to_symlinks() {
+  # Rule 12: unmodified copies migrate to symlinks without --overwrite.
   local root source_skill
   t_fixture
   root="$T_ROOT"
 
   source_skill="$root/home/.ai-tools/skills/vibe-ai-tools"
-  ln -s "$source_skill" "$root/home/.claude/skills/vibe-ai-tools"
-  ln -s "$root/home/.ai-tools/USER-AGENTS.md" "$root/home/.claude/CLAUDE.md"
+  mkdir -p "$root/home/.claude/skills/vibe-ai-tools"
+  cp -R "$source_skill"/* "$root/home/.claude/skills/vibe-ai-tools/"
+  cp "$root/home/.ai-tools/USER-AGENTS.md" "$root/home/.claude/CLAUDE.md"
 
   t_install "$root" --harnesses claude-code
   t_assert_exit 0
-  t_assert_regular_directory "$root/home/.claude/skills/vibe-ai-tools"
-  t_assert_same_content "$root/home/.claude/skills/vibe-ai-tools" "$source_skill"
+  t_assert_symlink "$root/home/.claude/skills/vibe-ai-tools" "$root/home/.ai-tools"
+  t_assert_symlink "$root/home/.claude/CLAUDE.md" "$root/home/.ai-tools"
+
+  t_cleanup "$root"
+}
+
+case_install_no_symlink_fallback() {
+  # Rule 12: copy fallback when the OS/fs refuses symlinks.
+  local root f base
+  t_fixture
+  root="$T_ROOT"
+
+  t_run_no_symlink "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
+  t_assert_exit 0
+  t_assert_line "ok: copied (will not track updates):"
+
+  for f in "$root/home/.ai-tools/skills"/*-ai-tools; do
+    [ -d "$f" ] || continue
+    base=$(basename "$f")
+    t_assert_regular_directory "$root/home/.claude/skills/$base"
+    t_assert_same_content "$root/home/.claude/skills/$base" "$f"
+  done
+
   t_assert_regular_file "$root/home/.claude/CLAUDE.md"
   t_assert_same_content "$root/home/.claude/CLAUDE.md" "$root/home/.ai-tools/USER-AGENTS.md"
 
@@ -194,9 +211,9 @@ case_install_antigravity_instructions() {
 
   t_install "$root" --harnesses antigravity
   t_assert_exit 0
-  t_assert_regular_file "$root/home/.gemini/GEMINI.md"
-  t_assert_regular_directory "$root/home/.gemini/config/skills/vibe-ai-tools"
-  t_assert_regular_directory "$root/home/.gemini/config/skills/az-ai-tools"
+  t_assert_symlink "$root/home/.gemini/GEMINI.md" "$root/home/.ai-tools"
+  t_assert_symlink "$root/home/.gemini/config/skills/vibe-ai-tools" "$root/home/.ai-tools"
+  t_assert_symlink "$root/home/.gemini/config/skills/az-ai-tools" "$root/home/.ai-tools"
   t_assert_absent "$root/home/.gemini/skills/vibe-ai-tools"
 
   t_cleanup "$root"
@@ -226,11 +243,10 @@ case_install_all_includes_undetected_harnesses() {
 
   t_install "$root" --harnesses all
   t_assert_exit 0
-  t_assert_regular_directory "$home/.claude/skills/vibe-ai-tools"
-  t_assert_regular_directory "$home/.copilot/skills/vibe-ai-tools"
-  t_assert_regular_directory "$home/.gemini/config/skills/vibe-ai-tools"
-  t_assert_regular_file "$home/.copilot/instructions/ai-tools.instructions.md"
-  t_assert_same_content "$home/.copilot/instructions/ai-tools.instructions.md" "$home/.ai-tools/USER-AGENTS.md"
+  t_assert_symlink "$home/.claude/skills/vibe-ai-tools" "$home/.ai-tools"
+  t_assert_symlink "$home/.copilot/skills/vibe-ai-tools" "$home/.ai-tools"
+  t_assert_symlink "$home/.gemini/config/skills/vibe-ai-tools" "$home/.ai-tools"
+  t_assert_symlink "$home/.copilot/instructions/ai-tools.instructions.md" "$home/.ai-tools"
 
   t_cleanup "$root"
 }
@@ -244,8 +260,7 @@ case_install_copilot_instructions_frontmatter() {
   t_install "$root" --harnesses copilot
   t_assert_exit 0
   dest="$root/home/.copilot/instructions/ai-tools.instructions.md"
-  t_assert_regular_file "$dest"
-  t_assert_same_content "$dest" "$root/home/.ai-tools/USER-AGENTS.md"
+  t_assert_symlink "$dest" "$root/home/.ai-tools"
   t_assert_content "$dest" 'applyTo: "**"'
   t_assert_no_line "no global instructions destination: copilot"
 
@@ -329,7 +344,7 @@ case_bootstrap_clones_then_installs() {
   t_run "$root" "$AI_TOOLS/scripts/shell/install-bash.sh" --harnesses claude-code
   t_assert_exit 0
   t_assert_regular_file "$home/.ai-tools/scripts/shell/install.sh"
-  t_assert_regular_directory "$home/.claude/skills/vibe-ai-tools"
+  t_assert_symlink "$home/.claude/skills/vibe-ai-tools" "$home/.ai-tools"
 
   t_cleanup "$root"
 }
@@ -365,7 +380,7 @@ case_install_parent_symlink_protects_agents_md() {
   t_assert_exit 2
   t_assert_line "refusing \$HOME/AGENTS.md alias:"
   t_assert_content "$home/AGENTS.md" "user overrides"
-  t_assert_regular_directory "$home/.claude/skills/vibe-ai-tools"
+  t_assert_symlink "$home/.claude/skills/vibe-ai-tools" "$home/.ai-tools"
 
   t_cleanup "$root"
 }
@@ -380,8 +395,8 @@ case_install_home_with_spaces() {
   t_run_at "$root" "$home" "$home/.ai-tools" \
     "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
-  t_assert_regular_directory "$home/.claude/skills/vibe-ai-tools"
-  t_assert_regular_file "$home/.claude/CLAUDE.md"
+  t_assert_symlink "$home/.claude/skills/vibe-ai-tools" "$home/.ai-tools"
+  t_assert_symlink "$home/.claude/CLAUDE.md" "$home/.ai-tools"
 
   t_cleanup "$root"
 }

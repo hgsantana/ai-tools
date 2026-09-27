@@ -26,13 +26,28 @@ case_remove_removes_installed_copies() {
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code
   t_assert_exit 0
-  t_assert_line "removed copy:"
+  t_assert_line "removed link:"
   t_assert_absent "$root/home/.claude/skills/vibe-ai-tools"
   if [ -e "$root/home/.claude/CLAUDE.md" ] || [ -L "$root/home/.claude/CLAUDE.md" ]; then
     ok "$T_CASE: instructions still present (no --instructions): $root/home/.claude/CLAUDE.md"
   else
     warn "$T_CASE: instructions unexpectedly absent: $root/home/.claude/CLAUDE.md"
   fi
+
+  t_cleanup "$root"
+}
+
+case_remove_removes_installed_fallback_copies() {
+  local root
+  t_fixture
+  root="$T_ROOT"
+
+  t_run_no_symlink "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
+
+  t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code
+  t_assert_exit 0
+  t_assert_line "removed copy:"
+  t_assert_absent "$root/home/.claude/skills/vibe-ai-tools"
 
   t_cleanup "$root"
 }
@@ -233,7 +248,7 @@ case_remove_instructions_gate() {
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code
-  t_assert_regular_file "$root/home/.claude/CLAUDE.md"
+  t_assert_symlink "$root/home/.claude/CLAUDE.md" "$root/home/.ai-tools"
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code --instructions
@@ -249,7 +264,7 @@ case_remove_antigravity_instructions() {
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses antigravity
 
-  t_assert_regular_file "$root/home/.gemini/GEMINI.md"
+  t_assert_symlink "$root/home/.gemini/GEMINI.md" "$root/home/.ai-tools"
   t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses antigravity --instructions
   t_assert_absent "$root/home/.gemini/GEMINI.md"
 
@@ -263,7 +278,7 @@ case_remove_copilot_instructions() {
   dest="$root/home/.copilot/instructions/ai-tools.instructions.md"
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses copilot
-  t_assert_regular_file "$dest"
+  t_assert_symlink "$dest" "$root/home/.ai-tools"
   t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses copilot --instructions
   t_assert_absent "$dest"
 
@@ -363,6 +378,25 @@ case_remove_without_a_clone() {
   root="$T_ROOT"
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
+
+  saved="$root/saved-scripts"
+  cp -r "$root/home/.ai-tools/scripts" "$saved" || fatal "$T_CASE: cannot save scripts before deleting the clone"
+  rm -rf "$root/home/.ai-tools"
+
+  t_run "$root" "$saved/shell/remove.sh" --harnesses claude-code
+  t_assert_exit 2
+  t_assert_line "WARN: $root/home/.ai-tools missing — copies cannot be verified; removing links only (sweep)"
+  t_assert_absent "$root/home/.claude/skills/vibe-ai-tools"
+
+  t_cleanup "$root"
+}
+
+case_remove_fallback_copies_without_a_clone() {
+  local root saved
+  t_fixture
+  root="$T_ROOT"
+
+  t_run_no_symlink "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
 
   saved="$root/saved-scripts"
   cp -r "$root/home/.ai-tools/scripts" "$saved" || fatal "$T_CASE: cannot save scripts before deleting the clone"
@@ -494,7 +528,7 @@ case_remove_failed_rm_is_warning() {
   skill="$home/.claude/skills/vibe-ai-tools"
 
   t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
-  t_assert_regular_directory "$skill"
+  t_assert_symlink "$skill" "$root/home/.ai-tools"
 
   wrapper="$root/bin"
   mkdir -p "$wrapper" || fatal "$T_CASE: cannot create wrapper dir"
@@ -513,9 +547,9 @@ EOF
   PATH="$wrapper:$PATH" t_run "$root" "$home/.ai-tools/scripts/shell/remove.sh" \
     --harnesses claude-code
   t_assert_exit 2
-  t_assert_line "cannot remove copy:"
-  t_assert_line "still installed: $skill"
-  t_assert_regular_directory "$skill"
+  t_assert_line "cannot remove link:"
+  t_assert_line "still linked: $skill"
+  t_assert_symlink "$skill" "$root/home/.ai-tools"
 
   t_cleanup "$root"
 }

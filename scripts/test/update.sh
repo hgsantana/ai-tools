@@ -177,13 +177,13 @@ case_update_reset_confined() {
 
 # --- Newly shipped content (README Update, step 4) -----------------------------
 
-case_update_new_content_copied() {
+case_update_new_content_linked() {
   local root home marker
 
   t_fixture
   root="$T_ROOT"
   home="$root/home"
-  marker="copytest"
+  marker="linktest"
 
   t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
@@ -192,9 +192,8 @@ case_update_new_content_copied() {
 
   t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
   t_assert_exit 0
-  t_assert_regular_directory "$home/.claude/skills/$marker-ai-tools"
-  t_assert_same_content "$home/.claude/skills/$marker-ai-tools" "$home/.ai-tools/skills/$marker-ai-tools"
-  t_assert_line "copied:"
+  t_assert_symlink "$home/.claude/skills/$marker-ai-tools" "$home/.ai-tools"
+  t_assert_line "linked:"
 
   t_cleanup "$root"
 }
@@ -211,16 +210,16 @@ case_update_stale_copy_refreshed() {
   instructions="$home/.claude/CLAUDE.md"
   skill="$home/.claude/skills/vibe-ai-tools"
 
-  t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
+  t_run_no_symlink "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
   t_assert_regular_file "$instructions"
   t_assert_regular_directory "$skill"
 
   t_origin_commit "$marker"
 
-  t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
+  t_run_no_symlink "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
   t_assert_exit 0
-  t_assert_line "copied:"
+  t_assert_line "copied (will not track updates):"
   t_assert_same_content "$instructions" "$home/.ai-tools/USER-AGENTS.md"
   t_assert_same_content "$skill" "$home/.ai-tools/skills/vibe-ai-tools"
 
@@ -236,7 +235,7 @@ case_update_modified_copy_kept() {
   marker="modcopy"
   target="$home/.claude/skills/vibe-ai-tools/SKILL.md"
 
-  t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
+  t_run_no_symlink "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
 
   printf '\nlocal edit that matches no revision\n' >> "$target"
@@ -244,7 +243,7 @@ case_update_modified_copy_kept() {
 
   t_origin_commit "$marker"
 
-  t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
+  t_run_no_symlink "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
   t_assert_exit 2
   t_assert_line "SKIP: copy was modified locally, user work preserved:"
 
@@ -266,16 +265,16 @@ case_update_up_to_date_copy() {
   marker="uptodate"
   skill="$home/.claude/skills/az-ai-tools"
 
-  t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
+  t_run_no_symlink "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
 
   # t_origin_commit only touches vibe-ai-tools/SKILL.md; az-ai-tools's copy
   # stays equal to its (unchanged) source across the reset.
   t_origin_commit "$marker"
 
-  t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
+  t_run_no_symlink "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
   t_assert_exit 0
-  t_assert_line "copied: $skill"
+  t_assert_line "copied (will not track updates): $skill"
 
   t_cleanup "$root"
 }
@@ -288,17 +287,12 @@ case_update_overwrite_modified_copy() {
   home="$root/home"
   skill="$home/.claude/skills/vibe-ai-tools"
 
-  t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
+  t_run_no_symlink "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   printf '\nlocal edit that should be replaced\n' >> "$skill/SKILL.md"
 
   t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code --overwrite
   t_assert_exit 0
-  t_assert_same_content "$skill" "$home/.ai-tools/skills/vibe-ai-tools"
-  if grep -qF 'local edit that should be replaced' "$skill/SKILL.md"; then
-    warn "$T_CASE: --overwrite preserved the modified copy"
-  else
-    ok "$T_CASE: --overwrite replaced the modified copy"
-  fi
+  t_assert_symlink "$skill" "$home/.ai-tools"
 
   t_cleanup "$root"
 }

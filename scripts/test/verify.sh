@@ -58,6 +58,8 @@ case_verify_skill_differs() {
   t_assert_exit 0
 
   dest="$root/home/.claude/skills/vibe-ai-tools"
+  rm -rf "$dest" || fatal "$T_CASE: cannot remove $dest"
+  mkdir -p "$dest"
   printf 'unrelated file\n' > "$dest/SKILL.md"
 
   before=$(t_snapshot "$root/home")
@@ -70,19 +72,46 @@ case_verify_skill_differs() {
   t_cleanup "$root"
 }
 
-case_verify_rejects_legacy_symlinks() {
+case_verify_rejects_external_symlinks() {
+  local root before home ext_skill ext_instr
+  t_fixture
+  root="$T_ROOT"
+  home="$root/home"
+
+  ext_skill="$root/external-skill"
+  mkdir -p "$ext_skill"
+  printf 'external\n' > "$ext_skill/SKILL.md"
+  ext_instr="$root/external-instr.md"
+  printf 'external\n' > "$ext_instr"
+
+  mkdir -p "$home/.claude/skills"
+  ln -s "$ext_skill" "$home/.claude/skills/vibe-ai-tools"
+  ln -s "$ext_instr" "$home/.claude/CLAUDE.md"
+
+  before=$(t_snapshot "$home")
+  t_verify "$root" --harnesses claude-code
+  t_assert_exit 2
+  t_assert_line "WARN: skill link points elsewhere:"
+  t_assert_line "WARN: instructions link points elsewhere:"
+  t_assert_unchanged "$home" "$before"
+  rm -f "$before"
+
+  t_cleanup "$root"
+}
+
+case_verify_accepts_fallback_copies() {
   local root before home
   t_fixture
   root="$T_ROOT"
   home="$root/home"
 
-  ln -s "$home/.ai-tools/skills/vibe-ai-tools" "$home/.claude/skills/vibe-ai-tools"
-  ln -s "$home/.ai-tools/USER-AGENTS.md" "$home/.claude/CLAUDE.md"
+  t_run_no_symlink "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
+  t_assert_exit 0
 
   before=$(t_snapshot "$home")
   t_verify "$root" --harnesses claude-code
-  t_assert_exit 2
-  t_assert_line "WARN:"
+  t_assert_exit 0
+  t_assert_no_line "WARN:"
   t_assert_unchanged "$home" "$before"
   rm -f "$before"
 

@@ -54,7 +54,7 @@ case_reinstall_stale_link_removed() {
   t_run "$root" "$root/home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
   t_assert_exit 0
   t_assert_absent "$T_STALE_LINK_PATH"
-  t_assert_regular_directory "$root/home/.claude/skills/vibe-ai-tools"
+  t_assert_symlink "$root/home/.claude/skills/vibe-ai-tools" "$root/home/.ai-tools"
 
   t_cleanup "$root"
 }
@@ -119,7 +119,7 @@ case_reinstall_no_instructions() {
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code --no-instructions
   t_assert_exit 0
-  t_assert_regular_file "$root/home/.claude/CLAUDE.md"
+  t_assert_symlink "$root/home/.claude/CLAUDE.md" "$root/home/.ai-tools"
 
   t_cleanup "$root"
 }
@@ -147,13 +147,7 @@ case_reinstall_overwrite_modified_copy() {
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code --overwrite
   t_assert_exit 0
-  t_assert_regular_directory "$T_MODIFIED_COPY_PATH"
-  t_assert_same_content "$T_MODIFIED_COPY_PATH" "$root/home/.ai-tools/skills/gh-ai-tools"
-  if grep -qF 'local edit that matches no revision' "$T_MODIFIED_COPY_PATH/SKILL.md"; then
-    warn "$T_CASE: --overwrite preserved a conflicting local edit"
-  else
-    ok "$T_CASE: --overwrite replaced the conflicting copy"
-  fi
+  t_assert_symlink "$T_MODIFIED_COPY_PATH" "$root/home/.ai-tools"
 
   t_cleanup "$root"
 }
@@ -166,9 +160,9 @@ case_reinstall_all_harnesses() {
 
   t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses all
   t_assert_exit 0
-  t_assert_regular_directory "$home/.claude/skills/vibe-ai-tools"
-  t_assert_regular_directory "$home/.copilot/skills/vibe-ai-tools"
-  t_assert_regular_directory "$home/.gemini/config/skills/vibe-ai-tools"
+  t_assert_symlink "$home/.claude/skills/vibe-ai-tools" "$home/.ai-tools"
+  t_assert_symlink "$home/.copilot/skills/vibe-ai-tools" "$home/.ai-tools"
+  t_assert_symlink "$home/.gemini/config/skills/vibe-ai-tools" "$home/.ai-tools"
 
   t_cleanup "$root"
 }

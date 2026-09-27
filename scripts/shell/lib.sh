@@ -424,41 +424,113 @@ copy_artifact() {
   return 0
 }
 
-safe_copy() {
-  # usage: safe_copy <source-in-ai-tools> <destination-path>
-  # All installs are physical copies. Legacy ai-tools links migrate safely;
-  # foreign links and differing artifacts require explicit --overwrite.
-  local src="$1" dest="$2"
+safe_link() {
+  # usage: safe_link <target-in-ai-tools> <destination-path>
+  # returns 0 done/already/migrated, 1 occupied/skipped, 2 symlink refused by OS/fs
+  local target="$1" dest="$2" cur want tmp_link
   refuse_protected_dest "$dest" && return 1
   if [ "$DRY_RUN" = 1 ] && is_dry_gone "$dest"; then
-    copy_artifact "$src" "$dest" install
-    return $?
+    ok "would link: $dest -> $target"
+    return 0
   fi
   if [ -L "$dest" ]; then
+    cur=$(readlink -f "$dest" 2>/dev/null || readlink "$dest")
+    want=$(readlink -f "$target" 2>/dev/null || printf '%s' "$target")
+    if [ "$cur" = "$want" ] || [ "$(readlink "$dest")" = "$target" ]; then
+      ok "already linked: $dest"
+      return 0
+    fi
     if is_ai_tools_link "$dest"; then
-      copy_artifact "$src" "$dest" migrate
-      return $?
+      if [ "$DRY_RUN" = 1 ]; then
+        ok "would link: $dest -> $target"
+        return 0
+      fi
+      rm -f "$dest" 2>/dev/null || { warn "cannot replace link: $dest"; return 1; }
+      if ln -s "$target" "$dest" 2>/dev/null; then
+        ok "linked: $dest -> $target"
+        return 0
+      fi
+      return 2
     fi
     if [ "$OVERWRITE" = 1 ]; then
-      copy_artifact "$src" "$dest" overwrite
-      return $?
+      if [ "$DRY_RUN" = 1 ]; then
+        ok "would link: $dest -> $target"
+        return 0
+      fi
+      rm -f "$dest" 2>/dev/null || { warn "cannot replace link: $dest"; return 1; }
+      if ln -s "$target" "$dest" 2>/dev/null; then
+        ok "linked: $dest -> $target"
+        return 0
+      fi
+      return 2
     fi
     skip "symlink points elsewhere, not overwriting: $dest -> $(readlink "$dest")"
     return 1
   fi
   if [ -e "$dest" ]; then
-    if same_content "$dest" "$src"; then
-      ok "copy up to date: $dest"
-      return 0
+    if same_content "$dest" "$target"; then
+      if [ "$DRY_RUN" = 1 ]; then
+        ok "would link: $dest -> $target"
+        return 0
+      fi
+      tmp_link="${dest}.test_link.$$"
+      if ln -s "$target" "$tmp_link" 2>/dev/null; then
+        rm -rf "$dest" 2>/dev/null || { rm -f "$tmp_link"; warn "cannot replace copy: $dest"; return 1; }
+        mv "$tmp_link" "$dest"
+        ok "linked: $dest -> $target"
+        return 0
+      else
+        rm -f "$tmp_link" 2>/dev/null
+        ok "copy up to date: $dest"
+        return 0
+      fi
     fi
     if [ "$OVERWRITE" = 1 ]; then
-      copy_artifact "$src" "$dest" overwrite
-      return $?
+      if [ "$DRY_RUN" = 1 ]; then
+        ok "would link: $dest -> $target"
+        return 0
+      fi
+      rm -rf "$dest" 2>/dev/null || { warn "cannot replace: $dest"; return 1; }
+      if ln -s "$target" "$dest" 2>/dev/null; then
+        ok "linked: $dest -> $target"
+        return 0
+      fi
+      return 2
     fi
     skip "exists, not overwriting: $dest"
     return 1
   fi
-  copy_artifact "$src" "$dest" install
+  if [ "$DRY_RUN" = 1 ]; then
+    ok "would link: $dest -> $target"
+    return 0
+  fi
+  mkdir -p "$(dirname "$dest")" 2>/dev/null || { warn "cannot create parent of: $dest"; return 1; }
+  if ln -s "$target" "$dest" 2>/dev/null; then
+    ok "linked: $dest -> $target"
+    return 0
+  fi
+  return 2
+}
+
+link_or_copy() {
+  # usage: link_or_copy <target-in-ai-tools> <destination-path>
+  # Symlink when the OS/filesystem allows it; copy otherwise as fallback.
+  local target="$1" dest="$2" rc
+  safe_link "$target" "$dest"
+  rc=$?
+  [ "$rc" != 2 ] && return "$rc"
+  if [ "$DRY_RUN" = 1 ]; then
+    ok "would copy: $dest <- $target"
+    return 0
+  fi
+  mkdir -p "$(dirname "$dest")" 2>/dev/null || { warn "cannot create parent of: $dest"; return 1; }
+  if [ -d "$target" ]; then
+    cp -R "$target" "$dest" 2>/dev/null || { warn "neither link nor copy possible: $dest"; return 1; }
+  else
+    cp "$target" "$dest" 2>/dev/null || { warn "neither link nor copy possible: $dest"; return 1; }
+  fi
+  ok "copied (will not track updates): $dest <- $target"
+  return 0
 }
 
 safe_unlink() {
@@ -625,41 +697,48 @@ sync_instructions() {
   # usage: sync_instructions
   # Synchronizes USER-AGENTS.md into installed harness instructions destinations,
   # respecting behavior settings from config.local.json.
-  local h dest src compiled tmp=""
+  local h dest src compiled target tmp=""
   src="$(source_root)/USER-AGENTS.md"
   compiled=$(compiled_instructions "$src")
   [ "$compiled" != "$src" ] && tmp="$compiled"
+  target="$AI_TOOLS/USER-AGENTS.md"
+  [ -f "$target" ] || target="$compiled"
   for h in $SCOPE; do
     dest=$(instructions_dest "$h")
     [ -n "$dest" ] || { info "no global instructions destination: $h"; continue; }
-    OVERWRITE=1 safe_copy "$compiled" "$dest" || true
+    OVERWRITE=1 link_or_copy "$target" "$dest" || true
   done
   [ -n "$tmp" ] && rm -f "$tmp"
   return 0
 }
 
 install_instructions() {
-  local h dest src compiled tmp=""
+  local h dest src compiled target tmp=""
   src="$(source_root)/USER-AGENTS.md"
   compiled=$(compiled_instructions "$src")
   [ "$compiled" != "$src" ] && tmp="$compiled"
+  target="$AI_TOOLS/USER-AGENTS.md"
+  [ -f "$target" ] || target="$compiled"
   for h in $SCOPE; do
     dest=$(instructions_dest "$h")
     [ -n "$dest" ] || { info "no global instructions destination: $h"; continue; }
-    safe_copy "$compiled" "$dest" || true
+    link_or_copy "$target" "$dest" || true
   done
   [ -n "$tmp" ] && rm -f "$tmp"
   return 0
 }
 
 install_skills() {
-  local h root p src
+  local h root p src name target
   src="$(source_root)/skills"
   for h in $SCOPE; do
     root=$(skills_root "$h")
     for p in "$src"/*-ai-tools; do
       [ -d "$p" ] || continue
-      safe_copy "$p" "$root/$(basename "$p")" || true
+      name=$(basename "$p")
+      target="$AI_TOOLS/skills/$name"
+      [ -d "$target" ] || target="$p"
+      link_or_copy "$target" "$root/$name" || true
     done
   done
   [ "${OVERWRITE:-0}" = 1 ] && prune_orphan_skills
@@ -693,8 +772,7 @@ prune_orphan_skills() {
     root=$(skills_root "$h")
     [ -d "$root" ] || continue
     for p in "$root"/*-ai-tools; do
-      [ -e "$p" ] || continue
-      [ -L "$p" ] && continue
+      [ -e "$p" ] || [ -L "$p" ] || continue
       base=$(basename "$p")
       [ -d "$(source_root)/skills/$base" ] && continue
       refuse_protected_dest "$p" && continue
@@ -702,6 +780,12 @@ prune_orphan_skills() {
         if [ "$DRY_RUN" = 1 ]; then
           mark_dry_gone "$p"
           ok "would remove orphan skill: $p"
+        elif [ -L "$p" ]; then
+          if rm "$p"; then
+            ok "removed orphan skill: $p"
+          else
+            warn "cannot remove orphan skill: $p"
+          fi
         elif rm -rf "$p"; then
           ok "removed orphan skill: $p"
         else
@@ -711,6 +795,12 @@ prune_orphan_skills() {
         if [ "$DRY_RUN" = 1 ]; then
           mark_dry_gone "$p"
           ok "would force-remove orphan skill: $p"
+        elif [ -L "$p" ]; then
+          if rm "$p"; then
+            ok "force-removed orphan skill: $p"
+          else
+            warn "cannot force-remove orphan skill: $p"
+          fi
         elif rm -rf "$p"; then
           ok "force-removed orphan skill: $p"
         else
@@ -910,7 +1000,11 @@ verify_install() {
       dest=$(instructions_dest "$h")
       [ -n "$dest" ] || continue
       if [ -L "$dest" ]; then
-        warn "instructions must be a physical copy, not a symlink: $dest -> $(readlink "$dest")"
+        if is_ai_tools_link "$dest"; then
+          ok "instructions link: $dest"
+        else
+          warn "instructions link points elsewhere: $dest -> $(readlink "$dest")"
+        fi
       elif [ -f "$dest" ] && cmp -s "$dest" "$exp"; then
         ok "instructions copy: $dest"
       elif [ -e "$dest" ]; then
@@ -928,7 +1022,11 @@ verify_install() {
       [ -d "$p" ] || continue
       name=$(basename "$p")
       if [ -L "$root/$name" ]; then
-        warn "skill must be a physical copy, not a symlink: $root/$name -> $(readlink "$root/$name")"
+        if is_ai_tools_link "$root/$name"; then
+          ok "skill link: $root/$name"
+        else
+          warn "skill link points elsewhere: $root/$name -> $(readlink "$root/$name")"
+        fi
       elif same_content "$root/$name" "$p"; then
         ok "skill copy: $root/$name"
       elif [ -e "$root/$name" ]; then
