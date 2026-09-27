@@ -66,6 +66,7 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
     <rule id="spawn-announce">Announce each spawn in the user's language with the template role and model.</rule>
     <rule id="spawn-fallback">If a default-worker spawn fails, the spawning context runs that payload and states that. If an implementer or session-subagent spawn fails, the session does not take that role.</rule>
     <rule id="parallel-spawns">Code-writing subagents run in parallel only on separate files; read-only exploration, builds, and tests may always run concurrently.</rule>
+    <rule id="session-commit">All changes from any task, plan, or simple request must be committed: if any file was modified, created, or removed, run tests (when code changed) and commit before returning the session to the user.</rule>
   </execution_protocol>
 
   <language_rules>
