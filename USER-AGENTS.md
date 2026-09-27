@@ -69,6 +69,7 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/A
     <rule id="spawn-fallback">Failed default-worker runs in spawning context. Failed implementer or session-subagent does not fall back to session.</rule>
     <rule id="parallel-spawns">Parallel code-writing only on separate files; exploration, builds, and tests run concurrently.</rule>
     <rule id="session-commit">Commit all changes before returning session: run tests when code changed and commit if files were modified, created, or removed.</rule>
+    <rule id="file-modification">Use harness APIs or direct terminal commands for file modification instead of IDE apis.</rule>
   </execution_protocol>
 
   <language_rules>
