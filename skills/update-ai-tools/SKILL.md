@@ -34,7 +34,7 @@ argument-hint: "[optional: harnesses in scope, or extra instructions]"
     </step>
 
     <step id="4" name="report">
-      Write `{REPORT_DIR}/update-report.md` with exact invocations, results, and tree status.
+      Write `{REPORT_DIR}/update-report_<year>-<month>-<day>_<hour>-<minutes>.md` (timestamped with the current date and time, e.g., `update-report_2026-09-26_23-55.md`, so previous reports are not overwritten) with exact invocations, results, and tree status.
       In chat (user's language), provide the report path, outcome, and reminder to restart harnesses that cache skills.
     </step>
   </session_workflow>
