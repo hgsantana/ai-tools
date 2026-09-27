@@ -36,7 +36,7 @@ case_verify_skill_absent() {
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
 
-  dest="$root/home/.claude/skills/plan-ai-tools"
+  dest="$root/home/.claude/skills/vibe-ai-tools"
   rm -rf "$dest" || fatal "$T_CASE: cannot remove $dest"
 
   before=$(t_snapshot "$root/home")
@@ -57,7 +57,7 @@ case_verify_skill_differs() {
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
 
-  dest="$root/home/.claude/skills/plan-ai-tools"
+  dest="$root/home/.claude/skills/vibe-ai-tools"
   printf 'unrelated file\n' > "$dest/SKILL.md"
 
   before=$(t_snapshot "$root/home")
@@ -76,7 +76,7 @@ case_verify_rejects_legacy_symlinks() {
   root="$T_ROOT"
   home="$root/home"
 
-  ln -s "$home/.ai-tools/skills/plan-ai-tools" "$home/.claude/skills/plan-ai-tools"
+  ln -s "$home/.ai-tools/skills/vibe-ai-tools" "$home/.claude/skills/vibe-ai-tools"
   ln -s "$home/.ai-tools/USER-AGENTS.md" "$home/.claude/CLAUDE.md"
 
   before=$(t_snapshot "$home")

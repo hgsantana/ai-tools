@@ -34,7 +34,7 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
 
     <step id="3" name="stage_loop">
       On `<signal code="PLAN">` or `<signal code="RESUME">`, stay on `improve/{CAMPAIGN}`. If the unit is not yet committed on this branch, commit it first as `chore(plans): plan` plus the plan directory name. Resume unfinished stages without rewriting accepted F commits.
-      For each unfinished stage in dependency order, following dev-ai-tools `<status_protocol>`:
+      For each unfinished stage in dependency order, following USER-AGENTS `<status_protocol>`:
         1. If the stage is not yet planned (status empty or resumed at P): set P in the base plan Status table, spawn `<template role="campaign-planner">` from `<dispatch_templates>` as executor="session-subagent" with {MODE} set to STAGE-PLAN, substituting {CAMPAIGN}, {PRIORITIES}, {EXCLUSIONS}, and {STAGE_FILE}; if that spawn fails, treat the campaign as `<signal code="BLOCKED">`.
         2. Set W and record Executor as implementer plus {IMPLEMENTER_MODEL} in the base plan Status table.
         3. Spawn `<template role="stage-implementer">` from `<dispatch_templates>` as executor="implementer" with {IMPLEMENTER_MODEL}, substituting {STAGE_FILE} and {CAMPAIGN}; if that spawn is rejected only for the recorded model, retry once with the harness default and name the model used in the iteration file; if the spawn fails, leave the stage unaccepted and treat the campaign as `<signal code="BLOCKED">` without implementing in the session.
@@ -77,8 +77,8 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
         <assigned_file>{STAGE_FILE}</assigned_file>
       </input>
       <instructions>
-        This payload is the brief; do not read sibling skill files. Nested spawn payloads are assembled here per USER-AGENTS `<rule id="payload-assembly">`. Include plan-ai-tools `<template role="repo-discovery">` in the brief.
-        When {MODE} is PLAN: inspect the working tree of campaign {CAMPAIGN} against {PRIORITIES}, skipping {EXCLUSIONS}. If an unfinished plan directory already exists for this campaign, validate its recorded branch and stage statuses and end with `<signal code="RESUME">` for that path; do not derive a new slug. Spawn plan-ai-tools `<template role="repo-discovery">` as executor="default-worker" with questions and a kebab-case topic. If that spawn fails, read and grep the tree yourself. For new work, derive a kebab-case slug. Write only under that directory: base `0-<slug>.md` (Status table with empty Status and Executor cells, Goal, Base branch, Execution graph, Stages outline, Open questions) containing succinct outlines for all stages. Leave product and test code unchanged. Do not commit. Decide open design questions from evidence and user criteria. End with one PLAN, RESUME, NONE, or BLOCKED `<signal>`. Return `<signal code="RESUME">` only when the recovery check found an unfinished unit. {STAGE_FILE} is unused in PLAN.
+        This payload is the brief; do not read sibling skill files. Nested spawn payloads are assembled here per USER-AGENTS `<rule id="payload-assembly">`. Include `<template role="repo-discovery">` in the brief.
+        When {MODE} is PLAN: inspect the working tree of campaign {CAMPAIGN} against {PRIORITIES}, skipping {EXCLUSIONS}. If an unfinished plan directory already exists for this campaign, validate its recorded branch and stage statuses and end with `<signal code="RESUME">` for that path; do not derive a new slug. Spawn `<template role="repo-discovery">` as executor="default-worker" with questions and a kebab-case topic. If that spawn fails, read and grep the tree yourself. For new work, derive a kebab-case slug. Write only under that directory: base `0-<slug>.md` (Status table with empty Status and Executor cells, Goal, Base branch, Execution graph, Stages outline, Open questions) containing succinct outlines for all stages. Leave product and test code unchanged. Do not commit. Decide open design questions from evidence and user criteria. End with one PLAN, RESUME, NONE, or BLOCKED `<signal>`. Return `<signal code="RESUME">` only when the recovery check found an unfinished unit. {STAGE_FILE} is unused in PLAN.
         When {MODE} is STAGE-PLAN: read {STAGE_FILE}'s succinct outline in `plans/improve/{CAMPAIGN}/`'s base plan and inspect current working tree and commits. Write detailed stage file `{STAGE_FILE}` under the campaign plan directory (Objective, Decisions, Files, Steps, Tests, Acceptance criteria, Commit message, Dependencies, Implementation log), set that stage's Status cell to PF in base plan, and end with one PLANNED or BLOCKED `<signal>`.
         When {MODE} is VALIDATE: read {STAGE_FILE} and run `git diff` against HEAD on `improve/{CAMPAIGN}` yourself. Judge whether that uncommitted diff meets the stage Objective, Files, and Acceptance criteria. Reject the stage when a criterion is not demonstrated. Write the verdict to `${TMPDIR:-/tmp}/ai-tools/{CAMPAIGN}-validate.md`. End with one ACCEPT, REWORK, or BLOCKED `<signal>`. Do not commit and do not edit product code. The session does not assemble or pass a diff.
       </instructions>
@@ -96,16 +96,50 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
         <campaign>{CAMPAIGN}</campaign>
       </input>
       <instructions>
-        This payload is the brief; do not read sibling skill files. Nested spawn payloads are assembled here per USER-AGENTS `<rule id="payload-assembly">`. Include dev-ai-tools `<template role="stage-verifier">` in the brief.
+        This payload is the brief; do not read sibling skill files. Nested spawn payloads are assembled here per USER-AGENTS `<rule id="payload-assembly">`. Include `<template role="stage-verifier">` in the brief.
         Read {STAGE_FILE} on improve/{CAMPAIGN} and the repository rules (README.md, AGENTS.md if present). If `${TMPDIR:-/tmp}/ai-tools/{CAMPAIGN}-validate.md` exists, apply its corrections. Implement only that stage.
         Match surrounding style, keep product and test edits within the declared files, and write behaviour tests for delivered changes.
-        Spawn dev-ai-tools `<template role="stage-verifier">` as executor="default-worker" with the stage's commands and a kebab-case topic. If that spawn fails, run the commands yourself and write the same log.
+        Spawn `<template role="stage-verifier">` as executor="default-worker" with the stage's commands and a kebab-case topic. If that spawn fails, run the commands yourself and write the same log.
         Append factual notes to the Implementation log of {STAGE_FILE}, set that stage's Status cell to V in the base plan Status table, and return a one-line outcome with the changed paths, test exit code, and log path.
       </instructions>
       <constraints>
         <constraint>Do not make architectural changes outside stage scope.</constraint>
         <constraint>Edit only the declared stage files, the Implementation log of {STAGE_FILE}, and that stage's Status cell in the plan's `0-*.md`.</constraint>
         <constraint>Do not commit or push; leave changes in the working tree for planner VALIDATE.</constraint>
+      </constraints>
+    </template>
+
+    <template role="stage-verifier" executor="default-worker">
+      <job>Default worker: run builds and tests and collect factual evidence.</job>
+      <input>
+        <commands>{COMMANDS}</commands>
+        <topic>{TOPIC}</topic>
+      </input>
+      <instructions>
+        Execute {COMMANDS} without design decisions.
+        Capture stdout and stderr to ${TMPDIR:-/tmp}/ai-tools/{TOPIC}-output.log.
+        Return facts: command, exit code, and output path.
+      </instructions>
+      <constraints>
+        <constraint>Do not modify production or test code unless explicitly passed as a patch.</constraint>
+      </constraints>
+    </template>
+
+    <template role="repo-discovery" executor="default-worker">
+      <job>Default worker: collect read-only repository facts for planning.</job>
+      <input>
+        <questions>{QUESTIONS}</questions>
+        <topic>{TOPIC}</topic>
+      </input>
+      <instructions>
+        Answer {QUESTIONS} from the working tree with read-only searches, file reads, and commands.
+        Write file paths, line references, and command outputs to ${TMPDIR:-/tmp}/ai-tools/{TOPIC}.md.
+        Return the output path and a one-line summary.
+      </instructions>
+      <constraints>
+        <constraint>Leave product, test, and plan files unchanged; do not commit or change branches.</constraint>
+        <constraint>The sole write is the report file ${TMPDIR:-/tmp}/ai-tools/{TOPIC}.md.</constraint>
+        <constraint>Report facts; leave design decisions to the caller.</constraint>
       </constraints>
     </template>
   </dispatch_templates>

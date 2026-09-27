@@ -2,47 +2,39 @@
 
 This guide is harness-agnostic. Skills are the user entry points. Automatic routing depends on the user-wide instructions being loaded; see [Supported harnesses](../README.md#supported-harnesses).
 
-## Invocation and gate
+## Invocation
 
-Invoke a skill by leading with its slash name and optional request:
+Invoke a skill explicitly by leading with its slash name and optional request:
 
 ```text
-/plan-ai-tools add resumable uploads
+/vibe-ai-tools add resumable uploads
 ```
 
-`USER-AGENTS.md` routes in three cases, for a new end-user request in the host session only. A prompt that starts with or mentions a skill or slash command runs that skill's `<session_workflow>` immediately. Simple, well specified, or documentation-only requests run in the session without asking. Other non-trivial requests receive the `<skill_offer>` inside `<routing_gate>`, the only USER-AGENTS gate. The offer names each option's impact, then lists the relevant skill, **run it here**, and **something else**. The last choice lets the user name another skill, revise the request, or propose a different approach; a native **Other** field serves the same purpose. Choosing a skill from the offer runs its `<session_workflow>`. A workflow that later invokes another skill does not re-enter `<routing_gate>`. Authorized delegated payloads, spawn briefs, and continuations skip the gate; a fresh worker that loads these instructions executes its brief and does not offer skills. If `$HOME/AGENTS.md` exists, follow it after the gate; if missing, ignore it. Later skill-specific questions and mutation approvals still follow the skill's own rules.
+Skills provide session-directed workflows. `USER-AGENTS.md` provides global planning, implementation, and execution protocols across supported harnesses.
 
 ## Skills
 
 | Skill | Use it for | Example |
 |---|---|---|
 | `/vibe-ai-tools` | Plan under `plans/`, then execute that plan and deliver a pull request | `/vibe-ai-tools add resumable uploads` |
-| `/plan-ai-tools` | Explore a multi-commit change, save a staged plan under `plans/`, then offer `/dev-ai-tools` | `/plan-ai-tools redesign cache invalidation` |
-| `/dev-ai-tools` | Execute a specified `plans/` plan, a queue of pending plans, or one single-commit task | `/dev-ai-tools plans/cache-invalidation/` |
 | `/campaign-ai-tools` | Repeatedly plan and deliver user-directed, multi-stage improvements in an autonomous local campaign | `/campaign-ai-tools repository-hardening` |
 | `/az-ai-tools` | Inspect or manage Azure resources, subscriptions, infrastructure, and costs with `az` | `/az-ai-tools list costly idle resources` |
 | `/gc-ai-tools` | Inspect or manage Google Cloud projects, infrastructure, and costs with `gcloud` | `/gc-ai-tools show resources in project-x` |
 | `/gh-ai-tools` | Inspect or manage GitHub accounts, repository administration, environments, Actions/builds, issues, and releases | `/gh-ai-tools show failing Actions runs` |
 | `/models-ai-tools` | Inspect available models and configure preferred models per tier (`junior`, `mid`, `senior`) for installed CLI harnesses | `/models-ai-tools agy` |
-| `/config-ai-tools` | Configure global behavioral preferences: skill offer gate, default CLI, and implementer model prompts | `/config-ai-tools offer_skills` |
+| `/config-ai-tools` | Configure global behavioral preferences: default CLI and implementer model prompts | `/config-ai-tools default_cli` |
 | `/update-ai-tools` | Remove current-version artifacts, reset the clone, and install from origin/master | `/update-ai-tools all detected harnesses` |
 | `/remove-ai-tools` | Remove installed ai-tools artifacts from selected harnesses | `/remove-ai-tools claude-code and copilot` |
 
 ### Who does the work
 
-Every skill runs on the session's model. The session handles user alignment, judgment, commits, and short pointers to disk. Builds, test suites, script runs, and bulk fact collection go to the harness's default subagent. The skill offer's Execution column, filled from the skills' `Agent:` field, shows `session`, `session + implementer` for `/dev-ai-tools`, or `session + implementer (model asked once)` for the two skills below.
+Every skill runs on the session's model. The session handles user alignment, judgment, commits, and short pointers to disk. Builds, test suites, script runs, and bulk fact collection go to the harness's default subagent. `/vibe-ai-tools` and `/campaign-ai-tools` spawn implementers per stage, asking one question before the first implementer for the model to use (or using configured defaults).
 
-Specified or queued `/dev-ai-tools`, `/vibe-ai-tools`, and `/campaign-ai-tools` spawn an implementer per stage. `/campaign-ai-tools` also spawns a session-subagent planner to write each plan and to validate each stage from the working-tree diff. If a planner or implementer cannot be spawned, delivery stops as blocked; the host session does not take that role. A failed default-worker spawn is run by the context that requested it. `/dev-ai-tools` Task mode implements in the session when the work fits one commit.
-
-`/vibe-ai-tools` and `/campaign-ai-tools` ask one question before the first implementer: which model implements the stages, with one to three models the harness can use. `/vibe-ai-tools` asks after the plan is on disk. `/campaign-ai-tools` asks when the campaign starts, records the answer in `plans/improve/<campaign>/campaign.md`, and reuses it for every iteration and on resume. `/dev-ai-tools` uses the harness default implementer model with no question. A harness that cannot choose a model per subagent skips the question and uses its default; chat names that.
+`/campaign-ai-tools` also spawns a session-subagent planner to write each plan and to validate each stage from the working-tree diff. If a planner or implementer cannot be spawned, delivery stops as blocked; the host session does not take that role. A failed default-worker spawn is run by the context that requested it.
 
 ### Delivery workflows
 
-`/vibe-ai-tools` is the end-to-end choice for a larger change. It follows `/plan-ai-tools` to execute a structured grill-me design interview to stress-test assumptions and align scope interactively, writing the agreed plan to disk. It then asks which model implements the stages. The session delivers: implementer subagents write stage code; the session reviews, commits, and opens the pull request. Chat names the report path and a one-line outcome. Decisions are recorded in `plans/<slug>/vibe-decisions.md`.
-
-`/plan-ai-tools` designs only. Its output is a base plan plus one file per commit-sized stage under `plans/<slug>/`; the base plan records the branch used for analysis. It executes a structured grill-me design interview, proactively probing unstated assumptions, edge cases, failure scenarios, harness compatibility, and architectural trade-offs one question at a time with recommendations through the harness question tool after exploring the codebase. After the plan is on disk it offers `/dev-ai-tools`. A one-commit request presents `/dev-ai-tools` Task mode with that skill's Impact and Agent and waits for acceptance before invoking it; refusal ends with a short planning assessment.
-
-`/dev-ai-tools` executes a specified `plans/<slug>/` plan, or lists pending plans, proposes an order, and runs the accepted queue; or agrees one single-commit task. Specified and queued plans run in the session on `plan/<slug>` with one implementer spawn per stage. Task mode interviews the user one question at a time with recommendations after exploring the codebase, and implements the single stage in the session when it fits one Conventional Commit; otherwise it offers `/plan-ai-tools` or `/vibe-ai-tools`. Tests go to the harness's default subagent, or to the spawning context if that spawn fails. Delivery (archive, push, pull request) runs only when every required stage is finished (`F`). An exhausted stage (`E`) blocks, keeps the work unit, and stops the queue. Chat names the report path and the PR URL or review-patch path. Resume of an existing `plan/<slug>` preserves accepted commits.
+`/vibe-ai-tools` is the end-to-end choice for delivering a feature or fix. It executes the centralized grill-me design interview (`USER-AGENTS.md`) to stress-test assumptions and align scope interactively, writing the agreed base plan to disk (`plans/<slug>/0-<slug>.md`). It then asks which model implements the stages (if not configured). The session delivers: on-demand stage planning expands stage details before implementation, implementer subagents write stage code, and the session reviews diffs and test evidence before committing and opening the pull request. Chat names the report path and a one-line outcome. In-scope decisions are recorded in `plans/<slug>/vibe-decisions.md`.
 
 ### Continuous improvement campaign
 
@@ -98,7 +90,6 @@ To request a clean stop while it is running, say `Stop after the current plan.` 
 ### Behavioral configuration
 
 `/config-ai-tools` configures global behavioral preferences across the `ai-tools` ecosystem, persisting settings in `$HOME/.ai-tools/config.local.json` under `"behavior"`. Key settings include:
-- **Skill offer gate** (`offer_skills`): whether `USER-AGENTS.md` displays the interactive skill offer table on non-trivial requests or routes directly to execution. When modified, instructions are automatically recompiled and synchronized into installed harness configurations.
 - **Default CLI harness** (`default_cli`): preferred CLI harness (`agy`, `claude`, `copilot`) for autonomous execution and tool invocations.
 - **Implementer model prompt** (`ask_implementer_model`): whether skills like `/vibe-ai-tools` and `/campaign-ai-tools` ask for an implementer model before execution or proceed directly with configured tier defaults.
 

@@ -66,7 +66,7 @@ case_install_foreign_file_skipped() {
   t_assert_exit 2
   t_assert_line "SKIP: exists, not overwriting: $T_FOREIGN_SKILL_PATH"
   t_assert_content "$T_FOREIGN_SKILL_PATH/SKILL.md" "not an ai-tools file"
-  t_assert_regular_directory "$root/home/.claude/skills/dev-ai-tools"
+  t_assert_regular_directory "$root/home/.claude/skills/gh-ai-tools"
 
   t_cleanup "$root"
 }
@@ -105,7 +105,7 @@ case_install_overwrite_conflicts() {
   t_install "$root" --harnesses claude-code --overwrite
   t_assert_exit 0
   t_assert_regular_directory "$T_FOREIGN_SKILL_PATH"
-  t_assert_same_content "$T_FOREIGN_SKILL_PATH" "$root/home/.ai-tools/skills/plan-ai-tools"
+  t_assert_same_content "$T_FOREIGN_SKILL_PATH" "$root/home/.ai-tools/skills/vibe-ai-tools"
   t_assert_regular_directory "$root/home/.claude/skills/az-ai-tools"
   t_assert_same_content "$root/home/.claude/skills/az-ai-tools" "$root/home/.ai-tools/skills/az-ai-tools"
   t_assert_regular_file "$T_FOREIGN_INSTRUCTIONS_PATH"
@@ -171,14 +171,14 @@ case_install_legacy_symlinks_migrated() {
   t_fixture
   root="$T_ROOT"
 
-  source_skill="$root/home/.ai-tools/skills/plan-ai-tools"
-  ln -s "$source_skill" "$root/home/.claude/skills/plan-ai-tools"
+  source_skill="$root/home/.ai-tools/skills/vibe-ai-tools"
+  ln -s "$source_skill" "$root/home/.claude/skills/vibe-ai-tools"
   ln -s "$root/home/.ai-tools/USER-AGENTS.md" "$root/home/.claude/CLAUDE.md"
 
   t_install "$root" --harnesses claude-code
   t_assert_exit 0
-  t_assert_regular_directory "$root/home/.claude/skills/plan-ai-tools"
-  t_assert_same_content "$root/home/.claude/skills/plan-ai-tools" "$source_skill"
+  t_assert_regular_directory "$root/home/.claude/skills/vibe-ai-tools"
+  t_assert_same_content "$root/home/.claude/skills/vibe-ai-tools" "$source_skill"
   t_assert_regular_file "$root/home/.claude/CLAUDE.md"
   t_assert_same_content "$root/home/.claude/CLAUDE.md" "$root/home/.ai-tools/USER-AGENTS.md"
 
@@ -195,9 +195,9 @@ case_install_antigravity_instructions() {
   t_install "$root" --harnesses antigravity
   t_assert_exit 0
   t_assert_regular_file "$root/home/.gemini/GEMINI.md"
-  t_assert_regular_directory "$root/home/.gemini/config/skills/plan-ai-tools"
+  t_assert_regular_directory "$root/home/.gemini/config/skills/vibe-ai-tools"
   t_assert_regular_directory "$root/home/.gemini/config/skills/az-ai-tools"
-  t_assert_absent "$root/home/.gemini/skills/plan-ai-tools"
+  t_assert_absent "$root/home/.gemini/skills/vibe-ai-tools"
 
   t_cleanup "$root"
 }
@@ -226,9 +226,9 @@ case_install_all_includes_undetected_harnesses() {
 
   t_install "$root" --harnesses all
   t_assert_exit 0
-  t_assert_regular_directory "$home/.claude/skills/plan-ai-tools"
-  t_assert_regular_directory "$home/.copilot/skills/plan-ai-tools"
-  t_assert_regular_directory "$home/.gemini/config/skills/plan-ai-tools"
+  t_assert_regular_directory "$home/.claude/skills/vibe-ai-tools"
+  t_assert_regular_directory "$home/.copilot/skills/vibe-ai-tools"
+  t_assert_regular_directory "$home/.gemini/config/skills/vibe-ai-tools"
   t_assert_regular_file "$home/.copilot/instructions/ai-tools.instructions.md"
   t_assert_same_content "$home/.copilot/instructions/ai-tools.instructions.md" "$home/.ai-tools/USER-AGENTS.md"
 
@@ -329,7 +329,7 @@ case_bootstrap_clones_then_installs() {
   t_run "$root" "$AI_TOOLS/scripts/shell/install-bash.sh" --harnesses claude-code
   t_assert_exit 0
   t_assert_regular_file "$home/.ai-tools/scripts/shell/install.sh"
-  t_assert_regular_directory "$home/.claude/skills/plan-ai-tools"
+  t_assert_regular_directory "$home/.claude/skills/vibe-ai-tools"
 
   t_cleanup "$root"
 }
@@ -365,7 +365,7 @@ case_install_parent_symlink_protects_agents_md() {
   t_assert_exit 2
   t_assert_line "refusing \$HOME/AGENTS.md alias:"
   t_assert_content "$home/AGENTS.md" "user overrides"
-  t_assert_regular_directory "$home/.claude/skills/plan-ai-tools"
+  t_assert_regular_directory "$home/.claude/skills/vibe-ai-tools"
 
   t_cleanup "$root"
 }
@@ -380,7 +380,7 @@ case_install_home_with_spaces() {
   t_run_at "$root" "$home" "$home/.ai-tools" \
     "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
-  t_assert_regular_directory "$home/.claude/skills/plan-ai-tools"
+  t_assert_regular_directory "$home/.claude/skills/vibe-ai-tools"
   t_assert_regular_file "$home/.claude/CLAUDE.md"
 
   t_cleanup "$root"

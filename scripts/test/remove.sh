@@ -27,7 +27,7 @@ case_remove_removes_installed_copies() {
   t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code
   t_assert_exit 0
   t_assert_line "removed copy:"
-  t_assert_absent "$root/home/.claude/skills/plan-ai-tools"
+  t_assert_absent "$root/home/.claude/skills/vibe-ai-tools"
   if [ -e "$root/home/.claude/CLAUDE.md" ] || [ -L "$root/home/.claude/CLAUDE.md" ]; then
     ok "$T_CASE: instructions still present (no --instructions): $root/home/.claude/CLAUDE.md"
   else
@@ -70,7 +70,7 @@ case_remove_modified_copy_kept() {
     warn "$T_CASE: modified copy lost its local edit: $T_MODIFIED_COPY_PATH"
   fi
   # Every unmodified copy from the same installation must be gone.
-  t_assert_absent "$root/home/.claude/skills/plan-ai-tools"
+  t_assert_absent "$root/home/.claude/skills/vibe-ai-tools"
 
   t_cleanup "$root"
 }
@@ -104,7 +104,7 @@ case_remove_force_removes_modified_copy() {
   t_assert_exit 0
   t_assert_line "force-removed copy: $T_MODIFIED_COPY_PATH"
   t_assert_absent "$T_MODIFIED_COPY_PATH"
-  t_assert_absent "$root/home/.claude/skills/plan-ai-tools"
+  t_assert_absent "$root/home/.claude/skills/vibe-ai-tools"
 
   t_cleanup "$root"
 }
@@ -371,7 +371,7 @@ case_remove_without_a_clone() {
   t_run "$root" "$saved/shell/remove.sh" --harnesses claude-code
   t_assert_exit 2
   t_assert_line "WARN: $root/home/.ai-tools missing — copies cannot be verified; removing links only (sweep)"
-  t_assert_regular_directory "$root/home/.claude/skills/plan-ai-tools"
+  t_assert_regular_directory "$root/home/.claude/skills/vibe-ai-tools"
 
   t_cleanup "$root"
 }
@@ -385,9 +385,9 @@ case_remove_all_harnesses() {
   t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses all
   t_run "$root" "$home/.ai-tools/scripts/shell/remove.sh" --harnesses all
   t_assert_exit 0
-  t_assert_absent "$home/.claude/skills/plan-ai-tools"
-  t_assert_absent "$home/.copilot/skills/plan-ai-tools"
-  t_assert_absent "$home/.gemini/config/skills/plan-ai-tools"
+  t_assert_absent "$home/.claude/skills/vibe-ai-tools"
+  t_assert_absent "$home/.copilot/skills/vibe-ai-tools"
+  t_assert_absent "$home/.gemini/config/skills/vibe-ai-tools"
 
   t_cleanup "$root"
 }
@@ -474,7 +474,7 @@ case_remove_home_with_spaces_sweeps_stale_link() {
   mv "$root/home" "$root/home with spaces" || fatal "$T_CASE: cannot rename HOME"
   home="$root/home with spaces"
   stale="$home/.claude/skills/old-layout-ai-tools"
-  ln -s "$home/.ai-tools/skills/plan-ai-tools" "$stale" \
+  ln -s "$home/.ai-tools/skills/vibe-ai-tools" "$stale" \
     || fatal "$T_CASE: cannot create stale link under spaced HOME"
 
   t_run_at "$root" "$home" "$home/.ai-tools" \
@@ -491,7 +491,7 @@ case_remove_failed_rm_is_warning() {
   t_fixture
   root="$T_ROOT"
   home="$root/home"
-  skill="$home/.claude/skills/plan-ai-tools"
+  skill="$home/.claude/skills/vibe-ai-tools"
 
   t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_regular_directory "$skill"

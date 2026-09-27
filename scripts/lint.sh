@@ -34,18 +34,15 @@ Checks:
   agent field       Agent: is session, session + implementer, or
                     session + implementer (model asked once) matching
                     <implementer_job> and an executor="implementer"
-                    template; dev-ai-tools, vibe-ai-tools, and
-                    campaign-ai-tools (rule 6)
+                    template; vibe-ai-tools and campaign-ai-tools (rule 6)
   skill layout      no skill-root markdown, every skill directory has
                     SKILL.md with semantic XML tags (<skill>, <session_workflow>,
                     <dispatch_templates>), no SKILL.md contains Continue? or Stake,
-                    USER-AGENTS.md has <routing_gate>, an <execution_protocol>
-                    with a <rule id> for default-worker, implementer, and
-                    session-subagent, and the offer header "Description,
-                    Execution", never <agents>, <dispatch_protocol>, or <worker,
-                    YAML applyTo/alwaysApply, a delegated-worker gate
-                    exemption, optional $HOME/AGENTS.md, and no references
-                    to deleted files (rules 5, 11)
+                    USER-AGENTS.md has <planning_protocol>, <implementation_protocol>,
+                    an <execution_protocol> with a <rule id> for default-worker,
+                    implementer, and session-subagent, never <agents>,
+                    <dispatch_protocol>, or <worker, YAML applyTo/alwaysApply,
+                    optional $HOME/AGENTS.md, and no references to deleted files (rules 5, 11)
   instructions cap  USER-AGENTS.md is at most 8000 characters (rule 3)
   instructions      USER-AGENTS.md has no ## sub-heading (rule 3)
   headings
@@ -207,7 +204,7 @@ check_skill_name_match() {
 
 check_skill_layout() {
   local f d name rid
-  local gated="vibe-ai-tools plan-ai-tools dev-ai-tools campaign-ai-tools az-ai-tools gc-ai-tools gh-ai-tools agy-ai-tools models-ai-tools config-ai-tools"
+  local gated="vibe-ai-tools campaign-ai-tools az-ai-tools gc-ai-tools gh-ai-tools agy-ai-tools models-ai-tools config-ai-tools"
   local maintainer="update-ai-tools remove-ai-tools"
 
   f="$AI_TOOLS/skills/SKILL-CONTRACT.md"
@@ -221,10 +218,10 @@ check_skill_layout() {
   done
 
   f="$AI_TOOLS/USER-AGENTS.md"
-  if grep -q '<routing_gate>' "$f"; then
-    ok "USER-AGENTS.md has routing_gate tag: $f"
+  if grep -q '<planning_protocol>' "$f" && grep -q '<implementation_protocol>' "$f"; then
+    ok "USER-AGENTS.md has planning_protocol and implementation_protocol tags: $f"
   else
-    warn "USER-AGENTS.md missing '<routing_gate>' tag: $f"
+    warn "USER-AGENTS.md missing '<planning_protocol>' or '<implementation_protocol>' tag: $f"
   fi
 
   if grep -q '<execution_protocol>' "$f"; then
@@ -241,12 +238,6 @@ check_skill_layout() {
     fi
   done
 
-  if grep -qF 'Description, Execution' "$f"; then
-    ok "USER-AGENTS.md offer header uses the Execution column: $f"
-  else
-    warn "USER-AGENTS.md offer header missing 'Description, Execution': $f"
-  fi
-
   if grep -qE '<agents>|<dispatch_protocol>|<worker' "$f"; then
     warn "USER-AGENTS.md contains a retired <agents>, <dispatch_protocol>, or <worker tag: $f"
   else
@@ -259,15 +250,15 @@ check_skill_layout() {
     warn "USER-AGENTS.md missing YAML applyTo: \"**\" and alwaysApply: true frontmatter: $f"
   fi
 
-  if grep -q 'authorized delegated payload' "$f" && grep -q 'does not offer skills' "$f"; then
-    ok "USER-AGENTS.md exempts delegated workers from the routing gate: $f"
+  if grep -q 'authorized delegated payload' "$f"; then
+    ok "USER-AGENTS.md notes authorized delegated payload: $f"
   else
-    warn "USER-AGENTS.md missing delegated-worker routing-gate exemption: $f"
+    warn "USER-AGENTS.md missing authorized delegated payload: $f"
   fi
 
   # shellcheck disable=SC2016 # literal '$HOME' text in instructions
   if grep -q '\$HOME/AGENTS.md' "$f"; then
-    ok "USER-AGENTS.md loads optional \$HOME/AGENTS.md after the routing gate: $f"
+    ok "USER-AGENTS.md loads optional \$HOME/AGENTS.md: $f"
   else
     warn "USER-AGENTS.md never mentions \$HOME/AGENTS.md: $f"
   fi
@@ -402,7 +393,7 @@ check_skill_description_content() {
   done
 }
 
-IMPLEMENTER_SKILLS="dev-ai-tools vibe-ai-tools campaign-ai-tools"
+IMPLEMENTER_SKILLS="vibe-ai-tools campaign-ai-tools"
 AGENT_SESSION="session"
 AGENT_IMPLEMENTER="session + implementer"
 AGENT_IMPLEMENTER_ASKED="session + implementer (model asked once)"
@@ -545,7 +536,7 @@ check_no_binaries() {
 # The vocabulary of structural tags (README, "Semantic XML grammar"). A tag
 # outside it, outside <input>, is a finding: register a new tag in the README
 # table and here in the same commit.
-XML_VOCAB="user_instructions system_overview routing_gate trigger_cases case skill_offer offer_message handling response execution_protocol language_rules chat disk user_interaction fallback security_guardrails skill overview session_workflow step dispatch_templates template job input instructions constraints constraint status_protocol states state return_protocol signal plan_file_format structure boundaries rule skill_question skill_options default implementer_job"
+XML_VOCAB="user_instructions system_overview planning_protocol implementation_protocol execution_protocol language_rules chat disk user_interaction fallback security_guardrails skill overview session_workflow step dispatch_templates template job input instructions constraints constraint status_protocol states state return_protocol signal plan_file_format structure boundaries rule default implementer_job"
 
 xml_files() {
   local f

@@ -245,17 +245,7 @@ config_behavior_value() {
 
 compiled_instructions() {
   # usage: compiled_instructions <source-file>
-  # Returns path to source-file, or a compiled temp file reflecting config.local.json behavior.
-  local src="$1" offer
-  offer=$(config_behavior_value "offer_skills" 2>/dev/null || echo "true")
-  if [ "$offer" = "false" ]; then
-    local tmp
-    tmp=$(mktemp "${TMPDIR:-/tmp}/ai-tools-user-agents.XXXXXX") || { printf '%s' "$src"; return 0; }
-    sed 's/Execute `<skill_offer>` with every ai-tools skill fitting scope\./Handle the request directly in this session without `<skill_offer>`\./' "$src" > "$tmp"
-    printf '%s' "$tmp"
-  else
-    printf '%s' "$src"
-  fi
+  printf '%s' "$1"
 }
 
 # --- Discovery ---------------------------------------------------------------

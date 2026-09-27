@@ -209,7 +209,7 @@ case_update_stale_copy_refreshed() {
   home="$root/home"
   marker="stalecopy"
   instructions="$home/.claude/CLAUDE.md"
-  skill="$home/.claude/skills/plan-ai-tools"
+  skill="$home/.claude/skills/vibe-ai-tools"
 
   t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
@@ -222,7 +222,7 @@ case_update_stale_copy_refreshed() {
   t_assert_exit 0
   t_assert_line "copied:"
   t_assert_same_content "$instructions" "$home/.ai-tools/USER-AGENTS.md"
-  t_assert_same_content "$skill" "$home/.ai-tools/skills/plan-ai-tools"
+  t_assert_same_content "$skill" "$home/.ai-tools/skills/vibe-ai-tools"
 
   t_cleanup "$root"
 }
@@ -234,7 +234,7 @@ case_update_modified_copy_kept() {
   root="$T_ROOT"
   home="$root/home"
   marker="modcopy"
-  target="$home/.claude/skills/plan-ai-tools/SKILL.md"
+  target="$home/.claude/skills/vibe-ai-tools/SKILL.md"
 
   t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
@@ -269,7 +269,7 @@ case_update_up_to_date_copy() {
   t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
 
-  # t_origin_commit only touches plan-ai-tools/SKILL.md; az-ai-tools's copy
+  # t_origin_commit only touches vibe-ai-tools/SKILL.md; az-ai-tools's copy
   # stays equal to its (unchanged) source across the reset.
   t_origin_commit "$marker"
 
@@ -286,14 +286,14 @@ case_update_overwrite_modified_copy() {
   t_fixture
   root="$T_ROOT"
   home="$root/home"
-  skill="$home/.claude/skills/plan-ai-tools"
+  skill="$home/.claude/skills/vibe-ai-tools"
 
   t_run "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   printf '\nlocal edit that should be replaced\n' >> "$skill/SKILL.md"
 
   t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code --overwrite
   t_assert_exit 0
-  t_assert_same_content "$skill" "$home/.ai-tools/skills/plan-ai-tools"
+  t_assert_same_content "$skill" "$home/.ai-tools/skills/vibe-ai-tools"
   if grep -qF 'local edit that should be replaced' "$skill/SKILL.md"; then
     warn "$T_CASE: --overwrite preserved the modified copy"
   else

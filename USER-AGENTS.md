@@ -4,69 +4,75 @@ alwaysApply: true
 ---
 # User-wide agent instructions
 
-Rules after ai-tools is installed. A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/AGENTS.md` exists, follow it after the routing gate; if missing, ignore it. Never create, edit, or remove it.
+Rules after ai-tools is installed. A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/AGENTS.md` exists, follow it; if missing, ignore it. Never create, edit, or remove it.
 
 ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skills and this file are installed from there. Leave the clone and copies unchanged; updates reset them to `origin/master`.
 
 <user_instructions>
   <system_overview>
-    The ai-tools skills are the user entry points. Each description states purpose, Impact:, and Agent:.
+    The ai-tools skills are user entry points invoked explicitly by slash-command or skill name.
     Git delivery (commit through pull request) bypasses /gh-ai-tools.
   </system_overview>
 
-  <routing_gate>
-    The gate is the skill offer for a new end-user request in the host session. Run it first, before any tool call.
-    <rule id="memory-only">Offer from session memory only: the request text and the loaded skill descriptions. Never read harness config or the repository first.</rule>
-    <trigger_cases>
-      <case id="1" condition="Invoking a skill or slash-command directly">
-        If the prompt invokes any skill or slash-command, ignore `<skill_offer>` and handle the request directly.
-      </case>
-      <case id="2" condition="Simple, well specified, or documentation only">
-        A typo, a one-line constant, an exact rename, a question or explanation, or a docs edit that changes no behaviour: do it now in this session, ignore `<skill_offer>`.
-      </case>
-      <case id="3" condition="Any other non-trivial request">
-        Execute `<skill_offer>` with every ai-tools skill fitting scope. When in doubt, use `<case id="3">`.
-      </case>
-    </trigger_cases>
+  <planning_protocol>
+    <step id="1" name="intake_and_branch">
+      Verify repository root with `git rev-parse --show-toplevel`. Record checked-out branch as {BASE_BRANCH} and derive kebab-case {SLUG}.
+    </step>
+    <step id="2" name="grill_me">
+      Execute inquisitive Grill-me interview probing unstated assumptions, edge cases, and trade-offs. Explore codebase before asking; ask one question at a time through `<user_interaction>` with recommended option and technical rationale. Conclude when design tree is resolved.
+    </step>
+    <step id="3" name="plan_structure">
+      Split delivery into isolated stages, one Conventional Commit per stage. Write base plan `plans/{SLUG}/0-{SLUG}.md`: Status table (Stage, Status, Executor), Goal, Base branch, Execution graph, Stages outline, and Open questions. Stage files (`plans/{SLUG}/<n>-{SLUG}.md`) are detailed on demand before implementation: Objective, Decisions, Files, Steps, Tests, Acceptance criteria, Commit message, Dependencies, Implementation log.
+    </step>
+  </planning_protocol>
 
-    <skill_offer>
-      Two steps, in this order, both in user's language.
-      <step id="1">Send `<offer_message>` as one plain chat message.</step>
-      <step id="2">Ask via `<user_interaction>` the question as `<skill_question>` and options as `<skill_options>`. The question never merges with `<step id="1">`; `<step id="1">` never carries the question of `<step id="2">`.</step>
-      <offer_message>
-        Line 1: the request restated in one sentence.
-        One table with columns: #, Skill, Description, Execution. Offered skills, best fit first, with Description and Execution from in-memory frontmatter "Impact:" and "Agent:".
-        Last two lines: "Run it here" (Skill - translated if needed) - this session, without ai-tools skills (Description); and "Other" (Skill) - user specifies what to do (Description). Omit Execution for these rows.
-      </offer_message>
-      <skill_question>
-        Which option would you like to take?
-      </skill_question>
-      <skill_options>
-        One per listed skill in the table from `<offer_message>`, in the same order, labelled by skill name with a one-line gist. Mark at most one as recommended.
-        Omit "Other" option line if `<user_interaction>` API already offers it.
-      </skill_options>
-      <handling>
-        <response type="named_skill">Execute it.</response>
-        <response type="run_it_here">Do the work in this session; ignore ai-tools skills.</response>
-        <response type="other">Treat text as a new or revised request and route it again.</response>
-        <response type="stop">Stop without taking action.</response>
-      </handling>
-      <rule id="single-gate">This `<skill_offer>` is the only gate. After dispatch, a workflow that invokes another skill does not re-enter `<routing_gate>`. `<case id="2">` and `<response type="run_it_here">` bypass skills. Delegated payloads and continuations skip it. A fresh worker executes its brief and does not offer skills.</rule>
-    </skill_offer>
-  </routing_gate>
+  <implementation_protocol>
+    <step id="1" name="stage_loop">
+      Execute unfinished stages in dependency order per `<status_protocol>`:
+      1. Expand stage details on demand before implementation via stage planner as `executor="session-subagent"`, setting PF in Status table.
+      2. Set W; spawn stage implementer as `executor="implementer"` to write code and behaviour tests in declared files, setting V.
+      3. Spawn stage verifier as `executor="default-worker"` to run tests to `${TMPDIR:-/tmp}/ai-tools/{TOPIC}-output.log`. Spawner falls back to running commands itself if worker fails.
+      4. On `<signal code="ACCEPT">`: commit Conventional Commit, set F. On `<signal code="REWORK">`: log corrections, set R1..R3, retry up to 3 times before setting E. On E: stop remaining stages and report blocked.
+    </step>
+    <step id="2" name="delivery_lifecycle">
+      Start branch `plan/{SLUG}` from {BASE_BRANCH}; commit plan first `chore(plans): plan {SLUG}`. When all stages are F: archive to `${TMPDIR:-/tmp}/ai-tools/finished/{SLUG}`, remove `plans/{SLUG}`, commit `chore(plans): archive {SLUG}`, push `plan/{SLUG}`, and open PR via `gh pr create` (or write review patch). On blocker: retain unit and report blocked.
+    </step>
+    <status_protocol>
+      Session sets P before stage planning and W before implementation. Planner sets PF; implementer sets V; reviewer/judge sets ACCEPT, REWORK (R1..R3), or E.
+      <states>
+        <state code="P">Planning - stage planning started</state>
+        <state code="PF">Planning Finished - stage file written</state>
+        <state code="W">Working - implementation running</state>
+        <state code="V">Validating - ready for review</state>
+        <state code="R1..R3">Rework - corrections after review</state>
+        <state code="T">Testing - verification running</state>
+        <state code="E">Exhausted - budget exceeded; blocked</state>
+        <state code="F">Finished - accepted and committed</state>
+      </states>
+    </status_protocol>
+    <return_protocol>
+      <signal code="PLANNED">PLANNED {STAGE_FILE}</signal>
+      <signal code="ACCEPT">ACCEPT {STAGE_FILE} {VERDICT_PATH}</signal>
+      <signal code="REWORK">REWORK {STAGE_FILE} {VERDICT_PATH}</signal>
+      <signal code="DELIVERED">DELIVERED {REPORT_PATH} {PR_OR_PATCH}</signal>
+      <signal code="BLOCKED">BLOCKED {REASON} {EVIDENCE_PATH}</signal>
+      <signal code="NONE">NONE</signal>
+      <signal code="RESUME">RESUME {PLAN_PATH}</signal>
+    </return_protocol>
+  </implementation_protocol>
 
   <execution_protocol>
-    <rule id="session-model">The host session executes the selected skill's `<session_workflow>` on the session model.</rule>
-    <rule id="agent-tiers">Three agent tiers classify workloads: `junior` (default-worker for mechanical tasks, tests, builds, and read-only fact collection), `mid` (implementer for stage code editing, bug fixes, and unit tests), and `senior` (high-level planner, judge, and architectural evaluation).</rule>
-    <rule id="native-spawn">A `<template>` is spawned only through the harness's native subagent API: Claude Code Agent, Copilot runSubagent, Antigravity invoke_subagent.</rule>
-    <rule id="payload-assembly">When spawning a `<template>`, assemble one brief from its job, populated input, instructions, and constraints, plus every nested template that brief names, recursively, including cited `<status_protocol>` and `<return_protocol>` blocks. State that the brief is an authorized delegated payload. Pass only that brief and file paths.</rule>
-    <rule id="default-worker">`executor="default-worker"` (`junior` tier) uses the harness default agent type and model. Builds, test suites, script runs, and bulk fact collection go to default workers; a single pinpoint command the session needs for its next decision runs in the session.</rule>
-    <rule id="implementer">`executor="implementer"` (`mid` tier) uses the implementer model the skill resolved.</rule>
-    <rule id="session-subagent">`executor="session-subagent"` (`senior` tier) uses the session's own model where the API accepts a model.</rule>
-    <rule id="spawn-announce">Announce each spawn in the user's language with the template role and model.</rule>
-    <rule id="spawn-fallback">If a default-worker spawn fails, the spawning context runs that payload and states that. If an implementer or session-subagent spawn fails, the session does not take that role.</rule>
-    <rule id="parallel-spawns">Code-writing subagents run in parallel only on separate files; read-only exploration, builds, and tests may always run concurrently.</rule>
-    <rule id="session-commit">All changes from any task, plan, or simple request must be committed: if any file was modified, created, or removed, run tests (when code changed) and commit before returning the session to the user.</rule>
+    <rule id="session-model">Host session executes `<session_workflow>` on its model.</rule>
+    <rule id="agent-tiers">Workload tiers: `junior` (default-worker for tasks, tests, fact collection), `mid` (implementer for code and unit tests), and `senior` (planner, judge, architecture).</rule>
+    <rule id="native-spawn">Spawn `<template>` via native API: Claude Code Agent, Copilot runSubagent, Antigravity invoke_subagent.</rule>
+    <rule id="payload-assembly">Assemble brief from job, input, instructions, constraints, and nested templates, citing `<status_protocol>` and `<return_protocol>`. State brief is authorized delegated payload. Pass only brief and file paths.</rule>
+    <rule id="default-worker">`executor="default-worker"` (`junior`) uses harness default model. Builds, tests, and fact collection go to default workers; single pinpoint command runs in session.</rule>
+    <rule id="implementer">`executor="implementer"` (`mid`) uses resolved implementer model.</rule>
+    <rule id="session-subagent">`executor="session-subagent"` (`senior`) uses session model.</rule>
+    <rule id="spawn-announce">Announce spawn in user's language with role and model.</rule>
+    <rule id="spawn-fallback">Failed default-worker runs in spawning context. Failed implementer or session-subagent does not fall back to session.</rule>
+    <rule id="parallel-spawns">Parallel code-writing only on separate files; exploration, builds, and tests run concurrently.</rule>
+    <rule id="session-commit">Commit all changes before returning session: run tests when code changed and commit if files were modified, created, or removed.</rule>
   </execution_protocol>
 
   <language_rules>
@@ -75,9 +81,8 @@ ai-tools lives at `$HOME/.ai-tools` (`%USERPROFILE%\.ai-tools` on Windows). Skil
   </language_rules>
 
   <user_interaction>
-    <default>Ask questions and offer alternatives through the harness's native tool, never plain chat: Claude Code AskUserQuestion, Copilot vscode_askQuestions, Antigravity ask_question.
-      A subagent asks directly when it holds that tool; else it returns the question and options to the session, which asks through it and relays the answer.</default>
-    <fallback>Tool missing or refused: ask in one chat message, the question then numbered options. Silence is not consent.</fallback>
+    <default>Ask questions and offer alternatives through native tool: Claude Code AskUserQuestion, Copilot vscode_askQuestions, Antigravity ask_question. A subagent asks directly when it holds that tool; else relays via session.</default>
+    <fallback>Tool missing or refused: ask in one chat message, question then numbered options. Silence is not consent.</fallback>
   </user_interaction>
 
   <security_guardrails>

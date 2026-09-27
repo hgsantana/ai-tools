@@ -101,8 +101,8 @@ EOF
   while [ $# -gt 0 ]; do
     case "$1" in
       --foreign-skill)
-        mkdir -p "$home/.claude/skills/plan-ai-tools" || fatal "t_fixture: cannot create $home/.claude/skills/plan-ai-tools"
-        T_FOREIGN_SKILL_PATH="$home/.claude/skills/plan-ai-tools"
+        mkdir -p "$home/.claude/skills/vibe-ai-tools" || fatal "t_fixture: cannot create $home/.claude/skills/vibe-ai-tools"
+        T_FOREIGN_SKILL_PATH="$home/.claude/skills/vibe-ai-tools"
         printf 'not an ai-tools file\n' > "$T_FOREIGN_SKILL_PATH/SKILL.md"
         ;;
       --foreign-instructions)
@@ -110,14 +110,14 @@ EOF
         printf 'not an ai-tools file\n' > "$T_FOREIGN_INSTRUCTIONS_PATH"
         ;;
       --modified-copy)
-        T_MODIFIED_COPY_PATH="$home/.claude/skills/dev-ai-tools"
-        cp -R "$home/.ai-tools/skills/dev-ai-tools" "$T_MODIFIED_COPY_PATH" \
+        T_MODIFIED_COPY_PATH="$home/.claude/skills/gh-ai-tools"
+        cp -R "$home/.ai-tools/skills/gh-ai-tools" "$T_MODIFIED_COPY_PATH" \
           || fatal "t_fixture: cannot stage modified copy"
         printf '\nlocal edit that matches no revision\n' >> "$T_MODIFIED_COPY_PATH/SKILL.md"
         ;;
       --stale-link)
         T_STALE_LINK_PATH="$home/.claude/skills/old-layout-ai-tools"
-        ln -s "$home/.ai-tools/skills/plan-ai-tools" "$T_STALE_LINK_PATH" \
+        ln -s "$home/.ai-tools/skills/vibe-ai-tools" "$T_STALE_LINK_PATH" \
           || fatal "t_fixture: cannot create stale-link fixture"
         ;;
       --external-symlink)
@@ -354,7 +354,7 @@ t_origin_commit() {
   # usage: t_origin_commit <label>
   # Clones the fixture's bare origin (T_ROOT/origin.git) into a scratch dir,
   # makes deterministic changes — appends marker lines to USER-AGENTS.md and
-  # the existing skills/plan-ai-tools/SKILL.md file, then adds a new
+  # the existing skills/vibe-ai-tools/SKILL.md file, then adds a new
   # skills/<label>-ai-tools/ directory containing SKILL.md (the single-file
   # layout the repository ships) — commits and pushes to master, giving the fixture's clone
   # something new to update to. Returns nothing; the caller already knows the
@@ -376,7 +376,7 @@ t_origin_commit() {
     || fatal "t_origin_commit: cannot append marker to instructions"
 
   printf '\n<!-- t_origin_commit marker: %s -->\n' "$label" \
-    >> "$scratch/skills/plan-ai-tools/SKILL.md" \
+    >> "$scratch/skills/vibe-ai-tools/SKILL.md" \
     || fatal "t_origin_commit: cannot append marker to existing skill"
 
   mkdir -p "$scratch/skills/$label-ai-tools" \
