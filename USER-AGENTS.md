@@ -3,7 +3,8 @@
 A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/AGENTS.md` exists, follow it; if missing, ignore it.
 
 <user_instructions>
-  <planning_protocol>
+ <planning_protocol>
+    The following instructions must be followed alongside the default plan behaviour when the user wants to plan a task using some skill like `/plan` or just asking to plan something explicitly.
     <step id="1" name="intake_and_branch">
       Verify repository root with `git rev-parse --show-toplevel`. Record checked-out branch as {BASE_BRANCH} and derive kebab-case {SLUG}.
     </step>
@@ -19,6 +20,7 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/A
   </planning_protocol>
 
   <implementation_protocol>
+    The following instructions must be followed alongside the default implementation behaviour when executing a planned stage using `<planning_protocol>`.
     <step id="1" name="stage_loop">
       Execute unfinished stages in dependency order per `<status_protocol>`:
       1. Expand stage details on demand before implementation via stage planner (`<planning_protocol><step id="4">`) as `executor="session-subagent"`, setting PF in Status table when done.
