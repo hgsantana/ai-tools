@@ -57,7 +57,7 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/A
     <rule id="agent-tiers">Tier models: `$HOME/.ai-tools/config.local.json` `models`, else `config/agents.json`.</rule>
     <rule id="default-worker">`executor="default-worker"` (`junior`): harness default subagent for tasks, tests, facts.</rule>
     <rule id="implementer">`executor="implementer"` (`mid`): code and unit tests.</rule>
-    <rule id="planner">`executor="planner"` (`senior`): planning.</rule>
+    <rule id="planner">`executor="planner"` (`senior`): planning, orchestration and validation.</rule>
     <rule id="session-subagent">`executor="session-subagent"`: session model, for review or when an offer picks it.</rule>
     <rule id="planner-offer">Entering `<planning_protocol>`, ask once who plans ({PLANNER}): 1. `executor="planner"` (recommended); 2. the session itself.</rule>
     <rule id="implementer-offer">Before the first `<implementation_protocol>` stage, ask once per run who implements ({IMPLEMENTER}, in the Executor column, reused for every stage): 1. `executor="implementer"` (recommended); 2. `executor="session-subagent"`; 3. `executor="default-worker"`. Take option 1 unasked if `behavior.ask_implementer_model` is false.</rule>
