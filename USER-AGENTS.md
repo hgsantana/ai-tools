@@ -16,7 +16,7 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/A
   </planning_protocol>
 
   <implementation_protocol>
-    Only for planned stages under `plans/{SLUG}/`, directly or via a citing skill:
+    Only for planned stages under `plans/{SLUG}/` or `plans/{SLUG}.md`, directly or via a citing skill:
     <step id="1" name="stage_loop">
       Resolve {IMPLEMENTER} per `<rule id="implementer-offer">`; run unfinished stages in dependency order per `<status_protocol>`:
       1. Detail stage per `<planning_protocol>` step 4, setting PF.
