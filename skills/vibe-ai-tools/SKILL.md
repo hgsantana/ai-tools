@@ -14,37 +14,31 @@ argument-hint: "[the change to deliver]"
 <skill name="vibe-ai-tools">
   <overview>
     Grill the user along the design tree and plan a change under plans/{SLUG}/, then the session delivers it.
-    The session plans, asks the implementer model, judges each stage, commits, and opens the pull request; implementers write stage code; tests go to a default worker when that spawn works.
+    Planning follows `<planning_protocol>` and delivery follows `<implementation_protocol>`: the chosen planner plans, the chosen implementer writes stage code, tests go to a default worker when that spawn works, and the session judges each stage, commits, and opens the pull request.
   </overview>
 
   <session_workflow>
     <step id="1" name="interactive_planning">
-      Execute `<planning_protocol>`: verify repository root, record {BASE_BRANCH}, conduct the grill-me interview to resolve scope, architecture, and trade-offs, derive kebab-case {SLUG}, and write the base plan under `plans/{SLUG}/0-{SLUG}.md`.
+      Execute `<planning_protocol>` for the requested change, resolving {PLANNER} per `<rule id="planner-offer">`: the chosen planner runs the grill-me interview and writes the base plan `plans/{SLUG}/0-{SLUG}.md`.
     </step>
 
-    <step id="2" name="implementer_model">
-      Check `$HOME/.ai-tools/config.local.json`: if `ask_implementer_model` under `"behavior"` is set to false, skip prompting the user and resolve {IMPLEMENTER_MODEL} directly from the configured tier model in `$HOME/.ai-tools/config.local.json` under `"models"` or `config/agents.json` default for `mid` tier.
-      Otherwise, with the plan on disk and before execution, ask the user exactly one question through `<user_interaction>`: which model implements this plan's stages, with 1-3 options chosen per `<implementer_job>`.
-      Record the answer as {IMPLEMENTER_MODEL} in plans/{SLUG}/vibe-decisions.md; ask nothing else before delivery.
+    <step id="2" name="implementer_choice">
+      With the plan on disk and before the first stage, resolve {IMPLEMENTER} once per `<rule id="implementer-offer">`, framed by `<implementer_job>`.
+      Record {PLANNER} and {IMPLEMENTER} in plans/{SLUG}/vibe-decisions.md; ask nothing else before delivery.
     </step>
 
     <step id="3" name="unattended_execution">
-      Read the base plan and repository rules (README.md, AGENTS.md if present).
-      Check out `plan/{SLUG}` from {BASE_BRANCH} and commit the plan first: `chore(plans): plan {SLUG}`.
-      For each unfinished stage in dependency order, following `<status_protocol>`:
-        1. If the stage is not yet planned (status empty or resumed at P): set P in the base plan Status table, spawn `<template role="stage-planner">` from `<dispatch_templates>` as executor="session-subagent", substituting {STAGE_FILE} and {SLUG}; if that spawn fails, treat the unit as `<signal code="BLOCKED">` without implementing in the session.
-        2. Set W and record Executor as implementer plus {IMPLEMENTER_MODEL} in the base plan Status table.
-        3. Spawn `<template role="stage-implementer">` from `<dispatch_templates>` as executor="implementer" with {IMPLEMENTER_MODEL}, substituting {STAGE_FILE} and {SLUG}; if that spawn is rejected only for the recorded model, retry once with the harness default and use that model for remaining stages; if the spawn fails, treat the unit as `<signal code="BLOCKED">` without implementing the stage in the session.
-        4. Review the working-tree diff against the stage objective, declared files, and acceptance criteria per `<implementation_protocol>`. Decide in-scope questions from code evidence; append each decision to plans/{SLUG}/vibe-decisions.md.
-        5. On passing evidence and met criteria: stage path by path, commit with the stage's Conventional Commit message, and set F.
-        6. Otherwise: append concrete correction tasks to the stage log, set R1..R3, and retry up to three times, then set E.
+      Read the base plan and repository rules (README.md, AGENTS.md if present), then deliver per `<implementation_protocol>` with these skill specifics:
+        1. Stage planning: when {PLANNER} is `executor="planner"`, spawn `<template role="stage-planner">` from `<dispatch_templates>`, substituting {STAGE_FILE} and {SLUG}; otherwise the session runs that template's instructions itself.
+        2. Implementation: spawn `<template role="stage-implementer">` as {IMPLEMENTER}, substituting {STAGE_FILE} and {SLUG}; it runs `<template role="stage-verifier">` in place of a separate tester spawn. If a spawn is rejected only for its model, retry once with the harness default and keep that for remaining stages.
+        3. Review: the session reviews the working-tree diff against the stage objective, declared files, and acceptance criteria in place of a reviewer spawn, decides in-scope questions from code evidence, and appends each decision to plans/{SLUG}/vibe-decisions.md. On rework, append concrete correction tasks to the stage log.
       On E: stop remaining stages, retain the work unit, and go to `<step id="4">` as blocked. Do not start a dependent stage.
-      Execute delivery lifecycle per `<implementation_protocol>`: on all stages F, copy to ${TMPDIR:-/tmp}/ai-tools/finished/{SLUG}, remove with `git rm -r plans/{SLUG}`, commit `chore(plans): archive {SLUG}`, push `plan/{SLUG}`, open a pull request targeting {BASE_BRANCH} with `gh pr create` or write ${TMPDIR:-/tmp}/ai-tools/{SLUG}-review.patch when no host is available, write ${TMPDIR:-/tmp}/ai-tools/{SLUG}-report.md, and treat the outcome as `<signal code="DELIVERED">`.
+      On all stages F, finish the delivery lifecycle of `<implementation_protocol>`: target {BASE_BRANCH} with `gh pr create` or write ${TMPDIR:-/tmp}/ai-tools/{SLUG}-review.patch when no host is available, write ${TMPDIR:-/tmp}/ai-tools/{SLUG}-report.md, and treat the outcome as `<signal code="DELIVERED">`.
       If blocked: retain unit without push or PR, write evidence to ${TMPDIR:-/tmp}/ai-tools/{SLUG}-blocked.md, and treat outcome as `<signal code="BLOCKED">`. Partial delivery is not authorized.
     </step>
 
     <step id="4" name="report">
-      In chat (user's language), provide the report or evidence path, a one-line outcome, the implementer model actually used, and the PR URL or review patch path.
+      In chat (user's language), provide the report or evidence path, a one-line outcome, the implementer actually used, and the PR URL or review patch path.
       Interrupt the user only for `<signal code="BLOCKED">` or an approval reserved by `<security_guardrails>`.
     </step>
   </session_workflow>
@@ -52,12 +46,11 @@ argument-hint: "[the change to deliver]"
   <implementer_job>
     The implementer takes one stage file at a time and delivers it without supervision: it reads the stage and the code it touches, edits production code and tests across several files within the declared scope, matches the repository's style and conventions, writes and runs behaviour tests, and appends a factual implementation log. It makes no architecture, planning, or user-facing decisions and never commits.
     Required capability: reliable multi-file code editing in an unfamiliar codebase, test writing and debugging, precise adherence to written acceptance criteria, and tool use for file edits and shell commands.
-    Offer 1-3 models that the harness's native subagent API can select, by their exact harness names: the strongest coding fit first and marked recommended, then cheaper or faster options that still meet the required capability.
-    When that API cannot select a model per spawn, skip the question, record `harness default` as the model, and state that in the report. When a spawn with the chosen model fails, retry once with the harness default and record that.
+    State the resolved model behind each option when the harness exposes it. When the native subagent API cannot select a model per spawn, the chosen executor runs on the harness default; state that in the report.
   </implementer_job>
 
   <dispatch_templates>
-    <template role="stage-planner" executor="session-subagent">
+    <template role="stage-planner" executor="planner">
       <job>Stage planner: inspect repository state and write detailed stage file for one stage.</job>
       <input>
         <stage_file>{STAGE_FILE}</stage_file>
@@ -115,15 +108,16 @@ argument-hint: "[the change to deliver]"
 
   <return_protocol>
     <signal code="PLANNED">PLANNED {STAGE_FILE}</signal>
-    <signal code="DELIVERED">DELIVERED {REPORT_PATH} {PR_OR_PATCH} {IMPLEMENTER_MODEL}</signal>
+    <signal code="DELIVERED">DELIVERED {REPORT_PATH} {PR_OR_PATCH} {IMPLEMENTER}</signal>
     <signal code="BLOCKED">BLOCKED {REASON} {EVIDENCE_PATH}</signal>
   </return_protocol>
 
   <boundaries>
-    <rule id="session-owns-delivery">The session owns user alignment, planning, the implementer question, in-scope decisions, judgment, commits, archival, the pull request, and reporting from disk paths.</rule>
-    <rule id="one-model-question">Ask the implementer model question once per run, after the plan is on disk; reuse the answer for every stage and rework.</rule>
-    <rule id="spawn-apis">Per `<execution_protocol>`: `<template role="stage-planner">` runs as `executor="session-subagent"`; `<template role="stage-implementer">` runs as `executor="implementer"` with the recorded {IMPLEMENTER_MODEL}; `<template role="stage-verifier">` runs as `executor="default-worker"`.</rule>
-    <rule id="no-implementer-fallback">If `<template role="stage-planner">` or `<template role="stage-implementer">` cannot be spawned, do not plan or implement that stage in the session: end as `<signal code="BLOCKED">` naming the missing spawn.</rule>
+    <rule id="session-owns-delivery">The session owns user alignment, the planner and implementer offers, in-scope decisions, judgment, commits, archival, the pull request, and reporting from disk paths.</rule>
+    <rule id="protocols">Planning follows user-wide `<planning_protocol>` and delivery follows `<implementation_protocol>`; this skill states only its specifics.</rule>
+    <rule id="one-offer-each">Ask the planner offer once when planning starts and the implementer offer once after the plan is on disk; reuse both for every stage, rework, and resume.</rule>
+    <rule id="spawn-apis">Per `<execution_protocol>`: `<template role="stage-planner">` runs as {PLANNER}; `<template role="stage-implementer">` runs as {IMPLEMENTER}; `<template role="stage-verifier">` runs as `executor="default-worker"`.</rule>
+    <rule id="no-implementer-fallback">If a chosen planner or implementer cannot be spawned, do not plan or implement that stage in the session: end as `<signal code="BLOCKED">` naming the missing spawn.</rule>
     <rule id="worker-fallback">If a default-worker spawn fails, the spawning context runs those commands itself per `<rule id="spawn-fallback">`.</rule>
     <rule id="completion-is-f">Archive, push, and pull-request creation run only when every required stage is F. An E stage is BLOCKED and retains the work unit.</rule>
     <rule id="protocol-source">Follow user-wide `<execution_protocol>`, `<user_interaction>`, and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>

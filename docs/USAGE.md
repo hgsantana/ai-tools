@@ -28,13 +28,13 @@ Skills provide session-directed workflows. Global planning, implementation, and 
 
 ### Who does the work
 
-Every skill runs on the session's model. The session handles user alignment, judgment, commits, and short pointers to disk. Builds, test suites, script runs, and bulk fact collection go to the harness's default subagent. `/vibe-ai-tools` and `/campaign-ai-tools` spawn implementers per stage, asking one question before the first implementer for the model to use (or using configured defaults).
+Every skill runs on the session's model. The session handles user alignment, judgment, commits, and short pointers to disk. Builds, test suites, script runs, and bulk fact collection go to the harness's default subagent. `/vibe-ai-tools` and `/campaign-ai-tools` plan per `<planning_protocol>` and deliver per `<implementation_protocol>`. When planning starts they ask who plans: a `senior` planner subagent (recommended) or the session itself. Before the first stage they ask once who implements: the `mid` implementer (recommended), a session-subagent inheriting the session model, or the harness default subagent (or use the `mid` implementer when configured not to ask).
 
-`/campaign-ai-tools` also spawns a session-subagent planner to write each plan and to validate each stage from the working-tree diff. If a planner or implementer cannot be spawned, delivery stops as blocked; the host session does not take that role. A failed default-worker spawn is run by the context that requested it.
+`/campaign-ai-tools` also spawns a session-subagent to validate each stage from the working-tree diff. If a planner or implementer cannot be spawned, delivery stops as blocked; the host session does not take that role. A failed default-worker spawn is run by the context that requested it.
 
 ### Delivery workflows
 
-`/vibe-ai-tools` is the end-to-end choice for delivering a feature or fix. It executes the centralized grill-me design interview (`<planning_protocol>`) to stress-test assumptions and align scope interactively, writing the agreed base plan to disk (`plans/<slug>/0-<slug>.md`). It then asks which model implements the stages (if not configured). The session delivers: on-demand stage planning expands stage details before implementation, implementer subagents write stage code, and the session reviews diffs and test evidence before committing and opening the pull request. Chat names the report path and a one-line outcome. In-scope decisions are recorded in `plans/<slug>/vibe-decisions.md`.
+`/vibe-ai-tools` is the end-to-end choice for delivering a feature or fix. It executes the centralized grill-me design interview (`<planning_protocol>`) to stress-test assumptions and align scope interactively, writing the agreed base plan to disk (`plans/<slug>/0-<slug>.md`). It then asks once who implements the stages (if not configured). The session delivers: on-demand stage planning expands stage details before implementation, implementer subagents write stage code, and the session reviews diffs and test evidence before committing and opening the pull request. Chat names the report path and a one-line outcome. In-scope decisions are recorded in `plans/<slug>/vibe-decisions.md`.
 
 ### Continuous improvement campaign
 
@@ -91,7 +91,7 @@ To request a clean stop while it is running, say `Stop after the current plan.` 
 
 `/config-ai-tools` configures global behavioral preferences across the `ai-tools` ecosystem, persisting settings in `$HOME/.ai-tools/config.local.json` under `"behavior"`. Key settings include:
 - **Default CLI harness** (`default_cli`): preferred CLI harness (`agy`, `claude`, `copilot`) for autonomous execution and tool invocations.
-- **Implementer model prompt** (`ask_implementer_model`): whether skills like `/vibe-ai-tools` and `/campaign-ai-tools` ask for an implementer model before execution or proceed directly with configured tier defaults.
+- **Implementer model prompt** (`ask_implementer_model`): whether skills like `/vibe-ai-tools` and `/campaign-ai-tools` ask who implements before execution or proceed directly with the `mid` implementer.
 
 ### Maintenance
 

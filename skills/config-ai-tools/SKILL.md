@@ -17,11 +17,11 @@ argument-hint: "[setting to configure]"
     <step id="1" name="intake_and_interview">
       Read existing `$HOME/.ai-tools/config.local.json` if present to load current `"behavior"` preferences:
       - `default_cli` (default `agy` or first detected harness): preferred CLI harness (`agy`, `claude`, `copilot`).
-      - `ask_implementer_model` (default `true`): whether skills like `vibe-ai-tools` and `campaign-ai-tools` prompt the user for an implementer model or use pre-configured defaults directly.
+      - `ask_implementer_model` (default `true`): whether skills like `vibe-ai-tools` and `campaign-ai-tools` ask who implements (USER-AGENTS implementer offer) or use the `mid` implementer directly.
       Parse optional request argument {SETTING} to focus configuration on a single preference if provided.
       Interview the user through `<user_interaction>` on settings to configure, offering current or recommended defaults:
       1. Preferred CLI harness: `agy` (Google Antigravity), `claude` (Claude Code), or `copilot` (GitHub Copilot).
-      2. Implementer model prompt: ask for model each run (`true`, recommended) or use configured defaults directly (`false`).
+      2. Implementer prompt: ask who implements each run (`true`, recommended) or use the `mid` implementer directly (`false`).
     </step>
 
     <step id="2" name="persist_settings">

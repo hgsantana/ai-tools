@@ -40,7 +40,7 @@ Checks:
                     <dispatch_templates>), no SKILL.md contains Continue? or Stake,
                     USER-AGENTS.md has <planning_protocol>, <implementation_protocol>,
                     an <execution_protocol> with a <rule id> for default-worker,
-                    implementer, and session-subagent, never <agents>,
+                    implementer, planner, and session-subagent, never <agents>,
                     <dispatch_protocol>, or <worker, YAML applyTo/alwaysApply,
                     optional $HOME/AGENTS.md, and no references to deleted files (rules 5, 11)
   instructions cap  USER-AGENTS.md is at most 8000 characters (rule 3)
@@ -64,7 +64,7 @@ Checks:
                     unique id, every <step> a numeric id, and <case>,
                     <response>, <signal>, <state> their id, type, or code,
                     and every <template> a role and an executor that is one
-                    of default-worker, implementer, or session-subagent AND
+                    of default-worker, implementer, planner, or session-subagent AND
                     has a matching <rule id> inside USER-AGENTS
                     <execution_protocol>, never an agent attribute (rule 9,
                     Semantic XML grammar)
@@ -230,7 +230,7 @@ check_skill_layout() {
     warn "USER-AGENTS.md missing '<execution_protocol>' tag: $f"
   fi
 
-  for rid in default-worker implementer session-subagent; do
+  for rid in default-worker implementer planner session-subagent; do
     if awk '/<execution_protocol>/{p=1} p&&/<\/execution_protocol>/{p=0} p' "$f" | grep -qF "<rule id=\"$rid\">"; then
       ok "USER-AGENTS.md execution_protocol defines rule $rid: $f"
     else
@@ -588,14 +588,14 @@ xml_references() {
 
 valid_executors() {
   # usage: valid_executors -- space-separated executor names that are both
-  # one of the three known executor kinds and have a matching <rule id> inside
+  # one of the four known executor kinds and have a matching <rule id> inside
   # USER-AGENTS.md's <execution_protocol> (rule 9). A skill <template> whose
   # executor is not in this set is a lint finding, even if it names one of the
-  # three known kinds by spelling alone.
+  # four known kinds by spelling alone.
   local rule_ids e out=""
   rule_ids=$(awk '/<execution_protocol>/{p=1} p&&/<\/execution_protocol>/{p=0} p' "$AI_TOOLS/USER-AGENTS.md" \
     | grep -oE '<rule id="[a-z0-9-]+"' | sed -E 's/<rule id="([a-z0-9-]+)"/\1/' )
-  for e in default-worker implementer session-subagent; do
+  for e in default-worker implementer planner session-subagent; do
     if in_list "$e" "$(echo "$rule_ids" | tr '\n' ' ')"; then out="$out $e"; fi
   done
   echo "${out# }"
