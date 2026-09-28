@@ -17,13 +17,13 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
 
   <session_workflow>
     <step id="1" name="initialize">
-      Resolve kebab-case {CAMPAIGN}, {PRIORITIES}, and {EXCLUSIONS} with the user per `<rule id="grill-me">`. If `plans/improve/{CAMPAIGN}.md` exists on `improve/{CAMPAIGN}`, resume it with its recorded {IMPLEMENTER}. Otherwise create `improve/{CAMPAIGN}` from the current branch, resolve {IMPLEMENTER} per `<rule id="implementer-offer">`, framed by `<implementer_job>`, and write `plans/improve/{CAMPAIGN}.md` with goals, priorities, exclusions, {IMPLEMENTER}, status, and an iteration log.
+      Resolve kebab-case {CAMPAIGN}, {PRIORITIES}, and {EXCLUSIONS} with the user per `<rule id="grill-me">`. If `plans/improve/{CAMPAIGN}.md` exists on `improve/{CAMPAIGN}`, resume it with its recorded {PLANNER} and {IMPLEMENTER}. Otherwise create `improve/{CAMPAIGN}` from the current branch, resolve {PLANNER} per `<rule id="planner-offer">` alongside {IMPLEMENTER} per `<rule id="implementer-offer">`, framed by `<implementer_job>`, and write `plans/improve/{CAMPAIGN}.md` with goals, priorities, exclusions, {PLANNER}, {IMPLEMENTER}, status, and an iteration log.
       Commit `chore(plans): start campaign {CAMPAIGN}` or `chore(plans): resume campaign {CAMPAIGN}`. Ask nothing else afterwards.
     </step>
 
     <step id="2" name="iterate">
-      Plan the next cohesive improvement matching {PRIORITIES} and skipping {EXCLUSIONS}, deriving kebab-case {SLUG}; resolve grill-me questions with your own recommendations. When nothing is worth planning, record NONE in the iteration log.
-      Otherwise, for each stage, spawn `<template role="stage-implementer">` as {IMPLEMENTER}, substituting {SLUG}, {STAGE}, and {PLAN} (for stage 1, the full plan or the path of a plan file saved outside the repository; else empty), then check its commit against the stage's acceptance criteria. On a failed check, respawn once with the corrections in the brief; a second failure blocks the campaign.
+      Delegate planning the next cohesive improvement matching {PRIORITIES} and skipping {EXCLUSIONS} to {PLANNER} (dispatched via harness skill when senior, else session) per `<planning_protocol>`, deriving kebab-case {SLUG}; resolve grill-me questions with your own recommendations. When nothing is worth planning, record NONE in the iteration log.
+      Otherwise, for each stage, spawn `<template role="stage-implementer">` as {IMPLEMENTER}, substituting {SLUG}, {STAGE}, and {PLAN} (for stage 1, the full plan or the path of a plan file saved outside the repository; else empty); {PLANNER} validates each stage delivery by reviewing the git diff against the plan and stage acceptance criteria. On a failed check, respawn once with the corrections in the brief; a second failure blocks the campaign.
       Append the iteration outcome to the iteration log and commit `chore(plans): record campaign {CAMPAIGN} iteration {N}`. Repeat until two consecutive NONE, a halt, budget exhaustion, or a block.
     </step>
 
