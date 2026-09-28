@@ -3,7 +3,7 @@
 | Stage | Title | Status | Implementer |
 |---|---|---|---|
 | 1 | Setup branch and write plan | done | Antigravity default |
-| 2 | Update USER-AGENTS.md | pending | Antigravity default |
+| 2 | Update USER-AGENTS.md | done | Antigravity default |
 | 3 | Update vibe-ai-tools skill | pending | Antigravity default |
 | 4 | Update campaign-ai-tools skill | pending | Antigravity default |
 | 5 | Update documentation in README.md | pending | Antigravity default |
@@ -87,3 +87,10 @@ Refine `USER-AGENTS.md`, `vibe-ai-tools`, `campaign-ai-tools`, and `README.md`:
 - Created branch `plan/campaign-vibe-refinement` from `master`.
 - Initialized plan in `plans/campaign-vibe-refinement.md` with status table tracking all 6 stages.
 - Ready for Stage 2.
+
+### Stage 2: Update USER-AGENTS.md
+- Removed `<rule id="planner-offer">` from `<planning_protocol>`.
+- Updated `<rule id="implementer-offer">` in `<implementation_protocol>`: immediately asks once upon user approval who implements every stage, without intermediate commands or checks, with expanded options (`mid`/`senior` tier or subagent/default).
+- Updated `<rule id="stage-close">` in `<implementation_protocol>`: planner validates stage delivery by reviewing git diff and test results against the plan.
+- Verified character count: 5,805 characters (well below the 8,000-character cap).
+- Tested with `./scripts/lint.sh`: all checks on `USER-AGENTS.md` passed cleanly. 2 expected interim warnings on unresolved `<rule id="planner-offer">` in `skills/vibe-ai-tools/SKILL.md` and `skills/campaign-ai-tools/SKILL.md` will resolve in Stage 3 and Stage 4 respectively.
