@@ -17,11 +17,11 @@ argument-hint: "[the change to deliver]"
 
   <session_workflow>
     <step id="1" name="plan">
-      Resolve {PLANNER} per `<rule id="planner-offer">`. Plan the requested change per `<planning_protocol>`, deriving kebab-case {SLUG}; when {PLANNER} is a senior subagent, relay its user questions via the session per `<user_interaction>`. After the briefing, resolve {IMPLEMENTER} per `<rule id="implementer-offer">`, framed by `<implementer_job>`; ask nothing else afterwards.
+      Plan the requested change per `<planning_protocol>`, deriving kebab-case {SLUG}. Immediately upon briefing approval to proceed, ask {IMPLEMENTER} per `<rule id="implementer-offer">`, framed by `<implementer_job>`, as the very first action without intermediate tools or checks; ask nothing else afterwards.
     </step>
 
     <step id="2" name="deliver">
-      For each stage, spawn `<template role="stage-implementer">` as {IMPLEMENTER}, substituting {SLUG}, {STAGE}, and {PLAN} (for stage 1, the full plan or the path of a plan file saved outside the repository; else empty); {PLANNER} validates the implementer's delivery by reviewing the git diff against the plan and stage acceptance criteria.
+      For each stage, spawn `<template role="stage-implementer">` as {IMPLEMENTER}, substituting {SLUG}, {STAGE}, and {PLAN} (for stage 1, the full plan or the path of a plan file saved outside the repository; else empty); the session validates the implementer's delivery by reviewing the git diff and test results against the plan and stage acceptance criteria.
       Decide in-scope questions from code evidence and log each in that stage's report. On a failed check, respawn once with the corrections in the brief; on a second failure, stop as blocked without push or pull request and write evidence to `${TMPDIR:-/tmp}/ai-tools/{SLUG}-blocked.md`.
     </step>
 
