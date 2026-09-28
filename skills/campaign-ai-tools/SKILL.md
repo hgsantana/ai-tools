@@ -21,7 +21,7 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
     </step>
 
     <step id="2" name="iterate">
-      For each goal in `plans/improve/{CAMPAIGN}.md`: dispatch a subagent inheriting the session's model and effort via the native harness API per `<rule id="native-spawn">` to plan that goal into short stages per `<planning_protocol>`, deriving kebab-case {SLUG}. For each stage of {SLUG}, spawn `<template role="stage-implementer">` as {IMPLEMENTER}, substituting {SLUG}, {STAGE}, and {PLAN} (for stage 1, the full plan or the path of a plan file saved outside the repository; else empty); the goal planner subagent (kept active across the goal's stages, falling back to a fresh inherited subagent with the plan and diff) validates the implementer's delivery by reviewing the git diff and test results against the plan and stage acceptance criteria. On a failed check, respawn once with the corrections in the brief; a second failure blocks the campaign. When the goal finishes, remove `plans/{SLUG}.md` and commit `chore(plans): complete goal {SLUG}`, update the goal's status to done in `plans/improve/{CAMPAIGN}.md`, and commit `chore(plans): record campaign {CAMPAIGN} goal {N} ({SLUG})`.
+      For each goal in `plans/improve/{CAMPAIGN}.md`: dispatch a subagent inheriting the session's model and effort via the native harness API per `<rule id="native-spawn">` to plan that goal into short stages per `<planning_protocol>`, deriving kebab-case {SLUG}. The session orchestrates stage delivery without loading the diff into session context (avoiding context bloat). For each stage of {SLUG}, spawn `<template role="stage-implementer">` as {IMPLEMENTER}, substituting {SLUG}, {STAGE}, and {PLAN} (for stage 1, the full plan or the path of a plan file saved outside the repository; else empty); the goal planner subagent (kept active across the goal's stages, falling back to a fresh inherited subagent with the plan) directly inspects the git diff and concise test summary in the repository against `plans/{SLUG}.md`, returning only the approval verdict or corrections. On a failed check, run `git reset --soft HEAD~1` before respawning the implementer once with the corrections in the brief; a second failure blocks the campaign. When the goal finishes, remove `plans/{SLUG}.md` and commit `chore(plans): complete goal {SLUG}`, update the goal's status to done in `plans/improve/{CAMPAIGN}.md`, and commit `chore(plans): record campaign {CAMPAIGN} goal {N} ({SLUG})`.
     </step>
 
     <step id="3" name="finish">
@@ -30,7 +30,7 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
   </session_workflow>
 
   <implementer_job>
-    The implementer takes one stage and delivers it without supervision: it reads the plan and the code it touches, edits code and tests across several files within the stage's scope, matches repository style, runs tests, and commits locally. It makes no architecture, planning, or user-facing decisions.
+    The implementer takes one stage and delivers it without supervision: it reads the plan and the code it touches, edits code and tests across several files within the stage's scope, matches repository style, runs tests reporting only a concise summary of coverage and execution, appends its stage report, sets status to done, and commits locally without validating delivery against the macro plan. It makes no architecture, planning, or user-facing decisions.
     Required capability: reliable multi-file code editing in an unfamiliar codebase, test writing and debugging, precise adherence to written acceptance criteria, and tool use for file edits and shell commands.
   </implementer_job>
 
@@ -45,11 +45,12 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
       </input>
       <instructions>
         This payload is the brief; do not read sibling skill files.
-        For stage 1, write {PLAN}, reading it first when it is a file path, to plans/{SLUG}.md as that stage specifies. Read plans/{SLUG}.md and the repository rules (README.md, AGENTS.md if present). Deliver only stage {STAGE}: match surrounding style, write and run its tests, set its Status to done, append a short report to the end of plans/{SLUG}.md, and commit with the stage's Conventional Commit message.
-        Return a one-line outcome with the commit hash, test result, and changed paths.
+        For stage 1, write {PLAN}, reading it first when it is a file path, to plans/{SLUG}.md as that stage specifies. Read plans/{SLUG}.md and the repository rules (README.md, AGENTS.md if present). Deliver only stage {STAGE}: match surrounding style, write and run its tests reporting only a concise summary of coverage and execution, set its Status to done, append a short report to the end of plans/{SLUG}.md, and commit with the stage's Conventional Commit message.
+        Return a one-line outcome with the commit hash, test summary, and changed paths.
       </instructions>
       <constraints>
         <constraint>Stay within the stage's scope.</constraint>
+        <constraint>Do not validate delivery against the macro plan; run tests, commit locally, and return outcome.</constraint>
         <constraint>Work locally on improve/{CAMPAIGN}: no push or remote mutation.</constraint>
       </constraints>
     </template>
