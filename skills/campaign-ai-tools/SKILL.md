@@ -23,7 +23,7 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
 
     <step id="2" name="iterate">
       Plan the next cohesive improvement matching {PRIORITIES} and skipping {EXCLUSIONS}, deriving kebab-case {SLUG}; resolve grill-me questions with your own recommendations. When nothing is worth planning, record NONE in the iteration log.
-      Otherwise, for each stage, spawn `<template role="stage-implementer">` as {IMPLEMENTER}, substituting {SLUG}, {STAGE}, and {PLAN} (the full plan for stage 1, else empty), then check its commit against the stage's acceptance criteria. On a failed check, respawn once with the corrections in the brief; a second failure blocks the campaign.
+      Otherwise, for each stage, spawn `<template role="stage-implementer">` as {IMPLEMENTER}, substituting {SLUG}, {STAGE}, and {PLAN} (for stage 1, the full plan or the path of a plan file saved outside the repository; else empty), then check its commit against the stage's acceptance criteria. On a failed check, respawn once with the corrections in the brief; a second failure blocks the campaign.
       Append the iteration outcome to the iteration log and commit `chore(plans): record campaign {CAMPAIGN} iteration {N}`. Repeat until two consecutive NONE, a halt, budget exhaustion, or a block.
     </step>
 
@@ -50,7 +50,7 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
       </input>
       <instructions>
         This payload is the brief; do not read sibling skill files.
-        For stage 1, write {PLAN} to plans/{SLUG}.md as that stage specifies. Read plans/{SLUG}.md and the repository rules (README.md, AGENTS.md if present). Deliver only stage {STAGE}: match surrounding style, write and run its tests, set its Status to done, append a short report to the end of plans/{SLUG}.md, and commit with the stage's Conventional Commit message.
+        For stage 1, write {PLAN}, reading it first when it is a file path, to plans/{SLUG}.md as that stage specifies. Read plans/{SLUG}.md and the repository rules (README.md, AGENTS.md if present). Deliver only stage {STAGE}: match surrounding style, write and run its tests, set its Status to done, append a short report to the end of plans/{SLUG}.md, and commit with the stage's Conventional Commit message.
         Return a one-line outcome with the commit hash, test result, and changed paths.
       </instructions>
       <constraints>
