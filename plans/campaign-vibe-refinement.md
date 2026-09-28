@@ -4,7 +4,7 @@
 |---|---|---|---|
 | 1 | Setup branch and write plan | done | Antigravity default |
 | 2 | Update USER-AGENTS.md | done | Antigravity default |
-| 3 | Update vibe-ai-tools skill | pending | Antigravity default |
+| 3 | Update vibe-ai-tools skill | done | Antigravity default |
 | 4 | Update campaign-ai-tools skill | pending | Antigravity default |
 | 5 | Update documentation in README.md | pending | Antigravity default |
 | 6 | Complete plan, push branch, and open PR | pending | Antigravity default |
@@ -94,3 +94,10 @@ Refine `USER-AGENTS.md`, `vibe-ai-tools`, `campaign-ai-tools`, and `README.md`:
 - Updated `<rule id="stage-close">` in `<implementation_protocol>`: planner validates stage delivery by reviewing git diff and test results against the plan.
 - Verified character count: 5,805 characters (well below the 8,000-character cap).
 - Tested with `./scripts/lint.sh`: all checks on `USER-AGENTS.md` passed cleanly. 2 expected interim warnings on unresolved `<rule id="planner-offer">` in `skills/vibe-ai-tools/SKILL.md` and `skills/campaign-ai-tools/SKILL.md` will resolve in Stage 3 and Stage 4 respectively.
+
+### Stage 3: Update vibe-ai-tools skill
+- Updated `skills/vibe-ai-tools/SKILL.md` `<step id="1" name="plan">`: session directly plans per `<planning_protocol>` and immediately offers {IMPLEMENTER} upon briefing approval as the very first action without intermediate tools or checks.
+- Updated `skills/vibe-ai-tools/SKILL.md` `<step id="2" name="deliver">`: session validates delivery by reviewing git diff and test results against the plan and stage acceptance criteria.
+- Verified frontmatter description length (410 characters, under the 500-character limit) and format (`Agent: session + implementer (model asked once).`).
+- Tested with `./scripts/lint.sh` and `./scripts/test.sh`: `vibe-ai-tools` passed cleanly with 0 warnings; remaining interim warning on `campaign-ai-tools` will resolve in Stage 4; all 349 regression tests in `test.sh` passed.
+
