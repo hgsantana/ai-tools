@@ -21,7 +21,7 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/A
   <implementation_protocol>
     Adds to, never replaces, the harness's own implementation flow when implementing a plan.
     <rule id="implementer-offer">Before the first stage, ask once via `<user_interaction>` who implements every stage ({IMPLEMENTER}): 1. the harness default, per the harness's own configuration; 2. the `mid` tier of the current harness's skill (`claude-ai-tools` in Claude Code, `copilot-ai-tools` in Copilot, `agy-ai-tools` in Antigravity), dispatched by that skill.</rule>
-    <rule id="clean-context">The session runs stage 1, since it holds the plan. Each later stage of a multi-stage plan runs in a fresh {IMPLEMENTER} with a clean context, briefed only with `plans/{SLUG}.md` and the stage number.</rule>
+    <rule id="clean-context">Each stage of a multi-stage plan runs in a fresh {IMPLEMENTER} with a clean context, briefed with `plans/{SLUG}.md` and the stage number; the stage 1 brief also carries the full plan content to write there.</rule>
     <rule id="stage-close">An implementer delivers its stage with tests, report, status, and commit; the session checks that commit before starting the next stage.</rule>
   </implementation_protocol>
 

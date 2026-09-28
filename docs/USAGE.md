@@ -27,7 +27,7 @@ Skills provide session-directed workflows. Global planning, implementation, and 
 
 ### Who does the work
 
-Every skill runs on the session's model. The session handles user alignment, judgment, commits, and short pointers to disk; builds, tests, and bulk fact collection go to the harness's default subagent. The user-wide planning and implementation rules add to each harness's own flows. Before the first stage of a plan, the session asks once who implements: the harness default or the `mid` tier of the current harness's skill. The session runs stage 1; every later stage runs in a fresh implementer with a clean context. If the implementer cannot be spawned, delivery stops as blocked.
+Every skill runs on the session's model. The session handles user alignment, judgment, commits, and short pointers to disk; builds, tests, and bulk fact collection go to the harness's default subagent. The user-wide planning and implementation rules add to each harness's own flows. Before the first stage of a plan, the session asks once who implements: the harness default or the `mid` tier of the current harness's skill. Every stage runs in a fresh implementer with a clean context; the stage 1 brief carries the full plan, which that implementer writes to disk. If the implementer cannot be spawned, delivery stops as blocked.
 
 ### Agent dispatch
 

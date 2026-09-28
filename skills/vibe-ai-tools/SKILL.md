@@ -21,7 +21,7 @@ argument-hint: "[the change to deliver]"
     </step>
 
     <step id="2" name="deliver">
-      Run stage 1 in the session. For each later stage, spawn `<template role="stage-implementer">` as {IMPLEMENTER}, substituting {SLUG} and {STAGE}, then check its commit against the stage's acceptance criteria.
+      For each stage, spawn `<template role="stage-implementer">` as {IMPLEMENTER}, substituting {SLUG}, {STAGE}, and {PLAN} (the full plan for stage 1, else empty), then check its commit against the stage's acceptance criteria.
       Decide in-scope questions from code evidence and log each in that stage's report. On a failed check, respawn once with the corrections in the brief; on a second failure, stop as blocked without push or pull request and write evidence to `${TMPDIR:-/tmp}/ai-tools/{SLUG}-blocked.md`.
     </step>
 
@@ -41,10 +41,11 @@ argument-hint: "[the change to deliver]"
       <input>
         <slug>{SLUG}</slug>
         <stage>{STAGE}</stage>
+        <plan>{PLAN}</plan>
       </input>
       <instructions>
         This payload is the brief; do not read sibling skill files.
-        Read plans/{SLUG}.md and the repository rules (README.md, AGENTS.md if present). Deliver only stage {STAGE}: match surrounding style, write and run its tests, set its Status to done, append a short report to the end of plans/{SLUG}.md, and commit with the stage's Conventional Commit message.
+        For stage 1, write {PLAN} to plans/{SLUG}.md as that stage specifies. Read plans/{SLUG}.md and the repository rules (README.md, AGENTS.md if present). Deliver only stage {STAGE}: match surrounding style, write and run its tests, set its Status to done, append a short report to the end of plans/{SLUG}.md, and commit with the stage's Conventional Commit message.
         For the last stage, also run its removal, push, and pull request against the base branch.
         Return a one-line outcome with the commit hash, test result, and changed paths.
       </instructions>
