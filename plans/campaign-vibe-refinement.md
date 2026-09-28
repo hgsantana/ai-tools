@@ -5,7 +5,7 @@
 | 1 | Setup branch and write plan | done | Antigravity default |
 | 2 | Update USER-AGENTS.md | done | Antigravity default |
 | 3 | Update vibe-ai-tools skill | done | Antigravity default |
-| 4 | Update campaign-ai-tools skill | pending | Antigravity default |
+| 4 | Update campaign-ai-tools skill | done | Antigravity default |
 | 5 | Update documentation in README.md | pending | Antigravity default |
 | 6 | Complete plan, push branch, and open PR | pending | Antigravity default |
 
@@ -100,4 +100,13 @@ Refine `USER-AGENTS.md`, `vibe-ai-tools`, `campaign-ai-tools`, and `README.md`:
 - Updated `skills/vibe-ai-tools/SKILL.md` `<step id="2" name="deliver">`: session validates delivery by reviewing git diff and test results against the plan and stage acceptance criteria.
 - Verified frontmatter description length (410 characters, under the 500-character limit) and format (`Agent: session + implementer (model asked once).`).
 - Tested with `./scripts/lint.sh` and `./scripts/test.sh`: `vibe-ai-tools` passed cleanly with 0 warnings; remaining interim warning on `campaign-ai-tools` will resolve in Stage 4; all 349 regression tests in `test.sh` passed.
+
+### Stage 4: Update campaign-ai-tools skill
+- Updated `skills/campaign-ai-tools/SKILL.md` frontmatter description to reflect 3–5 goal campaign workflow, inherited planner subagent, and PR delivery (443 characters, under the 500-character limit, matching `Agent: session + implementer (model asked once)`).
+- Updated `<overview>` and `<session_workflow>`: step 1 resolves 3–5 goals with user and immediately asks {IMPLEMENTER} upon approval as very first action; step 2 iterates each goal via inherited planner subagent, spawning {IMPLEMENTER} for each stage and validating delivery against git diff and test results; step 3 completes campaign by removing plan, pushing branch, and opening PR.
+- Updated template constraints to work locally on `improve/{CAMPAIGN}` without push or remote mutation, and added `<campaign>{CAMPAIGN}</campaign>` to template input to satisfy placeholder parity.
+- Replaced `<rule id="local-lifecycle">` with `<rule id="campaign-lifecycle">` and `<rule id="strictly-local">` with `<rule id="stay-in-repo">`.
+- Tested with `./scripts/lint.sh`: 398 checks ok, 0 warnings (unresolved `planner-offer` warning resolved).
+- Tested with `./scripts/test.sh`: 349 tests passed with 0 warnings.
+
 
