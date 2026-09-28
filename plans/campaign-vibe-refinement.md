@@ -6,7 +6,7 @@
 | 2 | Update USER-AGENTS.md | done | Antigravity default |
 | 3 | Update vibe-ai-tools skill | done | Antigravity default |
 | 4 | Update campaign-ai-tools skill | done | Antigravity default |
-| 5 | Update documentation in README.md | pending | Antigravity default |
+| 5 | Update documentation in README.md | done | Antigravity default |
 | 6 | Complete plan, push branch, and open PR | pending | Antigravity default |
 
 ## Overview
@@ -107,6 +107,14 @@ Refine `USER-AGENTS.md`, `vibe-ai-tools`, `campaign-ai-tools`, and `README.md`:
 - Updated template constraints to work locally on `improve/{CAMPAIGN}` without push or remote mutation, and added `<campaign>{CAMPAIGN}</campaign>` to template input to satisfy placeholder parity.
 - Replaced `<rule id="local-lifecycle">` with `<rule id="campaign-lifecycle">` and `<rule id="strictly-local">` with `<rule id="stay-in-repo">`.
 - Tested with `./scripts/lint.sh`: 398 checks ok, 0 warnings (unresolved `planner-offer` warning resolved).
+- Tested with `./scripts/test.sh`: 349 tests passed with 0 warnings.
+
+### Stage 5: Update documentation in README.md
+- Bumped version to `0.0.64-ALPHA` in `README.md`.
+- Updated bullet 4 in `README.md` to state that `vibe-ai-tools` plans with the user and `campaign-ai-tools` plans 3–5 goals via an inherited subagent, with both delivering each stage in a fresh implementer (`mid` recommended or `senior` tier, or subagent/default of the session) asked once.
+- Updated rule 23 in `README.md` to remove the planner selection offer sentence.
+- Updated rule 24 in `README.md` to specify immediate implementer offer upon approval without intermediate commands or checks, validation of deliveries by planner reviewing git diff and test results, and PR delivery for both `vibe-ai-tools` and `campaign-ai-tools`.
+- Tested with `./scripts/lint.sh`: 398 ok, 0 warnings.
 - Tested with `./scripts/test.sh`: 349 tests passed with 0 warnings.
 
 
