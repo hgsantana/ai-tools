@@ -5,7 +5,7 @@ Status table:
 | Stage | Title | Status | Implementer |
 |---|---|---|---|
 | 1 | Setup branch and write plan | done | Antigravity default |
-| 2 | Update USER-AGENTS.md | pending | Antigravity default |
+| 2 | Update USER-AGENTS.md | done | Antigravity default |
 | 3 | Update vibe-ai-tools skill | pending | Antigravity default |
 | 4 | Update campaign-ai-tools skill | pending | Antigravity default |
 | 5 | Update documentation in README.md | pending | Antigravity default |
@@ -70,3 +70,11 @@ Refine `USER-AGENTS.md`, `skills/vibe-ai-tools/SKILL.md`, `skills/campaign-ai-to
 - Created and checked out branch `plan/planner-diff-validation` from `master`.
 - Wrote initial plan to `plans/planner-diff-validation.md` with status table.
 - Marked Stage 1 as done.
+
+### Stage 2: Update USER-AGENTS.md
+- Refined `<rule id="stage-close">` in `USER-AGENTS.md`:
+  - Established implementer execution boundaries: executes within stage scope, runs tests reporting only a concise summary of coverage and execution, appends stage report to `plans/{SLUG}.md`, sets status to done, and commits locally without validating delivery against macro plan.
+  - Specified that the planner that created the plan ({PLANNER}) validates delivery by reviewing git diff and test summary against plan and acceptance criteria.
+  - Clarified soft reset (`git reset --soft HEAD~1`) on check failure before respawning implementer once with corrections.
+- Verified character count (6158 <= 8000 chars) and passed all `./scripts/lint.sh` checks (398 ok).
+- Marked Stage 2 as done.
