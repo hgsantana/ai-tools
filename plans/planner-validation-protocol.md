@@ -4,7 +4,7 @@
 |---|---|---|---|
 | 1 | Setup branch and write plan | done | Antigravity default |
 | 2 | Update USER-AGENTS.md with planner/implementer offer and diff validation | done | Antigravity default |
-| 3 | Update vibe-ai-tools skill | pending | Antigravity default |
+| 3 | Update vibe-ai-tools skill | done | Antigravity default |
 | 4 | Update campaign-ai-tools skill | pending | Antigravity default |
 | 5 | Update documentation in README.md | pending | Antigravity default |
 | 6 | Complete plan, push branch, and open PR | pending | Antigravity default |
@@ -82,3 +82,9 @@ Implement protocol updates across user-wide instructions (`USER-AGENTS.md`), pla
 - Updated `<rule id="implementer-offer">` in `<implementation_protocol>` to recommend mid tier harness skill over harness default.
 - Updated `<rule id="stage-close">` in `<implementation_protocol>` specifying that {PLANNER} validates stage delivery by reviewing the git diff against the plan.
 - Verified character count (5,991 characters, well below the 8,000-character cap) and verified lint passes cleanly.
+
+### Stage 3: Update vibe-ai-tools skill
+- Updated `<step id="1" name="plan">` in `skills/vibe-ai-tools/SKILL.md` to resolve {PLANNER} per `<rule id="planner-offer">` and relay subagent planner questions via session per `<user_interaction>`.
+- Updated `<step id="2" name="deliver">` in `skills/vibe-ai-tools/SKILL.md` to specify that {PLANNER} validates the implementer's delivery by reviewing the git diff against the plan and stage acceptance criteria.
+- Verified frontmatter description remains under 500 characters and valid per rule 6.
+- Ran `scripts/lint.sh` and verified all checks pass (401 ok, 0 warnings).
