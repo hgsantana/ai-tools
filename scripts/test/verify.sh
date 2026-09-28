@@ -145,7 +145,7 @@ case_verify_instructions_cap() {
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
 
-  printf '%02048d\n' 0 >> "$instructions"
+  printf '%08192d\n' 0 >> "$instructions"
   before=$(t_snapshot "$root/home")
   t_verify "$root" --harnesses claude-code
   t_assert_exit 2
