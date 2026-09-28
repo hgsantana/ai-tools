@@ -6,7 +6,7 @@
 | 2 | Update USER-AGENTS.md with planner/implementer offer and diff validation | done | Antigravity default |
 | 3 | Update vibe-ai-tools skill | done | Antigravity default |
 | 4 | Update campaign-ai-tools skill | done | Antigravity default |
-| 5 | Update documentation in README.md | pending | Antigravity default |
+| 5 | Update documentation in README.md | done | Antigravity default |
 | 6 | Complete plan, push branch, and open PR | pending | Antigravity default |
 
 ## Overview
@@ -94,3 +94,10 @@ Implement protocol updates across user-wide instructions (`USER-AGENTS.md`), pla
 - Updated `<step id="2" name="iterate">` in `skills/campaign-ai-tools/SKILL.md` to delegate goal planning to {PLANNER} per `<planning_protocol>`, spawn `<template role="stage-implementer">` as {IMPLEMENTER}, and validate stage deliveries via git diff review by {PLANNER}.
 - Maintained frontmatter description within 500 characters and valid per rule 6.
 - Ran `scripts/lint.sh` and verified all checks pass (403 ok, 0 warnings).
+
+### Stage 5: Update documentation in README.md
+- Bumped version to `0.0.63-ALPHA` on line 3 of `README.md`.
+- Updated line 16 (bullet 4) to describe the planner offer (senior recommended or session) and implementer offer (mid recommended or harness default).
+- Updated line 118 (rule 23) to state that skills offering planner selection ask once who plans: the senior tier of the current harness skill (recommended) or the session, relaying user questions via session.
+- Updated line 119 (rule 24) to reflect that mid tier is recommended for implementer, and that the planner that created the plan validates each stage delivery by reviewing the git diff against the plan before starting the next stage.
+- Verified `./scripts/lint.sh --base master` passes cleanly with 0 warnings.
