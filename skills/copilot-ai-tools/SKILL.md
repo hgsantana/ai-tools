@@ -31,7 +31,7 @@ argument-hint: "[tier | [model] [effort]] <task description>"
 
     <step id="3" name="dispatch">
       From the workspace root (`git rev-parse --show-toplevel`, else `.`), use the first level available, saving output to `${TMPDIR:-/tmp}/ai-tools/{TOPIC}.md`:
-      1. CLI: `copilot -p "{TASK_PROMPT}" --model "{MODEL}" --effort "{EFFORT}" --yolo`, with `copilot` from PATH or `~/.local/bin/copilot`.
+      1. CLI: execute directly assuming it exists (no pre-checks). If command is not found (exit 127), search PATH, `~/.local/bin/copilot`, or `which copilot` and retry with the resolved path; advance to level 2 only if missing: `copilot -p "{TASK_PROMPT}" --model "{MODEL}" --effort "{EFFORT}" --yolo`.
       2. Harness API: without the CLI, spawn a subagent via the native API per `<rule id="native-spawn">`, setting {MODEL} and {EFFORT}.
       3. Closest match: when that API cannot set them, pick the nearest model and effort it offers.
       Send bulk CLI inspection to `<template role="mechanical-discovery">`, substituting {COMMANDS} and {TOPIC}.
