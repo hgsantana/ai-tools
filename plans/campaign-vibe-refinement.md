@@ -1,0 +1,89 @@
+# Plan: Campaign and Vibe Workflow Refinement
+
+| Stage | Title | Status | Implementer |
+|---|---|---|---|
+| 1 | Setup branch and write plan | done | Antigravity default |
+| 2 | Update USER-AGENTS.md | pending | Antigravity default |
+| 3 | Update vibe-ai-tools skill | pending | Antigravity default |
+| 4 | Update campaign-ai-tools skill | pending | Antigravity default |
+| 5 | Update documentation in README.md | pending | Antigravity default |
+| 6 | Complete plan, push branch, and open PR | pending | Antigravity default |
+
+## Overview
+Refine `USER-AGENTS.md`, `vibe-ai-tools`, `campaign-ai-tools`, and `README.md`:
+1. **USER-AGENTS.md**:
+   - Remove `<rule id="planner-offer">`.
+   - Update `<rule id="implementer-offer">`: immediately upon user approval to start implementation, the very first action without intermediate commands, checks, or tool calls is asking once via `<user_interaction>` who implements every stage ({IMPLEMENTER}): 1. `mid` or `senior` tier of harness skill (`mid` recommended); 2. subagent of session or harness default. Execution proceeds only after {IMPLEMENTER} is resolved.
+   - Update `<rule id="stage-close">`: planner that created the plan ({PLANNER}) validates delivery by reviewing git diff and test results against the plan before starting the next stage.
+2. **vibe-ai-tools**:
+   - The session alone is the planner per `<planning_protocol>`.
+   - Immediately upon briefing approval to proceed, ask {IMPLEMENTER} as the very first action without intermediate tools or checks; ask nothing else afterwards.
+   - Session validates each stage delivery by reviewing git diff and test results against the plan and stage acceptance criteria.
+3. **campaign-ai-tools**:
+   - Grill-me with user structures a campaign with an achievable global objective and 3–5 concrete goals.
+   - Immediately upon user approval to begin, ask {IMPLEMENTER} as the very first action without intermediate tools or checks.
+   - Only after {IMPLEMENTER} is resolved, create branch `improve/{CAMPAIGN}`, commit `plans/improve/{CAMPAIGN}.md`, and run unattended until PR.
+   - Loop: session dispatches a subagent inheriting session model and effort via native harness API per `<rule id="native-spawn">` to plan next goal into stages per `<planning_protocol>`.
+   - Implementer delivers each stage; goal planner subagent validates delivery by reviewing git diff and test results against the plan.
+   - Each goal removes its plan file in its last stage. Session updates goal status in campaign log and commits.
+   - When all goals complete, remove `plans/improve/{CAMPAIGN}.md`, commit, push branch `improve/{CAMPAIGN}`, and open pull request.
+4. **README.md**:
+   - Update rules 4, 23, and 24 to reflect immediate implementer offer, diff + test validation, and campaign PR delivery.
+   - Bump version to `0.0.64-ALPHA`.
+
+## Stage 1: Setup branch and write plan
+- Create branch `plan/campaign-vibe-refinement` from `master`.
+- Write plan to `plans/campaign-vibe-refinement.md`.
+- Mark Stage 1 as `done`.
+- Commit: `chore(plans): initialize campaign-vibe-refinement plan`.
+
+## Stage 2: Update USER-AGENTS.md
+- Remove `<rule id="planner-offer">` from `<planning_protocol>`.
+- Update `<rule id="implementer-offer">` with immediate ask on approval, no intermediate calls, and expanded options (`mid`/`senior` tier or subagent/default).
+- Update `<rule id="stage-close">` to explicitly specify reviewing git diff and test results against the plan.
+- Verify character count stays under 8,000 characters.
+- Run `scripts/lint.sh`.
+- Mark Stage 2 as `done` and append stage report.
+- Commit: `feat(instructions): refine implementer offer timing and validation with diff and tests`.
+
+## Stage 3: Update vibe-ai-tools skill
+- In `skills/vibe-ai-tools/SKILL.md`:
+  - Session alone plans per `<planning_protocol>`.
+  - In Step 1: Immediately upon briefing approval to proceed, ask {IMPLEMENTER} as very first action without intermediate tools or checks.
+  - In Step 2: Session validates delivery by reviewing git diff and test results against plan and acceptance criteria.
+- Run `scripts/lint.sh`.
+- Mark Stage 3 as `done` and append stage report.
+- Commit: `feat(vibe): session-first planning with immediate implementer offer and diff test validation`.
+
+## Stage 4: Update campaign-ai-tools skill
+- In `skills/campaign-ai-tools/SKILL.md`:
+  - Update frontmatter description (mentions creating branch, editing, committing, pushing, and opening PR unattended).
+  - Step 1: Grill-me structures 3–5 goals. Immediately upon approval, ask {IMPLEMENTER} as very first action without intermediate tools or checks. Create `improve/{CAMPAIGN}`, commit `plans/improve/{CAMPAIGN}.md`, and run unattended until PR.
+  - Step 2: Loop delegating each goal to an inherited planner subagent, implementer delivers each stage, goal planner validates git diff and test results.
+  - Step 3: Remove `plans/improve/{CAMPAIGN}.md`, commit, push branch, and open PR.
+  - Update boundaries per PR delivery.
+- Run `scripts/lint.sh`.
+- Mark Stage 4 as `done` and append stage report.
+- Commit: `feat(campaign): 3-5 goal campaign workflow with inherited planner subagent and PR delivery`.
+
+## Stage 5: Update README.md
+- In `README.md`:
+  - Update bullet 4 (session-first skills), rule 23 (planning protocol), and rule 24 (implementation protocol).
+  - Bump version to `0.0.64-ALPHA`.
+- Run `./scripts/lint.sh --base master`.
+- Mark Stage 5 as `done` and append stage report.
+- Commit: `docs: document refined campaign and vibe lifecycle`.
+
+## Stage 6: Complete plan, push branch, and open PR
+- Run full verification (`./scripts/lint.sh --base master`).
+- Remove `plans/campaign-vibe-refinement.md`.
+- Commit removal: `chore(plans): complete campaign-vibe-refinement plan`.
+- Push branch `plan/campaign-vibe-refinement` to origin.
+- Open PR using `gh pr create`.
+
+## Reports
+
+### Stage 1: Setup branch and write plan
+- Created branch `plan/campaign-vibe-refinement` from `master`.
+- Initialized plan in `plans/campaign-vibe-refinement.md` with status table tracking all 6 stages.
+- Ready for Stage 2.
