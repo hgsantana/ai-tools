@@ -39,16 +39,10 @@ Every skill runs on the session's model. The session handles user alignment, jud
 
 ### Continuous improvement campaign
 
-`/campaign-ai-tools` authorizes all local, in-repository work for that campaign. It aligns campaign scope, priorities, and exclusions with the user, asks once who implements, then iterates without interruption on local branch `improve/<campaign>`, recording progress in `plans/improve/<campaign>.md`. Each iteration plans one cohesive improvement and delivers it like `/vibe-ai-tools`, except that plans stay on the campaign branch and nothing is pushed.
+`/campaign-ai-tools` delivers a 3–5 goal campaign to a pull request. It aligns campaign scope, priorities, and exclusions with the user, asks once who implements, then iterates without interruption on branch `campaign/<campaign>`, recording progress in `plans/campaign/<campaign>.md`. Each goal is planned and delivered under `plans/campaign/<n>-<slug>.md`, and the finished campaign pushes and opens a pull request.
 
 ```text
 /campaign-ai-tools repository-hardening
-```
-
-Two consecutive iterations with nothing to plan complete the campaign and remove its record; a halt or budget exhaustion pauses it, and a failed stage blocks it. Resume with the same campaign name, reusing the recorded implementer:
-
-```text
-/campaign-ai-tools resume repository-hardening
 ```
 
 ### Cloud and GitHub platform
