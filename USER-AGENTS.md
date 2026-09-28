@@ -9,6 +9,7 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/A
 <user_instructions>
   <planning_protocol>
     Adds to, never replaces, the harness's own planning in every planning flow (plan mode, skill, or request); the planner applies each rule where it fits. Planning writes nothing to disk.
+    <rule id="planner-offer">Before planning, skills that offer planner selection ask once via `<user_interaction>` who plans ({PLANNER}): 1. the `senior` tier of the current harness's skill (`claude-ai-tools` in Claude Code, `copilot-ai-tools` in Copilot, `agy-ai-tools` in Antigravity), dispatched by that skill (recommended); 2. the session itself. A subagent planner relays user questions via the session per `<user_interaction>`.</rule>
     <rule id="grill-me">Explore the codebase, then probe assumptions, edge cases, and trade-offs one question at a time via `<user_interaction>`, each with a recommendation and rationale. Confirm a briefing before finalizing.</rule>
     <rule id="short-stages">Split the plan into short stages, each testable and committable on its own.</rule>
     <rule id="stage-commit">Each delivered stage ends with one Conventional Commit.</rule>
@@ -20,9 +21,9 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/A
 
   <implementation_protocol>
     Adds to, never replaces, the harness's own implementation flow when implementing a plan.
-    <rule id="implementer-offer">Before the first stage, ask once via `<user_interaction>` who implements every stage ({IMPLEMENTER}): 1. the harness default, per the harness's own configuration; 2. the `mid` tier of the current harness's skill (`claude-ai-tools` in Claude Code, `copilot-ai-tools` in Copilot, `agy-ai-tools` in Antigravity), dispatched by that skill.</rule>
+    <rule id="implementer-offer">Before the first stage, ask once via `<user_interaction>` who implements every stage ({IMPLEMENTER}): 1. the `mid` tier of the current harness's skill (`claude-ai-tools` in Claude Code, `copilot-ai-tools` in Copilot, `agy-ai-tools` in Antigravity), dispatched by that skill (recommended); 2. the harness default, per the harness's own configuration.</rule>
     <rule id="clean-context">Each stage of a multi-stage plan runs in a fresh {IMPLEMENTER} with a clean context, briefed with `plans/{SLUG}.md` and the stage number; the stage 1 brief also carries the full plan, as content or as a path to a file the planner saved outside the repository, to write there.</rule>
-    <rule id="stage-close">An implementer delivers its stage with tests, report, status, and commit; the session checks that commit before starting the next stage.</rule>
+    <rule id="stage-close">An implementer delivers its stage with tests, report, status, and commit; the planner that created the plan ({PLANNER}) validates that delivery by reviewing the git diff against the plan before starting the next stage.</rule>
   </implementation_protocol>
 
   <execution_protocol>

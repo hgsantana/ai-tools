@@ -3,7 +3,7 @@
 | Stage | Title | Status | Implementer |
 |---|---|---|---|
 | 1 | Setup branch and write plan | done | Antigravity default |
-| 2 | Update USER-AGENTS.md with planner/implementer offer and diff validation | pending | Antigravity default |
+| 2 | Update USER-AGENTS.md with planner/implementer offer and diff validation | done | Antigravity default |
 | 3 | Update vibe-ai-tools skill | pending | Antigravity default |
 | 4 | Update campaign-ai-tools skill | pending | Antigravity default |
 | 5 | Update documentation in README.md | pending | Antigravity default |
@@ -76,3 +76,9 @@ Implement protocol updates across user-wide instructions (`USER-AGENTS.md`), pla
 - Created and checked out branch `plan/planner-validation-protocol`.
 - Initialized plan file at `plans/planner-validation-protocol.md`.
 - Updated status table with Stage 1 marked as `done`.
+
+### Stage 2: Update USER-AGENTS.md with planner/implementer offer and diff validation
+- Added `<rule id="planner-offer">` to `<planning_protocol>` with recommended senior tier harness skill or host session, noting question relay via session.
+- Updated `<rule id="implementer-offer">` in `<implementation_protocol>` to recommend mid tier harness skill over harness default.
+- Updated `<rule id="stage-close">` in `<implementation_protocol>` specifying that {PLANNER} validates stage delivery by reviewing the git diff against the plan.
+- Verified character count (5,991 characters, well below the 8,000-character cap) and verified lint passes cleanly.
