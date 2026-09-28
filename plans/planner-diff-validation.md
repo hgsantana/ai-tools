@@ -7,7 +7,7 @@ Status table:
 | 1 | Setup branch and write plan | done | Antigravity default |
 | 2 | Update USER-AGENTS.md | done | Antigravity default |
 | 3 | Update vibe-ai-tools skill | done | Antigravity default |
-| 4 | Update campaign-ai-tools skill | pending | Antigravity default |
+| 4 | Update campaign-ai-tools skill | done | Antigravity default |
 | 5 | Update documentation in README.md | pending | Antigravity default |
 | 6 | Final validation, remove plan, and open PR | pending | Antigravity default |
 
@@ -86,3 +86,11 @@ Refine `USER-AGENTS.md`, `skills/vibe-ai-tools/SKILL.md`, `skills/campaign-ai-to
   - Updated `<dispatch_templates>` `<template role="stage-implementer">`: specified running tests reporting only a concise summary of coverage and execution in `<instructions>`, returning one-line outcome with commit hash, test summary, and changed paths; added `<constraint>Do not validate delivery against the macro plan; run tests, commit locally, and return outcome.</constraint>` in `<constraints>`.
 - Verified all checks passed via `./scripts/lint.sh` (398 ok).
 - Marked Stage 3 as done.
+
+### Stage 4: Update campaign-ai-tools skill
+- In `skills/campaign-ai-tools/SKILL.md`:
+  - Updated `<session_workflow>` step 2: session orchestrates stage delivery without loading the diff into session context (avoiding context bloat); goal planner subagent directly inspects git diff and concise test summary in the repository against `plans/{SLUG}.md`, returning only the approval verdict or corrections; on failed check, runs `git reset --soft HEAD~1` before respawning implementer once with corrections in the brief.
+  - Updated `<implementer_job>`: clarified implementer executes within scope, runs tests reporting only a concise summary of coverage and execution, appends its stage report, sets status to done, and commits locally without validating delivery against the macro plan.
+  - Updated `<dispatch_templates>` `<template role="stage-implementer">`: specified writing and running tests reporting only a concise summary of coverage and execution in `<instructions>`, returning one-line outcome with commit hash, test summary, and changed paths; added `<constraint>Do not validate delivery against the macro plan; run tests, commit locally, and return outcome.</constraint>` in `<constraints>`.
+- Verified all checks passed via `./scripts/lint.sh` (398 ok).
+- Marked Stage 4 as done.
