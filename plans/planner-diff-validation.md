@@ -8,7 +8,7 @@ Status table:
 | 2 | Update USER-AGENTS.md | done | Antigravity default |
 | 3 | Update vibe-ai-tools skill | done | Antigravity default |
 | 4 | Update campaign-ai-tools skill | done | Antigravity default |
-| 5 | Update documentation in README.md | pending | Antigravity default |
+| 5 | Update documentation in README.md | done | Antigravity default |
 | 6 | Final validation, remove plan, and open PR | pending | Antigravity default |
 
 ## Context and Goals
@@ -94,3 +94,11 @@ Refine `USER-AGENTS.md`, `skills/vibe-ai-tools/SKILL.md`, `skills/campaign-ai-to
   - Updated `<dispatch_templates>` `<template role="stage-implementer">`: specified writing and running tests reporting only a concise summary of coverage and execution in `<instructions>`, returning one-line outcome with commit hash, test summary, and changed paths; added `<constraint>Do not validate delivery against the macro plan; run tests, commit locally, and return outcome.</constraint>` in `<constraints>`.
 - Verified all checks passed via `./scripts/lint.sh` (398 ok).
 - Marked Stage 4 as done.
+
+### Stage 5: Update documentation in README.md
+- Updated rule 24 in `README.md` to reflect the refined stage lifecycle:
+  - Implementer executes within scope, runs tests reporting only a concise summary of coverage and execution, appends its stage report, sets status to done, and commits locally without validating delivery against the macro plan.
+  - The planner that created the plan validates each stage delivery by reviewing the git diff and test summary against the plan and stage acceptance criteria before starting the next stage.
+  - On a failed check, the session runs `git reset --soft HEAD~1` before respawning the implementer once with corrections.
+- Verified all checks passed via `./scripts/lint.sh` (398 ok).
+- Marked Stage 5 as done.
