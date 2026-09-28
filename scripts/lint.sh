@@ -39,8 +39,8 @@ Checks:
                     SKILL.md with semantic XML tags (<skill>, <session_workflow>,
                     <dispatch_templates>), no SKILL.md contains Continue? or Stake,
                     USER-AGENTS.md has <planning_protocol>, <implementation_protocol>,
-                    an <execution_protocol> with a <rule id> for default-worker,
-                    implementer, planner, and session-subagent, never <agents>,
+                    an <execution_protocol> with a <rule id> for default-worker
+                    and implementer, never <agents>,
                     <dispatch_protocol>, or <worker, YAML applyTo/alwaysApply,
                     optional $HOME/AGENTS.md, and no references to deleted files (rules 5, 11)
   instructions cap  USER-AGENTS.md is at most 8000 characters (rule 3)
@@ -64,7 +64,7 @@ Checks:
                     unique id, every <step> a numeric id, and <case>,
                     <response>, <signal>, <state> their id, type, or code,
                     and every <template> a role and an executor that is one
-                    of default-worker, implementer, planner, or session-subagent AND
+                    of default-worker or implementer AND
                     has a matching <rule id> inside USER-AGENTS
                     <execution_protocol>, never an agent attribute (rule 9,
                     Semantic XML grammar)
@@ -85,8 +85,6 @@ Checks:
   harness table     lib.sh harness keys, skills roots, and instructions
                     destinations appear in the README Scope bullet and
                     Supported harnesses table (rule 19)
-  agents manifest   config/agents.json exists, is valid JSON, and defines
-                    junior, mid, and senior for all 3 supported harnesses
 
 --base <ref>  commit-ish to diff shipped content against for the version
               bump check. Without it, that check is skipped. The lint
@@ -204,7 +202,7 @@ check_skill_name_match() {
 
 check_skill_layout() {
   local f d name rid
-  local gated="vibe-ai-tools campaign-ai-tools az-ai-tools gc-ai-tools gh-ai-tools agy-ai-tools models-ai-tools config-ai-tools"
+  local gated="vibe-ai-tools campaign-ai-tools az-ai-tools gc-ai-tools gh-ai-tools agy-ai-tools claude-ai-tools copilot-ai-tools"
   local maintainer="update-ai-tools remove-ai-tools"
 
   f="$AI_TOOLS/skills/SKILL-CONTRACT.md"
@@ -230,7 +228,7 @@ check_skill_layout() {
     warn "USER-AGENTS.md missing '<execution_protocol>' tag: $f"
   fi
 
-  for rid in default-worker implementer planner session-subagent; do
+  for rid in default-worker implementer; do
     if awk '/<execution_protocol>/{p=1} p&&/<\/execution_protocol>/{p=0} p' "$f" | grep -qF "<rule id=\"$rid\">"; then
       ok "USER-AGENTS.md execution_protocol defines rule $rid: $f"
     else
@@ -588,14 +586,14 @@ xml_references() {
 
 valid_executors() {
   # usage: valid_executors -- space-separated executor names that are both
-  # one of the four known executor kinds and have a matching <rule id> inside
+  # one of the two known executor kinds and have a matching <rule id> inside
   # USER-AGENTS.md's <execution_protocol> (rule 9). A skill <template> whose
   # executor is not in this set is a lint finding, even if it names one of the
-  # four known kinds by spelling alone.
+  # two known kinds by spelling alone.
   local rule_ids e out=""
   rule_ids=$(awk '/<execution_protocol>/{p=1} p&&/<\/execution_protocol>/{p=0} p' "$AI_TOOLS/USER-AGENTS.md" \
     | grep -oE '<rule id="[a-z0-9-]+"' | sed -E 's/<rule id="([a-z0-9-]+)"/\1/' )
-  for e in default-worker implementer planner session-subagent; do
+  for e in default-worker implementer; do
     if in_list "$e" "$(echo "$rule_ids" | tr '\n' ' ')"; then out="$out $e"; fi
   done
   echo "${out# }"
@@ -991,44 +989,6 @@ EOF
   [ "$clean" = 1 ] && ok "Supported harnesses match lib.sh ($n harnesses)"
 }
 
-# --- Check: agents manifest ---------------------------------------------------
-# config/agents.json exists, is valid JSON, and defines junior, mid, and senior
-# for all 3 supported harnesses (antigravity, claude-code, copilot).
-
-check_agents_manifest() {
-  local f="$AI_TOOLS/config/agents.json"
-  local h tier model
-  if [ ! -f "$f" ]; then
-    warn "missing agents manifest: $f"
-    return
-  fi
-  ok "agents manifest present: $f"
-
-  if command -v python3 >/dev/null 2>&1; then
-    if ! python3 -m json.tool "$f" >/dev/null 2>&1; then
-      warn "agents manifest is not valid JSON: $f"
-      return
-    fi
-  elif command -v node >/dev/null 2>&1; then
-    if ! node -e "JSON.parse(require('fs').readFileSync(process.argv[1]))" "$f" >/dev/null 2>&1; then
-      warn "agents manifest is not valid JSON: $f"
-      return
-    fi
-  fi
-  ok "agents manifest valid JSON: $f"
-
-  for h in $ALL_HARNESSES; do
-    for tier in junior mid senior; do
-      model=$(agent_tier_model "$h" "$tier" 2>/dev/null || true)
-      if [ -n "$model" ]; then
-        ok "agents manifest defines $h $tier model: $model"
-      else
-        warn "agents manifest missing $h $tier definition: $f"
-      fi
-    done
-  done
-}
-
 # --- Run -----------------------------------------------------------------------
 
 check_naming
@@ -1051,6 +1011,5 @@ check_spawn_protocol_citation
 check_version_bump
 check_rule_citations
 check_harness_table
-check_agents_manifest
 
 finish
