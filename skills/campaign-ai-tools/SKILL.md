@@ -17,7 +17,7 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
 
   <session_workflow>
     <step id="1" name="initialize">
-      Resolve kebab-case {CAMPAIGN}, {PRIORITIES}, and {EXCLUSIONS} with the user per `<rule id="grill-me">`, structuring an achievable global objective with 3–5 concrete goals. Immediately upon user approval to begin, ask {IMPLEMENTER} per `<rule id="implementer-offer">`, framed by `<implementer_job>`, as the very first action without intermediate tools or checks. Only after {IMPLEMENTER} is resolved, create branch `campaign/{CAMPAIGN}` from current branch, write `plans/campaign/{CAMPAIGN}.md` with global objective, goals with status, priorities, exclusions, {IMPLEMENTER}, and an iteration log, and commit `chore(plans): start campaign {CAMPAIGN}`. Ask nothing else afterwards.
+      Resolve kebab-case {CAMPAIGN}, {PRIORITIES}, and {EXCLUSIONS} with the user per `<rule id="grill-me">`, structuring an achievable global objective with 3–10 concrete goals. Immediately upon user approval to begin, ask {IMPLEMENTER} per `<rule id="implementer-offer">`, framed by `<implementer_job>`, as the very first action without intermediate tools or checks. Only after {IMPLEMENTER} is resolved, create branch `campaign/{CAMPAIGN}` from current branch, write `plans/campaign/{CAMPAIGN}.md` with global objective, goals with status, priorities, exclusions, {IMPLEMENTER}, and an iteration log, and commit `chore(plans): start campaign {CAMPAIGN}`. Ask nothing else afterwards.
     </step>
 
     <step id="2" name="iterate">
