@@ -1,7 +1,7 @@
 ---
 name: campaign-ai-tools
 description: >
-  Run an autonomous campaign of 3-5 goals, each planned by a subagent and
+  Run an autonomous campaign of 3-10 goals, each planned by a subagent and
   delivered by an implementer, to a pull request. Use for /campaign-ai-tools.
   Impact: creates branch campaign/{CAMPAIGN}, edits files, commits, pushes,
   and opens a pull request unattended; edits and removals can be hard to undo.
@@ -12,7 +12,7 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
 
 <skill name="campaign-ai-tools">
   <overview>
-    Deliver a 3–5 goal campaign on branch `campaign/{CAMPAIGN}`, planning goals with an inherited subagent per `<planning_protocol>` and delivering stages per `<implementation_protocol>` to a pull request.
+    Deliver a 3–10 goal campaign on branch `campaign/{CAMPAIGN}`, planning goals with an inherited subagent per `<planning_protocol>` and delivering stages per `<implementation_protocol>` to a pull request.
   </overview>
 
   <session_workflow>
