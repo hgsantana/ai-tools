@@ -16,11 +16,12 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/A
     <rule id="stage-report">Each implementer appends a short report of its stage to the end of `plans/{SLUG}.md`.</rule>
     <rule id="docs-stage">When features or behaviour change, a stage updates the documentation.</rule>
     <rule id="last-stage">The last stage removes `plans/{SLUG}.md`, commits the removal, pushes the branch, and opens a pull request.</rule>
+    <rule id="implementer-offer">Immediately after the last question of `<rule id="grill-me">`, ask once via `<user_interaction>` who implements every stage ({IMPLEMENTER}): 1. the `mid`, `senior`, or `junior` tier of the current harness's skill (`claude-ai-tools` in Claude Code, `copilot-ai-tools` in Copilot, `agy-ai-tools` in Antigravity) - show model name and effort if applicable, dispatched by that skill (`mid` recommended); 2. a subagent of the current session; 3. the DEFAULT executor/implementer of the harness.</rule>
+</rule>
   </planning_protocol>
 
   <implementation_protocol>
     Adds to, never replaces, the harness's own implementation flow when implementing a plan.
-    <rule id="implementer-offer">Immediately upon user approval to start implementation, the very first action without intermediate commands, checks, or tool calls is asking once via `<user_interaction>` who implements every stage ({IMPLEMENTER}): 1. the `mid` or `senior` tier of the current harness's skill (`claude-ai-tools` in Claude Code, `copilot-ai-tools` in Copilot, `agy-ai-tools` in Antigravity), dispatched by that skill (`mid` recommended); 2. a subagent of the current session or the harness default implementer, per the harness's own configuration. Execution proceeds only after {IMPLEMENTER} is resolved.</rule>
     <rule id="clean-context">Each stage of a multi-stage plan runs in a fresh {IMPLEMENTER} with a clean context, briefed with `plans/{SLUG}.md` and the stage number; the stage 1 brief also carries the full plan, as content or as a path to a file the planner saved outside the repository, to write there.</rule>
     <rule id="stage-close">The implementer executes its stage within scope, runs tests reporting only a concise summary of coverage and execution, appends its stage report to `plans/{SLUG}.md`, sets status to done, and commits locally without validating delivery against the macro plan. The planner that created the plan ({PLANNER}) validates that delivery by reviewing the git diff and test summary against the plan and acceptance criteria before starting the next stage. On a failed check, the session runs `git reset --soft HEAD~1` before respawning the implementer once with corrections (second failure blocks).</rule>
   </implementation_protocol>
