@@ -16,7 +16,7 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/A
     <rule id="stage-report">Each implementer appends a short report of its stage to the end of `plans/{SLUG}.md`.</rule>
     <rule id="docs-stage">When features or behaviour change, a stage updates the documentation.</rule>
     <rule id="last-stage">The last stage removes `plans/{SLUG}.md`, commits the removal, pushes the branch, and opens a pull request.</rule>
-    <rule id="implementer-offer">Immediately after the last question of `<rule id="grill-me">`, ask once via `<user_interaction>` who implements every stage ({IMPLEMENTER}): 1. the `mid`, `senior`, or `junior` tier of the current harness's skill (`claude-ai-tools` in Claude Code, `copilot-ai-tools` in Copilot, `agy-ai-tools` in Antigravity) - show model name and effort if applicable, dispatched by that skill (`mid` recommended); 2. a subagent of the current session; 3. the DEFAULT executor/implementer of the harness.</rule>
+    <rule id="implementer-offer">Immediately after the last question of `<rule id="grill-me">`, ask once via `<user_interaction>` who implements every stage ({IMPLEMENTER}): 1. the `mid`, `senior`, or `junior` tier of the current harness's skill (`claude-ai-tools` in Claude Code, `copilot-ai-tools` in Copilot, `agy-ai-tools` in Antigravity) - show model name and effort if applicable, dispatched by that skill (`mid` recommended); 2. a subagent of the current session; 3. the DEFAULT executor/implementer agent/subagent of the harness.</rule>
 </rule>
   </planning_protocol>
 
