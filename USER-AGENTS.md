@@ -27,7 +27,7 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/A
   </implementation_protocol>
 
   <execution_protocol>
-    <rule id="default-worker">`executor="default-worker"`: harness default subagent for tasks, tests, and facts.</rule>
+    <rule id="default-worker">`executor="default-worker"`: harness default subagent for tasks, tests, and facts. Antigravity = Flash. Claude = Sonnet. Copilot = Gemini Flash Latest.</rule>
     <rule id="implementer">`executor="implementer"`: {IMPLEMENTER} per `<rule id="implementer-offer">`, for code and tests.</rule>
     <rule id="inherited">`executor="inherited"`: subagent spawned per `<rule id="native-spawn">` with the session's model and effort, else the closest available, for review and planning.</rule>
     <rule id="native-spawn">Spawn subagents via native harness APIs: Claude Code `Agent`, Copilot `runSubagent`, Antigravity `invoke_subagent`.</rule>
