@@ -1,8 +1,8 @@
 ---
 name: team-ai-tools
 description: >
-  Act as product owner leading 2-5 senior reviewers (security, performance,
-  UX, best practices, design) to refine a request into decisions and a plan
+  Act as product owner leading 2-7 senior reviewers (security, performance,
+  UX, best practices, design, DevOps, docs) to refine a request into a plan
   or campaign, then deliver it unattended to a pull request. Use for
   /team-ai-tools. Impact: spawns reviewer subagents that consume model quota;
   after approval, creates a branch, edits files, commits, pushes, and opens a
@@ -13,12 +13,12 @@ argument-hint: "[the request to refine and deliver]"
 
 <skill name="team-ai-tools">
   <overview>
-    The session, a strong model, is product owner (PO) and orchestrator: it audits the request against repository documentation and code, refines it with 2–5 senior reviewers, settles open points with the user in batched rounds, has a plan or campaign approved, then delivers it. Working files live in {WORKDIR} = `${TMPDIR:-/tmp}/ai-tools/team/{SLUG}/`; nothing is written to the repository before approval.
+    The session, a strong model, is product owner (PO) and orchestrator: it audits the request against repository documentation and code, refines it with 2–7 senior reviewers, settles open points with the user in batched rounds, has a plan or campaign approved, then delivers it. Working files live in {WORKDIR} = `${TMPDIR:-/tmp}/ai-tools/team/{SLUG}/`; nothing is written to the repository before approval.
   </overview>
 
   <session_workflow>
     <step id="1" name="po-analysis">
-      Derive kebab-case {SLUG}. Read the repository documentation (README, AGENTS.md, docs) and compare it with the code the request touches. Asking the user nothing, write `{WORKDIR}/po-report.md`: request restatement, documentation-versus-code gaps, scope, ambiguities, and refinement questions each with options and a recommendation. Select 2–5 reviewer templates by relevance: `<template role="security-reviewer">`, `<template role="performance-reviewer">`, `<template role="ux-reviewer">`, `<template role="best-practices-reviewer">`, and `<template role="design-reviewer">` only when structure changes; record one line on why each skipped role was skipped.
+      Derive kebab-case {SLUG}. Read the repository documentation (README, AGENTS.md, docs) and compare it with the code the request touches. Asking the user nothing, write `{WORKDIR}/po-report.md`: request restatement, documentation-versus-code gaps, scope, ambiguities, and refinement questions each with options and a recommendation. Select 2–7 reviewer templates by relevance: `<template role="security-reviewer">`, `<template role="performance-reviewer">`, `<template role="ux-reviewer">`, `<template role="best-practices-reviewer">`, `<template role="design-reviewer">` only when structure changes, and `<template role="devops-reviewer">` only when the request touches CI, static analysis, build, deploy, infrastructure, or cost, and `<template role="docs-reviewer">` only when it changes behaviour or documentation; record one line on why each skipped role was skipped.
     </step>
 
     <step id="2" name="team-review">
@@ -34,8 +34,9 @@ argument-hint: "[the request to refine and deliver]"
     </step>
 
     <step id="5" name="deliver">
-      Plan: run vibe-ai-tools `<step id="2">` and `<step id="3">` with {IMPLEMENTER}, {SLUG}, and `{WORKDIR}/plan.md` as the stage 1 plan, spawning `<template role="stage-implementer">` with {MODE} = plan and {PLAN_FILE} = `plans/{SLUG}.md`.
-      Campaign: run campaign-ai-tools `<step id="1">` from branch creation onward with {CAMPAIGN} = {SLUG} and the approved goals, then its `<step id="2">` and `<step id="3">`, planning each goal with `<template role="goal-planner">` and spawning `<template role="stage-implementer">` with {MODE} = campaign and {PLAN_FILE} = `plans/campaign/{N}-{GOAL_SLUG}.md`.
+      Plan: run vibe-ai-tools `<step id="2">` and `<step id="3">` with {IMPLEMENTER}, {SLUG}, and `{WORKDIR}/plan.md` as the stage 1 plan, spawning `<template role="stage-implementer">` with {MODE} = plan and {PLAN_FILE} = `plans/{SLUG}.md`; run the docs audit before the last stage.
+      Campaign: run campaign-ai-tools `<step id="1">` from branch creation onward with {CAMPAIGN} = {SLUG} and the approved goals, then its `<step id="2">` and `<step id="3">`, planning each goal with `<template role="goal-planner">` and spawning `<template role="stage-implementer">` with {MODE} = campaign and {PLAN_FILE} = `plans/campaign/{N}-{GOAL_SLUG}.md`; run the docs audit once, before its `<step id="3">`, with {PLAN_FILE} = `plans/campaign/{CAMPAIGN}.md`.
+      Docs audit: spawn `<template role="docs-auditor">` with {BASE_BRANCH} and {AUDIT} = `{WORKDIR}/docs-audit.md`. On `<signal code="DOCS_FIX">`, spawn `<template role="stage-implementer">` with {STAGE} = docs-audit and {NOTES} = {AUDIT}, then validate its diff against {AUDIT} once; write corrections it left unresolved to `{WORKDIR}/docs-followups.md` and pass that path as {NOTES} to the plan's last stage, or add it to the campaign pull request body, without blocking delivery.
     </step>
   </session_workflow>
 
@@ -107,7 +108,7 @@ argument-hint: "[the request to refine and deliver]"
       </input>
       <instructions>
         This payload is the brief; do not read sibling skill files.
-        Read {REPORT}, the repository rules (README.md, AGENTS.md if present), and the code in scope. Assess repository conventions and rules, style, tests and coverage, maintainability, readability, error handling, observability, and documentation updates.
+        Read {REPORT}, the repository rules (README.md, AGENTS.md if present), and the code in scope. Assess repository conventions and rules, style, test content and coverage, maintainability, readability, and error handling and logging; pipelines, analysis tooling, and operational monitoring belong to the DevOps role and documentation to the docs role.
         Write {FINDINGS}: per point an id, evidence (path:line), severity, options, the recommended option with rationale, and links to other roles it affects. Answer follow-ups from the session, updating {FINDINGS}.
         Return a one-line outcome with the path and point count.
       </instructions>
@@ -132,6 +133,60 @@ argument-hint: "[the request to refine and deliver]"
       <constraints>
         <constraint>Read-only on the repository.</constraint>
         <constraint>Ask the user nothing; return questions to the session.</constraint>
+      </constraints>
+    </template>
+
+    <template role="devops-reviewer" executor="inherited">
+      <job>Senior DevOps engineer: review the PO report and code for delivery efficiency, cost, and operability.</job>
+      <input>
+        <report>{REPORT}</report>
+        <findings>{FINDINGS}</findings>
+      </input>
+      <instructions>
+        This payload is the brief; do not read sibling skill files.
+        Read {REPORT}, the repository rules (README.md, AGENTS.md if present), and the code in scope, including pipelines, build files, containers, and infrastructure as code. Assess CI speed, caching, and flakiness; static analysis and lint gates; build and packaging; deploy resources and rollback; cloud cost and sizing; operational monitoring; and pipeline maintainability.
+        Write {FINDINGS}: per point an id, evidence (path:line), severity, options, the recommended option with rationale, and links to other roles it affects. Answer follow-ups from the session, updating {FINDINGS}.
+        Return a one-line outcome with the path and point count.
+      </instructions>
+      <constraints>
+        <constraint>Read-only on the repository; run no cloud CLI. Where live cost or resource data is needed, recommend a query through az-ai-tools or gc-ai-tools.</constraint>
+        <constraint>Ask the user nothing; return questions to the session.</constraint>
+      </constraints>
+    </template>
+
+    <template role="docs-reviewer" executor="inherited">
+      <job>Senior documentation engineer: review the PO report and documentation the request affects.</job>
+      <input>
+        <report>{REPORT}</report>
+        <findings>{FINDINGS}</findings>
+      </input>
+      <instructions>
+        This payload is the brief; do not read sibling skill files.
+        Read {REPORT}, the repository rules (README.md, AGENTS.md if present), the documentation tree, and the code in scope. Assess which documents must change, organization and placement, separation of concerns between documents, structure and navigation, duplication against a single source of truth, accuracy against code, audience fit, and consistent terminology.
+        Write {FINDINGS}: per point an id, evidence (path:line), severity, options, the recommended option with rationale, and links to other roles it affects. Answer follow-ups from the session, updating {FINDINGS}.
+        Return a one-line outcome with the path and point count.
+      </instructions>
+      <constraints>
+        <constraint>Read-only on the repository.</constraint>
+        <constraint>Ask the user nothing; return questions to the session.</constraint>
+      </constraints>
+    </template>
+
+    <template role="docs-auditor" executor="inherited">
+      <job>Senior documentation engineer: audit the delivered documentation before the pull request.</job>
+      <input>
+        <base_branch>{BASE_BRANCH}</base_branch>
+        <audit>{AUDIT}</audit>
+      </input>
+      <instructions>
+        This payload is the brief; do not read sibling skill files.
+        Read the repository rules (README.md, AGENTS.md if present), the plan files under plans/, the diff from {BASE_BRANCH} to HEAD, and the documentation tree. Validate organization and placement, separation of concerns between documents, structure and navigation, duplication against a single source of truth, accuracy against the delivered code, and consistent terminology.
+        Write {AUDIT}: per correction the path, the exact change, severity, and rationale, each executable without further decisions.
+        End with `<signal code="DOCS_OK">` when {AUDIT} lists no correction, else `<signal code="DOCS_FIX">`.
+      </instructions>
+      <constraints>
+        <constraint>Read-only on the repository.</constraint>
+        <constraint>Ask the user nothing; scope corrections to documentation.</constraint>
       </constraints>
     </template>
 
@@ -162,11 +217,13 @@ argument-hint: "[the request to refine and deliver]"
         <plan_file>{PLAN_FILE}</plan_file>
         <stage>{STAGE}</stage>
         <plan>{PLAN}</plan>
+        <notes>{NOTES}</notes>
       </input>
       <instructions>
         This payload is the brief; do not read sibling skill files.
-        For stage 1, write {PLAN}, reading it first when it is a file path, to {PLAN_FILE} as that stage specifies. Read {PLAN_FILE} and the repository rules (README.md, AGENTS.md if present). Deliver only stage {STAGE}: match surrounding style, write and run its tests reporting only a concise summary of coverage and execution, set its Status to done, append a short report to the end of {PLAN_FILE}, and commit with the stage's Conventional Commit message.
-        When {MODE} is plan and this is the last stage, also run its removal, push, and pull request against the base branch.
+        For stage 1, write {PLAN}, reading it first when it is a file path, to {PLAN_FILE} as that stage specifies. Read {PLAN_FILE} and the repository rules (README.md, AGENTS.md if present). Deliver only stage {STAGE}: match surrounding style, write and run its tests reporting only a concise summary of coverage and execution, set its Status to done, append a short report to the end of {PLAN_FILE}, and commit with the stage's Conventional Commit message. Apply {NOTES}, an optional session file, when it lists corrections from a failed check.
+        When {STAGE} is docs-audit, record a docs-audit entry with status done in {PLAN_FILE}, apply the corrections in {NOTES}, and commit `docs: apply documentation audit`.
+        When {MODE} is plan and this is the last stage, also run its removal, push, and pull request against the base branch, adding the follow-ups in {NOTES} to the pull request body.
         Return a one-line outcome with the commit hash, test summary, and changed paths.
       </instructions>
       <constraints>
@@ -176,6 +233,11 @@ argument-hint: "[the request to refine and deliver]"
       </constraints>
     </template>
   </dispatch_templates>
+
+  <return_protocol>
+    <signal code="DOCS_OK">The delivered documentation needs no correction; continue delivery.</signal>
+    <signal code="DOCS_FIX">The audit file lists documentation corrections for one docs-audit stage.</signal>
+  </return_protocol>
 
   <boundaries>
     <rule id="protocols">Planning follows user-wide `<planning_protocol>` and delivery `<implementation_protocol>`; this skill states only its specifics: batched questions, the reviewer team, and delivery reuse from vibe-ai-tools and campaign-ai-tools.</rule>
