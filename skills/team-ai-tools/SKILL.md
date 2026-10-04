@@ -1,10 +1,10 @@
 ---
 name: team-ai-tools
 description: >
-  Act as product owner leading 2-7 senior reviewers (security, performance,
-  UX, best practices, design, DevOps, docs) to refine a request into a plan
-  or campaign, then deliver it unattended to a pull request. Use for
-  /team-ai-tools. Impact: spawns reviewer subagents that consume model quota;
+  Act as product owner leading 2-8 senior reviewers (security, performance,
+  UX, best practices, design, DevOps, docs, tests) to refine a request into a
+  plan or campaign, then deliver it unattended to a pull request. Use for
+  /team-ai-tools. Impact: reviewer subagents consume model quota;
   after approval, creates a branch, edits files, commits, pushes, and opens a
   pull request unattended. Cloud and destructive operations require separate
   approval. Agent: session + implementer (model asked once).
@@ -13,12 +13,12 @@ argument-hint: "[the request to refine and deliver]"
 
 <skill name="team-ai-tools">
   <overview>
-    The session, a strong model, is product owner (PO) and orchestrator: it audits the request against repository documentation and code, refines it with 2–7 senior reviewers, settles open points with the user in batched rounds, has a plan or campaign approved, then delivers it. Working files live in {WORKDIR} = `${TMPDIR:-/tmp}/ai-tools/team/{SLUG}/`; nothing is written to the repository before approval.
+    The session, a strong model, is product owner (PO) and orchestrator: it audits the request against repository documentation and code, refines it with 2–8 senior reviewers, settles open points with the user in batched rounds, has a plan or campaign approved, then delivers it. Working files live in {WORKDIR} = `${TMPDIR:-/tmp}/ai-tools/team/{SLUG}/`; nothing is written to the repository before approval.
   </overview>
 
   <session_workflow>
     <step id="1" name="po-analysis">
-      Derive kebab-case {SLUG}. Read the repository documentation (README, AGENTS.md, docs) and compare it with the code the request touches. Asking the user nothing, write `{WORKDIR}/po-report.md`: request restatement, documentation-versus-code gaps, scope, ambiguities, and refinement questions each with options and a recommendation. Select 2–7 reviewer templates by relevance: `<template role="security-reviewer">`, `<template role="performance-reviewer">`, `<template role="ux-reviewer">`, `<template role="best-practices-reviewer">`, `<template role="design-reviewer">` only when structure changes, and `<template role="devops-reviewer">` only when the request touches CI, static analysis, build, deploy, infrastructure, or cost, and `<template role="docs-reviewer">` only when it changes behaviour or documentation; record one line on why each skipped role was skipped.
+      Derive kebab-case {SLUG}. Read the repository documentation (README, AGENTS.md, docs) and compare it with the code the request touches. Asking the user nothing, write `{WORKDIR}/po-report.md`: request restatement, documentation-versus-code gaps, scope, ambiguities, and refinement questions each with options and a recommendation. Select 2–8 reviewer templates by relevance: `<template role="security-reviewer">`, `<template role="performance-reviewer">`, `<template role="ux-reviewer">`, `<template role="best-practices-reviewer">`, `<template role="design-reviewer">` only when structure changes, and `<template role="devops-reviewer">` only when the request touches CI, static analysis, build, deploy, infrastructure, or cost, `<template role="docs-reviewer">` only when it changes behaviour or documentation, and `<template role="test-reviewer">` only when it changes code; record one line on why each skipped role was skipped.
     </step>
 
     <step id="2" name="team-review">
@@ -36,6 +36,7 @@ argument-hint: "[the request to refine and deliver]"
     <step id="5" name="deliver">
       Plan: run vibe-ai-tools `<step id="2">` and `<step id="3">` with {IMPLEMENTER}, {SLUG}, and `{WORKDIR}/plan.md` as the stage 1 plan, spawning `<template role="stage-implementer">` with {MODE} = plan and {PLAN_FILE} = `plans/{SLUG}.md`; run the docs audit before the last stage.
       Campaign: run campaign-ai-tools `<step id="1">` from branch creation onward with {CAMPAIGN} = {SLUG} and the approved goals, then its `<step id="2">` and `<step id="3">`, planning each goal with `<template role="goal-planner">` and spawning `<template role="stage-implementer">` with {MODE} = campaign and {PLAN_FILE} = `plans/campaign/{N}-{GOAL_SLUG}.md`; run the docs audit once, before its `<step id="3">`, with {PLAN_FILE} = `plans/campaign/{CAMPAIGN}.md`.
+      Stage validation: for each stage that changes code or tests, skipping plan-only, documentation-only (including docs-audit), and closing stages, spawn `<template role="test-validator">` with {PLAN_FILE}, {STAGE}, and {VERDICTS} = `{WORKDIR}/test-verdicts.md` before the planner's check, keeping one per plan or goal active across stages, else respawning it with {VERDICTS}. On `<signal code="TESTS_FIX">`, skip the planner's check, run `git reset --soft HEAD~1`, and respawn the implementer once with {NOTES} = {VERDICTS}; the retry passes both checks or blocks. On `<signal code="TESTS_OK">`, the planner's check proceeds.
       Docs audit: spawn `<template role="docs-auditor">` with {BASE_BRANCH} and {AUDIT} = `{WORKDIR}/docs-audit.md`. On `<signal code="DOCS_FIX">`, spawn `<template role="stage-implementer">` with {STAGE} = docs-audit and {NOTES} = {AUDIT}, then validate its diff against {AUDIT} once; write corrections it left unresolved to `{WORKDIR}/docs-followups.md` and pass that path as {NOTES} to the plan's last stage, or add it to the campaign pull request body, without blocking delivery.
     </step>
   </session_workflow>
@@ -108,7 +109,7 @@ argument-hint: "[the request to refine and deliver]"
       </input>
       <instructions>
         This payload is the brief; do not read sibling skill files.
-        Read {REPORT}, the repository rules (README.md, AGENTS.md if present), and the code in scope. Assess repository conventions and rules, style, test content and coverage, maintainability, readability, and error handling and logging; pipelines, analysis tooling, and operational monitoring belong to the DevOps role and documentation to the docs role.
+        Read {REPORT}, the repository rules (README.md, AGENTS.md if present), and the code in scope. Assess repository conventions and rules, style, maintainability, readability, and error handling and logging; pipelines, analysis tooling, and operational monitoring belong to the DevOps role, documentation to the docs role, and tests to the tests role.
         Write {FINDINGS}: per point an id, evidence (path:line), severity, options, the recommended option with rationale, and links to other roles it affects. Answer follow-ups from the session, updating {FINDINGS}.
         Return a one-line outcome with the path and point count.
       </instructions>
@@ -172,6 +173,24 @@ argument-hint: "[the request to refine and deliver]"
       </constraints>
     </template>
 
+    <template role="test-reviewer" executor="inherited">
+      <job>Senior test engineer: review the PO report and code to define the test strategy.</job>
+      <input>
+        <report>{REPORT}</report>
+        <findings>{FINDINGS}</findings>
+      </input>
+      <instructions>
+        This payload is the brief; do not read sibling skill files.
+        Read {REPORT}, the repository rules (README.md, AGENTS.md if present), the existing tests, and the code in scope. Define the behaviours each change must prove, the variations to cover (edge cases, invalid input, error paths, boundaries, state and ordering), test levels, fixtures, and where mocks would hide behaviour; these become stage acceptance criteria.
+        Write {FINDINGS}: per point an id, evidence (path:line), severity, options, the recommended option with rationale, and links to other roles it affects. Answer follow-ups from the session, updating {FINDINGS}.
+        Return a one-line outcome with the path and point count.
+      </instructions>
+      <constraints>
+        <constraint>Read-only on the repository.</constraint>
+        <constraint>Ask the user nothing; return questions to the session.</constraint>
+      </constraints>
+    </template>
+
     <template role="docs-auditor" executor="inherited">
       <job>Senior documentation engineer: audit the delivered documentation before the pull request.</job>
       <input>
@@ -187,6 +206,25 @@ argument-hint: "[the request to refine and deliver]"
       <constraints>
         <constraint>Read-only on the repository.</constraint>
         <constraint>Ask the user nothing; scope corrections to documentation.</constraint>
+      </constraints>
+    </template>
+
+    <template role="test-validator" executor="inherited">
+      <job>Senior test engineer: validate the tests of one delivered stage before the planner's check.</job>
+      <input>
+        <plan_file>{PLAN_FILE}</plan_file>
+        <stage>{STAGE}</stage>
+        <verdicts>{VERDICTS}</verdicts>
+      </input>
+      <instructions>
+        This payload is the brief; do not read sibling skill files.
+        Read {PLAN_FILE}, its stage {STAGE} acceptance criteria, the repository rules (README.md, AGENTS.md if present), and the diff of HEAD. Judge whether the tests assert behaviour rather than implementation, cover the required variations, use meaningful assertions, and avoid mocks that hide behaviour. Run the test suite; in a disposable git worktree or local clone under the OS temp directory, break each targeted behaviour and confirm a test fails, then remove that copy.
+        Append to {VERDICTS} the stage, the verdict, and per correction the path, the missing or wrong test, and the expected assertion, each executable without further decisions.
+        End with `<signal code="TESTS_OK">` when the stage needs no test correction, else `<signal code="TESTS_FIX">`.
+      </instructions>
+      <constraints>
+        <constraint>Leave the repository working tree, index, and history untouched; mutate only the disposable copy.</constraint>
+        <constraint>Ask the user nothing; judge from the plan and code evidence.</constraint>
       </constraints>
     </template>
 
@@ -237,11 +275,13 @@ argument-hint: "[the request to refine and deliver]"
   <return_protocol>
     <signal code="DOCS_OK">The delivered documentation needs no correction; continue delivery.</signal>
     <signal code="DOCS_FIX">The audit file lists documentation corrections for one docs-audit stage.</signal>
+    <signal code="TESTS_OK">The stage's tests prove its behaviour; the planner's check proceeds.</signal>
+    <signal code="TESTS_FIX">The verdicts file lists test corrections; the implementer retries before the planner's check.</signal>
   </return_protocol>
 
   <boundaries>
     <rule id="protocols">Planning follows user-wide `<planning_protocol>` and delivery `<implementation_protocol>`; this skill states only its specifics: batched questions, the reviewer team, and delivery reuse from vibe-ai-tools and campaign-ai-tools.</rule>
-    <rule id="reviewer-continuity">Keep reviewers active until approval; where the harness cannot continue a subagent, respawn its template with its findings file as context.</rule>
+    <rule id="reviewer-continuity">Keep planning reviewers active until approval; where the harness cannot continue a subagent, respawn its template with its findings file as context.</rule>
     <rule id="spawn-apis">Spawn templates per `<execution_protocol>`; if `<template role="stage-implementer">` cannot be spawned as {IMPLEMENTER}, stop as blocked per `<rule id="spawn-fallback">`.</rule>
     <rule id="chat-scope">Chat carries only questions, the approval, spawn announcements, a one-line outcome, and paths under {WORKDIR}; reports stay on disk.</rule>
     <rule id="protocol-source">Follow user-wide `<execution_protocol>`, `<user_interaction>`, and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
