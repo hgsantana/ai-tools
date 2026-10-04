@@ -1,6 +1,6 @@
 # ai-tools
 
-> **Version 0.0.65-ALPHA** — under active development. Suitable for testing; alpha versions provide neither guarantees nor backward compatibility (rule 4).
+> **Version 0.0.66-ALPHA** — under active development. Suitable for testing; alpha versions provide neither guarantees nor backward compatibility (rule 4).
 
 ## Overview
 
@@ -74,7 +74,7 @@ The semantic-XML bodies (`USER-AGENTS.md` and every `SKILL.md`) follow one gramm
 - **Variables** are brace placeholders: `{SLUG}`, `{BASE_BRANCH}`, `{COMMANDS}`. Every placeholder a `<template>` uses is declared in its `<input>`, and every declared one is used; the session substitutes them before spawning.
 - **References** carrying an attribute (`role`, `id`, `code`, `type`) resolve to a definition in the same file, in user-wide instructions, or in the skill named by the word before the backtick: `` dev-ai-tools `<status_protocol>` ``, `` `<rule id="payload-assembly">` ``. A bare reference names a vocabulary tag.
 - **Identity**: every `<rule>` carries a kebab-case `id`, unique in its file; every `<template>` carries a functional `role` and an `executor`; `<step>` ids are numeric per workflow; `<case>`, `<response>`, `<signal>`, and `<state>` carry `id`, `type`, or `code`.
-- **Executors**: `<execution_protocol>` applies to every request and defines the two valid `executor` values (`default-worker`, the harness default subagent; `implementer`, the {IMPLEMENTER} chosen by the implementer offer) and where each runs, the harness's native subagent API list, the payload rule (populated payload and file paths, never conversation context), the spawn-failure fallback (the spawning context runs a failed default-worker payload; the session does not take the implementer role), and the parallelism rule for concurrent subagents. Work the session does itself is a `<step>`, never a template.
+- **Executors**: `<execution_protocol>` applies to every request and defines the three valid `executor` values (`default-worker`, the harness default subagent; `implementer`, the {IMPLEMENTER} chosen by the implementer offer; `inherited`, subagent inheriting the session's model and effort, else closest, for review and planning) and where each runs, the harness's native subagent API list, the payload rule (populated payload and file paths, never conversation context), the spawn-failure fallback (the spawning context runs a failed default-worker payload; the session does not take the implementer role), and the parallelism rule for concurrent subagents. Work the session does itself is a `<step>`, never a template.
 - **Agent tiers**: `agy-ai-tools`, `claude-ai-tools`, and `copilot-ai-tools` each hardcode a `junior`, `mid`, and `senior` model and effort for their harness; there is no central manifest or local model configuration.
 - **Protocol** is a block, not prose: return tokens live in `<return_protocol>`/`<signal>` and stage states in `<status_protocol>`/`<state>`. A template whose outcome the caller branches on ends with one cited `<signal>`; any other template returns a one-line outcome with paths.
 
@@ -160,7 +160,7 @@ Check families:
 - **line endings and modes** — every tracked `scripts/` file resolves to `eol=lf` with LF in index and working tree, and `scripts/*.sh` and `scripts/shell/*.sh` are mode `100755` (rule 21)
 - **no binaries** — every tracked file under `skills/` and `scripts/` is text
 - **`dev/tmp` untracked** — `git ls-files dev/tmp` returns nothing (rule 22)
-- **xml grammar** — every semantic-XML body is balanced once backticked spans are removed, uses only vocabulary tags outside `<input>`, gives every `<rule>` a unique `id`, every `<step>` a numeric `id`, and `<case>`, `<response>`, `<signal>`, `<state>` their `id`, `type`, or `code`, and every `<template>` a `role` and a valid `executor` — one of the two USER-AGENTS `<execution_protocol>` defines as a rule id — never an `agent` attribute (rule 9, [Semantic XML grammar](#semantic-xml-grammar))
+- **xml grammar** — every semantic-XML body is balanced once backticked spans are removed, uses only vocabulary tags outside `<input>`, gives every `<rule>` a unique `id`, every `<step>` a numeric `id`, and `<case>`, `<response>`, `<signal>`, `<state>` their `id`, `type`, or `code`, and every `<template>` a `role` and a valid `executor` — one of the three USER-AGENTS `<execution_protocol>` defines as a rule id — never an `agent` attribute (rule 9, [Semantic XML grammar](#semantic-xml-grammar))
 - **xml references** — every backticked tag reference resolves: attribute references to a definition in the same or the qualified file, bare references to the vocabulary (rule 9)
 - **placeholder parity** — every `{PLACEHOLDER}` a `<template>` uses is declared in its `<input>`, and every declared one is used (rule 9)
 - **vocabulary parity** — the Semantic XML grammar table and `XML_VOCAB` list the same tags (rule 9)

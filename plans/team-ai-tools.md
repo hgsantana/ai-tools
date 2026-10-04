@@ -3,7 +3,7 @@
 | Stage | Title | Status | Implementer |
 |---|---|---|---|
 | 1 | Branch and plan file | done | self (flash) |
-| 2 | `inherited` executor and stray `</rule>` fix | todo | self (flash) |
+| 2 | `inherited` executor and stray `</rule>` fix | done | self (flash) |
 | 3 | `skills/team-ai-tools/SKILL.md` and lint registration | todo | self (flash) |
 | 4 | Documentation (README, USAGE, 3–10 goal drift) | todo | self (flash) |
 | 5 | Remove plan, push, pull request | todo | self (flash) |
@@ -278,3 +278,10 @@ Notes for the implementer:
 - Created branch `plan/team-ai-tools` from `master`.
 - Initialized plan in `plans/team-ai-tools.md` with status table tracking all 5 stages.
 - Replaced `{IMPLEMENTER}` with `self (flash)` and marked Stage 1 status as done.
+
+### Stage 2: `inherited` executor and stray `</rule>` fix
+- Removed stray `</rule>` tag at line 20 in `USER-AGENTS.md`.
+- Added `inherited` executor rule (`<rule id="inherited">`) to `<execution_protocol>` in `USER-AGENTS.md`.
+- Updated `valid_executors` in `scripts/lint.sh` to accept `inherited` alongside `default-worker` and `implementer`, and updated comment/help text.
+- Updated `README.md` Semantic XML grammar "Executors" bullet and Development checks "xml grammar" bullet to reference three valid executor values, and bumped version to `0.0.66-ALPHA`.
+- Verified with `scripts/lint.sh` (400 ok, 0 warnings) and `scripts/test.sh` (349 ok, 0 warnings).

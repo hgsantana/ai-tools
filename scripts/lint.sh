@@ -64,7 +64,7 @@ Checks:
                     unique id, every <step> a numeric id, and <case>,
                     <response>, <signal>, <state> their id, type, or code,
                     and every <template> a role and an executor that is one
-                    of default-worker or implementer AND
+                    of default-worker, implementer, or inherited AND
                     has a matching <rule id> inside USER-AGENTS
                     <execution_protocol>, never an agent attribute (rule 9,
                     Semantic XML grammar)
@@ -586,14 +586,14 @@ xml_references() {
 
 valid_executors() {
   # usage: valid_executors -- space-separated executor names that are both
-  # one of the two known executor kinds and have a matching <rule id> inside
+  # one of the three known executor kinds and have a matching <rule id> inside
   # USER-AGENTS.md's <execution_protocol> (rule 9). A skill <template> whose
   # executor is not in this set is a lint finding, even if it names one of the
-  # two known kinds by spelling alone.
+  # three known kinds by spelling alone.
   local rule_ids e out=""
   rule_ids=$(awk '/<execution_protocol>/{p=1} p&&/<\/execution_protocol>/{p=0} p' "$AI_TOOLS/USER-AGENTS.md" \
     | grep -oE '<rule id="[a-z0-9-]+"' | sed -E 's/<rule id="([a-z0-9-]+)"/\1/' )
-  for e in default-worker implementer; do
+  for e in default-worker implementer inherited; do
     if in_list "$e" "$(echo "$rule_ids" | tr '\n' ' ')"; then out="$out $e"; fi
   done
   echo "${out# }"

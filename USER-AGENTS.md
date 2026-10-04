@@ -17,7 +17,6 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/A
     <rule id="docs-stage">When features or behaviour change, a stage updates the documentation.</rule>
     <rule id="last-stage">The last stage removes `plans/{SLUG}.md`, commits the removal, pushes the branch, and opens a pull request.</rule>
     <rule id="implementer-offer">Immediately after the last question of `<rule id="grill-me">`, ask once via `<user_interaction>` who implements every stage ({IMPLEMENTER}): 1. the `mid`, `senior`, or `junior` tier of the current harness's skill (`claude-ai-tools` in Claude Code, `copilot-ai-tools` in Copilot, `agy-ai-tools` in Antigravity) - show model name and effort if applicable, dispatched by that skill (`mid` recommended); 2. a subagent of the current session; 3. the DEFAULT executor/implementer agent/subagent of the harness.</rule>
-</rule>
   </planning_protocol>
 
   <implementation_protocol>
@@ -29,6 +28,7 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/A
   <execution_protocol>
     <rule id="default-worker">`executor="default-worker"`: harness default subagent for tasks, tests, and facts.</rule>
     <rule id="implementer">`executor="implementer"`: {IMPLEMENTER} per `<rule id="implementer-offer">`, for code and tests.</rule>
+    <rule id="inherited">`executor="inherited"`: subagent spawned per `<rule id="native-spawn">` with the session's model and effort, else the closest available, for review and planning.</rule>
     <rule id="native-spawn">Spawn subagents via native harness APIs: Claude Code `Agent`, Copilot `runSubagent`, Antigravity `invoke_subagent`.</rule>
     <rule id="payload-assembly">A delegated brief states it is an authorized delegated payload and passes only the brief and paths, never conversation context.</rule>
     <rule id="spawn-fallback">A failed default-worker task runs in the spawning context; a failed implementer spawn reports blocked, never falls back to the session.</rule>
