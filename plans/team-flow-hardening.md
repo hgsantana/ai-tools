@@ -9,7 +9,7 @@ Harden the `team-ai-tools` flow and fix the write-ownership conflicts it shares 
 | 3 | Campaign write ownership | done | harness default subagent |
 | 4 | Team delivery placeholders and retries | done | harness default subagent |
 | 5 | Team baseline and plan sign-off | done | harness default subagent |
-| 6 | Team final audit and CI report | pending | harness default subagent |
+| 6 | Team final audit and CI report | done | harness default subagent |
 | 7 | Documentation | pending | harness default subagent |
 | 8 | Close plan | pending | harness default subagent |
 
@@ -214,3 +214,9 @@ Review items M1, M2, M5-M9, and L1-L6.
 - `skills/team-ai-tools/SKILL.md` step 1 spawns the new `baseline-runner` (`executor="default-worker"`) with `{BASELINE}` = `{WORKDIR}/baseline.md`; `po-report.md` carries a baseline summary. Step 4: stages per `stage-format`, a baseline section, and one blockers-only reviewer sign-off round before approval, with unresolved blockers in the approval question plus the PO recommendation. `test-validator` declares and reads `{BASELINE}` and attributes recorded failures to the baseline; step 5 passes `{BASELINE}` = `{WORKDIR}/baseline.md`.
 - Choices: `baseline-runner` discovers commands from repository rules, scripts, and CI files, records a missing command as absent, and leaves tracked files, index, and history untouched (writing only `{BASELINE}`); spawning is covered by the existing `spawn-apis` rule, so no new boundary rule.
 - Tests: `scripts/lint.sh` 470 ok, 1 skipped, 0 warnings; `scripts/lint.sh --base master` 471 ok, 0 warnings.
+
+## Stage 6 report
+
+- `skills/team-ai-tools/SKILL.md`: `final-auditor` (`executor="inherited"`, inputs `{BASE_BRANCH}`, `{DECISIONS}`, `{BASELINE}`, `{AUDIT}`) replaces `docs-auditor`; it runs the full test, lint, and build commands, validates acceptance, security regressions, and the documentation criteria, and writes corrections with blocker/high/medium/low severity. `AUDIT_OK`/`AUDIT_FIX` replace `DOCS_OK`/`DOCS_FIX`. Step 5 runs the final audit before the last plan stage or once before campaign finish, with `{AUDIT}` = `{WORKDIR}/final-audit.md`; unresolved items go to `{WORKDIR}/followups.md`, blockers first. The CI report runs after the last plan stage or the campaign finish returns: `gh pr checks --watch` (~15 min), failures to `{WORKDIR}/ci.md`, status in the closing chat line, no automatic fix. `stage-implementer` has a final-audit branch committing `fix: apply final audit` or a more fitting type.
+- Choices: final-audit stays in the test-validator skip list, as docs-audit was; the final-audit implementer also runs tests; the auditor writes only `{AUDIT}` and attributes baseline failures to the baseline; CI status values named passed, failed, or pending at timeout.
+- Tests: `scripts/lint.sh` 470 ok, 1 skipped, 0 warnings; `scripts/lint.sh --base master` 471 ok, 0 warnings; no `docs-audit`, `docs-auditor`, or `DOCS_` match remains.

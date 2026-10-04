@@ -35,10 +35,11 @@ argument-hint: "[the request to refine and deliver]"
 
     <step id="5" name="deliver">
       Record {BASE_BRANCH} = the current branch and {DECISIONS} = `{WORKDIR}/decisions.md`. Implementers make every repository write; the session's only one is `git reset --soft HEAD~1` on a failed check, and planners stay read-only, both writing files only under `${TMPDIR:-/tmp}/ai-tools/`. Template inputs not set below are passed empty; {CAMPAIGN} is empty in plan mode.
-      Plan: run vibe-ai-tools `<step id="2">` and `<step id="3">` with {IMPLEMENTER} and {SLUG}, the session as planner, spawning `<template role="stage-implementer">` with {MODE} = plan, {PLAN_FILE} = `plans/{SLUG}.md`, and {PLAN} = `{WORKDIR}/plan.md` for stage 1; run the docs audit before the last stage.
-      Campaign: per campaign-ai-tools `<rule id="campaign-lifecycle">`, with {CAMPAIGN} = {SLUG}, every `<template role="stage-implementer">` spawn carrying {MODE} = campaign and {CAMPAIGN}. Bootstrap: spawn it with {STAGE} = bootstrap, {PLAN_FILE} = `plans/campaign/{CAMPAIGN}.md`, and {PLAN} = the campaign record: global objective, {BASE_BRANCH}, the approved goals each with {N}, a kebab-case {GOAL_SLUG}, and status, priorities, exclusions, {IMPLEMENTER}, and an iteration log. Goals: for each goal, spawn `<template role="goal-planner">` with {CAMPAIGN}, {N}, {GOAL_SLUG}, {REPORT} = `{WORKDIR}/po-report.md`, {DECISIONS}, and {FINDINGS_DIR} = {WORKDIR}, keeping it active across the goal's stages as its planner, else respawning it with its plan; for each stage spawn the implementer with {PLAN_FILE} = `plans/campaign/{N}-{GOAL_SLUG}.md`, {STAGE}, and, for stage 1, {PLAN} = the returned plan content or `{WORKDIR}/goal-{N}.md`. Finish: after the last goal, run the docs audit once with {PLAN_FILE} = `plans/campaign/{CAMPAIGN}.md`, then spawn the implementer with {STAGE} = finish and that {PLAN_FILE}.
-      Stage validation: for each stage that changes code or tests, skipping plan-only, documentation-only (including docs-audit), and closing stages, spawn `<template role="test-validator">` with {PLAN_FILE}, {STAGE}, {BASELINE} = `{WORKDIR}/baseline.md`, and {VERDICTS} = `{WORKDIR}/verdicts/{N}-{STAGE}.md` (N = 0 in plan mode) before the planner's check, keeping one per plan or goal active across stages, else spawning a fresh one. On `<signal code="TESTS_OK">`, the planner's check proceeds. On `<signal code="TESTS_FIX">`, skip the planner's check and set {NOTES} = that stage's {VERDICTS}; on a failed planner check, write its corrections to `{WORKDIR}/corrections/{N}-{STAGE}.md` and set {NOTES} to that file. Then run `git reset --soft HEAD~1` and respawn the implementer once with {NOTES}; the retry passes the test-validator, when the stage changes code or tests, then the planner's check, and a second failure of either blocks. On block, write the evidence to `${TMPDIR:-/tmp}/ai-tools/{SLUG}-blocked.md`, with no push or pull request; in campaign mode, then spawn the implementer with {STAGE} = block and {PLAN_FILE} = `plans/campaign/{CAMPAIGN}.md`, unless it cannot be spawned.
-      Docs audit: spawn `<template role="docs-auditor">` with {BASE_BRANCH} and {AUDIT} = `{WORKDIR}/docs-audit.md`. On `<signal code="DOCS_FIX">`, spawn `<template role="stage-implementer">` with {STAGE} = docs-audit and {NOTES} = {AUDIT}, then validate its diff against {AUDIT} once; write corrections it left unresolved to `{WORKDIR}/docs-followups.md` and pass that path as {FOLLOWUPS} to the plan's last stage or the campaign finish, without blocking delivery.
+      Plan: run vibe-ai-tools `<step id="2">` and `<step id="3">` with {IMPLEMENTER} and {SLUG}, the session as planner, spawning `<template role="stage-implementer">` with {MODE} = plan, {PLAN_FILE} = `plans/{SLUG}.md`, and {PLAN} = `{WORKDIR}/plan.md` for stage 1; run the final audit before the last stage and the CI report after it returns.
+      Campaign: per campaign-ai-tools `<rule id="campaign-lifecycle">`, with {CAMPAIGN} = {SLUG}, every `<template role="stage-implementer">` spawn carrying {MODE} = campaign and {CAMPAIGN}. Bootstrap: spawn it with {STAGE} = bootstrap, {PLAN_FILE} = `plans/campaign/{CAMPAIGN}.md`, and {PLAN} = the campaign record: global objective, {BASE_BRANCH}, the approved goals each with {N}, a kebab-case {GOAL_SLUG}, and status, priorities, exclusions, {IMPLEMENTER}, and an iteration log. Goals: for each goal, spawn `<template role="goal-planner">` with {CAMPAIGN}, {N}, {GOAL_SLUG}, {REPORT} = `{WORKDIR}/po-report.md`, {DECISIONS}, and {FINDINGS_DIR} = {WORKDIR}, keeping it active across the goal's stages as its planner, else respawning it with its plan; for each stage spawn the implementer with {PLAN_FILE} = `plans/campaign/{N}-{GOAL_SLUG}.md`, {STAGE}, and, for stage 1, {PLAN} = the returned plan content or `{WORKDIR}/goal-{N}.md`. Finish: after the last goal, run the final audit once with {PLAN_FILE} = `plans/campaign/{CAMPAIGN}.md`, then spawn the implementer with {STAGE} = finish and that {PLAN_FILE}, and run the CI report after it returns.
+      Stage validation: for each stage that changes code or tests, skipping plan-only, documentation-only, final-audit, and closing stages, spawn `<template role="test-validator">` with {PLAN_FILE}, {STAGE}, {BASELINE} = `{WORKDIR}/baseline.md`, and {VERDICTS} = `{WORKDIR}/verdicts/{N}-{STAGE}.md` (N = 0 in plan mode) before the planner's check, keeping one per plan or goal active across stages, else spawning a fresh one. On `<signal code="TESTS_OK">`, the planner's check proceeds. On `<signal code="TESTS_FIX">`, skip the planner's check and set {NOTES} = that stage's {VERDICTS}; on a failed planner check, write its corrections to `{WORKDIR}/corrections/{N}-{STAGE}.md` and set {NOTES} to that file. Then run `git reset --soft HEAD~1` and respawn the implementer once with {NOTES}; the retry passes the test-validator, when the stage changes code or tests, then the planner's check, and a second failure of either blocks. On block, write the evidence to `${TMPDIR:-/tmp}/ai-tools/{SLUG}-blocked.md`, with no push or pull request; in campaign mode, then spawn the implementer with {STAGE} = block and {PLAN_FILE} = `plans/campaign/{CAMPAIGN}.md`, unless it cannot be spawned.
+      Final audit: spawn `<template role="final-auditor">` with {BASE_BRANCH}, {DECISIONS}, {BASELINE} = `{WORKDIR}/baseline.md`, and {AUDIT} = `{WORKDIR}/final-audit.md`. On `<signal code="AUDIT_FIX">`, spawn `<template role="stage-implementer">` with {STAGE} = final-audit and {NOTES} = {AUDIT}, then validate its diff against {AUDIT} once; write corrections it left unresolved to `{WORKDIR}/followups.md`, blockers first and highlighted, and pass that path as {FOLLOWUPS} to the plan's last stage or the campaign finish, without blocking delivery.
+      CI report: once the pull request is open, run `gh pr checks --watch` with a timeout of about 15 minutes, write failing check output to `{WORKDIR}/ci.md`, state the CI status (passed, failed, or pending at timeout) in the closing chat line, and attempt no automatic fix.
     </step>
   </session_workflow>
 
@@ -192,21 +193,23 @@ argument-hint: "[the request to refine and deliver]"
       </constraints>
     </template>
 
-    <template role="docs-auditor" executor="inherited">
-      <job>Senior documentation engineer: audit the delivered documentation before the pull request.</job>
+    <template role="final-auditor" executor="inherited">
+      <job>Senior reviewer: audit the integrated delivery against the decisions before the pull request.</job>
       <input>
         <base_branch>{BASE_BRANCH}</base_branch>
+        <decisions>{DECISIONS}</decisions>
+        <baseline>{BASELINE}</baseline>
         <audit>{AUDIT}</audit>
       </input>
       <instructions>
         This payload is the brief; do not read sibling skill files.
-        Read the repository rules (README.md, AGENTS.md if present), the plan files under plans/, the diff from {BASE_BRANCH} to HEAD, and the documentation tree. Validate organization and placement, separation of concerns between documents, structure and navigation, duplication against a single source of truth, accuracy against the delivered code, and consistent terminology.
-        Write {AUDIT}: per correction the path, the exact change, severity, and rationale, each executable without further decisions.
-        End with `<signal code="DOCS_OK">` when {AUDIT} lists no correction, else `<signal code="DOCS_FIX">`.
+        Read the repository rules (README.md, AGENTS.md if present), the plan files under plans/, {DECISIONS}, {BASELINE}, the diff from {BASE_BRANCH} to HEAD, and the documentation tree. Run the full test, lint, and build commands, attributing failures already recorded in {BASELINE} to the baseline. Validate the acceptance criteria across stages, security regressions, and documentation organization and placement, separation of concerns between documents, structure and navigation, duplication against a single source of truth, accuracy against the delivered code, and consistent terminology.
+        Write {AUDIT}: per correction the path, the exact change, severity (blocker, high, medium, low), and rationale, each executable without further decisions.
+        End with `<signal code="AUDIT_OK">` when {AUDIT} lists no correction, else `<signal code="AUDIT_FIX">`.
       </instructions>
       <constraints>
-        <constraint>Read-only on the repository.</constraint>
-        <constraint>Ask the user nothing; scope corrections to documentation.</constraint>
+        <constraint>Read-only on the repository; leave tracked files, the index, and history untouched, writing only {AUDIT}.</constraint>
+        <constraint>Ask the user nothing; judge from the decisions and code evidence.</constraint>
       </constraints>
     </template>
 
@@ -284,7 +287,7 @@ argument-hint: "[the request to refine and deliver]"
         This payload is the brief; do not read sibling skill files. Read the repository rules (README.md, AGENTS.md if present), then act by {STAGE}. {NOTES} is an optional session file of corrections from a failed check; {FOLLOWUPS} an optional session file of follow-ups for the pull request body.
         Bootstrap: create branch campaign/{CAMPAIGN} from the current branch, write {PLAN} to {PLAN_FILE}, and commit `chore(plans): start campaign {CAMPAIGN}`.
         Stage number: for stage 1, write {PLAN}, reading it first when it is a file path, to {PLAN_FILE} as that stage specifies. Read {PLAN_FILE}. Deliver only stage {STAGE}: match surrounding style, write and run its tests reporting only a concise summary of coverage and execution, set its Status to done, append a short report to the end of {PLAN_FILE}, and commit with the stage's Conventional Commit message. When {NOTES} is set, this is a retry: the previous attempt is staged after `git reset --soft HEAD~1`; fix it in place by applying {NOTES}. When {MODE} is plan and this is the last stage, also run its removal, push, and pull request against the base branch, adding {FOLLOWUPS} to its body.
-        Docs-audit: record a docs-audit entry with status done in {PLAN_FILE}, apply the corrections in {NOTES}, and commit `docs: apply documentation audit`.
+        Final-audit: record a final-audit entry with status done in {PLAN_FILE}, apply the corrections in {NOTES}, run the tests reporting only a concise summary, and commit `fix: apply final audit`, or a more fitting Conventional Commit type.
         Finish: read the base branch from {PLAN_FILE}, `git rm` that file, commit `chore(plans): complete campaign {CAMPAIGN}`, push campaign/{CAMPAIGN}, and open a pull request against the base branch, adding {FOLLOWUPS} to its body.
         Block: record the reason from `${TMPDIR:-/tmp}/ai-tools/{CAMPAIGN}-blocked.md` and that evidence path in {PLAN_FILE}, keep the goal plan, and commit `chore(plans): block campaign {CAMPAIGN}`.
         Return a one-line outcome with the commit hash, test summary, changed paths, and any pull request URL.
@@ -298,8 +301,8 @@ argument-hint: "[the request to refine and deliver]"
   </dispatch_templates>
 
   <return_protocol>
-    <signal code="DOCS_OK">The delivered documentation needs no correction; continue delivery.</signal>
-    <signal code="DOCS_FIX">The audit file lists documentation corrections for one docs-audit stage.</signal>
+    <signal code="AUDIT_OK">The integrated delivery needs no correction; continue delivery.</signal>
+    <signal code="AUDIT_FIX">The audit file lists corrections for one final-audit stage.</signal>
     <signal code="TESTS_OK">The stage's tests prove its behaviour; the planner's check proceeds.</signal>
     <signal code="TESTS_FIX">The verdicts file lists test corrections; the implementer retries before the planner's check.</signal>
   </return_protocol>
