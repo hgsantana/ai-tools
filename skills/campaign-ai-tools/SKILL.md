@@ -17,26 +17,26 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
 
   <session_workflow>
     <step id="1" name="initialize">
-      Resolve kebab-case {CAMPAIGN}, {PRIORITIES}, and {EXCLUSIONS} with the user per `<rule id="grill-me">`, structuring an achievable global objective with 3–10 concrete goals. Immediately upon user approval to begin, ask {IMPLEMENTER} per `<rule id="implementer-offer">`, framed by `<implementer_job>`, as the very first action without intermediate tools or checks. Only after {IMPLEMENTER} is resolved, create branch `campaign/{CAMPAIGN}` from current branch, write `plans/campaign/{CAMPAIGN}.md` with global objective, goals with status, priorities, exclusions, {IMPLEMENTER}, and an iteration log, and commit `chore(plans): start campaign {CAMPAIGN}`. Ask nothing else afterwards.
+      Resolve kebab-case {CAMPAIGN}, {PRIORITIES}, and {EXCLUSIONS} with the user per `<rule id="grill-me">`, structuring an achievable global objective with 3–10 concrete goals. Immediately upon user approval to begin, ask {IMPLEMENTER} per `<rule id="implementer-offer">`, framed by `<implementer_job>`, as the very first action without intermediate tools or checks. Only after {IMPLEMENTER} is resolved, spawn `<template role="stage-implementer">` as {IMPLEMENTER} with {STAGE} = bootstrap, {N} and {SLUG} empty, and {PLAN} = the campaign record: global objective, base branch (the current branch), goals with status, priorities, exclusions, {IMPLEMENTER}, and an iteration log. Ask nothing else afterwards.
     </step>
 
     <step id="2" name="iterate">
-      For each goal in `plans/campaign/{CAMPAIGN}.md`: dispatch a subagent inheriting the session's model and effort via the native harness API per `<rule id="native-spawn">` to plan that goal into short stages per `<planning_protocol>`, deriving kebab-case {SLUG}. The session orchestrates stage delivery without loading the diff into session context (avoiding context bloat). For each stage of {SLUG}, spawn `<template role="stage-implementer">` as {IMPLEMENTER}, substituting {CAMPAIGN}, {N}, {SLUG}, {STAGE}, and {PLAN} (for stage 1, the full plan or the path of a plan file saved outside the repository; else empty); the goal planner subagent (kept active across the goal's stages, falling back to a fresh inherited subagent with the plan) directly inspects the git diff and concise test summary in the repository against `plans/campaign/{N}-{SLUG}.md`, returning only the approval verdict or corrections. On a failed check, run `git reset --soft HEAD~1` before respawning the implementer once with the corrections in the brief; a second failure blocks the campaign. When the goal finishes, remove `plans/campaign/{N}-{SLUG}.md` and commit `chore(plans): complete goal {SLUG}`, update the goal's status to done in `plans/campaign/{CAMPAIGN}.md`, and commit `chore(plans): record campaign {CAMPAIGN} goal {N} ({SLUG})`.
+      For each goal in `plans/campaign/{CAMPAIGN}.md`: dispatch a subagent inheriting the session's model and effort via the native harness API per `<rule id="native-spawn">` to plan that goal into short stages per `<planning_protocol>`, deriving kebab-case {SLUG}, with these campaign adaptations: stage 1 writes `plans/campaign/{N}-{SLUG}.md` on `campaign/{CAMPAIGN}` without creating a branch; the last stage runs `git rm` on that goal plan, sets goal {N} done and logs the iteration in `plans/campaign/{CAMPAIGN}.md`, and commits `chore(plans): complete goal {SLUG}`, without pushing or opening a pull request. The planner returns the plan as content, or as a path under `${TMPDIR:-/tmp}/ai-tools/` when it can write there. The session orchestrates stage delivery without loading the diff into session context (avoiding context bloat). For each stage of {SLUG}, spawn `<template role="stage-implementer">` as {IMPLEMENTER}, substituting {CAMPAIGN}, {N}, {SLUG}, {STAGE}, and {PLAN} (for stage 1, the plan content or path; else empty); the goal planner subagent (kept active across the goal's stages, falling back to a fresh inherited subagent with the plan) directly inspects the git diff and concise test summary in the repository against `plans/campaign/{N}-{SLUG}.md`, returning only the approval verdict or corrections. On a failed check, run `git reset --soft HEAD~1` before respawning the implementer once with the corrections in the brief; a second failure blocks the campaign.
     </step>
 
     <step id="3" name="finish">
-      When all goals are complete: remove `plans/campaign/{CAMPAIGN}.md` and commit `chore(plans): complete campaign {CAMPAIGN}`, push branch `campaign/{CAMPAIGN}` to remote, and open a pull request against the base branch. On block: record the reason and evidence path `${TMPDIR:-/tmp}/ai-tools/{CAMPAIGN}-blocked.md`, keep the iteration plan, and commit `chore(plans): block campaign {CAMPAIGN}`. In chat (user's language): branch, HEAD, pull request URL or blocked evidence path, and one-line outcome.
+      When all goals are complete, spawn `<template role="stage-implementer">` as {IMPLEMENTER} with {STAGE} = finish and {N}, {SLUG}, and {PLAN} empty. On block, write the reason and evidence to `${TMPDIR:-/tmp}/ai-tools/{CAMPAIGN}-blocked.md`, then spawn it with {STAGE} = block, unless the implementer cannot be spawned. In chat (user's language): branch, HEAD, pull request URL or blocked evidence path, and one-line outcome.
     </step>
   </session_workflow>
 
   <implementer_job>
-    The implementer takes one stage and delivers it without supervision: it reads the plan and the code it touches, edits code and tests across several files within the stage's scope, matches repository style, runs tests reporting only a concise summary of coverage and execution, appends its stage report, sets status to done, and commits locally without validating delivery against the macro plan. It makes no architecture, planning, or user-facing decisions.
+    The implementer takes one stage and delivers it without supervision: it reads the plan and the code it touches, edits code and tests across several files within the stage's scope, matches repository style, runs tests reporting only a concise summary of coverage and execution, appends its stage report, sets status to done, and commits locally without validating delivery against the macro plan. It also runs the campaign's bootstrap, finish, and block stages. It makes no architecture, planning, or user-facing decisions.
     Required capability: reliable multi-file code editing in an unfamiliar codebase, test writing and debugging, precise adherence to written acceptance criteria, and tool use for file edits and shell commands.
   </implementer_job>
 
   <dispatch_templates>
     <template role="stage-implementer" executor="implementer">
-      <job>Implementer: deliver one plan stage from a clean context.</job>
+      <job>Implementer: deliver one campaign stage from a clean context.</job>
       <input>
         <campaign>{CAMPAIGN}</campaign>
         <goal>{N}</goal>
@@ -45,20 +45,23 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
         <plan>{PLAN}</plan>
       </input>
       <instructions>
-        This payload is the brief; do not read sibling skill files.
-        For stage 1, write {PLAN}, reading it first when it is a file path, to plans/campaign/{N}-{SLUG}.md as that stage specifies. Read plans/campaign/{N}-{SLUG}.md and the repository rules (README.md, AGENTS.md if present). Deliver only stage {STAGE}: match surrounding style, write and run its tests reporting only a concise summary of coverage and execution, set its Status to done, append a short report to the end of plans/campaign/{N}-{SLUG}.md, and commit with the stage's Conventional Commit message.
-        Return a one-line outcome with the commit hash, test summary, and changed paths.
+        This payload is the brief; do not read sibling skill files. Read the repository rules (README.md, AGENTS.md if present), then act by {STAGE}.
+        Bootstrap: create branch campaign/{CAMPAIGN} from the current branch, write {PLAN} to plans/campaign/{CAMPAIGN}.md, and commit `chore(plans): start campaign {CAMPAIGN}`.
+        Stage number: for stage 1, write {PLAN}, reading it first when it is a file path, to plans/campaign/{N}-{SLUG}.md as that stage specifies. Read plans/campaign/{N}-{SLUG}.md. Deliver only stage {STAGE}: match surrounding style, write and run its tests reporting only a concise summary of coverage and execution, set its Status to done, append a short report to the end of plans/campaign/{N}-{SLUG}.md, and commit with the stage's Conventional Commit message.
+        Finish: read the base branch from plans/campaign/{CAMPAIGN}.md, `git rm` that file, commit `chore(plans): complete campaign {CAMPAIGN}`, push campaign/{CAMPAIGN}, and open a pull request against the base branch.
+        Block: record the reason from `${TMPDIR:-/tmp}/ai-tools/{CAMPAIGN}-blocked.md` and that evidence path in plans/campaign/{CAMPAIGN}.md, keep the goal plan, and commit `chore(plans): block campaign {CAMPAIGN}`.
+        Return a one-line outcome with the commit hash, test summary, changed paths, and, for finish, the pull request URL.
       </instructions>
       <constraints>
         <constraint>Stay within the stage's scope.</constraint>
         <constraint>Do not validate delivery against the macro plan; run tests, commit locally, and return outcome.</constraint>
-        <constraint>Work locally on campaign/{CAMPAIGN}: no push or remote mutation.</constraint>
+        <constraint>Work on campaign/{CAMPAIGN}; push and open the pull request only in finish, with no other remote mutation.</constraint>
       </constraints>
     </template>
   </dispatch_templates>
 
   <boundaries>
-    <rule id="campaign-lifecycle">Campaign and goal plans stay on `campaign/{CAMPAIGN}`: each goal's stage 1 writes `plans/campaign/{N}-{SLUG}.md` and its last stage removes it; the finished campaign removes `plans/campaign/{CAMPAIGN}.md`, commits, pushes, and opens a pull request.</rule>
+    <rule id="campaign-lifecycle">Implementers make every other repository write; the session's only one is `git reset --soft HEAD~1` on a failed check, and goal planners stay read-only, both writing files only under `${TMPDIR:-/tmp}/ai-tools/`. Bootstrap creates `campaign/{CAMPAIGN}` and `plans/campaign/{CAMPAIGN}.md`; each goal's stage 1 writes `plans/campaign/{N}-{SLUG}.md` on that branch and its last stage removes it and marks the goal done, without pushing; finish removes the record, commits, pushes, and opens a pull request; block records the reason and commits without pushing.</rule>
     <rule id="spawn-apis">Spawn `<template role="stage-implementer">` as {IMPLEMENTER} per `<execution_protocol>`; if it cannot be spawned, block per `<rule id="spawn-fallback">`.</rule>
     <rule id="stay-in-repo">Stay inside the working repository. Preserve pre-existing commit history.</rule>
     <rule id="protocol-source">Follow user-wide `<execution_protocol>`, `<user_interaction>`, and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>

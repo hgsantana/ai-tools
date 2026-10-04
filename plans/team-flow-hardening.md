@@ -6,7 +6,7 @@ Harden the `team-ai-tools` flow and fix the write-ownership conflicts it shares 
 |---|---|---|---|
 | 1 | Start plan | done | harness default subagent |
 | 2 | Stage format in planning protocol | done | harness default subagent |
-| 3 | Campaign write ownership | pending | harness default subagent |
+| 3 | Campaign write ownership | done | harness default subagent |
 | 4 | Team delivery placeholders and retries | pending | harness default subagent |
 | 5 | Team baseline and plan sign-off | pending | harness default subagent |
 | 6 | Team final audit and CI report | pending | harness default subagent |
@@ -192,3 +192,11 @@ Review items M1, M2, M5-M9, and L1-L6.
 - Added `<rule id="stage-format">` to `<planning_protocol>` in `USER-AGENTS.md` after `short-stages` (file now 6464 characters).
 - README rule 23 now lists the stage format fields.
 - Tests: `scripts/lint.sh` 469 ok, 1 skipped, 0 warnings; `scripts/lint.sh --base master` 470 ok, 0 warnings; `scripts/test.sh` 352 ok, 0 warnings.
+
+## Stage 3 report
+
+- `skills/campaign-ai-tools/SKILL.md`: steps 1-3 now spawn `stage-implementer` for bootstrap, goal stages, finish, and block; the session and goal planner are read-only on the repository (temp files only). Session goal-closure commits removed; the goal's last stage removes its plan, marks the goal done, and commits without pushing.
+- `stage-implementer` handles bootstrap, numeric stages, finish, and block; push and PR only in finish. `campaign-lifecycle` restated with write ownership.
+- Choices: the campaign record holds the base branch so the clean-context finish implementer knows the PR target; the goal's last stage also logs the iteration in the record; block reads the reason from `${TMPDIR:-/tmp}/ai-tools/{CAMPAIGN}-blocked.md` (no new placeholder) and is skipped when the implementer cannot be spawned; `<implementer_job>` mentions bootstrap, finish, and block. Description unchanged.
+- Tests: `scripts/lint.sh` 471 ok, 1 skipped, 0 warnings; `scripts/lint.sh --base master` 472 ok, 0 warnings.
+- Retry fix: `campaign-lifecycle` now names the failed-check `git reset --soft HEAD~1` as the session's only repository write, matching step 2.
