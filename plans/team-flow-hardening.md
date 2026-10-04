@@ -7,7 +7,7 @@ Harden the `team-ai-tools` flow and fix the write-ownership conflicts it shares 
 | 1 | Start plan | done | harness default subagent |
 | 2 | Stage format in planning protocol | done | harness default subagent |
 | 3 | Campaign write ownership | done | harness default subagent |
-| 4 | Team delivery placeholders and retries | pending | harness default subagent |
+| 4 | Team delivery placeholders and retries | done | harness default subagent |
 | 5 | Team baseline and plan sign-off | pending | harness default subagent |
 | 6 | Team final audit and CI report | pending | harness default subagent |
 | 7 | Documentation | pending | harness default subagent |
@@ -200,3 +200,11 @@ Review items M1, M2, M5-M9, and L1-L6.
 - Choices: the campaign record holds the base branch so the clean-context finish implementer knows the PR target; the goal's last stage also logs the iteration in the record; block reads the reason from `${TMPDIR:-/tmp}/ai-tools/{CAMPAIGN}-blocked.md` (no new placeholder) and is skipped when the implementer cannot be spawned; `<implementer_job>` mentions bootstrap, finish, and block. Description unchanged.
 - Tests: `scripts/lint.sh` 471 ok, 1 skipped, 0 warnings; `scripts/lint.sh --base master` 472 ok, 0 warnings.
 - Retry fix: `campaign-lifecycle` now names the failed-check `git reset --soft HEAD~1` as the session's only repository write, matching step 2.
+
+## Stage 4 report
+
+- `skills/team-ai-tools/SKILL.md` step 5: records `{BASE_BRANCH}` and `{DECISIONS}`; states write ownership (implementers write; the session only runs `git reset --soft HEAD~1`; planners read-only; temp files under `${TMPDIR:-/tmp}/ai-tools/`). Campaign mode runs bootstrap, goals, finish, and block through team's `stage-implementer`, citing campaign-ai-tools `campaign-lifecycle`. Verdicts per stage at `{WORKDIR}/verdicts/{N}-{STAGE}.md` (N = 0 in plan mode). Every retry passes the test-validator (when applicable) then the planner check; a second failure blocks. Docs-audit follow-ups go to `{FOLLOWUPS}` (plan last stage or campaign finish); the session no longer edits the PR body.
+- `goal-planner`: inputs `{GOAL_SLUG}` and `{FINDINGS_DIR}`; applies the campaign adaptations; returns its plan as content or at `{FINDINGS_DIR}/goal-{N}.md`.
+- `stage-implementer`: inputs `{CAMPAIGN}` and `{FOLLOWUPS}`; handles bootstrap, numbered stages, docs-audit, finish, and block; `{NOTES}` is only failed-check corrections, with an in-place retry brief. `test-validator`: per-stage verdicts file.
+- Choices: the session derives each `{GOAL_SLUG}` and lists it in the campaign record, so the planner receives it as a declared input; `{CAMPAIGN}` added to `stage-implementer` for the branch, commit messages, and block evidence path; planner-check corrections are written by the session to `{WORKDIR}/corrections/{N}-{STAGE}.md` and passed as `{NOTES}`; block evidence path `${TMPDIR:-/tmp}/ai-tools/{SLUG}-blocked.md` matches vibe and campaign since `{CAMPAIGN}` = `{SLUG}`; `<implementer_job>` left unchanged (out of scope).
+- Tests: `scripts/lint.sh` 468 ok, 1 skipped, 0 warnings; `scripts/lint.sh --base master` 469 ok, 0 warnings.
