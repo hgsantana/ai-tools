@@ -4,7 +4,7 @@
 |---|---|---|---|
 | 1 | Branch and plan file | done | session subagent (Claude Opus 5.5, High) |
 | 2 | Add `ui-ai-tools` skill and lint registration | done | session subagent (Claude Opus 5.5, High) |
-| 3 | Documentation and version bump | pending | session subagent (Claude Opus 5.5, High) |
+| 3 | Documentation and version bump | done | session subagent (Claude Opus 5.5, High) |
 | 4 | Remove plan, push, pull request | pending | session subagent (Claude Opus 5.5, High) |
 
 ## Goal
@@ -103,3 +103,10 @@ Ship a new skill `ui-ai-tools` (slash `/ui-ai-tools`) for UI modernization:
 - Added `skills/ui-ai-tools/SKILL.md` per the specification: 8-step workflow, `<implementer_job>`, templates `route-mapper`, `dev-server`, `route-evaluator`, `stage-implementer`, and boundaries; description 489 characters. Step 4 adds session placeholder {ROUTE_SLUG} to derive {ROUTE_DIR}; the implementer brief restates viewports and capture method to stay self-contained.
 - Registered `ui-ai-tools` in `scripts/lint.sh` (shipped/gated list, `IMPLEMENTER_SKILLS`, usage text).
 - Verification: `scripts/lint.sh` 513 ok, 1 skipped (version bump needs `--base`), 0 warnings; `scripts/test.sh` 355 ok, 0 warnings; shellcheck clean.
+
+
+### Stage 3 — Documentation and version bump
+
+- README: version 0.0.67-ALPHA -> 0.0.68-ALPHA; `ui-ai-tools` added to Overview item 4 (one-sentence description; "all three" -> "all four"), rule 5 protocol-citing skills, rule 6 `Agent:` list, rule 24 delivery-to-PR list, and the Development checks "agent field" bullet.
+- `docs/USAGE.md`: Skills table row and `### UI modernization` section (discovery and confirmation, dev server, viewports and capture fallback, inherited evaluators in waves of 4, auth handling, report path, design grill-me, before/after recapture validation, pull request delivery), matching the shipped SKILL.md.
+- Verification: `scripts/lint.sh --base master` 515 ok, 0 skipped, 0 warnings (version bump ok); `scripts/test.sh` 355 ok, 0 warnings.
