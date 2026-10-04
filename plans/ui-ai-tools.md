@@ -3,7 +3,7 @@
 | Stage | Title | Status | Implementer |
 |---|---|---|---|
 | 1 | Branch and plan file | done | session subagent (Claude Opus 5.5, High) |
-| 2 | Add `ui-ai-tools` skill and lint registration | pending | session subagent (Claude Opus 5.5, High) |
+| 2 | Add `ui-ai-tools` skill and lint registration | done | session subagent (Claude Opus 5.5, High) |
 | 3 | Documentation and version bump | pending | session subagent (Claude Opus 5.5, High) |
 | 4 | Remove plan, push, pull request | pending | session subagent (Claude Opus 5.5, High) |
 
@@ -97,3 +97,9 @@ Ship a new skill `ui-ai-tools` (slash `/ui-ai-tools`) for UI modernization:
 
 - Created branch `plan/ui-ai-tools` from `master` and wrote the full plan to `plans/ui-ai-tools.md`; stage 1 set to done.
 - Verification: `git branch --show-current` prints `plan/ui-ai-tools`; `scripts/lint.sh` exits 0 (470 ok, 1 skipped — version bump needs `--base`, 0 warnings).
+
+### Stage 2 — Add `ui-ai-tools` skill and lint registration
+
+- Added `skills/ui-ai-tools/SKILL.md` per the specification: 8-step workflow, `<implementer_job>`, templates `route-mapper`, `dev-server`, `route-evaluator`, `stage-implementer`, and boundaries; description 489 characters. Step 4 adds session placeholder {ROUTE_SLUG} to derive {ROUTE_DIR}; the implementer brief restates viewports and capture method to stay self-contained.
+- Registered `ui-ai-tools` in `scripts/lint.sh` (shipped/gated list, `IMPLEMENTER_SKILLS`, usage text).
+- Verification: `scripts/lint.sh` 513 ok, 1 skipped (version bump needs `--base`), 0 warnings; `scripts/test.sh` 355 ok, 0 warnings; shellcheck clean.
