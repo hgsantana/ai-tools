@@ -19,6 +19,7 @@ Skills provide session-directed workflows. Global planning, implementation, and 
 | `/vibe-ai-tools` | Plan under `plans/`, then execute that plan and deliver a pull request | `/vibe-ai-tools add resumable uploads` |
 | `/team-ai-tools` | Refine a request with a PO-led team of senior reviewers, then deliver a plan or campaign to a pull request | `/team-ai-tools add rate limiting to the public API` |
 | `/campaign-ai-tools` | Repeatedly plan and deliver user-directed, multi-stage improvements in an autonomous local campaign | `/campaign-ai-tools repository-hardening` |
+| `/ui-ai-tools` | Evaluate routes by screenshots and code, then plan and deliver a UI modernization to a pull request | `/ui-ai-tools /dashboard /settings http://localhost:3000` |
 | `/az-ai-tools` | Inspect or manage Azure resources, subscriptions, infrastructure, and costs with `az` | `/az-ai-tools list costly idle resources` |
 | `/gc-ai-tools` | Inspect or manage Google Cloud projects, infrastructure, and costs with `gcloud` | `/gc-ai-tools show resources in project-x` |
 | `/agy-ai-tools`, `/claude-ai-tools`, `/copilot-ai-tools` | Dispatch an agent by tier (`junior`, `mid`, `senior`) or explicit model and effort | `/claude-ai-tools senior review the auth module` |
@@ -52,6 +53,14 @@ Every skill runs on the session's model. The session handles user alignment, jud
 
 ```text
 /campaign-ai-tools repository-hardening
+```
+
+### UI modernization
+
+`/ui-ai-tools` evaluates routes by rendered image and source code, then plans and delivers a UI modernization to a pull request. It takes the routes, a base URL, and an auth source (a storage-state path or env var names, never values). Without named routes, a default worker maps them from the router configuration and file conventions, and the session confirms the route list and example params with the user before evaluation. Without a base URL, a default worker starts the local dev server and stops it after evaluation. One evaluator per route, inheriting the session's model and effort, runs in waves of at most 4: it captures full-page screenshots at desktop 1440x900, tablet 768x1024, and mobile 390x844 with the harness browser or browser MCP tool, else `npx playwright screenshot`, reads the route's source and styles, and reports findings with severity and evidence plus creative modernization ideas; a failed capture falls back to a code-only evaluation marked "not captured". Auth values never reach disk, chat, or briefs. The session consolidates an illustrated report at `${TMPDIR:-/tmp}/ai-tools/ui/<slug>/report.md`, then plans from it with a grill-me on design direction (brand constraints, design system or CSS stack, scope and priorities, appetite for creative change) and asks once who implements. Delivery reuses the `/vibe-ai-tools` shape; each stage that changes UI recaptures the affected routes at the three viewports, and the session validates the diff, test summary, and before/after images before the next stage. The repository stays untouched until delivery.
+
+```text
+/ui-ai-tools /dashboard /settings http://localhost:3000
 ```
 
 ### Cloud and GitHub platform
