@@ -11,6 +11,7 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/A
     Adds to, never replaces, the harness's own planning in every planning flow (plan mode, skill, or request); the planner applies each rule where it fits. Planning writes nothing to disk.
     <rule id="grill-me">Explore the codebase, then probe assumptions, edge cases, and trade-offs one question at a time via `<user_interaction>`, each with a recommendation and rationale. Confirm a briefing before finalizing.</rule>
     <rule id="short-stages">Split the plan into short stages, each testable and committable on its own.</rule>
+    <rule id="stage-format">Each stage lists files in scope, out-of-scope items, testable acceptance criteria, required tests, verification commands, and its Conventional Commit message.</rule>
     <rule id="stage-commit">Each delivered stage ends with one Conventional Commit.</rule>
     <rule id="first-stage">Stage 1 creates branch `plan/{SLUG}` from the current branch and writes the whole plan to `plans/{SLUG}.md`, opened by a status table (Stage, Title, Status, Implementer).</rule>
     <rule id="stage-report">Each implementer appends a short report of its stage to the end of `plans/{SLUG}.md`.</rule>

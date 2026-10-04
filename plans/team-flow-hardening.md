@@ -5,7 +5,7 @@ Harden the `team-ai-tools` flow and fix the write-ownership conflicts it shares 
 | Stage | Title | Status | Implementer |
 |---|---|---|---|
 | 1 | Start plan | done | harness default subagent |
-| 2 | Stage format in planning protocol | pending | harness default subagent |
+| 2 | Stage format in planning protocol | done | harness default subagent |
 | 3 | Campaign write ownership | pending | harness default subagent |
 | 4 | Team delivery placeholders and retries | pending | harness default subagent |
 | 5 | Team baseline and plan sign-off | pending | harness default subagent |
@@ -186,3 +186,9 @@ Review items M1, M2, M5-M9, and L1-L6.
 - Wrote the whole plan to `plans/team-flow-hardening.md` on the existing branch `plan/team-devops-reviewer`; no branch created.
 - Status table: Implementer set to `harness default subagent`; stage 1 marked done.
 - Tests: `scripts/lint.sh` exit 0 — 469 ok, 1 skipped (version bump needs --base), 0 warnings.
+
+## Stage 2 report
+
+- Added `<rule id="stage-format">` to `<planning_protocol>` in `USER-AGENTS.md` after `short-stages` (file now 6464 characters).
+- README rule 23 now lists the stage format fields.
+- Tests: `scripts/lint.sh` 469 ok, 1 skipped, 0 warnings; `scripts/lint.sh --base master` 470 ok, 0 warnings; `scripts/test.sh` 352 ok, 0 warnings.
