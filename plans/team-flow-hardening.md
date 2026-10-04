@@ -8,7 +8,7 @@ Harden the `team-ai-tools` flow and fix the write-ownership conflicts it shares 
 | 2 | Stage format in planning protocol | done | harness default subagent |
 | 3 | Campaign write ownership | done | harness default subagent |
 | 4 | Team delivery placeholders and retries | done | harness default subagent |
-| 5 | Team baseline and plan sign-off | pending | harness default subagent |
+| 5 | Team baseline and plan sign-off | done | harness default subagent |
 | 6 | Team final audit and CI report | pending | harness default subagent |
 | 7 | Documentation | pending | harness default subagent |
 | 8 | Close plan | pending | harness default subagent |
@@ -208,3 +208,9 @@ Review items M1, M2, M5-M9, and L1-L6.
 - `stage-implementer`: inputs `{CAMPAIGN}` and `{FOLLOWUPS}`; handles bootstrap, numbered stages, docs-audit, finish, and block; `{NOTES}` is only failed-check corrections, with an in-place retry brief. `test-validator`: per-stage verdicts file.
 - Choices: the session derives each `{GOAL_SLUG}` and lists it in the campaign record, so the planner receives it as a declared input; `{CAMPAIGN}` added to `stage-implementer` for the branch, commit messages, and block evidence path; planner-check corrections are written by the session to `{WORKDIR}/corrections/{N}-{STAGE}.md` and passed as `{NOTES}`; block evidence path `${TMPDIR:-/tmp}/ai-tools/{SLUG}-blocked.md` matches vibe and campaign since `{CAMPAIGN}` = `{SLUG}`; `<implementer_job>` left unchanged (out of scope).
 - Tests: `scripts/lint.sh` 468 ok, 1 skipped, 0 warnings; `scripts/lint.sh --base master` 469 ok, 0 warnings.
+
+## Stage 5 report
+
+- `skills/team-ai-tools/SKILL.md` step 1 spawns the new `baseline-runner` (`executor="default-worker"`) with `{BASELINE}` = `{WORKDIR}/baseline.md`; `po-report.md` carries a baseline summary. Step 4: stages per `stage-format`, a baseline section, and one blockers-only reviewer sign-off round before approval, with unresolved blockers in the approval question plus the PO recommendation. `test-validator` declares and reads `{BASELINE}` and attributes recorded failures to the baseline; step 5 passes `{BASELINE}` = `{WORKDIR}/baseline.md`.
+- Choices: `baseline-runner` discovers commands from repository rules, scripts, and CI files, records a missing command as absent, and leaves tracked files, index, and history untouched (writing only `{BASELINE}`); spawning is covered by the existing `spawn-apis` rule, so no new boundary rule.
+- Tests: `scripts/lint.sh` 470 ok, 1 skipped, 0 warnings; `scripts/lint.sh --base master` 471 ok, 0 warnings.

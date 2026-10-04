@@ -18,7 +18,7 @@ argument-hint: "[the request to refine and deliver]"
 
   <session_workflow>
     <step id="1" name="po-analysis">
-      Derive kebab-case {SLUG}. Read the repository documentation (README, AGENTS.md, docs) and compare it with the code the request touches. Asking the user nothing, write `{WORKDIR}/po-report.md`: request restatement, documentation-versus-code gaps, scope, ambiguities, and refinement questions each with options and a recommendation. Select 2–8 reviewer templates by relevance: `<template role="security-reviewer">`, `<template role="performance-reviewer">`, `<template role="ux-reviewer">`, `<template role="best-practices-reviewer">`, `<template role="design-reviewer">` only when structure changes, and `<template role="devops-reviewer">` only when the request touches CI, static analysis, build, deploy, infrastructure, or cost, `<template role="docs-reviewer">` only when it changes behaviour or documentation, and `<template role="test-reviewer">` only when it changes code; record one line on why each skipped role was skipped.
+      Derive kebab-case {SLUG}. Spawn `<template role="baseline-runner">` with {BASELINE} = `{WORKDIR}/baseline.md`. Read the repository documentation (README, AGENTS.md, docs) and compare it with the code the request touches. Asking the user nothing, write `{WORKDIR}/po-report.md`: request restatement, a baseline summary from {BASELINE}, documentation-versus-code gaps, scope, ambiguities, and refinement questions each with options and a recommendation. Select 2–8 reviewer templates by relevance: `<template role="security-reviewer">`, `<template role="performance-reviewer">`, `<template role="ux-reviewer">`, `<template role="best-practices-reviewer">`, `<template role="design-reviewer">` only when structure changes, and `<template role="devops-reviewer">` only when the request touches CI, static analysis, build, deploy, infrastructure, or cost, `<template role="docs-reviewer">` only when it changes behaviour or documentation, and `<template role="test-reviewer">` only when it changes code; record one line on why each skipped role was skipped.
     </step>
 
     <step id="2" name="team-review">
@@ -30,14 +30,14 @@ argument-hint: "[the request to refine and deliver]"
     </step>
 
     <step id="4" name="approve">
-      Write `{WORKDIR}/plan.md` per `<planning_protocol>`, turning agreed decisions into acceptance criteria: a plan for one cohesive delivery within about 8 short stages, or a campaign for 3–10 independently deliverable goals. Ask approval via `<user_interaction>`, stating the choice and its reason, with options approve, switch between plan and campaign, or revise; revisions return to `<step id="2">` or `<step id="3">`. Approval ends the team: release the reviewers and ask nothing else afterwards.
+      Write `{WORKDIR}/plan.md` per `<planning_protocol>`, each stage per `<rule id="stage-format">`, with a baseline section from {BASELINE}, turning agreed decisions into acceptance criteria: a plan for one cohesive delivery within about 8 short stages, or a campaign for 3–10 independently deliverable goals. Send `plan.md` to the active reviewers for one sign-off round reporting blockers only; fold their blockers into the plan, and carry each unresolved blocker into the approval question with the PO recommendation. Ask approval via `<user_interaction>`, stating the choice and its reason, with options approve, switch between plan and campaign, or revise; revisions return to `<step id="2">` or `<step id="3">`. Approval ends the team: release the reviewers and ask nothing else afterwards.
     </step>
 
     <step id="5" name="deliver">
       Record {BASE_BRANCH} = the current branch and {DECISIONS} = `{WORKDIR}/decisions.md`. Implementers make every repository write; the session's only one is `git reset --soft HEAD~1` on a failed check, and planners stay read-only, both writing files only under `${TMPDIR:-/tmp}/ai-tools/`. Template inputs not set below are passed empty; {CAMPAIGN} is empty in plan mode.
       Plan: run vibe-ai-tools `<step id="2">` and `<step id="3">` with {IMPLEMENTER} and {SLUG}, the session as planner, spawning `<template role="stage-implementer">` with {MODE} = plan, {PLAN_FILE} = `plans/{SLUG}.md`, and {PLAN} = `{WORKDIR}/plan.md` for stage 1; run the docs audit before the last stage.
       Campaign: per campaign-ai-tools `<rule id="campaign-lifecycle">`, with {CAMPAIGN} = {SLUG}, every `<template role="stage-implementer">` spawn carrying {MODE} = campaign and {CAMPAIGN}. Bootstrap: spawn it with {STAGE} = bootstrap, {PLAN_FILE} = `plans/campaign/{CAMPAIGN}.md`, and {PLAN} = the campaign record: global objective, {BASE_BRANCH}, the approved goals each with {N}, a kebab-case {GOAL_SLUG}, and status, priorities, exclusions, {IMPLEMENTER}, and an iteration log. Goals: for each goal, spawn `<template role="goal-planner">` with {CAMPAIGN}, {N}, {GOAL_SLUG}, {REPORT} = `{WORKDIR}/po-report.md`, {DECISIONS}, and {FINDINGS_DIR} = {WORKDIR}, keeping it active across the goal's stages as its planner, else respawning it with its plan; for each stage spawn the implementer with {PLAN_FILE} = `plans/campaign/{N}-{GOAL_SLUG}.md`, {STAGE}, and, for stage 1, {PLAN} = the returned plan content or `{WORKDIR}/goal-{N}.md`. Finish: after the last goal, run the docs audit once with {PLAN_FILE} = `plans/campaign/{CAMPAIGN}.md`, then spawn the implementer with {STAGE} = finish and that {PLAN_FILE}.
-      Stage validation: for each stage that changes code or tests, skipping plan-only, documentation-only (including docs-audit), and closing stages, spawn `<template role="test-validator">` with {PLAN_FILE}, {STAGE}, and {VERDICTS} = `{WORKDIR}/verdicts/{N}-{STAGE}.md` (N = 0 in plan mode) before the planner's check, keeping one per plan or goal active across stages, else spawning a fresh one. On `<signal code="TESTS_OK">`, the planner's check proceeds. On `<signal code="TESTS_FIX">`, skip the planner's check and set {NOTES} = that stage's {VERDICTS}; on a failed planner check, write its corrections to `{WORKDIR}/corrections/{N}-{STAGE}.md` and set {NOTES} to that file. Then run `git reset --soft HEAD~1` and respawn the implementer once with {NOTES}; the retry passes the test-validator, when the stage changes code or tests, then the planner's check, and a second failure of either blocks. On block, write the evidence to `${TMPDIR:-/tmp}/ai-tools/{SLUG}-blocked.md`, with no push or pull request; in campaign mode, then spawn the implementer with {STAGE} = block and {PLAN_FILE} = `plans/campaign/{CAMPAIGN}.md`, unless it cannot be spawned.
+      Stage validation: for each stage that changes code or tests, skipping plan-only, documentation-only (including docs-audit), and closing stages, spawn `<template role="test-validator">` with {PLAN_FILE}, {STAGE}, {BASELINE} = `{WORKDIR}/baseline.md`, and {VERDICTS} = `{WORKDIR}/verdicts/{N}-{STAGE}.md` (N = 0 in plan mode) before the planner's check, keeping one per plan or goal active across stages, else spawning a fresh one. On `<signal code="TESTS_OK">`, the planner's check proceeds. On `<signal code="TESTS_FIX">`, skip the planner's check and set {NOTES} = that stage's {VERDICTS}; on a failed planner check, write its corrections to `{WORKDIR}/corrections/{N}-{STAGE}.md` and set {NOTES} to that file. Then run `git reset --soft HEAD~1` and respawn the implementer once with {NOTES}; the retry passes the test-validator, when the stage changes code or tests, then the planner's check, and a second failure of either blocks. On block, write the evidence to `${TMPDIR:-/tmp}/ai-tools/{SLUG}-blocked.md`, with no push or pull request; in campaign mode, then spawn the implementer with {STAGE} = block and {PLAN_FILE} = `plans/campaign/{CAMPAIGN}.md`, unless it cannot be spawned.
       Docs audit: spawn `<template role="docs-auditor">` with {BASE_BRANCH} and {AUDIT} = `{WORKDIR}/docs-audit.md`. On `<signal code="DOCS_FIX">`, spawn `<template role="stage-implementer">` with {STAGE} = docs-audit and {NOTES} = {AUDIT}, then validate its diff against {AUDIT} once; write corrections it left unresolved to `{WORKDIR}/docs-followups.md` and pass that path as {FOLLOWUPS} to the plan's last stage or the campaign finish, without blocking delivery.
     </step>
   </session_workflow>
@@ -210,16 +210,34 @@ argument-hint: "[the request to refine and deliver]"
       </constraints>
     </template>
 
+    <template role="baseline-runner" executor="default-worker">
+      <job>Default worker: record the repository's test, lint, and build baseline before any change.</job>
+      <input>
+        <baseline>{BASELINE}</baseline>
+      </input>
+      <instructions>
+        This payload is the brief; do not read sibling skill files.
+        Discover the repository's existing test, lint, and build commands from its rules (README.md, AGENTS.md if present), scripts, and CI files, and run each.
+        Write {BASELINE}: per command the command line, exit code, and known failures with their evidence.
+        Return a one-line outcome with the path and command count.
+      </instructions>
+      <constraints>
+        <constraint>Read-only on the repository; leave tracked files, the index, and history untouched, writing only {BASELINE}.</constraint>
+        <constraint>Ask the user nothing; record a missing command as absent.</constraint>
+      </constraints>
+    </template>
+
     <template role="test-validator" executor="inherited">
       <job>Senior test engineer: validate the tests of one delivered stage before the planner's check.</job>
       <input>
         <plan_file>{PLAN_FILE}</plan_file>
         <stage>{STAGE}</stage>
+        <baseline>{BASELINE}</baseline>
         <verdicts>{VERDICTS}</verdicts>
       </input>
       <instructions>
         This payload is the brief; do not read sibling skill files.
-        Read {PLAN_FILE}, its stage {STAGE} acceptance criteria, the repository rules (README.md, AGENTS.md if present), and the diff of HEAD. Judge whether the tests assert behaviour rather than implementation, cover the required variations, use meaningful assertions, and avoid mocks that hide behaviour. Run the test suite; in a disposable git worktree or local clone under the OS temp directory, break each targeted behaviour and confirm a test fails, then remove that copy.
+        Read {PLAN_FILE}, its stage {STAGE} acceptance criteria, {BASELINE}, the repository rules (README.md, AGENTS.md if present), and the diff of HEAD. Judge whether the tests assert behaviour rather than implementation, cover the required variations, use meaningful assertions, and avoid mocks that hide behaviour. Run the test suite, attributing failures already recorded in {BASELINE} to the baseline rather than the stage; in a disposable git worktree or local clone under the OS temp directory, break each targeted behaviour and confirm a test fails, then remove that copy.
         Append to {VERDICTS}, this stage's verdicts file, the verdict and per correction the path, the missing or wrong test, and the expected assertion, each executable without further decisions.
         End with `<signal code="TESTS_OK">` when the stage needs no test correction, else `<signal code="TESTS_FIX">`.
       </instructions>
