@@ -34,7 +34,8 @@ Checks:
   agent field       Agent: is session, session + implementer, or
                     session + implementer (model asked once) matching
                     <implementer_job> and an executor="implementer"
-                    template; vibe-ai-tools and campaign-ai-tools (rule 6)
+                    template; vibe-ai-tools, campaign-ai-tools, and
+                    team-ai-tools (rule 6)
   skill layout      no skill-root markdown, every skill directory has
                     SKILL.md with semantic XML tags (<skill>, <session_workflow>,
                     <dispatch_templates>), no SKILL.md contains Continue? or Stake,
@@ -202,7 +203,7 @@ check_skill_name_match() {
 
 check_skill_layout() {
   local f d name rid
-  local gated="vibe-ai-tools campaign-ai-tools az-ai-tools gc-ai-tools gh-ai-tools agy-ai-tools claude-ai-tools copilot-ai-tools"
+  local gated="vibe-ai-tools campaign-ai-tools team-ai-tools az-ai-tools gc-ai-tools gh-ai-tools agy-ai-tools claude-ai-tools copilot-ai-tools"
   local maintainer="update-ai-tools remove-ai-tools"
 
   f="$AI_TOOLS/skills/SKILL-CONTRACT.md"
@@ -391,7 +392,7 @@ check_skill_description_content() {
   done
 }
 
-IMPLEMENTER_SKILLS="vibe-ai-tools campaign-ai-tools"
+IMPLEMENTER_SKILLS="vibe-ai-tools campaign-ai-tools team-ai-tools"
 AGENT_SESSION="session"
 AGENT_IMPLEMENTER="session + implementer"
 AGENT_IMPLEMENTER_ASKED="session + implementer (model asked once)"
