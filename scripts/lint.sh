@@ -34,7 +34,8 @@ Checks:
   agent field       Agent: is session, session + implementer, or
                     session + implementer (model asked once) matching
                     <implementer_job> and an executor="implementer"
-                    template; vibe-ai-tools and campaign-ai-tools (rule 6)
+                    template; vibe-ai-tools, campaign-ai-tools, and
+                    team-ai-tools (rule 6)
   skill layout      no skill-root markdown, every skill directory has
                     SKILL.md with semantic XML tags (<skill>, <session_workflow>,
                     <dispatch_templates>), no SKILL.md contains Continue? or Stake,
@@ -64,7 +65,7 @@ Checks:
                     unique id, every <step> a numeric id, and <case>,
                     <response>, <signal>, <state> their id, type, or code,
                     and every <template> a role and an executor that is one
-                    of default-worker or implementer AND
+                    of default-worker, implementer, or inherited AND
                     has a matching <rule id> inside USER-AGENTS
                     <execution_protocol>, never an agent attribute (rule 9,
                     Semantic XML grammar)
@@ -202,7 +203,7 @@ check_skill_name_match() {
 
 check_skill_layout() {
   local f d name rid
-  local gated="vibe-ai-tools campaign-ai-tools az-ai-tools gc-ai-tools gh-ai-tools agy-ai-tools claude-ai-tools copilot-ai-tools"
+  local gated="vibe-ai-tools campaign-ai-tools team-ai-tools az-ai-tools gc-ai-tools gh-ai-tools agy-ai-tools claude-ai-tools copilot-ai-tools"
   local maintainer="update-ai-tools remove-ai-tools"
 
   f="$AI_TOOLS/skills/SKILL-CONTRACT.md"
@@ -391,7 +392,7 @@ check_skill_description_content() {
   done
 }
 
-IMPLEMENTER_SKILLS="vibe-ai-tools campaign-ai-tools"
+IMPLEMENTER_SKILLS="vibe-ai-tools campaign-ai-tools team-ai-tools"
 AGENT_SESSION="session"
 AGENT_IMPLEMENTER="session + implementer"
 AGENT_IMPLEMENTER_ASKED="session + implementer (model asked once)"
@@ -586,14 +587,14 @@ xml_references() {
 
 valid_executors() {
   # usage: valid_executors -- space-separated executor names that are both
-  # one of the two known executor kinds and have a matching <rule id> inside
+  # one of the three known executor kinds and have a matching <rule id> inside
   # USER-AGENTS.md's <execution_protocol> (rule 9). A skill <template> whose
   # executor is not in this set is a lint finding, even if it names one of the
-  # two known kinds by spelling alone.
+  # three known kinds by spelling alone.
   local rule_ids e out=""
   rule_ids=$(awk '/<execution_protocol>/{p=1} p&&/<\/execution_protocol>/{p=0} p' "$AI_TOOLS/USER-AGENTS.md" \
     | grep -oE '<rule id="[a-z0-9-]+"' | sed -E 's/<rule id="([a-z0-9-]+)"/\1/' )
-  for e in default-worker implementer; do
+  for e in default-worker implementer inherited; do
     if in_list "$e" "$(echo "$rule_ids" | tr '\n' ' ')"; then out="$out $e"; fi
   done
   echo "${out# }"

@@ -17,6 +17,7 @@ Skills provide session-directed workflows. Global planning, implementation, and 
 | Skill | Use it for | Example |
 |---|---|---|
 | `/vibe-ai-tools` | Plan under `plans/`, then execute that plan and deliver a pull request | `/vibe-ai-tools add resumable uploads` |
+| `/team-ai-tools` | Refine a request with a PO-led team of senior reviewers, then deliver a plan or campaign to a pull request | `/team-ai-tools add rate limiting to the public API` |
 | `/campaign-ai-tools` | Repeatedly plan and deliver user-directed, multi-stage improvements in an autonomous local campaign | `/campaign-ai-tools repository-hardening` |
 | `/az-ai-tools` | Inspect or manage Azure resources, subscriptions, infrastructure, and costs with `az` | `/az-ai-tools list costly idle resources` |
 | `/gc-ai-tools` | Inspect or manage Google Cloud projects, infrastructure, and costs with `gcloud` | `/gc-ai-tools show resources in project-x` |
@@ -37,9 +38,17 @@ Every skill runs on the session's model. The session handles user alignment, jud
 
 `/vibe-ai-tools` is the end-to-end choice for delivering a feature or fix. It grills the user into a staged plan, asks who implements, then runs unattended: stage 1 creates branch `plan/<slug>` and `plans/<slug>.md`, each later stage is delivered and committed by a fresh implementer that appends its report to the plan, and the last stage removes the plan, pushes, and opens the pull request.
 
+### Team review
+
+`/team-ai-tools` refines complex requests through a PO-led panel of senior reviewers before delivering unattended to a pull request. The session acts as product owner: it audits the request against repository documentation and code, asks the user nothing, and writes a PO analysis report under `${TMPDIR:-/tmp}/ai-tools/team/<slug>/po-report.md`. It selects 2–5 reviewers by relevance (`security`, `performance`, `ux`, `best-practices`, and `design` for software architecture when structure changes) that inherit the session's model and effort. Reviewers return findings; the PO clarifies and cross-routes points through up to 3 debate rounds per point. Open questions and decisions are asked in one batched round ending with the implementer question, re-iterating with affected reviewers on divergent answers. Once settled, the PO presents a plan (up to ~8 short stages) or campaign (3–10 goals) for user approval, then delivers unattended by reusing the delivery steps of `/vibe-ai-tools` or `/campaign-ai-tools`. Working files remain under `${TMPDIR:-/tmp}/ai-tools/team/<slug>/` until approved; nothing is written to the repository beforehand.
+
+```text
+/team-ai-tools add rate limiting to the public API
+```
+
 ### Continuous improvement campaign
 
-`/campaign-ai-tools` delivers a 3–5 goal campaign to a pull request. It aligns campaign scope, priorities, and exclusions with the user, asks once who implements, then iterates without interruption on branch `campaign/<campaign>`, recording progress in `plans/campaign/<campaign>.md`. Each goal is planned and delivered under `plans/campaign/<n>-<slug>.md`, and the finished campaign pushes and opens a pull request.
+`/campaign-ai-tools` delivers a 3–10 goal campaign to a pull request. It aligns campaign scope, priorities, and exclusions with the user, asks once who implements, then iterates without interruption on branch `campaign/<campaign>`, recording progress in `plans/campaign/<campaign>.md`. Each goal is planned and delivered under `plans/campaign/<n>-<slug>.md`, and the finished campaign pushes and opens a pull request.
 
 ```text
 /campaign-ai-tools repository-hardening
