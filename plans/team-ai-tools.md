@@ -5,7 +5,7 @@
 | 1 | Branch and plan file | done | self (flash) |
 | 2 | `inherited` executor and stray `</rule>` fix | done | self (flash) |
 | 3 | `skills/team-ai-tools/SKILL.md` and lint registration | done | self (flash) |
-| 4 | Documentation (README, USAGE, 3–10 goal drift) | todo | self (flash) |
+| 4 | Documentation (README, USAGE, 3–10 goal drift) | done | self (flash) |
 | 5 | Remove plan, push, pull request | todo | self (flash) |
 
 ## Goal
@@ -291,3 +291,8 @@ Notes for the implementer:
 - Registered `team-ai-tools` in `scripts/lint.sh`: added to `gated` in `check_skill_layout`, `IMPLEMENTER_SKILLS`, and `usage()` agent field help text.
 - No wording adjustments were needed for lint; all semantic XML references, placeholders, and structure passed on the first run.
 - Verified with `scripts/lint.sh` (454 ok, 0 warnings) and `scripts/test.sh` (352 ok, 0 warnings).
+
+### Stage 4: Documentation (README, USAGE, 3–10 goal drift)
+- Updated `README.md`: overview item 4, rule 5, rule 6, and rule 24 to document `team-ai-tools` and pull request delivery; updated Development checks agent-field bullet; aligned campaign goal count to 3–10 goals.
+- Updated `docs/USAGE.md`: added `/team-ai-tools` row to Skills table; added "Team review" section detailing the PO analysis report, senior reviewers, debate rounds, batched user questions, and vibe/campaign delivery reuse; aligned campaign section to 3–10 goals.
+- Verified with `scripts/lint.sh` (455 ok, 0 warnings) and `scripts/test.sh` (352 ok, 0 warnings).
