@@ -6,7 +6,7 @@
 | 1 | Bootstrap Branch and Plan | done | default-worker |
 | 2 | Global Rule in USER-AGENTS.md | done | default-worker |
 | 3 | Migrate vibe-ai-tools to docs/vibe-ai-tools | done | default-worker |
-| 4 | Migrate campaign-ai-tools to docs/campaign-ai-tools | pending | default-worker |
+| 4 | Migrate campaign-ai-tools to docs/campaign-ai-tools | done | default-worker |
 | 5 | Migrate team-ai-tools to docs/team-ai-tools | pending | default-worker |
 | 6 | Migrate ui-ai-tools to docs/ui-ai-tools | pending | default-worker |
 | 7 | Documentation & Scripts Alignment (README & tests) | pending | default-worker |
@@ -155,3 +155,9 @@
 - Updated last stage instructions to remove `docs/vibe-ai-tools/` with `git rm -r docs/vibe-ai-tools` and open pull request.
 - Updated delivery error handling to preserve `docs/vibe-ai-tools/` on block.
 - Verified semantic XML grammar and placeholder parity via `./scripts/lint.sh`.
+
+### Stage 4: Migrate campaign-ai-tools to docs/campaign-ai-tools
+- Updated `skills/campaign-ai-tools/SKILL.md` to write campaign records to `docs/campaign-ai-tools/{CAMPAIGN}.md` and goal plans to `docs/campaign-ai-tools/{N}-{SLUG}.md`.
+- Updated finish stage instructions to remove `docs/campaign-ai-tools/` with `git rm -r docs/campaign-ai-tools` before opening pull request.
+- Updated delivery error handling and step 3 to preserve `docs/campaign-ai-tools/` on block.
+- Verified semantic XML grammar and template placeholder parity via `./scripts/lint.sh`.
