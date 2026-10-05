@@ -5,7 +5,7 @@
 |---|---|---|---|
 | 1 | Bootstrap Branch and Plan | done | default-worker |
 | 2 | Global Rule in USER-AGENTS.md | done | default-worker |
-| 3 | Migrate vibe-ai-tools to docs/vibe-ai-tools | pending | default-worker |
+| 3 | Migrate vibe-ai-tools to docs/vibe-ai-tools | done | default-worker |
 | 4 | Migrate campaign-ai-tools to docs/campaign-ai-tools | pending | default-worker |
 | 5 | Migrate team-ai-tools to docs/team-ai-tools | pending | default-worker |
 | 6 | Migrate ui-ai-tools to docs/ui-ai-tools | pending | default-worker |
@@ -149,3 +149,9 @@
 - Updated `USER-AGENTS.md` planning protocol with `<rule id="transient-docs">`, requiring transient plans and docs under `docs/<full-skill-name>/*` (or `docs/plan/{SLUG}/*`).
 - Updated existing rules (`first-stage`, `stage-report`, `last-stage`, `clean-context`, `stage-close`, `chat`, `no-secrets`) to align with the `docs/<skill>/` directory convention and harness temp separation.
 - Verified XML grammar, heading constraints, and 8,000 char limit (7,450 chars) via `./scripts/lint.sh`.
+
+### Stage 3: Migrate vibe-ai-tools to docs/vibe-ai-tools
+- Updated `skills/vibe-ai-tools/SKILL.md` template instructions to write stage plans and reports to `docs/vibe-ai-tools/{SLUG}.md`.
+- Updated last stage instructions to remove `docs/vibe-ai-tools/` with `git rm -r docs/vibe-ai-tools` and open pull request.
+- Updated delivery error handling to preserve `docs/vibe-ai-tools/` on block.
+- Verified semantic XML grammar and placeholder parity via `./scripts/lint.sh`.
