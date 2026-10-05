@@ -4,7 +4,7 @@
 | Stage | Title | Status | Implementer |
 |---|---|---|---|
 | 1 | Bootstrap Branch and Plan | done | default-worker |
-| 2 | Global Rule in USER-AGENTS.md | pending | default-worker |
+| 2 | Global Rule in USER-AGENTS.md | done | default-worker |
 | 3 | Migrate vibe-ai-tools to docs/vibe-ai-tools | pending | default-worker |
 | 4 | Migrate campaign-ai-tools to docs/campaign-ai-tools | pending | default-worker |
 | 5 | Migrate team-ai-tools to docs/team-ai-tools | pending | default-worker |
@@ -144,3 +144,8 @@
 - Initialized plan document at `plans/docs-skill-transient-rule.md` from `/tmp/ai-tools/plan-docs-skill-transient-rule.md`.
 - Updated Stage 1 status to `done` in the status table.
 - Verified current branch and plan file existence.
+
+### Stage 2: Global Rule in USER-AGENTS.md
+- Updated `USER-AGENTS.md` planning protocol with `<rule id="transient-docs">`, requiring transient plans and docs under `docs/<full-skill-name>/*` (or `docs/plan/{SLUG}/*`).
+- Updated existing rules (`first-stage`, `stage-report`, `last-stage`, `clean-context`, `stage-close`, `chat`, `no-secrets`) to align with the `docs/<skill>/` directory convention and harness temp separation.
+- Verified XML grammar, heading constraints, and 8,000 char limit (7,450 chars) via `./scripts/lint.sh`.
