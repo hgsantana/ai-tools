@@ -17,7 +17,7 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
 
   <session_workflow>
     <step id="1" name="initialize">
-      Resolve kebab-case {CAMPAIGN}, {PRIORITIES}, and {EXCLUSIONS} with the user per `<rule id="grill-me">`, structuring an achievable global objective with 3–10 concrete goals. Immediately upon user approval to begin, ask {IMPLEMENTER} per `<rule id="implementer-offer">`, framed by `<implementer_job>`, as the very first action without intermediate tools or checks. Only after {IMPLEMENTER} is resolved, spawn `<template role="stage-implementer">` as {IMPLEMENTER} with {STAGE} = bootstrap, {N} and {SLUG} empty, and {PLAN} = the campaign record: global objective, base branch (the current branch), goals with status, priorities, exclusions, {IMPLEMENTER}, and an iteration log. Ask nothing else afterwards.
+      Resolve kebab-case {CAMPAIGN}, {PRIORITIES}, and {EXCLUSIONS} with the user per `<rule id="grill-me">`, structuring an achievable global objective with 3–10 concrete goals. Immediately upon briefing approval to proceed, ask {IMPLEMENTER} per `<rule id="implementer-offer">`, framed by `<implementer_job>`, as the very first action without intermediate tools or checks. Only after {IMPLEMENTER} is resolved, present the closed campaign record per `<rule id="present-plan">` and spawn `<template role="stage-implementer">` as {IMPLEMENTER} with {STAGE} = bootstrap, {N} and {SLUG} empty, and {PLAN} = the campaign record: global objective, base branch (the current branch), goals with status, priorities, exclusions, {IMPLEMENTER}, and an iteration log. Ask nothing else afterwards.
     </step>
 
     <step id="2" name="iterate">

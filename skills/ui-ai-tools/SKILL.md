@@ -38,7 +38,7 @@ argument-hint: "[routes] [base URL] [auth state path or env var names]"
     </step>
 
     <step id="6" name="plan">
-      Plan the modernization from the report per `<planning_protocol>`; the grill-me covers design direction: brand constraints, design system or CSS stack, scope and priorities, and appetite for creative change. Every stage that changes UI lists, in its verification, recapture of the affected routes at the three viewports into `{WORKDIR}/after/stage-{STAGE}/`. Save the plan outside the repository at `{WORKDIR}/plan.md`. Immediately upon briefing approval to proceed, ask {IMPLEMENTER} per `<rule id="implementer-offer">`, framed by `<implementer_job>`, as the very first action without intermediate tools or checks; ask nothing else afterwards.
+      Plan the modernization from the report per `<planning_protocol>`; the grill-me covers design direction: brand constraints, design system or CSS stack, scope and priorities, and appetite for creative change. Every stage that changes UI lists, in its verification, recapture of the affected routes at the three viewports into `{WORKDIR}/after/stage-{STAGE}/`. Save the plan outside the repository at `{WORKDIR}/plan.md`. Immediately upon briefing approval to proceed, ask {IMPLEMENTER} per `<rule id="implementer-offer">`, framed by `<implementer_job>`, as the very first action without intermediate tools or checks; present the closed plan per `<rule id="present-plan">` and ask nothing else afterwards.
     </step>
 
     <step id="7" name="deliver">

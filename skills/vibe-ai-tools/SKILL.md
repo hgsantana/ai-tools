@@ -17,7 +17,7 @@ argument-hint: "[the change to deliver]"
 
   <session_workflow>
     <step id="1" name="plan">
-      Plan the requested change per `<planning_protocol>`, deriving kebab-case {SLUG}. Immediately upon briefing approval to proceed, ask {IMPLEMENTER} per `<rule id="implementer-offer">`, framed by `<implementer_job>`, as the very first action without intermediate tools or checks; ask nothing else afterwards.
+      Plan the requested change per `<planning_protocol>`, deriving kebab-case {SLUG}. Immediately upon briefing approval to proceed, ask {IMPLEMENTER} per `<rule id="implementer-offer">`, framed by `<implementer_job>`, as the very first action without intermediate tools or checks; present the closed plan per `<rule id="present-plan">` and ask nothing else afterwards.
     </step>
 
     <step id="2" name="deliver">
