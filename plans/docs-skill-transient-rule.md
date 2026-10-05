@@ -7,7 +7,7 @@
 | 2 | Global Rule in USER-AGENTS.md | done | default-worker |
 | 3 | Migrate vibe-ai-tools to docs/vibe-ai-tools | done | default-worker |
 | 4 | Migrate campaign-ai-tools to docs/campaign-ai-tools | done | default-worker |
-| 5 | Migrate team-ai-tools to docs/team-ai-tools | pending | default-worker |
+| 5 | Migrate team-ai-tools to docs/team-ai-tools | done | default-worker |
 | 6 | Migrate ui-ai-tools to docs/ui-ai-tools | pending | default-worker |
 | 7 | Documentation & Scripts Alignment (README & tests) | pending | default-worker |
 | 8 | Final Verification and Delivery to Pull Request | pending | default-worker |
@@ -161,3 +161,9 @@
 - Updated finish stage instructions to remove `docs/campaign-ai-tools/` with `git rm -r docs/campaign-ai-tools` before opening pull request.
 - Updated delivery error handling and step 3 to preserve `docs/campaign-ai-tools/` on block.
 - Verified semantic XML grammar and template placeholder parity via `./scripts/lint.sh`.
+
+### Stage 5: Migrate team-ai-tools to docs/team-ai-tools
+- Updated `skills/team-ai-tools/SKILL.md` to reference `docs/team-ai-tools/{SLUG}.md` in plan mode and `docs/campaign-ai-tools/{CAMPAIGN}.md` / `docs/campaign-ai-tools/{N}-{GOAL_SLUG}.md` in campaign mode.
+- Updated deliver step, goal planner, final auditor, and stage implementer template instructions to operate on `docs/` paths instead of `plans/`.
+- Updated finish and last stage cleanup to remove `docs/team-ai-tools/` or `docs/campaign-ai-tools/` respectively with `git rm -r`, and preserve them on block.
+- Verified semantic XML grammar, tag references, and placeholder parity via `./scripts/lint.sh`.
