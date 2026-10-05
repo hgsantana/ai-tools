@@ -8,7 +8,7 @@
 | 3 | Migrate vibe-ai-tools to docs/vibe-ai-tools | done | default-worker |
 | 4 | Migrate campaign-ai-tools to docs/campaign-ai-tools | done | default-worker |
 | 5 | Migrate team-ai-tools to docs/team-ai-tools | done | default-worker |
-| 6 | Migrate ui-ai-tools to docs/ui-ai-tools | pending | default-worker |
+| 6 | Migrate ui-ai-tools to docs/ui-ai-tools | done | default-worker |
 | 7 | Documentation & Scripts Alignment (README & tests) | pending | default-worker |
 | 8 | Final Verification and Delivery to Pull Request | pending | default-worker |
 
@@ -167,3 +167,9 @@
 - Updated deliver step, goal planner, final auditor, and stage implementer template instructions to operate on `docs/` paths instead of `plans/`.
 - Updated finish and last stage cleanup to remove `docs/team-ai-tools/` or `docs/campaign-ai-tools/` respectively with `git rm -r`, and preserve them on block.
 - Verified semantic XML grammar, tag references, and placeholder parity via `./scripts/lint.sh`.
+
+### Stage 6: Migrate ui-ai-tools to docs/ui-ai-tools
+- Updated `skills/ui-ai-tools/SKILL.md` stage-implementer template instructions to write stage plans and reports to `docs/ui-ai-tools/{SLUG}.md`.
+- Updated last stage instructions to remove `docs/ui-ai-tools/` with `git rm -r docs/ui-ai-tools` and open pull request.
+- Updated delivery step 7 to preserve `docs/ui-ai-tools/` on block.
+- Verified semantic XML grammar, template placeholder parity, and tag references via `./scripts/lint.sh`.

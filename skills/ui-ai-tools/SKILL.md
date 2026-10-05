@@ -43,7 +43,7 @@ argument-hint: "[routes] [base URL] [auth state path or env var names]"
 
     <step id="7" name="deliver">
       For each stage, spawn `<template role="stage-implementer">` as {IMPLEMENTER}, substituting {SLUG}, {STAGE}, {WORKDIR}, and {PLAN} (`{WORKDIR}/plan.md` for stage 1; else empty); validate its delivery by reviewing the git diff, the concise test summary, and before/after images against the plan and stage acceptance criteria.
-      Decide in-scope questions from code evidence and log each in that stage's report. On a failed check, run `git reset --soft HEAD~1` before respawning once with the corrections in the brief; on a second failure, stop as blocked without push or pull request and write evidence to `{WORKDIR}/blocked.md`.
+      Decide in-scope questions from code evidence and log each in that stage's report. On a failed check, run `git reset --soft HEAD~1` before respawning once with the corrections in the brief; on a second failure, stop as blocked without push or pull request, write evidence to `{WORKDIR}/blocked.md`, and preserve `docs/ui-ai-tools/`.
     </step>
 
     <step id="8" name="report">
@@ -122,9 +122,9 @@ argument-hint: "[routes] [base URL] [auth state path or env var names]"
       </input>
       <instructions>
         This payload is the brief; do not read sibling skill files.
-        For stage 1, write {PLAN}, reading it first when it is a file path, to plans/{SLUG}.md as that stage specifies. Read plans/{SLUG}.md and the repository rules (README.md, AGENTS.md if present). Deliver only stage {STAGE}: match surrounding style, write and run its tests reporting only a concise summary of coverage and execution, set its Status to done, append a short report to the end of plans/{SLUG}.md, and commit with the stage's Conventional Commit message.
+        For stage 1, write {PLAN}, reading it first when it is a file path, to docs/ui-ai-tools/{SLUG}.md as that stage specifies. Read docs/ui-ai-tools/{SLUG}.md and the repository rules (README.md, AGENTS.md if present). Deliver only stage {STAGE}: match surrounding style, write and run its tests reporting only a concise summary of coverage and execution, set its Status to done, append a short report to the end of docs/ui-ai-tools/{SLUG}.md, and commit with the stage's Conventional Commit message.
         When the stage changes UI, start the app if needed and recapture the affected routes full-page at 1440x900, 768x1024, and 390x844 into {WORKDIR}/after/stage-{STAGE}/ with the same capture method as the evaluation (harness browser or browser MCP tool, else `npx playwright screenshot --full-page`), and list those paths in the outcome.
-        For the last stage, also run its removal, push, and pull request against the base branch.
+        For the last stage, remove `docs/ui-ai-tools/` (with `git rm -r docs/ui-ai-tools`), commit the removal with the stage's commit message, and run push and pull request against the base branch.
         Return a one-line outcome with the commit hash, test summary, changed paths, and recapture paths.
       </instructions>
       <constraints>
