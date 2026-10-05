@@ -9,7 +9,7 @@
 | 4 | Migrate campaign-ai-tools to docs/campaign-ai-tools | done | default-worker |
 | 5 | Migrate team-ai-tools to docs/team-ai-tools | done | default-worker |
 | 6 | Migrate ui-ai-tools to docs/ui-ai-tools | done | default-worker |
-| 7 | Documentation & Scripts Alignment (README & tests) | pending | default-worker |
+| 7 | Documentation & Scripts Alignment (README & tests) | done | default-worker |
 | 8 | Final Verification and Delivery to Pull Request | pending | default-worker |
 
 ---
@@ -173,3 +173,9 @@
 - Updated last stage instructions to remove `docs/ui-ai-tools/` with `git rm -r docs/ui-ai-tools` and open pull request.
 - Updated delivery step 7 to preserve `docs/ui-ai-tools/` on block.
 - Verified semantic XML grammar, template placeholder parity, and tag references via `./scripts/lint.sh`.
+
+### Stage 7: Documentation & Scripts Alignment (README & tests)
+- Updated `README.md` layout table to document `docs/<skill>/` for transient plans, reports, and campaign state.
+- Updated repository rules 22, 23, 24, and 25 in `README.md` to reflect `docs/<skill>/` (and `docs/plan/<slug>/`) convention and harness temp paths.
+- Updated `scripts/test/lib.sh` `t_build_origin` to exclude transient docs (`docs/plan`, `docs/*-ai-tools`) in fixture builds while keeping permanent documentation.
+- Verified `./scripts/lint.sh` (514 ok, 0 warnings) and `./scripts/test.sh --case install` (113 ok, 0 warnings).
