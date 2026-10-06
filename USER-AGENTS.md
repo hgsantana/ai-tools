@@ -9,7 +9,7 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/A
 <user_instructions>
   <planning_protocol>
     Adds to, never replaces, the harness's own planning in every planning flow (plan mode, skill, or request); the planner applies each rule where it fits. Planning writes nothing to disk.
-    <rule id="grill-me">Explore the codebase, then probe assumptions, edge cases, and trade-offs one question at a time via `<user_interaction>`, each with a recommendation and rationale. Confirm a briefing before finalizing.</rule>
+    <rule id="grill-me">Explore the codebase, then probe assumptions, edge cases, trade-offs, and scope. Ask all open questions at once in a batched `<user_interaction>` call, each with options and recommendation first, ending with a mandatory question offering {IMPLEMENTER} per `<rule id="implementer-offer">`. Analyze answers (by session, planner, architect, or reviewers per skill); ask follow-up batched rounds when open points, ambiguities, or new scope questions remain. Repeat until all points are settled. Send a chat message with the briefing, then confirm approval via `<user_interaction>`.</rule>
     <rule id="short-stages">Split the plan into short stages, each testable and committable on its own.</rule>
     <rule id="stage-format">Each stage lists files in scope, out-of-scope items, testable acceptance criteria, required tests, verification commands, and its Conventional Commit message.</rule>
     <rule id="stage-commit">Each delivered stage ends with one Conventional Commit.</rule>
@@ -17,14 +17,14 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/A
     <rule id="stage-report">Each implementer appends a short report of its stage to the end of the plan file in `docs/<skill>/` (or `docs/plan/`).</rule>
     <rule id="docs-stage">When features or behaviour change, a stage updates the documentation.</rule>
     <rule id="last-stage">The last stage removes `docs/<skill>/` (or `docs/plan/{SLUG}/`), commits the removal, pushes the branch, and opens a pull request.</rule>
-    <rule id="transient-docs">All plan files, reports, decisions, and documentation (even transient) must be saved in `docs/<full-skill-name>/*` (subfolders allowed; `docs/plan/{SLUG}/*` for general sessions without a skill). All remaining artifacts (tool outputs, binaries like screenshots, caches, or files pending AI analysis/reporting) remain in harness temporary directories (`${TMPDIR:-/tmp}/ai-tools/`). Any skill writing to `docs/<skill>/*` deletes the entire skill directory upon delivery (`git rm -r docs/<skill>`), preserving git history while keeping the merged repo clean. On blocked execution, `docs/<skill>/*` is preserved on the branch for inspection.</rule>
-    <rule id="implementer-offer">Immediately after the last question of `<rule id="grill-me">`, ask once via `<user_interaction>` who implements every stage ({IMPLEMENTER}): 1. the `mid`, `senior`, or `junior` tier of the current harness's skill (`claude-ai-tools` in Claude Code, `copilot-ai-tools` in Copilot, `agy-ai-tools` in Antigravity) - show model name and effort if applicable, dispatched by that skill (`mid` recommended); 2. a subagent of the current session; 3. the DEFAULT executor/implementer agent/subagent of the harness.</rule>
-    <rule id="present-plan">After {IMPLEMENTER} is resolved, present the closed plan or campaign record with its stages and {IMPLEMENTER} before dispatching execution to delivery.</rule>
+    <rule id="transient-docs">Save all plan files, reports, decisions, and transient docs in `docs/<full-skill-name>/*` (subfolders allowed; `docs/plan/{SLUG}/*` without a skill). Remaining artifacts (tool outputs, binaries like screenshots, caches) stay in harness temp (`${TMPDIR:-/tmp}/ai-tools/`). Any skill writing to `docs/<skill>/*` deletes the entire skill directory upon delivery (`git rm -r docs/<skill>`), keeping the merged repo clean. On blocked execution, `docs/<skill>/*` is preserved on the branch for inspection.</rule>
+    <rule id="implementer-offer">Offer once as the final question of the initial grill-me batch who implements every stage ({IMPLEMENTER}): 1. the `mid` (recommended), `senior`, or `junior` tier of the current harness skill (`claude-ai-tools`, `copilot-ai-tools`, `agy-ai-tools`) showing model and effort; 2. a session subagent; 3. the harness default executor.</rule>
+    <rule id="present-plan">After briefing approval and {IMPLEMENTER} resolution, formulate the plan and present the complete plan or campaign record with its stages and {IMPLEMENTER} in a chat message; obtain explicit user approval via `<user_interaction>` before dispatching delivery.</rule>
   </planning_protocol>
 
   <implementation_protocol>
     Adds to, never replaces, the harness's own implementation flow when implementing a plan.
-    <rule id="clean-context">Each stage of a multi-stage plan runs in a fresh {IMPLEMENTER} with a clean context, briefed with the plan file under `docs/<skill>/` (or `docs/plan/`) and the stage number; the stage 1 brief also carries the full plan, as content or as a path to a file the planner saved outside the repository, to write there.</rule>
+    <rule id="clean-context">Each stage of a multi-stage plan runs in a fresh {IMPLEMENTER} with a clean context, briefed with the plan file under `docs/<skill>/` (or `docs/plan/`) and the stage number; stage 1 also carries the full plan (content or external file path) to write there.</rule>
     <rule id="stage-close">The implementer executes its stage within scope, runs tests reporting only a concise summary of coverage and execution, appends its stage report to the plan under `docs/<skill>/` (or `docs/plan/`), sets status to done, and commits locally without validating delivery against the macro plan. The planner that created the plan ({PLANNER}) validates that delivery by reviewing the git diff and test summary against the plan and acceptance criteria before starting the next stage. On a failed check, the session runs `git reset --soft HEAD~1` before respawning the implementer once with corrections (second failure blocks).</rule>
   </implementation_protocol>
 
@@ -41,7 +41,7 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/A
   </execution_protocol>
 
   <language_rules>
-    <chat>User's language; only questions, approvals, stake warnings, spawn announcements, plan iteration, a one-line outcome, and links to what was written. Reports, summaries, findings, and logs go to disk (`docs/<skill>/`, or OS temp ${TMPDIR:-/tmp}/ai-tools for raw/binary tool output). Follow if they switch.</chat>
+    <chat>User's language; only briefings, plan presentations, questions, approvals, stake warnings, spawn announcements, plan iteration, a one-line outcome, and links to what was written. Reports, findings, and logs go to disk (`docs/<skill>/`, or OS temp ${TMPDIR:-/tmp}/ai-tools for raw/binary tool output). Follow if they switch.</chat>
     <disk>Concise English by default: code, comments, commits, docs, plans, briefs, logs, and subagent prompts. Use another language when the user asks, the task is translation, or the loaded repository already uses another language; stay English if mixed or unclear.</disk>
   </language_rules>
 

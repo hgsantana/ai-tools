@@ -3,7 +3,7 @@ name: vibe-ai-tools
 description: >
   Grill the user into a staged plan, then deliver it unattended, one clean
   implementer per stage, to a pull request. Use for /vibe-ai-tools. Impact:
-  after the briefing, creates a branch, edits files, commits, pushes, and
+  after approval, creates a branch, edits files, commits, pushes, and
   opens a pull request unattended; edits and removals can be hard to undo.
   Pre-existing history remains intact. Cloud and destructive operations
   require separate approval. Agent: session + implementer (model asked once).
@@ -17,7 +17,7 @@ argument-hint: "[the change to deliver]"
 
   <session_workflow>
     <step id="1" name="plan">
-      Plan the requested change per `<planning_protocol>`, deriving kebab-case {SLUG}. Immediately upon briefing approval to proceed, ask {IMPLEMENTER} per `<rule id="implementer-offer">`, framed by `<implementer_job>`, as the very first action without intermediate tools or checks; present the closed plan per `<rule id="present-plan">` and ask nothing else afterwards.
+      Plan the requested change per `<planning_protocol>`, deriving kebab-case {SLUG}: probe assumptions and scope per `<rule id="grill-me">`, framing {IMPLEMENTER} per `<implementer_job>` in the initial batch, and iterate on responses until settled; send the briefing in a chat message, then confirm approval via `<user_interaction>`; present the complete plan in a chat message and obtain explicit approval per `<rule id="present-plan">` before delivery.
     </step>
 
     <step id="2" name="deliver">

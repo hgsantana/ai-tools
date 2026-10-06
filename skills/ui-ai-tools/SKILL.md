@@ -4,7 +4,7 @@ description: >
   Evaluate app routes by screenshots and code into an illustrated report, then
   plan and deliver a UI modernization to a pull request. Use for /ui-ai-tools.
   Impact: evaluators consume model quota; may start and stop a local dev
-  server; writes screenshots and reports to OS temp; after the briefing,
+  server; writes screenshots and reports to OS temp; after approval,
   creates a branch, edits files, commits, pushes, and opens a pull request
   unattended. Cloud and destructive operations require separate approval.
   Agent: session + implementer (model asked once).
@@ -38,7 +38,7 @@ argument-hint: "[routes] [base URL] [auth state path or env var names]"
     </step>
 
     <step id="6" name="plan">
-      Plan the modernization from the report per `<planning_protocol>`; the grill-me covers design direction: brand constraints, design system or CSS stack, scope and priorities, and appetite for creative change. Every stage that changes UI lists, in its verification, recapture of the affected routes at the three viewports into `{WORKDIR}/after/stage-{STAGE}/`. Save the plan outside the repository at `{WORKDIR}/plan.md`. Immediately upon briefing approval to proceed, ask {IMPLEMENTER} per `<rule id="implementer-offer">`, framed by `<implementer_job>`, as the very first action without intermediate tools or checks; present the closed plan per `<rule id="present-plan">` and ask nothing else afterwards.
+      Plan the modernization from the report per `<planning_protocol>`; grill-me covers design direction (brand constraints, design system or CSS stack, scope, priorities, appetite for creative change), framing {IMPLEMENTER} per `<implementer_job>` in the initial batch, and iterates until settled. Send the briefing in a chat message, then confirm approval via `<user_interaction>`; present the complete plan in a chat message and obtain explicit approval per `<rule id="present-plan">` before delivery. Save the plan outside the repository at `{WORKDIR}/plan.md`. Every stage that changes UI lists, in its verification, recapture of the affected routes at the three viewports into `{WORKDIR}/after/stage-{STAGE}/`.
     </step>
 
     <step id="7" name="deliver">

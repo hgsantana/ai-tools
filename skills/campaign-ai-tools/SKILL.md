@@ -3,10 +3,10 @@ name: campaign-ai-tools
 description: >
   Run an autonomous campaign of 3-10 goals, each planned by a subagent and
   delivered by an implementer, to a pull request. Use for /campaign-ai-tools.
-  Impact: creates branch campaign/{CAMPAIGN}, edits files, commits, pushes,
-  and opens a pull request unattended; edits and removals can be hard to undo.
-  Pre-existing history remains intact. Cloud and destructive operations require
-  separate approval. Agent: session + implementer (model asked once).
+  Impact: after approval, creates branch campaign/{CAMPAIGN}, edits files,
+  commits, pushes, and opens a pull request unattended; edits and removals can
+  be hard to undo. Pre-existing history remains intact. Cloud and destructive
+  operations require separate approval. Agent: session + implementer (model asked once).
 argument-hint: "[campaign name and optional priorities or exclusions]"
 ---
 
@@ -17,7 +17,7 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
 
   <session_workflow>
     <step id="1" name="initialize">
-      Resolve kebab-case {CAMPAIGN}, {PRIORITIES}, and {EXCLUSIONS} with the user per `<rule id="grill-me">`, structuring an achievable global objective with 3–10 concrete goals. Immediately upon briefing approval to proceed, ask {IMPLEMENTER} per `<rule id="implementer-offer">`, framed by `<implementer_job>`, as the very first action without intermediate tools or checks. Only after {IMPLEMENTER} is resolved, present the closed campaign record per `<rule id="present-plan">` and spawn `<template role="stage-implementer">` as {IMPLEMENTER} with {STAGE} = bootstrap, {N} and {SLUG} empty, and {PLAN} = the campaign record: global objective, base branch (the current branch), goals with status, priorities, exclusions, {IMPLEMENTER}, and an iteration log. Ask nothing else afterwards.
+      Resolve kebab-case {CAMPAIGN}, {PRIORITIES}, and {EXCLUSIONS} with the user per `<rule id="grill-me">`, structuring an achievable global objective with 3–10 concrete goals and framing {IMPLEMENTER} per `<implementer_job>` in the initial batch; iterate on responses until settled. Send the briefing in a chat message, then confirm approval via `<user_interaction>`. Present the complete campaign record in a chat message and obtain explicit user approval per `<rule id="present-plan">`. Upon approval, spawn `<template role="stage-implementer">` as {IMPLEMENTER} with {STAGE} = bootstrap, {N} and {SLUG} empty, and {PLAN} = the campaign record: global objective, base branch (the current branch), goals with status, priorities, exclusions, {IMPLEMENTER}, and an iteration log.
     </step>
 
     <step id="2" name="iterate">
