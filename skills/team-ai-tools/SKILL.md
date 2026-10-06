@@ -30,14 +30,14 @@ argument-hint: "[the request to refine and deliver]"
     </step>
 
     <step id="4" name="approve">
-      Write `{WORKDIR}/plan.md` per `<planning_protocol>`, each stage per `<rule id="stage-format">`, with a baseline section from {BASELINE}, turning agreed decisions into acceptance criteria: a plan for one cohesive delivery within about 8 short stages, or a campaign for 3–10 independently deliverable goals. Send `plan.md` to the active reviewers for one sign-off round reporting blockers only; fold their blockers into the plan, and carry each unresolved blocker into the approval question with the PO recommendation. Ask approval via `<user_interaction>`, stating the choice and its reason, with options approve, switch between plan and campaign, or revise; revisions return to `<step id="2">` or `<step id="3">`. Approval ends the team: release the reviewers, present the closed plan per `<rule id="present-plan">`, and ask nothing else afterwards.
+      Write `{WORKDIR}/plan.md` per `<planning_protocol>`, each stage per `<rule id="stage-format">` plus its validators per `<rule id="stage-validators">`, with a baseline section from {BASELINE}, turning agreed decisions into acceptance criteria: a plan for one cohesive delivery within about 8 short stages, or a campaign for 3–10 independently deliverable goals. Send `plan.md` to the active reviewers for one sign-off round reporting blockers only, including a stage that omits or wrongly names their role as validator; fold their blockers into the plan, and carry each unresolved blocker into the approval question with the PO recommendation. Ask approval via `<user_interaction>`, stating the choice and its reason, with options approve, switch between plan and campaign, or revise; revisions return to `<step id="2">` or `<step id="3">`. Approval ends planning: keep the reviewers active for stage validation where the harness can continue a subagent, else release them; present the closed plan per `<rule id="present-plan">`, and ask nothing else afterwards.
     </step>
 
     <step id="5" name="deliver">
       Record {BASE_BRANCH} = the current branch and {DECISIONS} = `{WORKDIR}/decisions.md`. Implementers make every repository write; the session's only one is `git reset --soft HEAD~1` on a failed check, and planners stay read-only, both writing files only under `${TMPDIR:-/tmp}/ai-tools/`. Template inputs not set below are passed empty; {CAMPAIGN} is empty in plan mode.
       Plan: run vibe-ai-tools `<step id="2">` and `<step id="3">` with {IMPLEMENTER} and {SLUG}, the session as planner, spawning `<template role="stage-implementer">` with {MODE} = plan, {PLAN_FILE} = `docs/team-ai-tools/{SLUG}.md`, and {PLAN} = `{WORKDIR}/plan.md` for stage 1; run the final audit before the last stage and the CI report after it returns.
       Campaign: per campaign-ai-tools `<rule id="campaign-lifecycle">`, with {CAMPAIGN} = {SLUG}, every `<template role="stage-implementer">` spawn carrying {MODE} = campaign and {CAMPAIGN}. Bootstrap: spawn it with {STAGE} = bootstrap, {PLAN_FILE} = `docs/campaign-ai-tools/{CAMPAIGN}.md`, and {PLAN} = the campaign record: global objective, {BASE_BRANCH}, the approved goals each with {N}, a kebab-case {GOAL_SLUG}, and status, priorities, exclusions, {IMPLEMENTER}, and an iteration log. Goals: for each goal, spawn `<template role="goal-planner">` with {CAMPAIGN}, {N}, {GOAL_SLUG}, {REPORT} = `{WORKDIR}/po-report.md`, {DECISIONS}, and {FINDINGS_DIR} = {WORKDIR}, keeping it active across the goal's stages as its planner, else respawning it with its plan; for each stage spawn the implementer with {PLAN_FILE} = `docs/campaign-ai-tools/{N}-{GOAL_SLUG}.md`, {STAGE}, and, for stage 1, {PLAN} = the returned plan content or `{WORKDIR}/goal-{N}.md`. Finish: after the last goal, run the final audit once with {PLAN_FILE} = `docs/campaign-ai-tools/{CAMPAIGN}.md`, then spawn the implementer with {STAGE} = finish and that {PLAN_FILE}, and run the CI report after it returns.
-      Stage validation: for each stage that changes code or tests, skipping plan-only, documentation-only, final-audit, and closing stages, spawn `<template role="test-validator">` with {PLAN_FILE}, {STAGE}, {BASELINE} = `{WORKDIR}/baseline.md`, and {VERDICTS} = `{WORKDIR}/verdicts/{N}-{STAGE}.md` (N = 0 in plan mode) before the planner's check, keeping one per plan or goal active across stages, else spawning a fresh one. On `<signal code="TESTS_OK">`, the planner's check proceeds. On `<signal code="TESTS_FIX">`, skip the planner's check and set {NOTES} = that stage's {VERDICTS}; on a failed planner check, write its corrections to `{WORKDIR}/corrections/{N}-{STAGE}.md` and set {NOTES} to that file. Then run `git reset --soft HEAD~1` and respawn the implementer once with {NOTES}; the retry passes the test-validator, when the stage changes code or tests, then the planner's check, and a second failure of either blocks. On block, write the evidence to `${TMPDIR:-/tmp}/ai-tools/{SLUG}-blocked.md` and preserve `docs/team-ai-tools/` or `docs/campaign-ai-tools/` respectively, with no push or pull request; in campaign mode, then spawn the implementer with {STAGE} = block and {PLAN_FILE} = `docs/campaign-ai-tools/{CAMPAIGN}.md`, unless it cannot be spawned.
+      Stage validation: before the planner's check of each stage, run in parallel every validator the stage lists per `<rule id="stage-validators">` (N = 0 in plan mode): per reviewer role, `<template role="stage-reviewer">` with {ROLE}, {FINDINGS} = `{WORKDIR}/{role}.md`, {DECISIONS}, {PLAN_FILE}, {STAGE}, {BASELINE} = `{WORKDIR}/baseline.md`, and {VERDICTS} = `{WORKDIR}/verdicts/{N}-{STAGE}-{role}.md`; for tests, `<template role="test-validator">` with {PLAN_FILE}, {STAGE}, {BASELINE}, and {VERDICTS} = `{WORKDIR}/verdicts/{N}-{STAGE}-tests.md`. Send each payload to that role's reviewer kept active since planning, else to that role's validator kept active per plan or goal, else spawn it fresh. When every validator ends with `<signal code="REVIEW_OK">` or `<signal code="TESTS_OK">`, the planner's check proceeds. When any ends with `<signal code="REVIEW_FIX">` or `<signal code="TESTS_FIX">`, skip the planner's check and merge every correction from that stage's verdicts, whatever its severity, into `{WORKDIR}/corrections/{N}-{STAGE}.md`, settling conflicting corrections by {DECISIONS} and recording each choice there; on a failed planner check, write its corrections to that file. Set {NOTES} to that file, run `git reset --soft HEAD~1`, and respawn the implementer once with {NOTES}; the retry passes the same validators, then the planner's check, and a second failure of any blocks. On block, write the evidence to `${TMPDIR:-/tmp}/ai-tools/{SLUG}-blocked.md` and preserve `docs/team-ai-tools/` or `docs/campaign-ai-tools/` respectively, with no push or pull request; in campaign mode, then spawn the implementer with {STAGE} = block and {PLAN_FILE} = `docs/campaign-ai-tools/{CAMPAIGN}.md`, unless it cannot be spawned.
       Final audit: spawn `<template role="final-auditor">` with {BASE_BRANCH}, {DECISIONS}, {BASELINE} = `{WORKDIR}/baseline.md`, and {AUDIT} = `{WORKDIR}/final-audit.md`. On `<signal code="AUDIT_FIX">`, spawn `<template role="stage-implementer">` with {STAGE} = final-audit and {NOTES} = {AUDIT}, then validate its diff against {AUDIT} once; write corrections it left unresolved to `{WORKDIR}/followups.md`, blockers first and highlighted, and pass that path as {FOLLOWUPS} to the plan's last stage or the campaign finish, without blocking delivery.
       CI report: once the pull request is open, run `gh pr checks --watch` with a timeout of about 15 minutes, write failing check output to `{WORKDIR}/ci.md`, state the CI status (passed, failed, or pending at timeout) in the closing chat line, and attempt no automatic fix.
     </step>
@@ -250,6 +250,29 @@ argument-hint: "[the request to refine and deliver]"
       </constraints>
     </template>
 
+    <template role="stage-reviewer" executor="inherited">
+      <job>Senior {ROLE} reviewer: validate one delivered stage within that role's domain before the planner's check.</job>
+      <input>
+        <role>{ROLE}</role>
+        <findings>{FINDINGS}</findings>
+        <decisions>{DECISIONS}</decisions>
+        <plan_file>{PLAN_FILE}</plan_file>
+        <stage>{STAGE}</stage>
+        <baseline>{BASELINE}</baseline>
+        <verdicts>{VERDICTS}</verdicts>
+      </input>
+      <instructions>
+        This payload is the brief; do not read sibling skill files.
+        Read {FINDINGS}, the {ROLE} findings from planning that define your domain, {DECISIONS}, {PLAN_FILE} with its stage {STAGE} acceptance criteria, {BASELINE}, the repository rules (README.md, AGENTS.md if present), and the diff of HEAD. Judge, within the {ROLE} domain only, whether the stage honours the decisions and recommendations that apply to it, meets its acceptance criteria, and introduces no new risk; attribute issues already recorded in {BASELINE} to the baseline rather than the stage.
+        Append to {VERDICTS}, this stage's {ROLE} verdicts file, the verdict and per correction the path, the exact change, severity, and rationale, each executable without further decisions.
+        End with `<signal code="REVIEW_OK">` when the stage needs no {ROLE} correction, else `<signal code="REVIEW_FIX">`.
+      </instructions>
+      <constraints>
+        <constraint>Read-only on the repository; leave tracked files, the index, and history untouched, writing only {VERDICTS}.</constraint>
+        <constraint>Ask the user nothing; judge from the decisions, plan, and code evidence.</constraint>
+      </constraints>
+    </template>
+
     <template role="goal-planner" executor="inherited">
       <job>Planner: plan one campaign goal from settled decisions and validate its stages.</job>
       <input>
@@ -262,7 +285,7 @@ argument-hint: "[the request to refine and deliver]"
       </input>
       <instructions>
         This payload is the brief; do not read sibling skill files.
-        Read docs/campaign-ai-tools/{CAMPAIGN}.md, {REPORT}, {DECISIONS}, the reviewer findings files in {FINDINGS_DIR}, the repository rules (README.md, AGENTS.md if present), and the code goal {N} touches. Plan goal {N} into short stages per `<planning_protocol>`, with the decisions as acceptance criteria and these campaign adaptations: stage 1 writes docs/campaign-ai-tools/{N}-{GOAL_SLUG}.md on campaign/{CAMPAIGN} without creating a branch; the last stage runs `git rm` on that goal plan, sets goal {N} done and logs the iteration in docs/campaign-ai-tools/{CAMPAIGN}.md, and commits `chore(plans): complete goal {GOAL_SLUG}`, without pushing or opening a pull request. Return the plan as content, or write it to {FINDINGS_DIR}/goal-{N}.md when you can write there.
+        Read docs/campaign-ai-tools/{CAMPAIGN}.md, {REPORT}, {DECISIONS}, the reviewer findings files in {FINDINGS_DIR}, the repository rules (README.md, AGENTS.md if present), and the code goal {N} touches. Plan goal {N} into short stages per `<planning_protocol>`, with the decisions as acceptance criteria and these campaign adaptations: stage 1 writes docs/campaign-ai-tools/{N}-{GOAL_SLUG}.md on campaign/{CAMPAIGN} without creating a branch; the last stage runs `git rm` on that goal plan, sets goal {N} done and logs the iteration in docs/campaign-ai-tools/{CAMPAIGN}.md, and commits `chore(plans): complete goal {GOAL_SLUG}`, without pushing or opening a pull request. Give each stage a validators field: every reviewer role with a findings file in {FINDINGS_DIR} whose domain the stage touches, tests only when it changes code or tests, and none for plan-only and closing stages. Return the plan as content, or write it to {FINDINGS_DIR}/goal-{N}.md when you can write there.
         Stay active across the goal's stages: inspect each stage's git diff and test summary against docs/campaign-ai-tools/{N}-{GOAL_SLUG}.md and return only the approval verdict or corrections.
         Return the plan content, or a one-line outcome with its path.
       </instructions>
@@ -303,13 +326,16 @@ argument-hint: "[the request to refine and deliver]"
   <return_protocol>
     <signal code="AUDIT_OK">The integrated delivery needs no correction; continue delivery.</signal>
     <signal code="AUDIT_FIX">The audit file lists corrections for one final-audit stage.</signal>
-    <signal code="TESTS_OK">The stage's tests prove its behaviour; the planner's check proceeds.</signal>
+    <signal code="TESTS_OK">The stage's tests prove its behaviour; the planner's check proceeds once every validator passes.</signal>
     <signal code="TESTS_FIX">The verdicts file lists test corrections; the implementer retries before the planner's check.</signal>
+    <signal code="REVIEW_OK">The stage needs no correction in the reviewer's domain; the planner's check proceeds once every validator passes.</signal>
+    <signal code="REVIEW_FIX">The verdicts file lists corrections in the reviewer's domain; the implementer retries before the planner's check.</signal>
   </return_protocol>
 
   <boundaries>
-    <rule id="protocols">Planning follows user-wide `<planning_protocol>` and delivery `<implementation_protocol>`; this skill states only its specifics: batched questions, the reviewer team, and delivery reuse from vibe-ai-tools and campaign-ai-tools.</rule>
-    <rule id="reviewer-continuity">Keep planning reviewers active until approval; where the harness cannot continue a subagent, respawn its template with its findings file as context.</rule>
+    <rule id="protocols">Planning follows user-wide `<planning_protocol>` and delivery `<implementation_protocol>`; this skill states only its specifics: batched questions, the reviewer team, per-stage validation by related reviewers, and delivery reuse from vibe-ai-tools and campaign-ai-tools.</rule>
+    <rule id="stage-validators">Each stage names its validators: every reviewer selected in `<step id="1">` whose domain the stage touches, tests only when it changes code or tests, validated through `<template role="test-validator">`; plan-only and closing stages have none, and the session validates the final-audit stage against the audit.</rule>
+    <rule id="reviewer-continuity">Keep reviewers active until approval, and through delivery for stage validation where the harness can continue a subagent; where it cannot, respawn the role's template with its findings file as context.</rule>
     <rule id="spawn-apis">Spawn templates per `<execution_protocol>`; if `<template role="stage-implementer">` cannot be spawned as {IMPLEMENTER}, stop as blocked per `<rule id="spawn-fallback">`.</rule>
     <rule id="chat-scope">Chat carries only questions, the approval, spawn announcements, a one-line outcome, and paths under {WORKDIR}; reports stay on disk.</rule>
     <rule id="protocol-source">Follow user-wide `<execution_protocol>`, `<user_interaction>`, and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
