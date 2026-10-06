@@ -17,7 +17,7 @@ argument-hint: "[the change to deliver]"
 
   <session_workflow>
     <step id="1" name="plan">
-      Plan the requested change per `<planning_protocol>`, deriving kebab-case {SLUG}: probe assumptions and scope per `<rule id="grill-me">`, framing {IMPLEMENTER} per `<implementer_job>` in the initial batch, and iterate on responses until settled; send the briefing in a chat message, then confirm approval via `<user_interaction>`; present the complete plan in a chat message and obtain explicit approval per `<rule id="present-plan">` before delivery.
+      Plan the requested change per `<planning_protocol>`, deriving kebab-case {SLUG}: probe assumptions and scope per `<rule id="grill-me">`, framing {IMPLEMENTER} per `<implementer_job>` in the initial batch, and iterate on responses until settled; send the briefing in a chat message, then confirm approval via `<user_interaction>`; present the plan in a chat message (linking to it when on disk) and obtain explicit approval per `<rule id="present-plan">` before delivery.
     </step>
 
     <step id="2" name="deliver">

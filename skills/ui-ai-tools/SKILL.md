@@ -38,7 +38,7 @@ argument-hint: "[routes] [base URL] [auth state path or env var names]"
     </step>
 
     <step id="6" name="plan">
-      Plan the modernization from the report per `<planning_protocol>`; grill-me covers design direction (brand constraints, design system or CSS stack, scope, priorities, appetite for creative change), framing {IMPLEMENTER} per `<implementer_job>` in the initial batch, and iterates until settled. Send the briefing in a chat message, then confirm approval via `<user_interaction>`; present the complete plan in a chat message and obtain explicit approval per `<rule id="present-plan">` before delivery. Save the plan outside the repository at `{WORKDIR}/plan.md`. Every stage that changes UI lists, in its verification, recapture of the affected routes at the three viewports into `{WORKDIR}/after/stage-{STAGE}/`.
+      Plan the modernization from the report per `<planning_protocol>`; grill-me covers design direction (brand constraints, design system or CSS stack, scope, priorities, appetite for creative change), framing {IMPLEMENTER} per `<implementer_job>` in the initial batch, and iterates until settled. Save the plan outside the repository at `{WORKDIR}/plan.md`. Send the briefing in a chat message, then confirm approval via `<user_interaction>`; present the plan in a chat message linking to `{WORKDIR}/plan.md` per `<rule id="present-plan">` and obtain explicit approval before delivery. Every stage that changes UI lists, in its verification, recapture of the affected routes at the three viewports into `{WORKDIR}/after/stage-{STAGE}/`.
     </step>
 
     <step id="7" name="deliver">
