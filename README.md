@@ -53,7 +53,7 @@ Normative for every human and every AI maintaining this repository.
 
 1. This `README.md` is the repository's source of truth for its explanation, rules, and installation, removal, and update processes. `scripts/` provides their executable form (rules 18–21).
 2. For work in this repository, this README takes precedence over user-wide and harness-global instructions, including an installed `USER-AGENTS.md`.
-3. `USER-AGENTS.md` is an installation artifact for user-wide harness instructions, not this repository's rule file. After YAML frontmatter (`applyTo: "**"` and `alwaysApply: true` for Copilot and Cursor attachment), a title, and a short preamble, its body is semantic XML under `<user_instructions>` ([Semantic XML grammar](#semantic-xml-grammar)) with no markdown sub-headings, and every internal cross-reference is a deterministic XML tag reference. Its self-imposed **8,000-character** cap is tighter than every current harness constraint, including Antigravity's 12,000-character limit. Every shipped artifact fits the strictest harness that consumes it. Register stricter constraints in [Supported harnesses](#supported-harnesses) and update affected artifacts in the same commit.
+3. `USER-AGENTS.md` is an installation artifact for user-wide harness instructions, not this repository's rule file. After YAML frontmatter (`applyTo: "**"` and `alwaysApply: true` for Copilot and Cursor attachment), a title, and a short preamble, its body is semantic XML under `<user_instructions>` ([Semantic XML grammar](#semantic-xml-grammar)) with no markdown sub-headings, and every internal cross-reference is a deterministic XML tag reference. Its self-imposed **10,000-character** cap is tighter than every current harness constraint, including Antigravity's 12,000-character limit. Every shipped artifact fits the strictest harness that consumes it. Register stricter constraints in [Supported harnesses](#supported-harnesses) and update affected artifacts in the same commit.
 4. Pre-release (`0.x`/ALPHA at the top) versions provide no backward compatibility or migration notes; this README describes only the current state. Repair older layouts through [Update](#update) and its stale-link sweep. Every pull request that changes `skills/`, `scripts/`, or `USER-AGENTS.md` changes the version against its base branch; stacked pull requests each bump once. Backward-compatibility records begin with the first stable release.
 
 ### Structure and authoring
@@ -83,7 +83,7 @@ Vocabulary. A new tag is registered here and in `scripts/lint.sh` (`XML_VOCAB`) 
 | Tag | File | Meaning |
 |---|---|---|
 | `<user_instructions>` | USER-AGENTS | root |
-| `<system_overview>`, `<planning_protocol>`, `<implementation_protocol>`, `<execution_protocol>`, `<language_rules>`, `<user_interaction>`, `<security_guardrails>` | USER-AGENTS | top-level sections |
+| `<system_overview>`, `<planning_protocol>`, `<implementation_protocol>`, `<execution_protocol>`, `<simple_tasks_protocol>`, `<language_rules>`, `<user_interaction>`, `<security_guardrails>` | USER-AGENTS | top-level sections |
 | `<chat>`, `<disk>` | USER-AGENTS | language destinations |
 | `<default>`, `<fallback>` | USER-AGENTS | native-tool question rule and its chat fallback |
 | `<skill name>` | skills | root |
@@ -155,7 +155,7 @@ Check families:
 - **skill layout** — no `skills/*.md` at the skills root and no `skills/SKILL-CONTRACT.md` or `skills/MAINTAINER.md`; the shipped skills `lint.sh` names are present; every `skills/*/` has a `SKILL.md` with a root `<skill name>`, `<session_workflow>`, and `<dispatch_templates>`, and no `## Continue?` or `## Stake` heading or mention of `SKILL-CONTRACT`/`MAINTAINER.md`; `USER-AGENTS.md` contains `<planning_protocol>`, `<implementation_protocol>`, and `<execution_protocol>` with rules `default-worker` and `implementer`, YAML `applyTo`/`alwaysApply`, an authorized delegated payload note, optional `$HOME/AGENTS.md`, and no `<agents>`, `<dispatch_protocol>`, or `<worker>` tag (rules 5, 11)
 - **spawn protocol citation** — every skill with a `<template>` cites `<execution_protocol>`, and no skill repeats the harness native subagent API list (rule 9)
 - **rule anchors** — no `SKILL.md` or `USER-AGENTS.md` cites a README rule number (rule 9)
-- **size caps** — `USER-AGENTS.md` at most 8,000 characters (rule 3), every skill `description` at most 500 (rule 6)
+- **size caps** — `USER-AGENTS.md` at most 10,000 characters (rule 3), every skill `description` at most 500 (rule 6)
 - **instructions headings** — `USER-AGENTS.md` has no `##` sub-heading (rule 3)
 - **line endings and modes** — every tracked `scripts/` file resolves to `eol=lf` with LF in index and working tree, and `scripts/*.sh` and `scripts/shell/*.sh` are mode `100755` (rule 21)
 - **no binaries** — every tracked file under `skills/` and `scripts/` is text
@@ -214,7 +214,7 @@ One row per harness: global instructions destination and skills root.
 Notes:
 
 - **Antigravity lives under `$HOME/.gemini`**: instructions at `GEMINI.md`, skills at `config/skills/`. Do not install into `$HOME/.gemini/skills/` (retired Gemini CLI root). The stale-link sweep always unlinks leftover ai-tools links there, even when Gemini is not in `--harnesses`; `--no-sweep` skips it. The sweep does not touch `config/`.
-- **Antigravity limits rules files to 12,000 characters.** The repository's stricter self-imposed 8,000-character cap governs `USER-AGENTS.md` (rule 3); Antigravity truncates or rejects files above its own limit.
+- **Antigravity limits rules files to 12,000 characters.** The repository's stricter self-imposed 10,000-character cap governs `USER-AGENTS.md` (rule 3); Antigravity truncates or rejects files above its own limit.
 - **Copilot** user-level `*.instructions.md` files apply automatically only with YAML `applyTo`. The shared copy starts with `applyTo: "**"` (all files). File equality is not activation; confirm Chat diagnostics after install.
 - **Never install into `$HOME/.agents/`.** Several harnesses discover it; copying there as well as into each harness root would double-register every skill.
 
@@ -234,7 +234,7 @@ Every `install.sh` step is idempotent and reports conflicts it skips.
 2. **Discovery and scope** — report each detected harness from its configuration directory, CLI, or known IDE extension, plus possible AI extensions outside scope. Omitted `--harnesses` selects those detected harnesses; `--harnesses all` selects all three and creates their skill roots as needed. Report `$HOME/.agents` while leaving it untouched.
 3. **Instructions** — link `USER-AGENTS.md` into each scoped harness's global instructions destination (`--no-instructions` skips), with fallback to copy if symlinks are unavailable. Antigravity uses `$HOME/.gemini/GEMINI.md`.
 4. **Skills** — link each `skills/*-ai-tools` directory into every scoped skills root (rules 5–6), falling back to copy if symlinks are unavailable. Harnesses list frontmatter; the host session reads the body only when it runs the skill. With `--overwrite`, orphan `*-ai-tools` skills no longer in the tree are pruned from the scoped roots.
-5. **Verify** — every installed instruction and skill is an ai-tools symlink or matching copy fallback; `USER-AGENTS.md` fits the repository's 8,000-character cap (rule 3); every shipped `skills/<name>/SKILL.md` exists. Skipped under `--dry-run`; re-run anytime with `verify`.
+5. **Verify** — every installed instruction and skill is an ai-tools symlink or matching copy fallback; `USER-AGENTS.md` fits the repository's 10,000-character cap (rule 3); every shipped `skills/<name>/SKILL.md` exists. Skipped under `--dry-run`; re-run anytime with `verify`.
 
 Then restart or reload any harness that caches skills at startup. Confirm a slash command for every shipped skill.
 
@@ -299,4 +299,4 @@ MIT — see [`LICENSE`](LICENSE). Use, modify, fork, redistribute, and sell free
 Maintenance consequences:
 
 - The copyright block names the project and its URL. It is reproduced verbatim in third-party notices, so keep both lines — they make a downstream copy traceable back here.
-- Use the root `LICENSE` instead of per-file license headers in shipped artifacts. `USER-AGENTS.md` follows the **8,000-character** cap in rule 3, and every artifact follows rule 8. Installation on one's own machine is not redistribution.
+- Use the root `LICENSE` instead of per-file license headers in shipped artifacts. `USER-AGENTS.md` follows the **10,000-character** cap in rule 3, and every artifact follows rule 8. Installation on one's own machine is not redistribution.

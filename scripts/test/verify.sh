@@ -145,11 +145,11 @@ case_verify_instructions_cap() {
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
 
-  printf '%08192d\n' 0 >> "$instructions"
+  printf '%016384d\n' 0 >> "$instructions"
   before=$(t_snapshot "$root/home")
   t_verify "$root" --harnesses claude-code
   t_assert_exit 2
-  t_assert_line "WARN: USER-AGENTS.md exceeds 8000 chars (repository limit):"
+  t_assert_line "WARN: USER-AGENTS.md exceeds 10000 chars (repository limit):"
   t_assert_unchanged "$root/home" "$before"
   rm -f "$before"
 

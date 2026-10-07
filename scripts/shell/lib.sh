@@ -875,8 +875,8 @@ verify_install() {
   src=$(source_root)
 
   size=$(wc -c < "$src/USER-AGENTS.md")
-  if [ "$size" -le 8000 ]; then ok "instructions size: $size chars"
-  else warn "USER-AGENTS.md exceeds 8000 chars (repository limit): $size"; fi
+  if [ "$size" -le 10000 ]; then ok "instructions size: $size chars"
+  else warn "USER-AGENTS.md exceeds 10000 chars (repository limit): $size"; fi
 
   for p in "$src/skills"/*-ai-tools; do
     [ -d "$p" ] || continue

@@ -44,7 +44,7 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/A
   <simple_tasks_protocol>
     <rule id="simple-tasks">For simple tasks, questions, code review, or documentation only tasks, follow the harness default flow. If a plan is requested, follow `<planning_protocol>` instead.</rule>
     <rule id="simple-briefing">Brief the user with a concise summary of the task, its scope, and any assumptions or constraints. Ask for confirmation before proceeding.</rule>
-    <rule id ="simple-implementation">Implement the task in a single stage, following the harness default flow. Fix tests when code changes, run them and report results concisely. Commit changes locally if files were modified, created, or removed with conventional commit messages.</rule>
+    <rule id="simple-implementation">Implement the task in a single stage, following the harness default flow. Fix tests when code changes, run them and report results concisely. Commit changes locally if files were modified, created, or removed with conventional commit messages.</rule>
   </simple_tasks_protocol>
 
   <language_rules>

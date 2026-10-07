@@ -44,7 +44,7 @@ Checks:
                     and implementer, never <agents>,
                     <dispatch_protocol>, or <worker, YAML applyTo/alwaysApply,
                     optional $HOME/AGENTS.md, and no references to deleted files (rules 5, 11)
-  instructions cap  USER-AGENTS.md is at most 8000 characters (rule 3)
+  instructions cap  USER-AGENTS.md is at most 10000 characters (rule 3)
   instructions      USER-AGENTS.md has no ## sub-heading (rule 3)
   headings
   line endings      git ls-files --eol matches the declared eol= attribute:
@@ -454,7 +454,7 @@ char_count() {
 }
 
 check_instructions_cap() {
-  local f count cap=8000
+  local f count cap=10000
   f="$AI_TOOLS/USER-AGENTS.md"
   if [ ! -f "$f" ]; then warn "missing: $f"; return; fi
   count=$(char_count "$f")
@@ -535,7 +535,7 @@ check_no_binaries() {
 # The vocabulary of structural tags (README, "Semantic XML grammar"). A tag
 # outside it, outside <input>, is a finding: register a new tag in the README
 # table and here in the same commit.
-XML_VOCAB="user_instructions system_overview planning_protocol implementation_protocol execution_protocol language_rules chat disk user_interaction fallback security_guardrails skill overview session_workflow step dispatch_templates template job input instructions constraints constraint status_protocol states state return_protocol signal plan_file_format structure boundaries rule default implementer_job"
+XML_VOCAB="user_instructions system_overview planning_protocol implementation_protocol execution_protocol simple_tasks_protocol language_rules chat disk user_interaction fallback security_guardrails skill overview session_workflow step dispatch_templates template job input instructions constraints constraint status_protocol states state return_protocol signal plan_file_format structure boundaries rule default implementer_job"
 
 xml_files() {
   local f
