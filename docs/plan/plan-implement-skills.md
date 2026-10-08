@@ -4,7 +4,7 @@
 |---|---|---|---|
 | 1 | Setup & Initial Plan Record | done | session |
 | 2 | Create `skills/plan-ai-tools/SKILL.md` | done | session |
-| 3 | Create `skills/implement-ai-tools/SKILL.md` | pending | session |
+| 3 | Create `skills/implement-ai-tools/SKILL.md` | done | session |
 | 4 | Update `USER-AGENTS.md` | pending | session |
 | 5 | Update Consumer Skills (`vibe`, `campaign`, `team`, `ui`) | pending | session |
 | 6 | Update Linters, Shell Scripts, and Docs | pending | session |
@@ -122,4 +122,11 @@
 - Created `skills/plan-ai-tools/SKILL.md` with complete planning protocol rules (`grill-me`, `short-stages`, `stage-format`, `stage-commit`, `first-stage`, `stage-report`, `docs-stage`, `last-stage`, `transient-docs`, `implementer-offer`, `present-plan`).
 - Verified frontmatter: name, description <= 500 chars (with `Impact:` and `Agent: session`), argument-hint.
 - Status: Stage 2 complete.
+
+## Stage 3 Report
+- Created `skills/implement-ai-tools/SKILL.md` supporting both staged plan execution (`<implementation_protocol>`) and simplified execution (`<simple_tasks_protocol>`).
+- Included templates `<template role="stage-implementer">` and `<template role="simple-implementer">`.
+- Verified frontmatter: name, description <= 500 chars (with `Impact:` and `Agent: session + implementer (model asked once)`), argument-hint.
+- Status: Stage 3 complete.
+
 
