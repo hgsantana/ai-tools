@@ -39,7 +39,8 @@ Checks:
   skill layout      no skill-root markdown, every skill directory has
                     SKILL.md with semantic XML tags (<skill>, <session_workflow>,
                     <dispatch_templates>), no SKILL.md contains Continue? or Stake,
-                    USER-AGENTS.md has <planning_protocol>, <implementation_protocol>,
+                    plan-ai-tools has <planning_protocol>, implement-ai-tools has
+                    <implementation_protocol> and <simple_tasks_protocol>, USER-AGENTS.md has
                     an <execution_protocol> with a <rule id> for default-worker
                     and implementer, never <agents>,
                     <dispatch_protocol>, or <worker, YAML applyTo/alwaysApply,
@@ -203,7 +204,7 @@ check_skill_name_match() {
 
 check_skill_layout() {
   local f d name rid
-  local gated="vibe-ai-tools campaign-ai-tools team-ai-tools ui-ai-tools az-ai-tools gc-ai-tools gh-ai-tools agy-ai-tools claude-ai-tools copilot-ai-tools"
+  local gated="vibe-ai-tools campaign-ai-tools team-ai-tools ui-ai-tools az-ai-tools gc-ai-tools gh-ai-tools agy-ai-tools claude-ai-tools copilot-ai-tools plan-ai-tools implement-ai-tools"
   local maintainer="update-ai-tools remove-ai-tools"
 
   f="$AI_TOOLS/skills/SKILL-CONTRACT.md"
@@ -216,11 +217,25 @@ check_skill_layout() {
     warn "skill-root markdown file must not exist: $f"
   done
 
-  f="$AI_TOOLS/USER-AGENTS.md"
-  if grep -q '<planning_protocol>' "$f" && grep -q '<implementation_protocol>' "$f"; then
-    ok "USER-AGENTS.md has planning_protocol and implementation_protocol tags: $f"
+  f="$AI_TOOLS/skills/plan-ai-tools/SKILL.md"
+  if grep -q '<planning_protocol>' "$f"; then
+    ok "plan-ai-tools has planning_protocol tag: $f"
   else
-    warn "USER-AGENTS.md missing '<planning_protocol>' or '<implementation_protocol>' tag: $f"
+    warn "plan-ai-tools missing '<planning_protocol>' tag: $f"
+  fi
+
+  f="$AI_TOOLS/skills/implement-ai-tools/SKILL.md"
+  if grep -q '<implementation_protocol>' "$f" && grep -q '<simple_tasks_protocol>' "$f"; then
+    ok "implement-ai-tools has implementation_protocol and simple_tasks_protocol tags: $f"
+  else
+    warn "implement-ai-tools missing '<implementation_protocol>' or '<simple_tasks_protocol>' tag: $f"
+  fi
+
+  f="$AI_TOOLS/USER-AGENTS.md"
+  if grep -q '<planning_protocol>' "$f" || grep -q '<implementation_protocol>' "$f"; then
+    warn "USER-AGENTS.md must not contain migrated planning_protocol or implementation_protocol tags: $f"
+  else
+    ok "USER-AGENTS.md has no retired planning_protocol or implementation_protocol tag: $f"
   fi
 
   if grep -q '<execution_protocol>' "$f"; then
@@ -392,7 +407,7 @@ check_skill_description_content() {
   done
 }
 
-IMPLEMENTER_SKILLS="vibe-ai-tools campaign-ai-tools team-ai-tools ui-ai-tools"
+IMPLEMENTER_SKILLS="vibe-ai-tools campaign-ai-tools team-ai-tools ui-ai-tools implement-ai-tools"
 AGENT_SESSION="session"
 AGENT_IMPLEMENTER="session + implementer"
 AGENT_IMPLEMENTER_ASKED="session + implementer (model asked once)"

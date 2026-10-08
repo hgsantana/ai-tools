@@ -94,3 +94,4 @@ argument-hint: "[slug of plan to implement | task description for simple executi
     <rule id="stay-in-repo">Stay inside the working repository. Preserve pre-existing commit history.</rule>
   </boundaries>
 </skill>
+

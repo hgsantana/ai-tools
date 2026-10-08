@@ -10,12 +10,14 @@ Invoke a skill explicitly by leading with its slash name and optional request:
 /vibe-ai-tools add resumable uploads
 ```
 
-Skills provide session-directed workflows. Global planning, implementation, and execution protocols are provided across supported harnesses via user-wide instructions.
+Skills provide session-directed workflows. Global execution, testing, and interaction protocols are provided across supported harnesses via user-wide instructions, while planning and implementation protocols are provided by `plan-ai-tools` and `implement-ai-tools`.
 
 ## Skills
 
 | Skill | Use it for | Example |
 |---|---|---|
+| `/plan-ai-tools` | Probe assumptions, settle scope with the user, and formulate a staged plan | `/plan-ai-tools add OAuth2 authentication` |
+| `/implement-ai-tools` | Deliver changes from an existing plan or directly via a simplified flow | `/implement-ai-tools plan-implement-skills` |
 | `/vibe-ai-tools` | Plan under `plans/`, then execute that plan and deliver a pull request | `/vibe-ai-tools add resumable uploads` |
 | `/team-ai-tools` | Refine a request with a PO-led team of senior reviewers, then deliver a plan or campaign to a pull request | `/team-ai-tools add rate limiting to the public API` |
 | `/campaign-ai-tools` | Repeatedly plan and deliver user-directed, multi-stage improvements in an autonomous local campaign | `/campaign-ai-tools repository-hardening` |
@@ -29,11 +31,25 @@ Skills provide session-directed workflows. Global planning, implementation, and 
 
 ### Who does the work
 
-Every skill runs on the session's model. The session handles user alignment, judgment, commits, and short pointers to disk; builds, tests, and bulk fact collection go to the harness's default subagent. The user-wide planning and implementation rules add to each harness's own flows. Before the first stage of a plan, the session probes assumptions through batched questions ending with who implements (the harness default or the `mid` tier of the current harness's skill), analyzes responses and iterates until settled, sends a chat message with the briefing and confirms approval, then presents the plan in chat (linking to the plan file when on disk, preferred over repeating written content) and obtains explicit approval before dispatching execution. Every stage runs in a fresh implementer with a clean context; the stage 1 brief carries the full plan, or the path of a plan file saved outside the repository, which that implementer writes to `docs/<skill>/<slug>.md` (or `docs/plan/<slug>.md`). If the implementer cannot be spawned, delivery stops as blocked.
+Every skill runs on the session's model. The session handles user alignment, judgment, commits, and short pointers to disk; builds, tests, and bulk fact collection go to the harness's default subagent. The planning and implementation protocols from `plan-ai-tools` and `implement-ai-tools` add to each harness's own flows. Before the first stage of a plan, the session probes assumptions through batched questions ending with who implements (the harness default or the `mid` tier of the current harness's skill), analyzes responses and iterates until settled, sends a chat message with the briefing and confirms approval, then presents the plan in chat (linking to the plan file when on disk, preferred over repeating written content) and obtains explicit approval before dispatching execution. Every stage runs in a fresh implementer with a clean context; the stage 1 brief carries the full plan, or the path of a plan file saved outside the repository, which that implementer writes to `docs/<skill>/<slug>.md` (or `docs/plan/<slug>.md`). If the implementer cannot be spawned, delivery stops as blocked.
 
 ### Agent dispatch
 
 `/agy-ai-tools`, `/claude-ai-tools`, and `/copilot-ai-tools` each hold their harness's tier table. They dispatch through the CLI when installed, else through the harness subagent API with the tier's model and effort, else with the closest model and effort that API offers, and report which level and substitution applied.
+
+### Planning and implementation
+
+`/plan-ai-tools` conducts the interactive planning protocol: it grills assumptions and scope with the user in batched questions, settles decisions, formulates short testable stages in conventional commit format, and presents the plan for user approval before handing off to delivery.
+
+```text
+/plan-ai-tools add OAuth2 authentication
+```
+
+`/implement-ai-tools` executes changes either stage-by-stage from an approved plan (running each stage in a fresh implementer with clean context, validating diffs and test summaries before advancing), or directly in a single stage when no plan is present.
+
+```text
+/implement-ai-tools plan-implement-skills
+```
 
 ### Delivery workflows
 

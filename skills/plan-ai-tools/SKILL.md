@@ -51,6 +51,6 @@ argument-hint: "[the change to plan]"
 
   <boundaries>
     <rule id="protocol-source">Follow user-wide `<execution_protocol>`, `<user_interaction>`, and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
-    <rule id="transient-planning">Planning writes nothing to repository code; save plan files in docs/<skill>/{SLUG}.md (or docs/plan/{SLUG}.md), and temp artifacts in ${TMPDIR:-/tmp}/ai-tools/.</rule>
+    <rule id="transient-planning">Planning writes nothing to repository code; save plan files in `docs/<skill>/{SLUG}.md` (or `docs/plan/{SLUG}.md`), and temp artifacts in `${TMPDIR:-/tmp}/ai-tools/`.</rule>
   </boundaries>
 </skill>

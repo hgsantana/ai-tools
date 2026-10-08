@@ -7,7 +7,7 @@
 | 3 | Create `skills/implement-ai-tools/SKILL.md` | done | session |
 | 4 | Update `USER-AGENTS.md` | done | session |
 | 5 | Update Consumer Skills (`vibe`, `campaign`, `team`, `ui`) | done | session |
-| 6 | Update Linters, Shell Scripts, and Docs | pending | session |
+| 6 | Update Linters, Shell Scripts, and Docs | done | session |
 | 7 | Cleanup & Final Verification | pending | session |
 
 ---
@@ -142,6 +142,15 @@
 - Updated `skills/team-ai-tools/SKILL.md` to reference `plan-ai-tools` and `implement-ai-tools`.
 - Updated `skills/ui-ai-tools/SKILL.md` to reference `plan-ai-tools` and `implement-ai-tools`.
 - Status: Stage 5 complete.
+
+## Stage 6 Report
+- Updated `scripts/lint.sh`: added `plan-ai-tools` and `implement-ai-tools` to `gated` and `IMPLEMENTER_SKILLS`; updated layout checks to verify `<planning_protocol>` in `plan-ai-tools`, `<implementation_protocol>` and `<simple_tasks_protocol>` in `implement-ai-tools`, and absence in `USER-AGENTS.md`.
+- Updated `README.md`: updated Semantic XML grammar table, rules 23 and 24, agent field bullet, and skill layout bullet.
+- Updated `docs/USAGE.md`: added `/plan-ai-tools` and `/implement-ai-tools` to skills table and created dedicated usage section.
+- Executed `scripts/lint.sh`: 604 ok, 0 warnings.
+- Executed `scripts/test.sh`: 361 ok, 0 warnings.
+- Status: Stage 6 complete.
+
 
 
 
