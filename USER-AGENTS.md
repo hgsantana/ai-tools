@@ -48,6 +48,7 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/A
   </simple_tasks_protocol>
 
   <unit_tests>
+    Add this rules when making unit tests, alongside the harness default unit test flow. If not making unit tests, ignore it.
     <rule id="anti-happy-path">Test beyond the minimal happy path: cover boundary values, edge cases, missing vs populated fields, and invalid inputs.</rule>
     <rule id="bidirectional-contracts">Test serialization schemas and DTOs bidirectionally: verify both unmarshalling/reading of input fields and marshalling/redaction of output fields.</rule>
     <rule id="branch-exhaustion">Test every branch of conditional fallbacks and defaults: verify outcomes when an optional value is provided and when the fallback triggers.</rule>
