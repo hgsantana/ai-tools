@@ -7,17 +7,6 @@ alwaysApply: true
 A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/AGENTS.md` exists, follow it; if missing, ignore it.
 
 <user_instructions>
-  <execution_protocol>
-    <rule id="default-worker">`executor="default-worker"`: harness default subagent for tasks, tests, and facts. Antigravity = Flash. Claude = Sonnet. Copilot = Gemini Flash Latest.</rule>
-    <rule id="implementer">`executor="implementer"`: {IMPLEMENTER} per plan-ai-tools `<rule id="implementer-offer">`, for code and tests.</rule>
-    <rule id="inherited">`executor="inherited"`: subagent spawned per `<rule id="native-spawn">` with the session's model and effort, else the closest available, for review and planning.</rule>
-    <rule id="native-spawn">Spawn subagents via native harness APIs: Claude Code `Agent`, Copilot `runSubagent`, Antigravity `invoke_subagent`.</rule>
-    <rule id="payload-assembly">A delegated brief states it is an authorized delegated payload and passes only the brief and paths, never conversation context.</rule>
-    <rule id="spawn-fallback">A failed default-worker task runs in the spawning context; a failed implementer spawn reports blocked, never falls back to the session.</rule>
-    <rule id="parallel-spawns">Parallel code-writing only on separate files; exploration, builds, and tests run concurrently.</rule>
-    <rule id="session-commit">Commit all changes before returning session: run tests when code changed and commit LOCALLY if files were modified, created, or removed. Pushing is allowed to plan/task branches.</rule>
-    <rule id="file-modification">Modify files via harness APIs or terminal commands, not IDE APIs.</rule>
-  </execution_protocol>
 
   <unit_tests>
     Add this rules when making unit tests, alongside the harness default unit test flow. If not making unit tests, ignore it.

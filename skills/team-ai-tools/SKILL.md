@@ -26,7 +26,7 @@ argument-hint: "[the request to refine and deliver]"
     </step>
 
     <step id="3" name="user-round">
-      Ask every open question in one batched `<user_interaction>` call per plan-ai-tools `<rule id="grill-me">`, each with its own options and its recommendation first, ending with {IMPLEMENTER} per plan-ai-tools `<rule id="implementer-offer">`, framed by `<implementer_job>`. Record answers in `decisions.md`. When an answer departs from its recommendation or raises open points, take it to the affected reviewers per `<step id="2">`, then ask a new batch with only the resulting questions; repeat until every point is closed. Send a chat message containing the briefing of settled scope and decisions, then confirm approval via `<user_interaction>`.
+      Ask every open question in one batched `<user_interaction>` call per plan-ai-tools `<rule id="grill-me">`, each with its own options and its recommendation first, ending with {IMPLEMENTER} per implement-ai-tools `<rule id="implementer-offer">`, framed by `<implementer_job>`. Record answers in `decisions.md`. When an answer departs from its recommendation or raises open points, take it to the affected reviewers per `<step id="2">`, then ask a new batch with only the resulting questions; repeat until every point is closed. Send a chat message containing the briefing of settled scope and decisions, then confirm approval via `<user_interaction>`.
     </step>
 
     <step id="4" name="approve">
@@ -336,9 +336,9 @@ argument-hint: "[the request to refine and deliver]"
     <rule id="protocols">Planning follows plan-ai-tools `<planning_protocol>` and delivery implement-ai-tools `<implementation_protocol>`; this skill states only its specifics: the reviewer team, per-stage validation by related reviewers, and delivery reuse from vibe-ai-tools and campaign-ai-tools.</rule>
     <rule id="stage-validators">Each stage names its validators: every reviewer selected in `<step id="1">` whose domain the stage touches, tests only when it changes code or tests, validated through `<template role="test-validator">`; plan-only and closing stages have none, and the session validates the final-audit stage against the audit.</rule>
     <rule id="reviewer-continuity">Keep reviewers active until approval, and through delivery for stage validation where the harness can continue a subagent; where it cannot, respawn the role's template with its findings file as context.</rule>
-    <rule id="spawn-apis">Spawn templates per `<execution_protocol>`; if `<template role="stage-implementer">` cannot be spawned as {IMPLEMENTER}, stop as blocked per `<rule id="spawn-fallback">`.</rule>
+    <rule id="spawn-apis">Spawn templates per implement-ai-tools `<harness_agents>`; if `<template role="stage-implementer">` cannot be spawned as {IMPLEMENTER}, stop as blocked per implement-ai-tools `<rule id="spawn-fallback">`.</rule>
     <rule id="chat-scope">Chat carries only the briefing, plan presentation, questions, approvals, spawn announcements, a one-line outcome, and paths under {WORKDIR}; reports stay on disk.</rule>
-    <rule id="protocol-source">Follow user-wide `<execution_protocol>`, `<user_interaction>`, and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
+    <rule id="protocol-source">Follow user-wide `<user_interaction>` and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
     <rule id="stay-in-repo">Stay inside the working repository. Preserve pre-existing commit history.</rule>
   </boundaries>
 </skill>

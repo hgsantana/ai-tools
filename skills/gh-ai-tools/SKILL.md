@@ -72,7 +72,7 @@ argument-hint: "[GitHub platform resource to inspect or manage]"
     <rule id="reads-free-mutations-approved">Read-only queries run freely; remote mutations require explicit approval.</rule>
     <rule id="code-work-bypasses">Repository code work bypasses this skill and executes directly under repository instructions.</rule>
     <rule id="outputs-on-disk">Save large outputs and logs to ${TMPDIR:-/tmp}/ai-tools/ rather than flooding session context.</rule>
-    <rule id="protocol-source">Follow user-wide `<execution_protocol>`, `<user_interaction>`, and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
-    <rule id="default-worker">Spawn each `<template executor="default-worker">` per `<execution_protocol>`, assembling nested payloads per `<rule id="payload-assembly">`.</rule>
+    <rule id="protocol-source">Follow user-wide `<user_interaction>` and `<security_guardrails>`, and dispatch agents per implement-ai-tools `<harness_agents>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
+    <rule id="default-worker">Spawn each `<template executor="default-worker">` per implement-ai-tools `<harness_agents>`, assembling nested payloads per implement-ai-tools `<rule id="payload-assembly">`.</rule>
   </boundaries>
 </skill>

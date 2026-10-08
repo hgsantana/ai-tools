@@ -137,8 +137,8 @@ argument-hint: "[routes] [base URL] [auth state path or env var names]"
 
   <boundaries>
     <rule id="protocols">Planning follows plan-ai-tools `<planning_protocol>` and delivery implement-ai-tools `<implementation_protocol>`; this skill states only its specifics: route evaluation, the illustrated report, and before/after recapture.</rule>
-    <rule id="spawn-apis">Spawn templates per `<execution_protocol>`; if `<template role="stage-implementer">` cannot be spawned as {IMPLEMENTER}, stop as blocked per `<rule id="spawn-fallback">`.</rule>
-    <rule id="protocol-source">Follow user-wide `<execution_protocol>`, `<user_interaction>`, and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
+    <rule id="spawn-apis">Spawn templates per implement-ai-tools `<harness_agents>`; if `<template role="stage-implementer">` cannot be spawned as {IMPLEMENTER}, stop as blocked per implement-ai-tools `<rule id="spawn-fallback">`.</rule>
+    <rule id="protocol-source">Follow user-wide `<user_interaction>` and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
     <rule id="evaluators-read-only">Steps 1–5 write only under {WORKDIR}; the repository stays untouched until delivery.</rule>
     <rule id="secrets">Auth values never reach disk, chat, or briefs; pass only paths or env var names.</rule>
     <rule id="stay-in-repo">Stay inside the working repository. Preserve pre-existing commit history.</rule>

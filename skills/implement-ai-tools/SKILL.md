@@ -11,7 +11,7 @@ argument-hint: "[slug of plan to implement | task description for simple executi
 
 <skill name="implement-ai-tools">
   <overview>
-    Deliver changes either stage-by-stage from a plan created by plan-ai-tools per `<implementation_protocol>`, or in a single stage per `<simple_tasks_protocol>` when no plan is involved.
+    Deliver changes either stage-by-stage from a plan created by plan-ai-tools per `<implementation_protocol>`, or in a single stage per `<simple_tasks_protocol>` when no plan is involved, using agents configured per `<harness_agents>`.
   </overview>
 
   <session_workflow>
@@ -32,6 +32,24 @@ argument-hint: "[slug of plan to implement | task description for simple executi
       In chat (user's language): one-line outcome, the implementer actually used, commit hash, and changed paths.
     </step>
   </session_workflow>
+
+  <harness_agents>
+    <rule id="default-worker">`executor="default-worker"`: harness default subagent for tasks, tests, and facts. Antigravity = Flash. Claude = Sonnet 5.5. Copilot = Gemini Flash 3.8.</rule>
+    <rule id="inherited">`executor="inherited"`: subagent spawned per `<rule id="native-spawn">` with the session's model and effort, else the closest available, for review and planning.</rule>
+    <rule id="inherit">Alias for `<rule id="inherited">`.</rule>
+    <rule id="implementer">`executor="implementer"`: {IMPLEMENTER} per `<rule id="implementer-offer">`, for code and tests. Default: Antigravity = Flash, Claude = Sonnet 5.5, Copilot = Gemini Flash 3.8.</rule>
+    <rule id="session">Executes within the session itself without spawning a subagent.</rule>
+    <rule id="senior">Senior tier agent dispatched per the current harness skill (`claude-ai-tools`, `copilot-ai-tools`, `agy-ai-tools`).</rule>
+    <rule id="mid-level">Mid tier agent dispatched per the current harness skill (`claude-ai-tools`, `copilot-ai-tools`, `agy-ai-tools`).</rule>
+    <rule id="junior">Junior tier agent dispatched per the current harness skill (`claude-ai-tools`, `copilot-ai-tools`, `agy-ai-tools`).</rule>
+    <rule id="implementer-offer">Offer once as the final question of the initial grill-me batch who implements every stage ({IMPLEMENTER}): 1. the `mid` (recommended), `senior`, or `junior` tier of the current harness skill (`claude-ai-tools`, `copilot-ai-tools`, `agy-ai-tools`) showing model and effort; 2. a session subagent (`inherit`); 3. the session itself; 4. the harness default executor (`default-worker`).</rule>
+    <rule id="native-spawn">Spawn subagents via native harness APIs: Claude Code `Agent`, Copilot `runSubagent`, Antigravity `invoke_subagent`.</rule>
+    <rule id="payload-assembly">A delegated brief states it is an authorized delegated payload and passes only the brief and paths, never conversation context.</rule>
+    <rule id="spawn-fallback">A failed default-worker task runs in the spawning context; a failed implementer spawn reports blocked, never falls back to the session.</rule>
+    <rule id="parallel-spawns">Parallel code-writing only on separate files; exploration, builds, and tests run concurrently.</rule>
+    <rule id="session-commit">Commit all changes before returning session: run tests when code changed and commit LOCALLY if files were modified, created, or removed. Pushing is allowed to plan/task branches.</rule>
+    <rule id="file-modification">Modify files via harness APIs or terminal commands, not IDE APIs.</rule>
+  </harness_agents>
 
   <implementation_protocol>
     Adds to, never replaces, the harness's own implementation flow when implementing a plan. If not a plan, ignore it.
@@ -88,10 +106,9 @@ argument-hint: "[slug of plan to implement | task description for simple executi
   </dispatch_templates>
 
   <boundaries>
-    <rule id="protocols">Execution follows `<implementation_protocol>` for staged plans and `<simple_tasks_protocol>` for simple tasks.</rule>
-    <rule id="spawn-apis">Spawn implementers per `<execution_protocol>`; if an implementer cannot be spawned, stop as blocked per `<rule id="spawn-fallback">`.</rule>
-    <rule id="protocol-source">Follow user-wide `<execution_protocol>`, `<user_interaction>`, and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
+    <rule id="protocols">Execution follows `<implementation_protocol>` for staged plans and `<simple_tasks_protocol>` for simple tasks; subagent dispatch follows `<harness_agents>`.</rule>
+    <rule id="spawn-apis">Spawn implementers per `<harness_agents>`; if an implementer cannot be spawned, stop as blocked per `<rule id="spawn-fallback">`.</rule>
+    <rule id="protocol-source">Follow user-wide `<user_interaction>` and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
     <rule id="stay-in-repo">Stay inside the working repository. Preserve pre-existing commit history.</rule>
   </boundaries>
 </skill>
-

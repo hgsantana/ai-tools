@@ -59,8 +59,8 @@ argument-hint: "[the change to deliver]"
 
   <boundaries>
     <rule id="protocols">Planning follows plan-ai-tools `<planning_protocol>` and delivery implement-ai-tools `<implementation_protocol>`; this skill states only its specifics.</rule>
-    <rule id="spawn-apis">Spawn `<template role="stage-implementer">` as {IMPLEMENTER} per `<execution_protocol>`; if it cannot be spawned, stop as blocked per `<rule id="spawn-fallback">`.</rule>
-    <rule id="protocol-source">Follow user-wide `<execution_protocol>`, `<user_interaction>`, and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
+    <rule id="spawn-apis">Spawn `<template role="stage-implementer">` as {IMPLEMENTER} per implement-ai-tools `<harness_agents>`; if it cannot be spawned, stop as blocked per implement-ai-tools `<rule id="spawn-fallback">`.</rule>
+    <rule id="protocol-source">Follow user-wide `<user_interaction>` and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
     <rule id="stay-in-repo">Stay inside the working repository. Preserve pre-existing commit history.</rule>
   </boundaries>
 </skill>

@@ -10,7 +10,7 @@ Invoke a skill explicitly by leading with its slash name and optional request:
 /vibe-ai-tools add resumable uploads
 ```
 
-Skills provide session-directed workflows. Global execution, testing, and interaction protocols are provided across supported harnesses via user-wide instructions, while planning and implementation protocols are provided by `plan-ai-tools` and `implement-ai-tools`.
+Skills provide session-directed workflows. Testing, interaction, and security protocols are provided across supported harnesses via user-wide instructions, while planning, implementation, and agent dispatch protocols are provided by `plan-ai-tools` and `implement-ai-tools`.
 
 ## Skills
 

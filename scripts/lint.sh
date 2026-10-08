@@ -40,9 +40,9 @@ Checks:
                     SKILL.md with semantic XML tags (<skill>, <session_workflow>,
                     <dispatch_templates>), no SKILL.md contains Continue? or Stake,
                     plan-ai-tools has <planning_protocol>, implement-ai-tools has
-                    <implementation_protocol> and <simple_tasks_protocol>, USER-AGENTS.md has
-                    an <execution_protocol> with a <rule id> for default-worker
-                    and implementer, never <agents>,
+                    <harness_agents>, <implementation_protocol>, and <simple_tasks_protocol>,
+                    USER-AGENTS.md has no <execution_protocol>, implement-ai-tools defines
+                    rules for default-worker and implementer, never <agents>,
                     <dispatch_protocol>, or <worker, YAML applyTo/alwaysApply,
                     optional $HOME/AGENTS.md, and no references to deleted files (rules 5, 11)
   instructions cap  USER-AGENTS.md is at most 10000 characters (rule 3)
@@ -67,8 +67,8 @@ Checks:
                     <response>, <signal>, <state> their id, type, or code,
                     and every <template> a role and an executor that is one
                     of default-worker, implementer, or inherited AND
-                    has a matching <rule id> inside USER-AGENTS
-                    <execution_protocol>, never an agent attribute (rule 9,
+                    has a matching <rule id> inside implement-ai-tools
+                    <harness_agents>, never an agent attribute (rule 9,
                     Semantic XML grammar)
   xml references    every backticked tag reference resolves: attribute
                     references to a definition in the same or the qualified
@@ -80,7 +80,7 @@ Checks:
   rule anchors      no SKILL.md or USER-AGENTS.md cites a README rule number
                     (rule 9)
   spawn protocol    every SKILL.md with a <template> cites
-  citation          <execution_protocol>, and no SKILL.md duplicates the
+  citation          <harness_agents>, and no SKILL.md duplicates the
                     harness native subagent API list (Copilot runSubagent)
   rule citations    README rules numbered 1..N without gaps; every rule N
                     cited in tracked docs and scripts is within 1..N (rule 1)
@@ -225,32 +225,32 @@ check_skill_layout() {
   fi
 
   f="$AI_TOOLS/skills/implement-ai-tools/SKILL.md"
-  if grep -q '<implementation_protocol>' "$f" && grep -q '<simple_tasks_protocol>' "$f"; then
-    ok "implement-ai-tools has implementation_protocol and simple_tasks_protocol tags: $f"
+  if grep -q '<implementation_protocol>' "$f" && grep -q '<simple_tasks_protocol>' "$f" && grep -q '<harness_agents>' "$f"; then
+    ok "implement-ai-tools has harness_agents, implementation_protocol and simple_tasks_protocol tags: $f"
   else
-    warn "implement-ai-tools missing '<implementation_protocol>' or '<simple_tasks_protocol>' tag: $f"
-  fi
-
-  f="$AI_TOOLS/USER-AGENTS.md"
-  if grep -q '<planning_protocol>' "$f" || grep -q '<implementation_protocol>' "$f"; then
-    warn "USER-AGENTS.md must not contain migrated planning_protocol or implementation_protocol tags: $f"
-  else
-    ok "USER-AGENTS.md has no retired planning_protocol or implementation_protocol tag: $f"
-  fi
-
-  if grep -q '<execution_protocol>' "$f"; then
-    ok "USER-AGENTS.md has execution_protocol tag: $f"
-  else
-    warn "USER-AGENTS.md missing '<execution_protocol>' tag: $f"
+    warn "implement-ai-tools missing '<harness_agents>', '<implementation_protocol>', or '<simple_tasks_protocol>' tag: $f"
   fi
 
   for rid in default-worker implementer; do
-    if awk '/<execution_protocol>/{p=1} p&&/<\/execution_protocol>/{p=0} p' "$f" | grep -qF "<rule id=\"$rid\">"; then
-      ok "USER-AGENTS.md execution_protocol defines rule $rid: $f"
+    if awk '/<harness_agents>/{p=1} p&&/<\/harness_agents>/{p=0} p' "$f" | grep -qF "<rule id=\"$rid\">"; then
+      ok "implement-ai-tools harness_agents defines rule $rid: $f"
     else
-      warn "USER-AGENTS.md execution_protocol missing <rule id=\"$rid\">: $f"
+      warn "implement-ai-tools harness_agents missing <rule id=\"$rid\">: $f"
     fi
   done
+
+  if grep -q 'authorized delegated payload' "$f"; then
+    ok "implement-ai-tools notes authorized delegated payload: $f"
+  else
+    warn "implement-ai-tools missing authorized delegated payload: $f"
+  fi
+
+  f="$AI_TOOLS/USER-AGENTS.md"
+  if grep -q '<planning_protocol>' "$f" || grep -q '<implementation_protocol>' "$f" || grep -q '<execution_protocol>' "$f" || grep -q '<harness_agents>' "$f"; then
+    warn "USER-AGENTS.md must not contain migrated planning_protocol, implementation_protocol, execution_protocol, or harness_agents tags: $f"
+  else
+    ok "USER-AGENTS.md has no retired planning_protocol, implementation_protocol, execution_protocol, or harness_agents tag: $f"
+  fi
 
   if grep -qE '<agents>|<dispatch_protocol>|<worker' "$f"; then
     warn "USER-AGENTS.md contains a retired <agents>, <dispatch_protocol>, or <worker tag: $f"
@@ -262,12 +262,6 @@ check_skill_layout() {
     ok "USER-AGENTS.md has Copilot applyTo and Cursor alwaysApply frontmatter: $f"
   else
     warn "USER-AGENTS.md missing YAML applyTo: \"**\" and alwaysApply: true frontmatter: $f"
-  fi
-
-  if grep -q 'authorized delegated payload' "$f"; then
-    ok "USER-AGENTS.md notes authorized delegated payload: $f"
-  else
-    warn "USER-AGENTS.md missing authorized delegated payload: $f"
   fi
 
   # shellcheck disable=SC2016 # literal '$HOME' text in instructions
@@ -550,7 +544,7 @@ check_no_binaries() {
 # The vocabulary of structural tags (README, "Semantic XML grammar"). A tag
 # outside it, outside <input>, is a finding: register a new tag in the README
 # table and here in the same commit.
-XML_VOCAB="user_instructions system_overview planning_protocol implementation_protocol execution_protocol simple_tasks_protocol unit_tests language_rules chat disk user_interaction fallback security_guardrails skill overview session_workflow step dispatch_templates template job input instructions constraints constraint status_protocol states state return_protocol signal plan_file_format structure boundaries rule default implementer_job"
+XML_VOCAB="user_instructions system_overview planning_protocol implementation_protocol harness_agents simple_tasks_protocol unit_tests language_rules chat disk user_interaction fallback security_guardrails skill overview session_workflow step dispatch_templates template job input instructions constraints constraint status_protocol states state return_protocol signal plan_file_format structure boundaries rule default implementer_job"
 
 xml_files() {
   local f
@@ -603,11 +597,11 @@ xml_references() {
 valid_executors() {
   # usage: valid_executors -- space-separated executor names that are both
   # one of the three known executor kinds and have a matching <rule id> inside
-  # USER-AGENTS.md's <execution_protocol> (rule 9). A skill <template> whose
+  # implement-ai-tools's <harness_agents> (rule 9). A skill <template> whose
   # executor is not in this set is a lint finding, even if it names one of the
   # three known kinds by spelling alone.
   local rule_ids e out=""
-  rule_ids=$(awk '/<execution_protocol>/{p=1} p&&/<\/execution_protocol>/{p=0} p' "$AI_TOOLS/USER-AGENTS.md" \
+  rule_ids=$(awk '/<harness_agents>/{p=1} p&&/<\/harness_agents>/{p=0} p' "$AI_TOOLS/skills/implement-ai-tools/SKILL.md" \
     | grep -oE '<rule id="[a-z0-9-]+"' | sed -E 's/<rule id="([a-z0-9-]+)"/\1/' )
   for e in default-worker implementer inherited; do
     if in_list "$e" "$(echo "$rule_ids" | tr '\n' ' ')"; then out="$out $e"; fi
@@ -725,6 +719,8 @@ EOF
           ok "reference resolves: <$name $attr=\"$val\"> in $f"
         elif [ -z "$q" ] && xml_body "$AI_TOOLS/USER-AGENTS.md" | grep -q "<${name}[^>]* ${attr}=\"${val}\""; then
           ok "reference resolves: <$name $attr=\"$val\"> in $f"
+        elif [ -z "$q" ] && xml_body "$AI_TOOLS/skills/implement-ai-tools/SKILL.md" | grep -q "<${name}[^>]* ${attr}=\"${val}\""; then
+          ok "reference resolves: <$name $attr=\"$val\"> in $f"
         else
           warn "unresolved reference <$name $attr=\"$val\"> in $f (looked in $target)"
         fi
@@ -802,7 +798,7 @@ EOF
 # --- Check: spawn protocol citation (rule 9) --------------------------------
 # Every skill that spawns a template cites the centralized execution protocol
 # instead of restating it, and the harness native subagent API list lives
-# only in USER-AGENTS.md.
+# only in implement-ai-tools.
 
 check_spawn_protocol_citation() {
   local f
@@ -810,14 +806,14 @@ check_spawn_protocol_citation() {
     [ -f "$f" ] || continue
     if grep -q '<template' "$f"; then
       # shellcheck disable=SC2016 # literal backticked citation text, not command substitution
-      if grep -qF '`<execution_protocol>`' "$f"; then
-        ok "cites execution_protocol: $f"
+      if grep -qF '`<harness_agents>`' "$f"; then
+        ok "cites harness_agents: $f"
       else
-        warn "SKILL.md has a <template> but does not cite \`<execution_protocol>\`: $f"
+        warn "SKILL.md has a <template> but does not cite \`<harness_agents>\`: $f"
       fi
     fi
-    if grep -qF 'Copilot runSubagent' "$f"; then
-      warn "SKILL.md repeats the harness native subagent API list (belongs only in USER-AGENTS.md): $f"
+    if [ "$f" != "$AI_TOOLS/skills/implement-ai-tools/SKILL.md" ] && grep -qF 'Copilot runSubagent' "$f"; then
+      warn "SKILL.md repeats the harness native subagent API list (belongs only in implement-ai-tools): $f"
     else
       ok "no duplicated native subagent API list: $f"
     fi

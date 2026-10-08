@@ -62,8 +62,8 @@ argument-hint: "[campaign name and optional priorities or exclusions]"
 
   <boundaries>
     <rule id="campaign-lifecycle">Implementers make every other repository write; the session's only one is `git reset --soft HEAD~1` on a failed check, and goal planners stay read-only, both writing files only under `${TMPDIR:-/tmp}/ai-tools/`. Bootstrap creates `campaign/{CAMPAIGN}` and `docs/campaign-ai-tools/{CAMPAIGN}.md`; each goal's stage 1 writes `docs/campaign-ai-tools/{N}-{SLUG}.md` on that branch and its last stage removes it and marks the goal done, without pushing; finish removes `docs/campaign-ai-tools/`, commits, pushes, and opens a pull request; block records the reason, preserves `docs/campaign-ai-tools/`, and commits without pushing.</rule>
-    <rule id="spawn-apis">Spawn `<template role="stage-implementer">` as {IMPLEMENTER} per `<execution_protocol>`; if it cannot be spawned, block per `<rule id="spawn-fallback">`.</rule>
+    <rule id="spawn-apis">Spawn `<template role="stage-implementer">` as {IMPLEMENTER} per implement-ai-tools `<harness_agents>`; if it cannot be spawned, block per implement-ai-tools `<rule id="spawn-fallback">`.</rule>
     <rule id="stay-in-repo">Stay inside the working repository. Preserve pre-existing commit history.</rule>
-    <rule id="protocol-source">Follow user-wide `<execution_protocol>`, `<user_interaction>`, and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
+    <rule id="protocol-source">Follow user-wide `<user_interaction>` and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
   </boundaries>
 </skill>
