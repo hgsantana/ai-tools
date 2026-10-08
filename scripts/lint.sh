@@ -535,7 +535,7 @@ check_no_binaries() {
 # The vocabulary of structural tags (README, "Semantic XML grammar"). A tag
 # outside it, outside <input>, is a finding: register a new tag in the README
 # table and here in the same commit.
-XML_VOCAB="user_instructions system_overview planning_protocol implementation_protocol execution_protocol simple_tasks_protocol language_rules chat disk user_interaction fallback security_guardrails skill overview session_workflow step dispatch_templates template job input instructions constraints constraint status_protocol states state return_protocol signal plan_file_format structure boundaries rule default implementer_job"
+XML_VOCAB="user_instructions system_overview planning_protocol implementation_protocol execution_protocol simple_tasks_protocol unit_tests language_rules chat disk user_interaction fallback security_guardrails skill overview session_workflow step dispatch_templates template job input instructions constraints constraint status_protocol states state return_protocol signal plan_file_format structure boundaries rule default implementer_job"
 
 xml_files() {
   local f

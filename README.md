@@ -83,7 +83,7 @@ Vocabulary. A new tag is registered here and in `scripts/lint.sh` (`XML_VOCAB`) 
 | Tag | File | Meaning |
 |---|---|---|
 | `<user_instructions>` | USER-AGENTS | root |
-| `<system_overview>`, `<planning_protocol>`, `<implementation_protocol>`, `<execution_protocol>`, `<simple_tasks_protocol>`, `<language_rules>`, `<user_interaction>`, `<security_guardrails>` | USER-AGENTS | top-level sections |
+| `<system_overview>`, `<planning_protocol>`, `<implementation_protocol>`, `<execution_protocol>`, `<simple_tasks_protocol>`, `<unit_tests>`, `<language_rules>`, `<user_interaction>`, `<security_guardrails>` | USER-AGENTS | top-level sections |
 | `<chat>`, `<disk>` | USER-AGENTS | language destinations |
 | `<default>`, `<fallback>` | USER-AGENTS | native-tool question rule and its chat fallback |
 | `<skill name>` | skills | root |
