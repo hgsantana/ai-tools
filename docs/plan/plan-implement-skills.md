@@ -6,7 +6,7 @@
 | 2 | Create `skills/plan-ai-tools/SKILL.md` | done | session |
 | 3 | Create `skills/implement-ai-tools/SKILL.md` | done | session |
 | 4 | Update `USER-AGENTS.md` | done | session |
-| 5 | Update Consumer Skills (`vibe`, `campaign`, `team`, `ui`) | pending | session |
+| 5 | Update Consumer Skills (`vibe`, `campaign`, `team`, `ui`) | done | session |
 | 6 | Update Linters, Shell Scripts, and Docs | pending | session |
 | 7 | Cleanup & Final Verification | pending | session |
 
@@ -135,6 +135,14 @@
 - Updated reference to `plan-ai-tools <rule id="implementer-offer">` in `implementer` rule.
 - Checked size: 4,640 chars (well within 10,000 char cap).
 - Status: Stage 4 complete.
+
+## Stage 5 Report
+- Updated `skills/vibe-ai-tools/SKILL.md` to reference `plan-ai-tools <planning_protocol>`, `plan-ai-tools <rule id="grill-me">`, `plan-ai-tools <rule id="present-plan">`, and `implement-ai-tools <implementation_protocol>`.
+- Updated `skills/campaign-ai-tools/SKILL.md` to reference `plan-ai-tools` and `implement-ai-tools`.
+- Updated `skills/team-ai-tools/SKILL.md` to reference `plan-ai-tools` and `implement-ai-tools`.
+- Updated `skills/ui-ai-tools/SKILL.md` to reference `plan-ai-tools` and `implement-ai-tools`.
+- Status: Stage 5 complete.
+
 
 
 

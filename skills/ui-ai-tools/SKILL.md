@@ -13,7 +13,7 @@ argument-hint: "[routes] [base URL] [auth state path or env var names]"
 
 <skill name="ui-ai-tools">
   <overview>
-    Evaluate routes by rendered image and source code, consolidate an illustrated report, plan the modernization per `<planning_protocol>`, and deliver it per `<implementation_protocol>`.
+    Evaluate routes by rendered image and source code, consolidate an illustrated report, plan the modernization per plan-ai-tools `<planning_protocol>`, and deliver it per implement-ai-tools `<implementation_protocol>`.
   </overview>
 
   <session_workflow>
@@ -38,7 +38,7 @@ argument-hint: "[routes] [base URL] [auth state path or env var names]"
     </step>
 
     <step id="6" name="plan">
-      Plan the modernization from the report per `<planning_protocol>`; grill-me covers design direction (brand constraints, design system or CSS stack, scope, priorities, appetite for creative change), framing {IMPLEMENTER} per `<implementer_job>` in the initial batch, and iterates until settled. Save the plan outside the repository at `{WORKDIR}/plan.md`. Send the briefing in a chat message, then confirm approval via `<user_interaction>`; present the plan in a chat message linking to `{WORKDIR}/plan.md` per `<rule id="present-plan">` and obtain explicit approval before delivery. Every stage that changes UI lists, in its verification, recapture of the affected routes at the three viewports into `{WORKDIR}/after/stage-{STAGE}/`.
+      Plan the modernization from the report per plan-ai-tools `<planning_protocol>`; grill-me covers design direction (brand constraints, design system or CSS stack, scope, priorities, appetite for creative change), framing {IMPLEMENTER} per `<implementer_job>` in the initial batch, and iterates until settled. Save the plan outside the repository at `{WORKDIR}/plan.md`. Send the briefing in a chat message, then confirm approval via `<user_interaction>`; present the plan in a chat message linking to `{WORKDIR}/plan.md` per plan-ai-tools `<rule id="present-plan">` and obtain explicit approval before delivery. Every stage that changes UI lists, in its verification, recapture of the affected routes at the three viewports into `{WORKDIR}/after/stage-{STAGE}/`.
     </step>
 
     <step id="7" name="deliver">
@@ -136,7 +136,7 @@ argument-hint: "[routes] [base URL] [auth state path or env var names]"
   </dispatch_templates>
 
   <boundaries>
-    <rule id="protocols">Planning follows user-wide `<planning_protocol>` and delivery `<implementation_protocol>`; this skill states only its specifics: route evaluation, the illustrated report, and before/after recapture.</rule>
+    <rule id="protocols">Planning follows plan-ai-tools `<planning_protocol>` and delivery implement-ai-tools `<implementation_protocol>`; this skill states only its specifics: route evaluation, the illustrated report, and before/after recapture.</rule>
     <rule id="spawn-apis">Spawn templates per `<execution_protocol>`; if `<template role="stage-implementer">` cannot be spawned as {IMPLEMENTER}, stop as blocked per `<rule id="spawn-fallback">`.</rule>
     <rule id="protocol-source">Follow user-wide `<execution_protocol>`, `<user_interaction>`, and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
     <rule id="evaluators-read-only">Steps 1–5 write only under {WORKDIR}; the repository stays untouched until delivery.</rule>

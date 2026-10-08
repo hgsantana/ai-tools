@@ -12,12 +12,12 @@ argument-hint: "[the change to deliver]"
 
 <skill name="vibe-ai-tools">
   <overview>
-    Plan a change with the user per `<planning_protocol>`, then deliver it unattended per `<implementation_protocol>`.
+    Plan a change with the user per plan-ai-tools `<planning_protocol>`, then deliver it unattended per implement-ai-tools `<implementation_protocol>`.
   </overview>
 
   <session_workflow>
     <step id="1" name="plan">
-      Plan the requested change per `<planning_protocol>`, deriving kebab-case {SLUG}: probe assumptions and scope per `<rule id="grill-me">`, framing {IMPLEMENTER} per `<implementer_job>` in the initial batch, and iterate on responses until settled; send the briefing in a chat message, then confirm approval via `<user_interaction>`; present the plan in a chat message (linking to it when on disk) and obtain explicit approval per `<rule id="present-plan">` before delivery.
+      Plan the requested change per plan-ai-tools `<planning_protocol>`, deriving kebab-case {SLUG}: probe assumptions and scope per plan-ai-tools `<rule id="grill-me">`, framing {IMPLEMENTER} per `<implementer_job>` in the initial batch, and iterate on responses until settled; send the briefing in a chat message, then confirm approval via `<user_interaction>`; present the plan in a chat message (linking to it when on disk) and obtain explicit approval per plan-ai-tools `<rule id="present-plan">` before delivery.
     </step>
 
     <step id="2" name="deliver">
@@ -58,7 +58,7 @@ argument-hint: "[the change to deliver]"
   </dispatch_templates>
 
   <boundaries>
-    <rule id="protocols">Planning follows user-wide `<planning_protocol>` and delivery `<implementation_protocol>`; this skill states only its specifics.</rule>
+    <rule id="protocols">Planning follows plan-ai-tools `<planning_protocol>` and delivery implement-ai-tools `<implementation_protocol>`; this skill states only its specifics.</rule>
     <rule id="spawn-apis">Spawn `<template role="stage-implementer">` as {IMPLEMENTER} per `<execution_protocol>`; if it cannot be spawned, stop as blocked per `<rule id="spawn-fallback">`.</rule>
     <rule id="protocol-source">Follow user-wide `<execution_protocol>`, `<user_interaction>`, and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
     <rule id="stay-in-repo">Stay inside the working repository. Preserve pre-existing commit history.</rule>
