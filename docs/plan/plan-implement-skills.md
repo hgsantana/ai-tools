@@ -5,7 +5,7 @@
 | 1 | Setup & Initial Plan Record | done | session |
 | 2 | Create `skills/plan-ai-tools/SKILL.md` | done | session |
 | 3 | Create `skills/implement-ai-tools/SKILL.md` | done | session |
-| 4 | Update `USER-AGENTS.md` | pending | session |
+| 4 | Update `USER-AGENTS.md` | done | session |
 | 5 | Update Consumer Skills (`vibe`, `campaign`, `team`, `ui`) | pending | session |
 | 6 | Update Linters, Shell Scripts, and Docs | pending | session |
 | 7 | Cleanup & Final Verification | pending | session |
@@ -128,5 +128,13 @@
 - Included templates `<template role="stage-implementer">` and `<template role="simple-implementer">`.
 - Verified frontmatter: name, description <= 500 chars (with `Impact:` and `Agent: session + implementer (model asked once)`), argument-hint.
 - Status: Stage 3 complete.
+
+## Stage 4 Report
+- Migrated `<planning_protocol>`, `<implementation_protocol>`, and `<simple_tasks_protocol>` out of `USER-AGENTS.md`.
+- Retained `<execution_protocol>`, `<unit_tests>`, `<language_rules>`, `<user_interaction>`, and `<security_guardrails>`.
+- Updated reference to `plan-ai-tools <rule id="implementer-offer">` in `implementer` rule.
+- Checked size: 4,640 chars (well within 10,000 char cap).
+- Status: Stage 4 complete.
+
 
 
