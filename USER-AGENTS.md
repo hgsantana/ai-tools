@@ -4,7 +4,7 @@ alwaysApply: true
 ---
 # User-wide agent instructions
 
-A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/AGENTS.md` exists, follow it; if missing, ignore it.
+A repository `AGENTS.md` or `README.md` overrides these rules there.
 
 <user_instructions>
 
@@ -33,4 +33,12 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/A
     <rule id="cloud-approval">Never mutate a cloud resource without explicit user approval for that specific action. Approval never carries over, not even inside unattended execution.</rule>
     <rule id="confirm-destructive">Prefer reversible local work. Confirm destructive or shared-state operations — force-push, dropping tables, production deploys.</rule>
   </security_guardrails>
+
+  <conventional_commits>
+    <rule id="always-commit">Always commit changes to the repository when you fulfill an user request. If the user requests a correction of the commit you've just delivered in the session, amend the existing commit.</rule>
+    <rule id="commit-message-format">Use Conventional Commits format for commit messages: `<type>(<scope>): <description>` with optional body and footer. Types include `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`.</rule>
+    <rule id="commit-message-content">Commit messages should be concise, clear, and descriptive of the change. Avoid vague messages like "update" or "fix".</rule>
+    <rule id="commit-message-body">It should provide additional context, reasoning, or details about the change in the commit body. Use bullet points or paragraphs as needed.</rule>
+    <rule id="never-push">Never push to remote, unless explicitly instructed by the user or some skill to open a new PR.</rule>
+  </conventional_commits>
 </user_instructions>
