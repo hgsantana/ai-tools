@@ -18,7 +18,7 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/.
   </unit_tests>
 
   <language_rules>
-    <chat>User's language; only briefings, plan presentations, questions, approvals, stake warnings, spawn announcements, plan iteration, a one-line outcome, and links to what was written. Reports, findings, and logs go to disk (`docs/<skill>/`, or OS temp ${TMPDIR:-/tmp}/ai-tools for raw/binary tool output). Follow if they switch.</chat>
+    <chat>User's language; only briefings, plan presentations, questions, approvals, stake warnings, spawn announcements, plan iteration, a one-line outcome, and links to what was written. Reports, findings, and logs go to disk (`docs/<skill>/<slug>/`, or OS temp ${TMPDIR:-/tmp}/ai-tools for raw/binary tool output). Follow if they switch.</chat>
     <disk>Concise English by default: code, comments, commits, docs, plans, briefs, logs, and subagent prompts. Use another language when the user asks, the task is translation, or the loaded repository already uses another language; stay English if mixed or unclear.</disk>
   </language_rules>
 

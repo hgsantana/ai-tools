@@ -18,7 +18,7 @@ argument-hint: "[the change to deliver]"
 
     <step id="2" name="deliver">
       For each stage, spawn `<template role="stage-implementer">` as {IMPLEMENTER}, substituting {SLUG}, {STAGE}, and {PLAN} (for stage 1, the full plan or the path of a plan file saved outside the repository; else empty); the session validates the implementer's delivery by reviewing the git diff and concise test summary against the plan and stage acceptance criteria.
-      Decide in-scope questions from code evidence and log each in that stage's report. On a failed check, run `git reset --soft HEAD~1` before respawning once with the corrections in the brief; on a second failure, stop as blocked without push or pull request, write evidence to `${TMPDIR:-/tmp}/ai-tools/{SLUG}-blocked.md`, and preserve `docs/vibe-ai-tools/`.
+      Decide in-scope questions from code evidence and log each in that stage's report. On a failed check, run `git reset --soft HEAD~1` before respawning once with the corrections in the brief; on a second failure, stop as blocked without push or pull request, write evidence to `${TMPDIR:-/tmp}/ai-tools/{SLUG}-blocked.md`, and preserve `docs/vibe-ai-tools/{SLUG}/`.
     </step>
 
     <step id="3" name="report">
@@ -41,8 +41,8 @@ argument-hint: "[the change to deliver]"
       </input>
       <instructions>
         This payload is the brief; do not read sibling skill files.
-        For stage 1, write {PLAN}, reading it first when it is a file path, to docs/vibe-ai-tools/{SLUG}.md as that stage specifies. Read docs/vibe-ai-tools/{SLUG}.md and the repository rules (README.md, AGENTS.md if present). Deliver only stage {STAGE}: match surrounding style, write and run its tests reporting only a concise summary of coverage and execution, set its Status to done, append a short report to the end of docs/vibe-ai-tools/{SLUG}.md, and commit with the stage's Conventional Commit message.
-        For the last stage, remove `docs/vibe-ai-tools/` (with `git rm -r docs/vibe-ai-tools`), commit the removal with the stage's commit message, and run push and pull request against the base branch.
+        For stage 1, write {PLAN}, reading it first when it is a file path, to docs/vibe-ai-tools/{SLUG}/0-{SLUG}.md as that stage specifies. Read docs/vibe-ai-tools/{SLUG}/0-{SLUG}.md and the repository rules (README.md, AGENTS.md if present). Deliver only stage {STAGE}: match surrounding style, write and run its tests reporting only a concise summary of coverage and execution, set its Status to done, append a short report to the end of docs/vibe-ai-tools/{SLUG}/0-{SLUG}.md, and commit with the stage's Conventional Commit message.
+        For the last stage, remove `docs/vibe-ai-tools/{SLUG}/` (with `git rm -r docs/vibe-ai-tools/{SLUG}`), commit the removal with the stage's commit message, and run push and pull request against the base branch.
         Return a one-line outcome with the commit hash, test summary, and changed paths.
       </instructions>
       <constraints>
