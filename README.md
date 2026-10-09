@@ -1,6 +1,6 @@
 # ai-tools
 
-> **Version 0.0.71-ALPHA** — under active development. Suitable for testing; alpha versions provide neither guarantees nor backward compatibility (rule 4).
+> **Version 0.0.72-ALPHA** — under active development. Suitable for testing; alpha versions provide neither guarantees nor backward compatibility (rule 4).
 
 ## Overview
 
@@ -10,17 +10,17 @@ This repository is the source of those tools. It is installed on the user's mach
 
 How it operates:
 
-1. **A harness toolkit.** Skills and `USER-AGENTS.md` are what the supported harnesses load after install.
+1. **A harness toolkit.** Skills and `AI-TOOLS-AGENTS.md` are what the supported harnesses load after install.
 2. **Machine-local install.** `$HOME/.ai-tools` is the only supported clone. Installed instructions and skills reference that path.
-3. **User-wide instructions.** [`USER-AGENTS.md`](USER-AGENTS.md) is linked (or fallback-copied) as the global instructions file for every supported harness. After install it provides global planning, implementation, and execution protocols; it is not this repository's rule file (rule 3). The copy includes Copilot `applyTo: "**"` and Cursor `alwaysApply: true` so those destinations attach automatically.
-4. **Session-first skills.** Skills provide session-directed workflows in semantic XML. The host session executes them on its own model and interacts with the user; builds, tests, script runs, and bulk fact collection go to the harness's default subagent. `USER-AGENTS.md` adds planning and implementation rules to each harness's own flows without replacing them. `agy-ai-tools`, `claude-ai-tools`, and `copilot-ai-tools` dispatch an agent by tier (`junior`, `mid`, `senior`) from a table hardcoded in each skill, via the CLI first, then the harness subagent API, then the closest model and effort available. `vibe-ai-tools` plans with the user, `campaign-ai-tools` plans 3–10 goals via an inherited subagent, and `team-ai-tools` records a test, lint, and build baseline, then refines a request through the PO session and 2–8 inherited senior reviewers with batched questions into a reviewer-signed-off, user-approved plan or campaign, reusing vibe/campaign delivery with per-stage validation by every related reviewer, plus a test validator for code stages, ahead of each stage check, a final audit, and a CI report; `ui-ai-tools` evaluates routes by full-page screenshots at three viewports and source code, one inherited evaluator per route, into an illustrated report, then plans the UI modernization with the user and validates stages with before/after recaptures; all four deliver each stage in a fresh implementer: the current harness skill's `mid` tier (recommended) or `senior` tier, or a subagent/default of the session, asked once. In campaigns, implementers make every repository write.
+3. **User-wide instructions.** [`AI-TOOLS-AGENTS.md`](AI-TOOLS-AGENTS.md) is linked (or fallback-copied) as the global instructions file for every supported harness. After install it provides global planning, implementation, and execution protocols; it is not this repository's rule file (rule 3). The copy includes Copilot `applyTo: "**"` and Cursor `alwaysApply: true` so those destinations attach automatically.
+4. **Session-first skills.** Skills provide session-directed workflows in semantic XML. The host session executes them on its own model and interacts with the user; builds, tests, script runs, and bulk fact collection go to the harness's default subagent. `AI-TOOLS-AGENTS.md` adds planning and implementation rules to each harness's own flows without replacing them. `agy-ai-tools`, `claude-ai-tools`, and `copilot-ai-tools` dispatch an agent by tier (`junior`, `mid`, `senior`) from a table hardcoded in each skill, via the CLI first, then the harness subagent API, then the closest model and effort available. `vibe-ai-tools` plans with the user, `campaign-ai-tools` plans 3–10 goals via an inherited subagent, and `team-ai-tools` records a test, lint, and build baseline, then refines a request through the PO session and 2–8 inherited senior reviewers with batched questions into a reviewer-signed-off, user-approved plan or campaign, reusing vibe/campaign delivery with per-stage validation by every related reviewer, plus a test validator for code stages, ahead of each stage check, a final audit, and a CI report; `ui-ai-tools` evaluates routes by full-page screenshots at three viewports and source code, one inherited evaluator per route, into an illustrated report, then plans the UI modernization with the user and validates stages with before/after recaptures; all four deliver each stage in a fresh implementer: the current harness skill's `mid` tier (recommended) or `senior` tier, or a subagent/default of the session, asked once. In campaigns, implementers make every repository write.
 5. **Frontmatter only in the host session.** Harnesses keep skill `name` and `description` in the skill list without loading the body. Skills are invoked explicitly by slash-command or skill name.
 
 ### Contents
 
 | Path | What it is |
 |---|---|
-| [`USER-AGENTS.md`](USER-AGENTS.md) | User-wide instructions after install: planning and implementation rules added to each harness's own flows, execution protocol, language, native question tool, and security. Linked (or fallback-copied) to each harness's global instructions destination. Workflows live in skills |
+| [`AI-TOOLS-AGENTS.md`](AI-TOOLS-AGENTS.md) | User-wide instructions after install: planning and implementation rules added to each harness's own flows, execution protocol, language, native question tool, and security. Linked (or fallback-copied) to each harness's global instructions destination. Workflows live in skills |
 | [`docs/USAGE.md`](docs/USAGE.md) | Harness-agnostic invocation guide for every shipped skill |
 | [`skills/`](skills/) | Each `skills/<name>/SKILL.md` has a semantic XML body. Harnesses list frontmatter; the session executes the workflow |
 | [`scripts/`](scripts/) | `scripts/shell/` install processes ([Scripts](#scripts); rules 18–21); `lint.sh`, `test.sh`, and its sourced `scripts/test/` case files ([Development checks](#development-checks)). Windows: WSL or Git Bash |
@@ -52,9 +52,9 @@ Normative for every human and every AI maintaining this repository.
 ### Source of truth
 
 1. This `README.md` is the repository's source of truth for its explanation, rules, and installation, removal, and update processes. `scripts/` provides their executable form (rules 18–21).
-2. For work in this repository, this README takes precedence over user-wide and harness-global instructions, including an installed `USER-AGENTS.md`.
-3. `USER-AGENTS.md` is an installation artifact for user-wide harness instructions, not this repository's rule file. After YAML frontmatter (`applyTo: "**"` and `alwaysApply: true` for Copilot and Cursor attachment), a title, and a short preamble, its body is semantic XML under `<user_instructions>` ([Semantic XML grammar](#semantic-xml-grammar)) with no markdown sub-headings, and every internal cross-reference is a deterministic XML tag reference. Its self-imposed **10,000-character** cap is tighter than every current harness constraint, including Antigravity's 12,000-character limit. Every shipped artifact fits the strictest harness that consumes it. Register stricter constraints in [Supported harnesses](#supported-harnesses) and update affected artifacts in the same commit.
-4. Pre-release (`0.x`/ALPHA at the top) versions provide no backward compatibility or migration notes; this README describes only the current state. Repair older layouts through [Update](#update) and its stale-link sweep. Every pull request that changes `skills/`, `scripts/`, or `USER-AGENTS.md` changes the version against its base branch; stacked pull requests each bump once. Backward-compatibility records begin with the first stable release.
+2. For work in this repository, this README takes precedence over user-wide and harness-global instructions, including an installed `AI-TOOLS-AGENTS.md`.
+3. `AI-TOOLS-AGENTS.md` is an installation artifact for user-wide harness instructions, not this repository's rule file. After YAML frontmatter (`applyTo: "**"` and `alwaysApply: true` for Copilot and Cursor attachment), a title, and a short preamble, its body is semantic XML under `<user_instructions>` ([Semantic XML grammar](#semantic-xml-grammar)) with no markdown sub-headings, and every internal cross-reference is a deterministic XML tag reference. Its self-imposed **10,000-character** cap is tighter than every current harness constraint, including Antigravity's 12,000-character limit. Every shipped artifact fits the strictest harness that consumes it. Register stricter constraints in [Supported harnesses](#supported-harnesses) and update affected artifacts in the same commit.
+4. Pre-release (`0.x`/ALPHA at the top) versions provide no backward compatibility or migration notes; this README describes only the current state. Repair older layouts through [Update](#update) and its stale-link sweep. Every pull request that changes `skills/`, `scripts/`, or `AI-TOOLS-AGENTS.md` changes the version against its base branch; stacked pull requests each bump once. Backward-compatibility records begin with the first stable release.
 
 ### Structure and authoring
 
@@ -62,13 +62,13 @@ Normative for every human and every AI maintaining this repository.
 6. Skill frontmatter uses universally accepted `name` and `description`, plus optional keys supported by every harness, such as `argument-hint`. The `description`, which harnesses retain without loading the body, states in order: (1) what the skill does and when to use it, including `/name`; (2) `Impact:` plus what can be billed, deleted, committed, pushed, or otherwise changed—or that impact is absent; (3) `Agent:` with `session` when the skill never spawns implementers; or `session + implementer (model asked once)` when it defines `<implementer_job>` and an executor="implementer" template (`vibe-ai-tools`, `campaign-ai-tools`, `team-ai-tools`, `ui-ai-tools`). Keep it within **500 characters** because harnesses budget the skill list: Claude Code truncates it at 1,536.
 7. Every installed skill directory, slash command, and frontmatter `name:` ends in `-ai-tools`; bare names such as `plan` and `az` remain uninstalled.
 8. Use extreme concision: remove ambiguity and redundancy while preserving every instruction, rule, and intention.
-9. Skills and `USER-AGENTS.md` state what to do in the [Semantic XML grammar](#semantic-xml-grammar): every cross-reference is a backticked tag reference that resolves (`<planning_protocol>`, `<template role="...">`, `<step id="...">`), every variable is a `{PLACEHOLDER}`, every `<rule>` has an `id`, and every `<template>` names its `role` and `executor`. A skill with a `<template>` cites implement-ai-tools `<harness_agents>` for spawning and never restates the harness native subagent API list. Prose citations of this README use section anchors, never rule numbers. A negative (`never`, `do not`) is used only when it reinforces an essential positive, or when the positive phrasing would lose force or not make sense.
+9. Skills and `AI-TOOLS-AGENTS.md` state what to do in the [Semantic XML grammar](#semantic-xml-grammar): every cross-reference is a backticked tag reference that resolves (`<planning_protocol>`, `<template role="...">`, `<step id="...">`), every variable is a `{PLACEHOLDER}`, every `<rule>` has an `id`, and every `<template>` names its `role` and `executor`. A skill with a `<template>` cites implement-ai-tools `<harness_agents>` for spawning and never restates the harness native subagent API list. Prose citations of this README use section anchors, never rule numbers. A negative (`never`, `do not`) is used only when it reinforces an essential positive, or when the positive phrasing would lose force or not make sense.
 10. Repository files use concise English; chat uses the user's language. Rule 25 assigns content between them.
 11. A skill that can be **destructive** or **generate cost** states that impact once in its `description` `Impact:` (rule 6), rather than in a body Stake section.
 
 ### Semantic XML grammar
 
-The semantic-XML bodies (`USER-AGENTS.md` and every `SKILL.md`) follow one grammar, enforced by `scripts/lint.sh` (rule 9):
+The semantic-XML bodies (`AI-TOOLS-AGENTS.md` and every `SKILL.md`) follow one grammar, enforced by `scripts/lint.sh` (rule 9):
 
 - **Angle brackets** appear only as structural tags from the vocabulary below, or as a backticked reference to one: `` `<template role="stage-implementer">` ``, `` `<step id="2">` ``, `` `<security_guardrails>` ``. Once backticked spans are removed, every body is balanced XML.
 - **Variables** are brace placeholders: `{SLUG}`, `{BASE_BRANCH}`, `{COMMANDS}`. Every placeholder a `<template>` uses is declared in its `<input>`, and every declared one is used; the session substitutes them before spawning.
@@ -82,12 +82,12 @@ Vocabulary. A new tag is registered here and in `scripts/lint.sh` (`XML_VOCAB`) 
 
 | Tag | File | Meaning |
 |---|---|---|
-| `<user_instructions>` | USER-AGENTS | root |
-| `<system_overview>`, `<unit_tests>`, `<language_rules>`, `<user_interaction>`, `<security_guardrails>` | USER-AGENTS | top-level sections |
+| `<user_instructions>` | AI-TOOLS-AGENTS | root |
+| `<system_overview>`, `<unit_tests>`, `<language_rules>`, `<user_interaction>`, `<security_guardrails>`, `<conventional_commits>` | AI-TOOLS-AGENTS | top-level sections |
 | `<planning_protocol>` | plan-ai-tools | planning protocol |
 | `<harness_agents>`, `<implementation_protocol>`, `<simple_tasks_protocol>` | implement-ai-tools | agent dispatch and implementation protocols |
-| `<chat>`, `<disk>` | USER-AGENTS | language destinations |
-| `<default>`, `<fallback>` | USER-AGENTS | native-tool question rule and its chat fallback |
+| `<chat>`, `<disk>` | AI-TOOLS-AGENTS | language destinations |
+| `<default>`, `<fallback>` | AI-TOOLS-AGENTS | native-tool question rule and its chat fallback |
 | `<skill name>` | skills | root |
 | `<overview>`, `<session_workflow>`, `<boundaries>` | skills | what the session runs |
 | `<dispatch_templates>` / `<template role executor>` / `<job>`, `<input>`, `<instructions>`, `<constraints>` / `<constraint>` | skills | the payload a template carries |
@@ -101,11 +101,11 @@ Vocabulary. A new tag is registered here and in `scripts/lint.sh` (`XML_VOCAB`) 
 ### Installation contract
 
 12. Install global instructions and skill directories as **symbolic links**. Fall back to physical copies only when the OS or filesystem refuses symlinks, and report every copy.
-13. Never overwrite a conflicting or locally modified destination by default. `--overwrite` explicitly replaces installed artifact paths for the selected harnesses; it never applies to `$HOME/AGENTS.md` or unrelated harness configuration.
-14. Never remove anything ai-tools did not create. Removal drops only legacy ai-tools links and copies that still match their source. `--force` also drops those same known regular-file or directory destinations when contents differ; it never unlinks a foreign symlink and never applies to `$HOME/AGENTS.md` or unrelated harness configuration.
+13. Never overwrite a conflicting or locally modified destination by default. `--overwrite` explicitly replaces installed artifact paths for the selected harnesses; it never applies to `$HOME/.ai-tools/USER-AGENTS.md` or unrelated harness configuration.
+14. Never remove anything ai-tools did not create. Removal drops only legacy ai-tools links and copies that still match their source. `--force` also drops those same known regular-file or directory destinations when contents differ; it never unlinks a foreign symlink and never applies to `$HOME/.ai-tools/USER-AGENTS.md` or unrelated harness configuration.
 15. Every install/remove/update step is idempotent; on conflict, skip and report unless the user passed the process's explicit replacement or forced-removal flag.
 16. `$HOME/.ai-tools` is the only supported clone location — user-level, never inside a project. Installed instructions and skills reference it; any other path breaks them.
-17. `$HOME/AGENTS.md` (`%USERPROFILE%\AGENTS.md` on Windows) is user-owned: if present, follow it; if missing, ignore it. It is never created, edited, overwritten, truncated, symlinked, or removed.
+17. `$HOME/.ai-tools/USER-AGENTS.md` (`%USERPROFILE%\.ai-tools\USER-AGENTS.md` on Windows) is user-owned: if present, follow it; if missing, ignore it. It is never created, edited, overwritten, truncated, symlinked, or removed.
 
 ### Script contract
 
@@ -119,7 +119,7 @@ Vocabulary. A new tag is registered here and in `scripts/lint.sh` (`XML_VOCAB`) 
 22. Version transient work under `docs/<skill>/` (or `docs/plan/<slug>/` when no skill is named) as a plan file `docs/<skill>/<slug>.md`, reports, decisions, or campaign state. All are temporary working state: stage 1 of a plan writes its file and the last stage removes `docs/<skill>/` (or `docs/plan/<slug>/`) with `git rm -r` before the push, so the full rationale stays on the branch while the repository root is clean after merge. On blocked execution, `docs/<skill>/` is preserved on the branch for inspection. Generated state, raw tool outputs, binaries like screenshots, and volatile runtime caches live in OS temp (`${TMPDIR:-/tmp}/ai-tools/`).
 23. The planning protocol ([`skills/plan-ai-tools/SKILL.md`](skills/plan-ai-tools/SKILL.md)) adds to, never replaces, the harness's own planning in every planning flow; the planner applies each rule where it fits and writes nothing to disk. It asks for a grill-me interview (all open questions asked at once in a batched call, with recommendations, ending with who implements, and follow-up batched rounds until all points are settled), sending a chat message containing the briefing and confirming it before finalizing, formulating the plan, presenting the plan in chat (linking to the plan file when on disk, preferred over repeating written content) and obtaining explicit approval before dispatching execution, short stages that are each testable and committable, a stage format listing files in scope, out-of-scope items, testable acceptance criteria, required tests, verification commands, and the commit message, one Conventional Commit per stage, a first stage that creates `plan/<slug>` from the current branch and writes `docs/<skill>/<slug>.md` (or `docs/plan/<slug>.md`) opened by a status table, a short report appended by each implementer, a documentation stage when features or behaviour change, and a last stage that removes that transient docs directory, commits, pushes, and opens a pull request.
 24. The implementation protocol ([`skills/implement-ai-tools/SKILL.md`](skills/implement-ai-tools/SKILL.md)) adds to, never replaces, the harness's own implementation flow when implementing a plan. The grill-me's final question settles who implements: the `mid` tier (recommended) or `senior` tier of the current harness skill (`claude-ai-tools`, `copilot-ai-tools`, or `agy-ai-tools`), or a subagent/default of the session. After briefing approval, the session presents the plan or campaign record in chat (linking to the file when on disk, preferred over restating written content) and obtains explicit approval before dispatching execution to delivery. Each stage runs in a fresh implementer with a clean context, the stage 1 brief carrying the full plan, or the path of a plan file the planner saved outside the repository, for that implementer to write to `docs/<skill>/<slug>.md` (or `docs/plan/<slug>.md`) (planners may be read-only). The implementer executes within scope, runs tests reporting only a concise summary of coverage and execution, appends its stage report, sets status to done, and commits locally without validating delivery against the macro plan. The planner that created the plan validates each stage delivery by reviewing the git diff and test summary against the plan and stage acceptance criteria before starting the next stage; on a failed check, the session runs `git reset --soft HEAD~1` before respawning the implementer once with corrections. `vibe-ai-tools`, `campaign-ai-tools`, `team-ai-tools`, and `ui-ai-tools` deliver to a pull request.
-25. **Substance is written to disk; the session carries questions, briefings, plans, and pointers.** Plans, tasks, and campaigns go where rule 22 puts them under `docs/<skill>/` (or `docs/plan/`). Raw tool outputs, binaries (such as screenshots), and runtime caches go under the OS temp directory (`${TMPDIR:-/tmp}/ai-tools/`). What reaches the user is the batched questions that need answers, the briefing message, the plan presentation (preferring a link to the plan file when on disk over repeating written content), the approvals that need confirmation, a one-line outcome, and the paths of what was written. Where the harness can open a file in the user's editor, open it rather than pasting its content. Restating on screen what already sits on disk spends the user's context twice and creates a second, diverging copy of the truth. This binds every skill and `USER-AGENTS.md`.
+25. **Substance is written to disk; the session carries questions, briefings, plans, and pointers.** Plans, tasks, and campaigns go where rule 22 puts them under `docs/<skill>/` (or `docs/plan/`). Raw tool outputs, binaries (such as screenshots), and runtime caches go under the OS temp directory (`${TMPDIR:-/tmp}/ai-tools/`). What reaches the user is the batched questions that need answers, the briefing message, the plan presentation (preferring a link to the plan file when on disk over repeating written content), the approvals that need confirmation, a one-line outcome, and the paths of what was written. Where the harness can open a file in the user's editor, open it rather than pasting its content. Restating on screen what already sits on disk spends the user's context twice and creates a second, diverging copy of the truth. This binds every skill and `AI-TOOLS-AGENTS.md`.
 
 ## Scripts
 
@@ -154,11 +154,11 @@ Check families:
 - **skill frontmatter** — every `skills/*/SKILL.md` exists, keys a subset of `name`/`description`/`argument-hint`, and `name:` matches its directory (rule 6)
 - **skill description** — every skill `description` is at most 500 characters and states what it does, then `Impact:`, then `Agent:`, and names its own `/<name>` (rule 6)
 - **agent field** — `Agent:` is `session`, `session + implementer`, or `session + implementer (model asked once)` matching whether the skill defines `<implementer_job>` and a `<template executor="implementer">`; `dev-ai-tools`, `vibe-ai-tools`, `campaign-ai-tools`, `team-ai-tools`, `ui-ai-tools`, and `implement-ai-tools` may spawn implementers (rule 6)
-- **skill layout** — no `skills/*.md` at the skills root and no `skills/SKILL-CONTRACT.md` or `skills/MAINTAINER.md`; the shipped skills `lint.sh` names are present; every `skills/*/` has a `SKILL.md` with a root `<skill name>`, `<session_workflow>`, and `<dispatch_templates>`, and no `## Continue?` or `## Stake` heading or mention of `SKILL-CONTRACT`/`MAINTAINER.md`; `plan-ai-tools` has `<planning_protocol>`, `implement-ai-tools` has `<harness_agents>`, `<implementation_protocol>`, and `<simple_tasks_protocol>`, `USER-AGENTS.md` has no `<execution_protocol>`, contains YAML `applyTo`/`alwaysApply`, optional `$HOME/AGENTS.md`, and no `<agents>`, `<dispatch_protocol>`, or `<worker>` tag (rules 5, 11)
+- **skill layout** — no `skills/*.md` at the skills root and no `skills/SKILL-CONTRACT.md` or `skills/MAINTAINER.md`; the shipped skills `lint.sh` names are present; every `skills/*/` has a `SKILL.md` with a root `<skill name>`, `<session_workflow>`, and `<dispatch_templates>`, and no `## Continue?` or `## Stake` heading or mention of `SKILL-CONTRACT`/`MAINTAINER.md`; `plan-ai-tools` has `<planning_protocol>`, `implement-ai-tools` has `<harness_agents>`, `<implementation_protocol>`, and `<simple_tasks_protocol>`, `AI-TOOLS-AGENTS.md` has no `<execution_protocol>`, contains YAML `applyTo`/`alwaysApply`, optional `$HOME/.ai-tools/USER-AGENTS.md`, and no `<agents>`, `<dispatch_protocol>`, or `<worker>` tag (rules 5, 11)
 - **spawn protocol citation** — every skill with a `<template>` cites `<harness_agents>`, and no skill repeats the harness native subagent API list (rule 9)
-- **rule anchors** — no `SKILL.md` or `USER-AGENTS.md` cites a README rule number (rule 9)
-- **size caps** — `USER-AGENTS.md` at most 10,000 characters (rule 3), every skill `description` at most 500 (rule 6)
-- **instructions headings** — `USER-AGENTS.md` has no `##` sub-heading (rule 3)
+- **rule anchors** — no `SKILL.md` or `AI-TOOLS-AGENTS.md` cites a README rule number (rule 9)
+- **size caps** — `AI-TOOLS-AGENTS.md` at most 10,000 characters (rule 3), every skill `description` at most 500 (rule 6)
+- **instructions headings** — `AI-TOOLS-AGENTS.md` has no `##` sub-heading (rule 3)
 - **line endings and modes** — every tracked `scripts/` file resolves to `eol=lf` with LF in index and working tree, and `scripts/*.sh` and `scripts/shell/*.sh` are mode `100755` (rule 21)
 - **no binaries** — every tracked file under `skills/` and `scripts/` is text
 - **`dev/tmp` untracked** — `git ls-files dev/tmp` returns nothing (rule 22)
@@ -166,7 +166,7 @@ Check families:
 - **xml references** — every backticked tag reference resolves: attribute references to a definition in the same or the qualified file, bare references to the vocabulary (rule 9)
 - **placeholder parity** — every `{PLACEHOLDER}` a `<template>` uses is declared in its `<input>`, and every declared one is used (rule 9)
 - **vocabulary parity** — the Semantic XML grammar table and `XML_VOCAB` list the same tags (rule 9)
-- **version bump** — only with `--base <ref>`: `<ref>` must be a commit (an invalid or unavailable base is a finding, not a skip); when `skills/`, `scripts/`, or `USER-AGENTS.md` changed between `<ref>` and `HEAD`, the README version line must differ from `<ref>`'s (rule 4)
+- **version bump** — only with `--base <ref>`: `<ref>` must be a commit (an invalid or unavailable base is a finding, not a skip); when `skills/`, `scripts/`, or `AI-TOOLS-AGENTS.md` changed between `<ref>` and `HEAD`, the README version line must differ from `<ref>`'s (rule 4)
 - **rule citations** — Repository rules are numbered 1..N without gaps, and every `rule N` citation in `README.md`, `docs/USAGE.md`, `.gitattributes`, and `scripts/` names an existing rule (rule 1)
 - **harness table** — `lib.sh` harness keys, skills roots, and instructions destinations appear in the README Scope bullet and Supported harnesses table (rule 19)
 
@@ -187,7 +187,7 @@ Each case builds its own fixture: a harness layout for all three harnesses and a
 - no overwrite by default and selected-harness overwrite with the explicit flag (rule 13)
 - never remove what ai-tools did not create (rule 14)
 - idempotency and skip-and-report on conflict (rule 15)
-- `$HOME/AGENTS.md` untouched (rule 17)
+- `$HOME/.ai-tools/USER-AGENTS.md` untouched (rule 17)
 - destructive flags default to refuse; `--dry-run` does not install, remove, reset, or purge (rule 20; update still fetches)
 - exit codes `0`/`1`/`2` (rule 20)
 
@@ -197,11 +197,11 @@ These bind the scripts and any human or AI intervening manually in [Installation
 
 - **Never replace by default** an existing regular file or a symlink pointing outside `$AI_TOOLS`: **skip, report, continue** (rules 13, 15). `--overwrite` is the only authorization to replace those exact artifact destinations and prune orphan `*-ai-tools` artifacts in selected harnesses. A matching copy is left alone.
 - **Never** recursively remove a harness's skills root; replace or remove individual artifact paths only.
-- Remove a destination only when it is a symlink resolving under `$AI_TOOLS`, or a copy whose contents still match their `$AI_TOOLS` source. A locally modified copy is user work: skip it, do not delete it (rule 14). `--force` is the only authorization to remove those exact regular-file or directory destinations and orphan paths when contents differ; a symlink whose target is outside ai-tools is still skipped. `$HOME/AGENTS.md` remains untouched.
-- Never touch unrelated user skills, a repository's own `AGENTS.md` (that application's architecture), or `$HOME/AGENTS.md` (rule 17).
+- Remove a destination only when it is a symlink resolving under `$AI_TOOLS`, or a copy whose contents still match their `$AI_TOOLS` source. A locally modified copy is user work: skip it, do not delete it (rule 14). `--force` is the only authorization to remove those exact regular-file or directory destinations and orphan paths when contents differ; a symlink whose target is outside ai-tools is still skipped. `$HOME/.ai-tools/USER-AGENTS.md` remains untouched.
+- Never touch unrelated user skills, a repository's own `AGENTS.md` (that application's architecture), or `$HOME/.ai-tools/USER-AGENTS.md` (rule 17).
 - An AI operating the scripts asks which harnesses are in scope and reports discovery before a mutating run; the scripts themselves default to every detected harness.
 
-The safe-link, link-or-copy, and copy-removal primitives are implemented once in [`scripts/shell/lib.sh`](scripts/shell/lib.sh). Scripts refuse unsafe paths, including `$HOME/AGENTS.md` reached through a parent-directory symlink, an `AI_TOOLS` override that is not `$HOME/.ai-tools`, and empty/root/home clone targets; manual intervention must honour the same rules.
+The safe-link, link-or-copy, and copy-removal primitives are implemented once in [`scripts/shell/lib.sh`](scripts/shell/lib.sh). Scripts refuse unsafe paths, including `$HOME/.ai-tools/USER-AGENTS.md` reached through a parent-directory symlink, an `AI_TOOLS` override that is not `$HOME/.ai-tools`, and empty/root/home clone targets; manual intervention must honour the same rules.
 
 ## Supported harnesses
 
@@ -216,7 +216,7 @@ One row per harness: global instructions destination and skills root.
 Notes:
 
 - **Antigravity lives under `$HOME/.gemini`**: instructions at `GEMINI.md`, skills at `config/skills/`. Do not install into `$HOME/.gemini/skills/` (retired Gemini CLI root). The stale-link sweep always unlinks leftover ai-tools links there, even when Gemini is not in `--harnesses`; `--no-sweep` skips it. The sweep does not touch `config/`.
-- **Antigravity limits rules files to 12,000 characters.** The repository's stricter self-imposed 10,000-character cap governs `USER-AGENTS.md` (rule 3); Antigravity truncates or rejects files above its own limit.
+- **Antigravity limits rules files to 12,000 characters.** The repository's stricter self-imposed 10,000-character cap governs `AI-TOOLS-AGENTS.md` (rule 3); Antigravity truncates or rejects files above its own limit.
 - **Copilot** user-level `*.instructions.md` files apply automatically only with YAML `applyTo`. The shared copy starts with `applyTo: "**"` (all files). File equality is not activation; confirm Chat diagnostics after install.
 - **Never install into `$HOME/.agents/`.** Several harnesses discover it; copying there as well as into each harness root would double-register every skill.
 
@@ -234,9 +234,9 @@ Every `install.sh` step is idempotent and reports conflicts it skips.
 
 1. **Preconditions** — the clone at `$HOME/.ai-tools` exists and validates; `install.sh` clones it when missing, except under `--dry-run` (rule 16; move any existing clone there — no other location is recoverable by configuration).
 2. **Discovery and scope** — report each detected harness from its configuration directory, CLI, or known IDE extension, plus possible AI extensions outside scope. Omitted `--harnesses` selects those detected harnesses; `--harnesses all` selects all three and creates their skill roots as needed. Report `$HOME/.agents` while leaving it untouched.
-3. **Instructions** — link `USER-AGENTS.md` into each scoped harness's global instructions destination (`--no-instructions` skips), with fallback to copy if symlinks are unavailable. Antigravity uses `$HOME/.gemini/GEMINI.md`.
+3. **Instructions** — link `AI-TOOLS-AGENTS.md` into each scoped harness's global instructions destination (`--no-instructions` skips), with fallback to copy if symlinks are unavailable. Antigravity uses `$HOME/.gemini/GEMINI.md`.
 4. **Skills** — link each `skills/*-ai-tools` directory into every scoped skills root (rules 5–6), falling back to copy if symlinks are unavailable. Harnesses list frontmatter; the host session reads the body only when it runs the skill. With `--overwrite`, orphan `*-ai-tools` skills no longer in the tree are pruned from the scoped roots.
-5. **Verify** — every installed instruction and skill is an ai-tools symlink or matching copy fallback; `USER-AGENTS.md` fits the repository's 10,000-character cap (rule 3); every shipped `skills/<name>/SKILL.md` exists. Skipped under `--dry-run`; re-run anytime with `verify`.
+5. **Verify** — every installed instruction and skill is an ai-tools symlink or matching copy fallback; `AI-TOOLS-AGENTS.md` fits the repository's 10,000-character cap (rule 3); every shipped `skills/<name>/SKILL.md` exists. Skipped under `--dry-run`; re-run anytime with `verify`.
 
 Then restart or reload any harness that caches skills at startup. Confirm a slash command for every shipped skill.
 
@@ -253,9 +253,9 @@ Remove installed artifacts from harnesses while retaining the clone. Keeping `$H
 1. **Report** — list every possible ai-tools artifact and legacy link in the scoped roots before changing them.
 2. **Skills** — remove copies only while their contents still match their source; also unlink legacy links resolving into ai-tools. A locally modified copy is user work: skip and keep (rule 14), unless `--force`. Orphan `*-ai-tools` skills no longer in the tree are removed only with `--force`.
 3. **Stale-link sweep** — remove anything in the scoped roots that still resolves into the clone, whatever its name or era, and leftover ai-tools links in the retired Gemini CLI root `$HOME/.gemini/skills` even when that root is outside `--harnesses`. Alpha keeps no backward compatibility (rule 4); the sweep cleans older layouts. `--no-sweep` skips both the scoped roots and that legacy root.
-4. **Instructions** — only with `--instructions`; remove an exact source copy or a legacy ai-tools link. Preserve a modified copy unless `--force`. A foreign symlink is always skipped, including with `--force`. Never remove `$HOME/AGENTS.md` (rule 17).
+4. **Instructions** — only with `--instructions`; remove an exact source copy or a legacy ai-tools link. Preserve a modified copy unless `--force`. A foreign symlink is always skipped, including with `--force`. Never remove `$HOME/.ai-tools/USER-AGENTS.md` (rule 17).
 5. **Verify** — report any link in the scoped roots that still resolves into the clone, and any selected copy that should have been removed (still matching its source, or still present after `--force`). Exit `0` means no warnings, not that every requested artifact is gone: skipped modified copies can remain, so read the summary.
-6. **Purge** — with `--purge` only (prompt; `--yes` skips), delete `$HOME/.ai-tools` while always preserving `$HOME/AGENTS.md`. Purge is independent of skips: a skipped copy can remain after the clone is gone.
+6. **Purge** — with `--purge` only (prompt; `--yes` skips), delete `$HOME/.ai-tools` while always preserving `$HOME/.ai-tools/USER-AGENTS.md`. Purge is independent of skips: a skipped copy can remain after the clone is gone.
 
 When `$HOME/.ai-tools` is missing, copies cannot be compared: the script warns and removes only ai-tools links. Skill copies are left alone. If a separately retained `remove.sh`/`lib.sh` pair is run with `--instructions --force`, instruction copies at known destinations are still deleted because `--force` does not need the source file. Recover that path by invoking those retained scripts from their directory, not from the missing clone.
 
@@ -271,7 +271,7 @@ Remove artifacts using the **current** clone (the user's version), reset that cl
 
 1. **Preconditions** — require the clone at `$HOME/.ai-tools`; if missing, [Installation](#installation) instead. Fetch `origin/master` and refuse a discarding reset unless `--discard-local`, **before** touching harness artifacts. The guard inspects the current worktree, commits on `HEAD`, and commits on local `master` even when another branch is checked out.
 2. **Remove** — using this clone's skills and instructions: skills, the stale-link sweep (`--no-sweep` skips), and instructions (`--no-instructions` keeps them). Drop unmodified copies and legacy ai-tools links; skip and report modified copies.
-3. **Reset** — check out `master` and reset `--hard` to `origin/master`. The destructive scope is **the clone only**; `$HOME/AGENTS.md` remains untouched.
+3. **Reset** — check out `master` and reset `--hard` to `origin/master`. The destructive scope is **the clone only**; `$HOME/.ai-tools/USER-AGENTS.md` remains untouched.
 4. **Install** — the Installation steps against the fresh tree, listing skills from the tree, never from hardcoded names.
 5. **Verify** — the Installation checks.
 
@@ -286,13 +286,13 @@ Then restart or reload the harness and confirm a slash command for every shipped
 - **Not a clone / no remote:** the user sets a remote or re-clones from `https://github.com/hgsantana/ai-tools.git`; never invent a URL.
 - **Clone is not at `$HOME/.ai-tools`:** move it there (rule 16). Installed instructions and skills reference that path; no other location is recoverable by configuration.
 - **Skills missing after install/update:** the harness caches skills at startup — fully restart the CLI or IDE, then `verify`.
-- **Copilot ignores installed instructions:** `verify` checks file equality, not activation. Copilot needs `applyTo` in `~/.copilot/instructions/*.instructions.md`. Restart the IDE, then use Chat diagnostics (Copilot). A prompt with no file open still depends on those headers. Confirm on a fresh profile: ordinary request with no file open, explicit `/skill`, a delegated default-worker that must not re-offer skills, missing native question tool (chat fallback), and a `$HOME/AGENTS.md` sentinel from an unrelated repository.
+- **Copilot ignores installed instructions:** `verify` checks file equality, not activation. Copilot needs `applyTo` in `~/.copilot/instructions/*.instructions.md`. Restart the IDE, then use Chat diagnostics (Copilot). A prompt with no file open still depends on those headers. Confirm on a fresh profile: ordinary request with no file open, explicit `/skill`, a delegated default-worker that must not re-offer skills, missing native question tool (chat fallback), and a `$HOME/.ai-tools/USER-AGENTS.md` sentinel from an unrelated repository.
 - **Legacy or dangling ai-tools links:** [Update](#update) sweeps stale links after removing current-version artifacts.
 - **Installed copies out of date:** copies do not track `git pull` — use [Update](#update).
 - **`copied (will not track updates)`:** the OS refused symlinks (on Windows: Developer Mode or an elevated shell, then reinstall converts copies to links). Until then, [Update](#update) after every upstream change on that machine.
 - **A conflicting or locally modified installed artifact should be replaced:** rerun install or update with `--overwrite` and an explicit `--harnesses` scope. The flag affects only known artifact destinations in that scope.
 - **A locally modified installed artifact should be removed:** rerun remove with `--force` and an explicit `--harnesses` scope. The flag affects known regular-file or directory destinations and orphan `*-ai-tools` skills in that scope; foreign symlinks stay.
-- **A copied artifact was edited locally:** preserve the edit elsewhere before `--overwrite` or `--force`; installed copies are managed deployment artifacts, while `$HOME/AGENTS.md` remains the supported place for personal instructions.
+- **A copied artifact was edited locally:** preserve the edit elsewhere before `--overwrite` or `--force`; installed copies are managed deployment artifacts, while `$HOME/.ai-tools/USER-AGENTS.md` remains the supported place for personal instructions.
 
 ## License
 
@@ -301,4 +301,4 @@ MIT — see [`LICENSE`](LICENSE). Use, modify, fork, redistribute, and sell free
 Maintenance consequences:
 
 - The copyright block names the project and its URL. It is reproduced verbatim in third-party notices, so keep both lines — they make a downstream copy traceable back here.
-- Use the root `LICENSE` instead of per-file license headers in shipped artifacts. `USER-AGENTS.md` follows the **10,000-character** cap in rule 3, and every artifact follows rule 8. Installation on one's own machine is not redistribution.
+- Use the root `LICENSE` instead of per-file license headers in shipped artifacts. `AI-TOOLS-AGENTS.md` follows the **10,000-character** cap in rule 3, and every artifact follows rule 8. Installation on one's own machine is not redistribution.

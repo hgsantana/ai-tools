@@ -86,21 +86,25 @@ canonical_path() {
   printf '%s\n' "$path"
 }
 
-is_home_agents_alias() {
+is_user_agents_alias() {
   local dest="$1" resolved protected
   [ -n "$dest" ] || return 1
   case "$dest" in
-    "$HOME/AGENTS.md"|"$HOME/AGENTS.md/") return 0 ;;
+    "$AI_TOOLS/USER-AGENTS.md"|"$AI_TOOLS/USER-AGENTS.md/"|"$HOME/.ai-tools/USER-AGENTS.md"|"$HOME/.ai-tools/USER-AGENTS.md/") return 0 ;;
   esac
   resolved=$(canonical_path "$dest")
-  protected=$(canonical_path "$HOME/AGENTS.md")
+  protected=$(canonical_path "$HOME/.ai-tools/USER-AGENTS.md")
   [ "$resolved" = "$protected" ]
+}
+
+is_home_agents_alias() {
+  is_user_agents_alias "$@"
 }
 
 refuse_protected_dest() {
   local dest="$1"
-  if is_home_agents_alias "$dest"; then
-    warn "refusing \$HOME/AGENTS.md alias: $dest"
+  if is_user_agents_alias "$dest"; then
+    warn "refusing \$HOME/.ai-tools/USER-AGENTS.md alias: $dest"
     return 0
   fi
   return 1
@@ -504,13 +508,13 @@ ensure_clone() {
     # shellcheck disable=SC2034 # read by install.sh after a bootstrap clone
     FRESH_CLONE=1
   fi
-  { [ -f "$AI_TOOLS/USER-AGENTS.md" ] && [ -d "$AI_TOOLS/skills" ]; } \
+  { [ -f "$AI_TOOLS/AI-TOOLS-AGENTS.md" ] && [ -d "$AI_TOOLS/skills" ]; } \
     || fatal "$AI_TOOLS is not an ai-tools clone (move any existing clone here — the only supported location)"
 }
 
 require_clone() {
   assert_supported_clone_path
-  { [ -d "$AI_TOOLS/.git" ] && [ -f "$AI_TOOLS/USER-AGENTS.md" ] && [ -d "$AI_TOOLS/skills" ]; } \
+  { [ -d "$AI_TOOLS/.git" ] && [ -f "$AI_TOOLS/AI-TOOLS-AGENTS.md" ] && [ -d "$AI_TOOLS/skills" ]; } \
     || fatal "$AI_TOOLS is missing or not a clone — run scripts/shell/install-bash.sh (or install-zsh.sh) to clone"
 }
 
@@ -589,12 +593,12 @@ update_source() {
 
 sync_instructions() {
   # usage: sync_instructions
-  # Synchronizes USER-AGENTS.md into installed harness instructions destinations.
+  # Synchronizes AI-TOOLS-AGENTS.md into installed harness instructions destinations.
   local h dest src compiled target tmp=""
-  src="$(source_root)/USER-AGENTS.md"
+  src="$(source_root)/AI-TOOLS-AGENTS.md"
   compiled=$(compiled_instructions "$src")
   [ "$compiled" != "$src" ] && tmp="$compiled"
-  target="$AI_TOOLS/USER-AGENTS.md"
+  target="$AI_TOOLS/AI-TOOLS-AGENTS.md"
   [ -f "$target" ] || target="$compiled"
   for h in $SCOPE; do
     dest=$(instructions_dest "$h")
@@ -607,10 +611,10 @@ sync_instructions() {
 
 install_instructions() {
   local h dest src compiled target tmp=""
-  src="$(source_root)/USER-AGENTS.md"
+  src="$(source_root)/AI-TOOLS-AGENTS.md"
   compiled=$(compiled_instructions "$src")
   [ "$compiled" != "$src" ] && tmp="$compiled"
-  target="$AI_TOOLS/USER-AGENTS.md"
+  target="$AI_TOOLS/AI-TOOLS-AGENTS.md"
   [ -f "$target" ] || target="$compiled"
   for h in $SCOPE; do
     dest=$(instructions_dest "$h")
@@ -755,9 +759,9 @@ sweep_stale_links() {
 }
 
 remove_instructions() {
-  # Remove legacy ai-tools links or exact physical copies. Never $HOME/AGENTS.md.
+  # Remove legacy ai-tools links or exact physical copies. Never $HOME/.ai-tools/USER-AGENTS.md.
   local h dest src exp tmp_exp=""
-  src="$AI_TOOLS/USER-AGENTS.md"
+  src="$AI_TOOLS/AI-TOOLS-AGENTS.md"
   exp=$(compiled_instructions "$src")
   [ "$exp" != "$src" ] && tmp_exp="$exp"
   for h in $SCOPE; do
@@ -779,11 +783,11 @@ remove_instructions() {
 }
 
 purge_clone() {
-  # usage: purge_clone <yes 0|1> — deletes $AI_TOOLS itself. Never $HOME/AGENTS.md.
-  local yes="${1:-0}" answer
+  # usage: purge_clone <yes 0|1> — deletes $AI_TOOLS itself. Never $HOME/.ai-tools/USER-AGENTS.md.
+  local yes="${1:-0}" answer save_user_agents=0 tmp_ua=""
   assert_supported_clone_path
   [ -d "$AI_TOOLS" ] || { ok "absent: $AI_TOOLS"; return 0; }
-  { [ -d "$AI_TOOLS/.git" ] && [ -f "$AI_TOOLS/USER-AGENTS.md" ] && [ -d "$AI_TOOLS/skills" ]; } \
+  { [ -d "$AI_TOOLS/.git" ] && [ -f "$AI_TOOLS/AI-TOOLS-AGENTS.md" ] && [ -d "$AI_TOOLS/skills" ]; } \
     || fatal "$AI_TOOLS is not an ai-tools clone — refusing purge"
   if [ "$DRY_RUN" = 1 ]; then ok "would delete: $AI_TOOLS"; return 0; fi
   if [ "$yes" != 1 ]; then
@@ -791,9 +795,19 @@ purge_clone() {
     read -r answer || answer=""
     [ "$answer" = yes ] || { skip "purge not confirmed: $AI_TOOLS kept"; return 1; }
   fi
+  if [ -f "$AI_TOOLS/USER-AGENTS.md" ]; then
+    save_user_agents=1
+    tmp_ua=$(mktemp "${TMPDIR:-/tmp}/user-agents.XXXXXX")
+    cp -p "$AI_TOOLS/USER-AGENTS.md" "$tmp_ua"
+  fi
   if rm -rf "$AI_TOOLS"; then
+    if [ "$save_user_agents" = 1 ]; then
+      mkdir -p "$AI_TOOLS"
+      mv "$tmp_ua" "$AI_TOOLS/USER-AGENTS.md"
+    fi
     ok "deleted: $AI_TOOLS"
   else
+    [ -n "$tmp_ua" ] && rm -f "$tmp_ua"
     warn "cannot delete: $AI_TOOLS"
     return 1
   fi
@@ -847,12 +861,12 @@ refresh_copies() {
   src=$(source_root)
   if [ "$include_instructions" = 1 ]; then
     local exp tmp_exp=""
-    exp=$(compiled_instructions "$src/USER-AGENTS.md")
-    [ "$exp" != "$src/USER-AGENTS.md" ] && tmp_exp="$exp"
+    exp=$(compiled_instructions "$src/AI-TOOLS-AGENTS.md")
+    [ "$exp" != "$src/AI-TOOLS-AGENTS.md" ] && tmp_exp="$exp"
     for h in $SCOPE; do
       dest=$(instructions_dest "$h")
       [ -n "$dest" ] || continue
-      refresh_one_copy "$exp" "$dest" "USER-AGENTS.md"
+      refresh_one_copy "$exp" "$dest" "AI-TOOLS-AGENTS.md"
     done
     [ -n "$tmp_exp" ] && rm -f "$tmp_exp"
   fi
@@ -874,9 +888,9 @@ verify_install() {
   if [ "$DRY_RUN" = 1 ]; then info "dry-run: verification skipped"; return 0; fi
   src=$(source_root)
 
-  size=$(wc -c < "$src/USER-AGENTS.md")
+  size=$(wc -c < "$src/AI-TOOLS-AGENTS.md")
   if [ "$size" -le 10000 ]; then ok "instructions size: $size chars"
-  else warn "USER-AGENTS.md exceeds 10000 chars (repository limit): $size"; fi
+  else warn "AI-TOOLS-AGENTS.md exceeds 10000 chars (repository limit): $size"; fi
 
   for p in "$src/skills"/*-ai-tools; do
     [ -d "$p" ] || continue
@@ -887,8 +901,8 @@ verify_install() {
 
   if [ "$check_instr" = 1 ]; then
     local exp tmp_exp=""
-    exp=$(compiled_instructions "$src/USER-AGENTS.md")
-    [ "$exp" != "$src/USER-AGENTS.md" ] && tmp_exp="$exp"
+    exp=$(compiled_instructions "$src/AI-TOOLS-AGENTS.md")
+    [ "$exp" != "$src/AI-TOOLS-AGENTS.md" ] && tmp_exp="$exp"
     for h in $SCOPE; do
       dest=$(instructions_dest "$h")
       [ -n "$dest" ] || continue

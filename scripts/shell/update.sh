@@ -14,7 +14,7 @@ usage: update.sh [--harnesses <list>] [--overwrite] [--discard-local]
                        detected harnesses; "all" selects every supported harness
   --overwrite          replace conflicting or locally modified installed artifacts
                        and prune orphan artifacts in the selected harnesses;
-                       never touches $HOME/AGENTS.md
+                       never touches $HOME/.ai-tools/USER-AGENTS.md
   --discard-local      allow the reset to origin/master to discard local commits
                        and uncommitted edits inside $HOME/.ai-tools (shown first)
   --no-instructions    keep existing global instructions (do not remove

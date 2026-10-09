@@ -33,7 +33,7 @@ description: >
   <boundaries>
     <rule id="scope-roots">Touch only $AI_TOOLS and declared harness destination roots.</rule>
     <rule id="canonical-script">Resolve `$HOME/.ai-tools` first and invoke `"$HOME/.ai-tools/scripts/shell/update.sh"`; do not run a relative `scripts/shell/update.sh` from the caller's project.</rule>
-    <rule id="home-agents-untouched">Never touch $HOME/AGENTS.md.</rule>
+    <rule id="home-agents-untouched">Never touch $HOME/.ai-tools/USER-AGENTS.md.</rule>
     <rule id="protocol-source">Follow user-wide `<user_interaction>` and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
     <rule id="separate-approvals">Destructive steps require explicit separate approval; never bypass safety flags.</rule>
   </boundaries>

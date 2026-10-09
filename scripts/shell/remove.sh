@@ -12,11 +12,11 @@ usage: remove.sh [--harnesses <list>] [--instructions] [--force] [--no-sweep]
 
   --harnesses <list>   comma-separated harnesses in scope; omitted selects
                        detected harnesses; "all" selects every supported harness
-  --instructions       also remove the global USER-AGENTS.md copies or legacy links;
-                       never touches $HOME/AGENTS.md
+  --instructions       also remove the global AI-TOOLS-AGENTS.md copies or legacy links;
+                       never touches $HOME/.ai-tools/USER-AGENTS.md
   --force              remove known artifact destinations and orphan artifacts
                        even when contents no longer match their source;
-                       never touches $HOME/AGENTS.md
+                       never touches $HOME/.ai-tools/USER-AGENTS.md
   --no-sweep           skip the stale-link sweep (links from older alpha layouts)
   --purge              delete $HOME/.ai-tools itself after removal (asks for
                        confirmation; --yes skips the prompt)

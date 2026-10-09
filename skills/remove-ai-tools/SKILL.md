@@ -62,7 +62,7 @@ argument-hint: "[optional: harnesses in scope, or extra instructions]"
     <rule id="scope-roots">Touch only $AI_TOOLS and declared harness destination roots, except the surviving purge-report directory in `<rule id="surviving-reports">`.</rule>
     <rule id="canonical-script">Resolve `$HOME/.ai-tools` first and invoke `"$HOME/.ai-tools/scripts/shell/remove.sh"`; do not run a relative `scripts/shell/remove.sh` from the caller's project.</rule>
     <rule id="surviving-reports">When `--purge` is approved, write dry-run, execution, and final reports under `$HOME/.ai-tools-remove-logs` and never recreate the clone to store them. That directory is the only write outside the clone and harness roots, and only for purge evidence.</rule>
-    <rule id="home-agents-untouched">Never touch $HOME/AGENTS.md.</rule>
+    <rule id="home-agents-untouched">Never touch $HOME/.ai-tools/USER-AGENTS.md.</rule>
     <rule id="protocol-source">Follow user-wide `<user_interaction>` and `<security_guardrails>`, and dispatch agents per implement-ai-tools `<harness_agents>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
     <rule id="separate-approvals">Destructive steps require explicit separate approval; never bypass safety flags.</rule>
     <rule id="default-worker">Spawn each `<template executor="default-worker">` per implement-ai-tools `<harness_agents>`, assembling nested payloads per implement-ai-tools `<rule id="payload-assembly">`.</rule>

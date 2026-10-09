@@ -41,12 +41,12 @@ Checks:
                     <dispatch_templates>), no SKILL.md contains Continue? or Stake,
                     plan-ai-tools has <planning_protocol>, implement-ai-tools has
                     <harness_agents>, <implementation_protocol>, and <simple_tasks_protocol>,
-                    USER-AGENTS.md has no <execution_protocol>, implement-ai-tools defines
+                    AI-TOOLS-AGENTS.md has no <execution_protocol>, implement-ai-tools defines
                     rules for default-worker and implementer, never <agents>,
                     <dispatch_protocol>, or <worker, YAML applyTo/alwaysApply,
-                    optional $HOME/AGENTS.md, and no references to deleted files (rules 5, 11)
-  instructions cap  USER-AGENTS.md is at most 10000 characters (rule 3)
-  instructions      USER-AGENTS.md has no ## sub-heading (rule 3)
+                    optional $HOME/.ai-tools/USER-AGENTS.md, and no references to deleted files (rules 5, 11)
+  instructions cap  AI-TOOLS-AGENTS.md is at most 10000 characters (rule 3)
+  instructions      AI-TOOLS-AGENTS.md has no ## sub-heading (rule 3)
   headings
   line endings      git ls-files --eol matches the declared eol= attribute:
                     lf for scripts/ (rule 21)
@@ -56,11 +56,11 @@ Checks:
                     is text
   version bump      CI-only, needs --base <ref> (skipped without it): <ref>
                     must be a commit (invalid base is a finding); when
-                    skills/, scripts/, or USER-AGENTS.md changed
+                    skills/, scripts/, or AI-TOOLS-AGENTS.md changed
                     since <ref>, the README version line must have changed
                     too (rule 4)
   dev/tmp untracked git ls-files dev/tmp returns nothing (rule 22)
-  xml grammar       every semantic-XML body (USER-AGENTS.md, SKILL.md) is
+  xml grammar       every semantic-XML body (AI-TOOLS-AGENTS.md, SKILL.md) is
                     balanced once backticked spans are removed, uses only
                     vocabulary tags outside <input>, gives every <rule> a
                     unique id, every <step> a numeric id, and <case>,
@@ -77,7 +77,7 @@ Checks:
                     <input>, and every declared one is used (rule 9)
   vocabulary parity the README Semantic XML grammar table and XML_VOCAB list
                     the same tags (rule 9)
-  rule anchors      no SKILL.md or USER-AGENTS.md cites a README rule number
+  rule anchors      no SKILL.md or AI-TOOLS-AGENTS.md cites a README rule number
                     (rule 9)
   spawn protocol    every SKILL.md with a <template> cites
   citation          <harness_agents>, and no SKILL.md duplicates the
@@ -245,30 +245,30 @@ check_skill_layout() {
     warn "implement-ai-tools missing authorized delegated payload: $f"
   fi
 
-  f="$AI_TOOLS/USER-AGENTS.md"
+  f="$AI_TOOLS/AI-TOOLS-AGENTS.md"
   if grep -q '<planning_protocol>' "$f" || grep -q '<implementation_protocol>' "$f" || grep -q '<execution_protocol>' "$f" || grep -q '<harness_agents>' "$f"; then
-    warn "USER-AGENTS.md must not contain migrated planning_protocol, implementation_protocol, execution_protocol, or harness_agents tags: $f"
+    warn "AI-TOOLS-AGENTS.md must not contain migrated planning_protocol, implementation_protocol, execution_protocol, or harness_agents tags: $f"
   else
-    ok "USER-AGENTS.md has no retired planning_protocol, implementation_protocol, execution_protocol, or harness_agents tag: $f"
+    ok "AI-TOOLS-AGENTS.md has no retired planning_protocol, implementation_protocol, execution_protocol, or harness_agents tag: $f"
   fi
 
   if grep -qE '<agents>|<dispatch_protocol>|<worker' "$f"; then
-    warn "USER-AGENTS.md contains a retired <agents>, <dispatch_protocol>, or <worker tag: $f"
+    warn "AI-TOOLS-AGENTS.md contains a retired <agents>, <dispatch_protocol>, or <worker tag: $f"
   else
-    ok "USER-AGENTS.md has no retired <agents>, <dispatch_protocol>, or <worker tag: $f"
+    ok "AI-TOOLS-AGENTS.md has no retired <agents>, <dispatch_protocol>, or <worker tag: $f"
   fi
 
   if awk 'NR==1{ok=($0=="---")} NR==2{ok=ok && index($0,"applyTo:") && index($0,"**")} NR==3{ok=ok && index($0,"alwaysApply: true")} NR==4{ok=ok && $0=="---"; exit !ok}' "$f"; then
-    ok "USER-AGENTS.md has Copilot applyTo and Cursor alwaysApply frontmatter: $f"
+    ok "AI-TOOLS-AGENTS.md has Copilot applyTo and Cursor alwaysApply frontmatter: $f"
   else
-    warn "USER-AGENTS.md missing YAML applyTo: \"**\" and alwaysApply: true frontmatter: $f"
+    warn "AI-TOOLS-AGENTS.md missing YAML applyTo: \"**\" and alwaysApply: true frontmatter: $f"
   fi
 
   # shellcheck disable=SC2016 # literal '$HOME' text in instructions
-  if grep -q '\$HOME/AGENTS.md' "$f"; then
-    ok "USER-AGENTS.md loads optional \$HOME/AGENTS.md: $f"
+  if grep -q '\$HOME/\.ai-tools/USER-AGENTS\.md' "$f"; then
+    ok "AI-TOOLS-AGENTS.md loads optional \$HOME/.ai-tools/USER-AGENTS.md: $f"
   else
-    warn "USER-AGENTS.md never mentions \$HOME/AGENTS.md: $f"
+    warn "AI-TOOLS-AGENTS.md never mentions \$HOME/.ai-tools/USER-AGENTS.md: $f"
   fi
 
   for name in $gated $maintainer; do
@@ -464,28 +464,28 @@ char_count() {
 
 check_instructions_cap() {
   local f count cap=10000
-  f="$AI_TOOLS/USER-AGENTS.md"
+  f="$AI_TOOLS/AI-TOOLS-AGENTS.md"
   if [ ! -f "$f" ]; then warn "missing: $f"; return; fi
   count=$(char_count "$f")
   if [ "$count" -le "$cap" ]; then
-    ok "USER-AGENTS.md within cap: $count/$cap chars (headroom $((cap - count)))"
+    ok "AI-TOOLS-AGENTS.md within cap: $count/$cap chars (headroom $((cap - count)))"
   else
-    warn "USER-AGENTS.md exceeds $cap chars: $count (over by $((count - cap)))"
+    warn "AI-TOOLS-AGENTS.md exceeds $cap chars: $count (over by $((count - cap)))"
   fi
 }
 
 check_instructions_headings() {
-  # rule 3: after its title and short preamble, USER-AGENTS.md's body is
+  # rule 3: after its title and short preamble, AI-TOOLS-AGENTS.md's body is
   # semantic XML, not markdown sub-headings.
   local f hits line
-  f="$AI_TOOLS/USER-AGENTS.md"
+  f="$AI_TOOLS/AI-TOOLS-AGENTS.md"
   if [ ! -f "$f" ]; then warn "missing: $f"; return; fi
   hits=$(grep -nE '^#{2,} ' "$f" || true)
   if [ -z "$hits" ]; then
-    ok "USER-AGENTS.md has no ## sub-heading: $f"
+    ok "AI-TOOLS-AGENTS.md has no ## sub-heading: $f"
   else
     while IFS=: read -r line _; do
-      warn "USER-AGENTS.md has a ## sub-heading at line $line (rule 3): $f"
+      warn "AI-TOOLS-AGENTS.md has a ## sub-heading at line $line (rule 3): $f"
     done <<EOF
 $hits
 EOF
@@ -544,11 +544,11 @@ check_no_binaries() {
 # The vocabulary of structural tags (README, "Semantic XML grammar"). A tag
 # outside it, outside <input>, is a finding: register a new tag in the README
 # table and here in the same commit.
-XML_VOCAB="user_instructions system_overview planning_protocol implementation_protocol harness_agents simple_tasks_protocol unit_tests language_rules chat disk user_interaction fallback security_guardrails skill overview session_workflow step dispatch_templates template job input instructions constraints constraint status_protocol states state return_protocol signal plan_file_format structure boundaries rule default implementer_job"
+XML_VOCAB="user_instructions system_overview planning_protocol implementation_protocol harness_agents simple_tasks_protocol unit_tests language_rules chat disk user_interaction fallback security_guardrails conventional_commits skill overview session_workflow step dispatch_templates template job input instructions constraints constraint status_protocol states state return_protocol signal plan_file_format structure boundaries rule default implementer_job"
 
 xml_files() {
   local f
-  echo "$AI_TOOLS/USER-AGENTS.md"
+  echo "$AI_TOOLS/AI-TOOLS-AGENTS.md"
   for f in "$AI_TOOLS"/skills/*/SKILL.md; do [ -f "$f" ] && echo "$f"; done
 }
 
@@ -569,7 +569,7 @@ xml_file_for() {
   # usage: xml_file_for <qualifier> -> the file a qualified reference names,
   # or nothing when the word before the backtick is not a qualifier.
   case "$1" in
-    USER-AGENTS) echo "$AI_TOOLS/USER-AGENTS.md" ;;
+    AI-TOOLS-AGENTS|USER-AGENTS) echo "$AI_TOOLS/AI-TOOLS-AGENTS.md" ;;
     *-ai-tools)
       if [ -f "$AI_TOOLS/skills/$1/SKILL.md" ]; then echo "$AI_TOOLS/skills/$1/SKILL.md"; fi
       ;;
@@ -717,7 +717,7 @@ EOF
       if [ -n "$attr" ]; then
         if xml_body "$target" | grep -q "<${name}[^>]* ${attr}=\"${val}\""; then
           ok "reference resolves: <$name $attr=\"$val\"> in $f"
-        elif [ -z "$q" ] && xml_body "$AI_TOOLS/USER-AGENTS.md" | grep -q "<${name}[^>]* ${attr}=\"${val}\""; then
+        elif [ -z "$q" ] && xml_body "$AI_TOOLS/AI-TOOLS-AGENTS.md" | grep -q "<${name}[^>]* ${attr}=\"${val}\""; then
           ok "reference resolves: <$name $attr=\"$val\"> in $f"
         elif [ -z "$q" ] && xml_body "$AI_TOOLS/skills/implement-ai-tools/SKILL.md" | grep -q "<${name}[^>]* ${attr}=\"${val}\""; then
           ok "reference resolves: <$name $attr=\"$val\"> in $f"
@@ -744,7 +744,7 @@ EOF
 
 check_rule_anchor_citations() {
   local f hits line
-  for f in "$AI_TOOLS/USER-AGENTS.md" "$AI_TOOLS"/skills/*/SKILL.md; do
+  for f in "$AI_TOOLS/AI-TOOLS-AGENTS.md" "$AI_TOOLS"/skills/*/SKILL.md; do
     [ -f "$f" ] || continue
     hits=$(grep -nE '(^|[^A-Za-z])[Rr]ules? [0-9]' "$f" || true)
     if [ -z "$hits" ]; then
@@ -859,7 +859,7 @@ check_version_bump() {
   fi
   git -C "$AI_TOOLS" rev-parse --verify "$base^{commit}" >/dev/null 2>&1 \
     || { warn "version bump check: --base is not a commit: $base"; return; }
-  if ! changed=$(git -C "$AI_TOOLS" diff --name-only "$base...HEAD" -- skills scripts USER-AGENTS.md); then
+  if ! changed=$(git -C "$AI_TOOLS" diff --name-only "$base...HEAD" -- skills scripts AI-TOOLS-AGENTS.md); then
     warn "version bump check: git diff failed against $base"
     return
   fi

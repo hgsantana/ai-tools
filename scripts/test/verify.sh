@@ -140,7 +140,7 @@ case_verify_instructions_cap() {
   local root before instructions
   t_fixture
   root="$T_ROOT"
-  instructions="$root/home/.ai-tools/USER-AGENTS.md"
+  instructions="$root/home/.ai-tools/AI-TOOLS-AGENTS.md"
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
@@ -149,7 +149,7 @@ case_verify_instructions_cap() {
   before=$(t_snapshot "$root/home")
   t_verify "$root" --harnesses claude-code
   t_assert_exit 2
-  t_assert_line "WARN: USER-AGENTS.md exceeds 10000 chars (repository limit):"
+  t_assert_line "WARN: AI-TOOLS-AGENTS.md exceeds 10000 chars (repository limit):"
   t_assert_unchanged "$root/home" "$before"
   rm -f "$before"
 

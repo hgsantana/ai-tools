@@ -3,7 +3,7 @@
 # remove only what ai-tools created, keep locally modified copies unless
 # --force, never touch a symlink pointing elsewhere, gate --instructions,
 # --force, and --purge, sweep stale links without crossing outside $AI_TOOLS,
-# and never touch $HOME/AGENTS.md.
+# and never touch $HOME/.ai-tools/USER-AGENTS.md.
 #
 # Every case installs first (via t_run on install.sh) unless noted otherwise,
 # so removal has something real to act on.
@@ -220,22 +220,22 @@ case_remove_agents_md_untouched() {
   ref=$(mktemp "${TMPDIR:-/tmp}/t-remove-agentsmd-ref.XXXXXX") || fatal "$T_CASE: mktemp failed"
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
-  printf 'my custom overlay\nline two\n' > "$root/home/AGENTS.md"
-  cp "$root/home/AGENTS.md" "$ref"
+  printf 'my custom overlay\nline two\n' > "$root/home/.ai-tools/USER-AGENTS.md"
+  cp "$root/home/.ai-tools/USER-AGENTS.md" "$ref"
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code
-  if cmp -s "$ref" "$root/home/AGENTS.md"; then ok "$T_CASE: AGENTS.md unchanged after remove.sh"
-  else warn "$T_CASE: AGENTS.md changed after remove.sh"; fi
+  if cmp -s "$ref" "$root/home/.ai-tools/USER-AGENTS.md"; then ok "$T_CASE: USER-AGENTS.md unchanged after remove.sh"
+  else warn "$T_CASE: USER-AGENTS.md changed after remove.sh"; fi
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code --instructions --force
-  if cmp -s "$ref" "$root/home/AGENTS.md"; then ok "$T_CASE: AGENTS.md unchanged after remove.sh --instructions --force"
-  else warn "$T_CASE: AGENTS.md changed after remove.sh --instructions --force"; fi
+  if cmp -s "$ref" "$root/home/.ai-tools/USER-AGENTS.md"; then ok "$T_CASE: USER-AGENTS.md unchanged after remove.sh --instructions --force"
+  else warn "$T_CASE: USER-AGENTS.md changed after remove.sh --instructions --force"; fi
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code --force --purge --yes
-  if cmp -s "$ref" "$root/home/AGENTS.md"; then ok "$T_CASE: AGENTS.md unchanged after remove.sh --force --purge --yes"
-  else warn "$T_CASE: AGENTS.md changed after remove.sh --force --purge --yes"; fi
+  if cmp -s "$ref" "$root/home/.ai-tools/USER-AGENTS.md"; then ok "$T_CASE: USER-AGENTS.md unchanged after remove.sh --force --purge --yes"
+  else warn "$T_CASE: USER-AGENTS.md changed after remove.sh --force --purge --yes"; fi
 
   rm -f "$ref"
   t_cleanup "$root"
@@ -325,7 +325,7 @@ case_remove_purge_refuses_without_confirmation() {
   root="$T_ROOT"
 
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
-  printf 'keep me\n' > "$root/home/AGENTS.md"
+  printf 'keep me\n' > "$root/home/.ai-tools/USER-AGENTS.md"
 
   t_run_stdin "$root" "no" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code --purge
   t_assert_exit 0
@@ -336,10 +336,10 @@ case_remove_purge_refuses_without_confirmation() {
   t_run "$root" "$root/home/.ai-tools/scripts/shell/remove.sh" --harnesses claude-code --purge --yes
   t_assert_exit 0
   t_assert_line "ok: deleted: $root/home/.ai-tools"
-  if [ ! -d "$root/home/.ai-tools" ]; then ok "$T_CASE: clone deleted by --purge --yes"
+  if [ ! -d "$root/home/.ai-tools/.git" ]; then ok "$T_CASE: clone deleted by --purge --yes"
   else warn "$T_CASE: clone survived --purge --yes"; fi
-  t_assert_regular_file "$root/home/AGENTS.md"
-  t_assert_content "$root/home/AGENTS.md" "keep me"
+  t_assert_regular_file "$root/home/.ai-tools/USER-AGENTS.md"
+  t_assert_content "$root/home/.ai-tools/USER-AGENTS.md" "keep me"
 
   t_cleanup "$root"
 
@@ -487,16 +487,16 @@ case_remove_parent_symlink_protects_agents_md() {
   root="$T_ROOT"
   home="$root/home"
 
-  printf 'user overrides\n' > "$home/AGENTS.md"
+  printf 'user overrides\n' > "$home/.ai-tools/USER-AGENTS.md"
   rm -rf "$home/.claude"
   mkdir -p "$home/.claude/skills" || fatal "$T_CASE: cannot create skills root"
-  ln -s "$home/AGENTS.md" "$home/.claude/CLAUDE.md" || fatal "$T_CASE: cannot alias CLAUDE.md to AGENTS.md"
+  ln -s "$home/.ai-tools/USER-AGENTS.md" "$home/.claude/CLAUDE.md" || fatal "$T_CASE: cannot alias CLAUDE.md to USER-AGENTS.md"
 
   t_run "$root" "$home/.ai-tools/scripts/shell/remove.sh" \
     --harnesses claude-code --instructions --force
   t_assert_exit 2
-  t_assert_line "refusing \$HOME/AGENTS.md alias:"
-  t_assert_content "$home/AGENTS.md" "user overrides"
+  t_assert_line "refusing \$HOME/.ai-tools/USER-AGENTS.md alias:"
+  t_assert_content "$home/.ai-tools/USER-AGENTS.md" "user overrides"
 
   t_cleanup "$root"
 }

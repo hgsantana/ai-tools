@@ -111,32 +111,32 @@ case_install_overwrite_conflicts() {
 }
 
 case_install_agents_md_absent() {
-  # Rule 17: $HOME/AGENTS.md is not an install artifact — absent stays absent.
+  # Rule 17: $HOME/.ai-tools/USER-AGENTS.md is not an install artifact — absent stays absent.
   local root
   t_fixture
   root="$T_ROOT"
 
   t_install "$root" --harnesses claude-code
   t_assert_exit 0
-  t_assert_absent "$root/home/AGENTS.md"
+  t_assert_absent "$root/home/.ai-tools/USER-AGENTS.md"
 
   t_cleanup "$root"
 }
 
 case_install_agents_md_present() {
-  # Rule 17: $HOME/AGENTS.md is user-owned and never touched when present.
+  # Rule 17: $HOME/.ai-tools/USER-AGENTS.md is user-owned and never touched when present.
   local root
   t_fixture
   root="$T_ROOT"
-  printf 'user overrides\n' > "$root/home/AGENTS.md"
+  printf 'user overrides\n' > "$root/home/.ai-tools/USER-AGENTS.md"
 
   t_install "$root" --harnesses claude-code
   t_assert_exit 0
-  t_assert_content "$root/home/AGENTS.md" "user overrides"
-  if [ -L "$root/home/AGENTS.md" ]; then
-    warn "$T_CASE: AGENTS.md became a symlink: $root/home/AGENTS.md"
+  t_assert_content "$root/home/.ai-tools/USER-AGENTS.md" "user overrides"
+  if [ -L "$root/home/.ai-tools/USER-AGENTS.md" ]; then
+    warn "$T_CASE: USER-AGENTS.md became a symlink: $root/home/.ai-tools/USER-AGENTS.md"
   else
-    ok "$T_CASE: AGENTS.md is not a symlink: $root/home/AGENTS.md"
+    ok "$T_CASE: USER-AGENTS.md is not a symlink: $root/home/.ai-tools/USER-AGENTS.md"
   fi
 
   t_cleanup "$root"
@@ -169,7 +169,7 @@ case_install_copies_migrated_to_symlinks() {
   source_skill="$root/home/.ai-tools/skills/vibe-ai-tools"
   mkdir -p "$root/home/.claude/skills/vibe-ai-tools"
   cp -R "$source_skill"/* "$root/home/.claude/skills/vibe-ai-tools/"
-  cp "$root/home/.ai-tools/USER-AGENTS.md" "$root/home/.claude/CLAUDE.md"
+  cp "$root/home/.ai-tools/AI-TOOLS-AGENTS.md" "$root/home/.claude/CLAUDE.md"
 
   t_install "$root" --harnesses claude-code
   t_assert_exit 0
@@ -197,7 +197,7 @@ case_install_no_symlink_fallback() {
   done
 
   t_assert_regular_file "$root/home/.claude/CLAUDE.md"
-  t_assert_same_content "$root/home/.claude/CLAUDE.md" "$root/home/.ai-tools/USER-AGENTS.md"
+  t_assert_same_content "$root/home/.claude/CLAUDE.md" "$root/home/.ai-tools/AI-TOOLS-AGENTS.md"
 
   t_cleanup "$root"
 }
@@ -364,22 +364,22 @@ case_bootstrap_rejects_non_clone() {
 }
 
 case_install_parent_symlink_protects_agents_md() {
-  # Rule 17: a harness destination that aliases $HOME/AGENTS.md must not let --overwrite
-  # replace $HOME/AGENTS.md (resolved destination, including parent symlinks).
+  # Rule 17: a harness destination that aliases $HOME/.ai-tools/USER-AGENTS.md must not let --overwrite
+  # replace $HOME/.ai-tools/USER-AGENTS.md (resolved destination, including parent symlinks).
   local root home
   t_fixture
   root="$T_ROOT"
   home="$root/home"
 
-  printf 'user overrides\n' > "$home/AGENTS.md"
+  printf 'user overrides\n' > "$home/.ai-tools/USER-AGENTS.md"
   rm -rf "$home/.claude"
   mkdir -p "$home/.claude"
-  ln -s "$home/AGENTS.md" "$home/.claude/CLAUDE.md" || fatal "$T_CASE: cannot alias CLAUDE.md to AGENTS.md"
+  ln -s "$home/.ai-tools/USER-AGENTS.md" "$home/.claude/CLAUDE.md" || fatal "$T_CASE: cannot alias CLAUDE.md to USER-AGENTS.md"
 
   t_install "$root" --harnesses claude-code --overwrite
   t_assert_exit 2
-  t_assert_line "refusing \$HOME/AGENTS.md alias:"
-  t_assert_content "$home/AGENTS.md" "user overrides"
+  t_assert_line "refusing \$HOME/.ai-tools/USER-AGENTS.md alias:"
+  t_assert_content "$home/.ai-tools/USER-AGENTS.md" "user overrides"
   t_assert_symlink "$home/.claude/skills/vibe-ai-tools" "$home/.ai-tools"
 
   t_cleanup "$root"

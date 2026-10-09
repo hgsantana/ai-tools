@@ -7,7 +7,7 @@
 # --no-instructions and --dry-run.
 #
 # Snapshot scope note: comparisons below snapshot only $root/home/.claude and
-# $root/home/AGENTS.md, never $root/home/.ai-tools. update_source() in
+# $root/home/.ai-tools/USER-AGENTS.md, never $root/home/.ai-tools. update_source() in
 # scripts/shell/lib.sh runs `git fetch origin` unconditionally, including
 # under --dry-run, which writes $AI_TOOLS/.git/FETCH_HEAD — harmless local
 # git bookkeeping, not installed state. The base plan's own reinstall-vs-

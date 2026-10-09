@@ -2,3 +2,4 @@
 .vscode/
 config.local.json
 *.local.json
+USER-AGENTS.md

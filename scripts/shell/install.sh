@@ -16,8 +16,8 @@ usage: install.sh [--harnesses <list>] [--overwrite] [--no-instructions]
                        supported harness, whether detected or not
   --overwrite          replace conflicting or locally modified installed artifacts
                        and prune orphan artifacts in the selected harnesses;
-                       never touches $HOME/AGENTS.md
-  --no-instructions    skip linking USER-AGENTS.md as global instructions
+                       never touches $HOME/.ai-tools/USER-AGENTS.md
+  --no-instructions    skip linking AI-TOOLS-AGENTS.md as global instructions
   --dry-run            report what would be done without changing anything
 
 Exit codes: 0 clean, 1 aborted on a precondition, 2 finished with warnings.

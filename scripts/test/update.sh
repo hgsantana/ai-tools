@@ -3,7 +3,7 @@
 # guard refuses to discard local work until --discard-local is passed, stale
 # copies are refreshed while locally modified copies are kept, newly shipped
 # content is copied, and the clone's reset never reaches harness
-# configuration or $HOME/AGENTS.md.
+# configuration or $HOME/.ai-tools/USER-AGENTS.md.
 
 # --- Reset guard (rule 20) -----------------------------------------------------
 
@@ -130,7 +130,7 @@ case_update_reset_confined() {
   t_fixture --foreign-skill
   root="$T_ROOT"
   home="$root/home"
-  agents_md="$home/AGENTS.md"
+  agents_md="$home/.ai-tools/USER-AGENTS.md"
   foreign_path="$T_FOREIGN_SKILL_PATH/SKILL.md"
   claude_md="$home/.claude/CLAUDE.md"
 
@@ -155,9 +155,9 @@ case_update_reset_confined() {
   t_assert_exit 2
 
   if [ "$(cat "$agents_md")" = "$before_agents" ]; then
-    ok "$T_CASE: \$HOME/AGENTS.md untouched"
+    ok "$T_CASE: \$HOME/.ai-tools/USER-AGENTS.md untouched"
   else
-    warn "$T_CASE: \$HOME/AGENTS.md changed"
+    warn "$T_CASE: \$HOME/.ai-tools/USER-AGENTS.md changed"
   fi
 
   if [ "$(cat "$claude_md")" = "$before_claude" ]; then
@@ -220,7 +220,7 @@ case_update_stale_copy_refreshed() {
   t_run_no_symlink "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
   t_assert_exit 0
   t_assert_line "copied (will not track updates):"
-  t_assert_same_content "$instructions" "$home/.ai-tools/USER-AGENTS.md"
+  t_assert_same_content "$instructions" "$home/.ai-tools/AI-TOOLS-AGENTS.md"
   t_assert_same_content "$skill" "$home/.ai-tools/skills/vibe-ai-tools"
 
   t_cleanup "$root"

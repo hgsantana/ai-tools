@@ -386,7 +386,7 @@ t_assert_unchanged() {
 t_origin_commit() {
   # usage: t_origin_commit <label>
   # Clones the fixture's bare origin (T_ROOT/origin.git) into a scratch dir,
-  # makes deterministic changes — appends marker lines to USER-AGENTS.md and
+  # makes deterministic changes — appends marker lines to AI-TOOLS-AGENTS.md and
   # the existing skills/vibe-ai-tools/SKILL.md file, then adds a new
   # skills/<label>-ai-tools/ directory containing SKILL.md (the single-file
   # layout the repository ships) — commits and pushes to master, giving the fixture's clone
@@ -405,7 +405,7 @@ t_origin_commit() {
     || fatal "t_origin_commit: git config user.email failed"
 
   printf '\n<!-- t_origin_commit marker: %s -->\n' "$label" \
-    >> "$scratch/USER-AGENTS.md" \
+    >> "$scratch/AI-TOOLS-AGENTS.md" \
     || fatal "t_origin_commit: cannot append marker to instructions"
 
   printf '\n<!-- t_origin_commit marker: %s -->\n' "$label" \
