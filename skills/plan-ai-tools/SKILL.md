@@ -3,8 +3,7 @@ name: plan-ai-tools
 description: >
   Probe assumptions, edge cases, trade-offs, and scope with the user, then
   formulate and present a staged plan. Use for /plan-ai-tools or as the
-  planning protocol for multi-stage delivery. Impact: writes plan files to
-  disk; no repository code is modified during planning. Agent: session.
+  planning protocol for multi-stage delivery.
 argument-hint: "[the change to plan]"
 ---
 

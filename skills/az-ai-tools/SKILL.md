@@ -2,9 +2,7 @@
 name: az-ai-tools
 description: >
   Query or manage Azure resources, subscriptions, costs, and infrastructure
-  through the Azure CLI (az). Use for /az-ai-tools. Impact: mutations may
-  create billable resources or remove resources and can be hard to reverse.
-  Reads run freely; each mutation requires explicit approval. Agent: session.
+  through the Azure CLI (az). Use for /az-ai-tools.
 argument-hint: "[what to inspect or change in Azure]"
 ---
 

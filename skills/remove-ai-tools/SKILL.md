@@ -2,9 +2,7 @@
 name: remove-ai-tools
 description: >
   Remove this installation per the README: remove skills and optionally
-  instructions from harnesses. Use for /remove-ai-tools. Impact: those tools
-  become unavailable; the clone remains unless the user separately approves a
-  purge. Each destructive step requires explicit approval. Agent: session.
+  instructions from harnesses. Use for /remove-ai-tools.
 argument-hint: "[optional: harnesses in scope, or extra instructions]"
 ---
 

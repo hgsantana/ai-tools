@@ -4,10 +4,7 @@ description: >
   Act as product owner leading 2-8 senior reviewers (security, performance,
   UX, best practices, design, DevOps, docs, tests) to refine a request into a
   plan or campaign, then deliver it unattended to a pull request. Use for
-  /team-ai-tools. Impact: reviewer subagents consume model quota;
-  after approval, creates a branch, edits files, commits, pushes, and opens a
-  pull request unattended. Cloud and destructive operations require separate
-  approval. Agent: session + implementer (model asked once).
+  /team-ai-tools.
 argument-hint: "[the request to refine and deliver]"
 ---
 

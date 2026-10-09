@@ -3,10 +3,6 @@ name: campaign-ai-tools
 description: >
   Run an autonomous campaign of 3-10 goals, each planned by a subagent and
   delivered by an implementer, to a pull request. Use for /campaign-ai-tools.
-  Impact: after approval, creates branch campaign/{CAMPAIGN}, edits files,
-  commits, pushes, and opens a pull request unattended; edits and removals can
-  be hard to undo. Pre-existing history remains intact. Cloud and destructive
-  operations require separate approval. Agent: session + implementer (model asked once).
 argument-hint: "[campaign name and optional priorities or exclusions]"
 ---
 

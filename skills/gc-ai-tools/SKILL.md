@@ -2,9 +2,7 @@
 name: gc-ai-tools
 description: >
   Query or manage Google Cloud resources, projects, costs, and infrastructure
-  through the gcloud CLI. Use for /gc-ai-tools. Impact: mutations may create
-  billable resources or remove resources and can be hard to reverse. Reads run
-  freely; each mutation requires explicit approval. Agent: session.
+  through the gcloud CLI. Use for /gc-ai-tools.
 argument-hint: "[what to inspect or change in Google Cloud]"
 ---
 

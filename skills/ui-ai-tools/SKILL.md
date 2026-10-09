@@ -3,11 +3,6 @@ name: ui-ai-tools
 description: >
   Evaluate app routes by screenshots and code into an illustrated report, then
   plan and deliver a UI modernization to a pull request. Use for /ui-ai-tools.
-  Impact: evaluators consume model quota; may start and stop a local dev
-  server; writes screenshots and reports to OS temp; after approval,
-  creates a branch, edits files, commits, pushes, and opens a pull request
-  unattended. Cloud and destructive operations require separate approval.
-  Agent: session + implementer (model asked once).
 argument-hint: "[routes] [base URL] [auth state path or env var names]"
 ---
 

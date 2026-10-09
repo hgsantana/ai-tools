@@ -2,9 +2,7 @@
 name: update-ai-tools
 description: >
   Update the ai-tools installation across all harnesses: preview with dry-run,
-  confirm destructive changes, and apply. Use for /update-ai-tools. Impact:
-  discards local clone edits and commits, replaces conflicting artifacts, and
-  refreshes harness config. Requires explicit confirmation. Agent: session.
+  confirm destructive changes, and apply. Use for /update-ai-tools.
 ---
 
 <skill name="update-ai-tools">

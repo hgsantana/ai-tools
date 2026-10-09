@@ -2,10 +2,8 @@
 name: agy-ai-tools
 description: >
   Dispatch an Antigravity agent by tier (junior, mid, senior) or explicit model
-  and effort, via the agy CLI or else the harness subagent API. Use for
-  /agy-ai-tools or as the mid implementer of plan stages. Impact: runs
-  agents that can modify workspace files, commit, and consume model quota;
-  destructive actions require explicit approval. Agent: session.
+  and effort, via the agy CLI or the harness subagent API. Use for
+  /agy-ai-tools to execute delegated coding, research, or operational tasks.
 argument-hint: "[tier | [model] [effort]] <task description>"
 ---
 

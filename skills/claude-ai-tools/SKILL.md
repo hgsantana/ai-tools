@@ -2,10 +2,8 @@
 name: claude-ai-tools
 description: >
   Dispatch a Claude Code agent by tier (junior, mid, senior) or explicit model
-  and effort, via the claude CLI or else the harness subagent API. Use for
-  /claude-ai-tools or as the mid implementer of plan stages. Impact: runs
-  agents that can modify workspace files, commit, and consume model quota;
-  destructive actions require explicit approval. Agent: session.
+  and effort, via the claude CLI or the harness subagent API. Use for
+  /claude-ai-tools to execute delegated coding, research, or operational tasks.
 argument-hint: "[tier | [model] [effort]] <task description>"
 ---
 

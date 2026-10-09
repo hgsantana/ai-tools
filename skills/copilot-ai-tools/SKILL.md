@@ -2,10 +2,8 @@
 name: copilot-ai-tools
 description: >
   Dispatch a GitHub Copilot agent by tier (junior, mid, senior) or explicit model
-  and effort, via the copilot CLI or else the harness subagent API. Use for
-  /copilot-ai-tools or as the mid implementer of plan stages. Impact: runs
-  agents that can modify workspace files, commit, and consume model quota;
-  destructive actions require explicit approval. Agent: session.
+  and effort, via the copilot CLI or the harness subagent API. Use for
+  /copilot-ai-tools to execute delegated coding, research, or operational tasks.
 argument-hint: "[tier | [model] [effort]] <task description>"
 ---
 

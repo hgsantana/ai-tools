@@ -3,9 +3,7 @@ name: gh-ai-tools
 description: >
   Query or manage GitHub accounts, administration, environments, Actions,
   issues, and releases through the GitHub CLI (gh). Use for /gh-ai-tools;
-  handle repository code work directly. Impact: remote mutations can change
-  access, settings, automation, or hosted data. Reads run freely; each
-  mutation requires explicit approval. Agent: session.
+  handle repository code work directly.
 argument-hint: "[GitHub platform resource to inspect or manage]"
 ---
 

@@ -417,7 +417,7 @@ t_origin_commit() {
   cat > "$scratch/skills/$label-ai-tools/SKILL.md" <<EOF
 ---
 name: $label-ai-tools
-description: Test-only skill added by t_origin_commit for marker $label. Impact: none.
+description: Test-only skill added by t_origin_commit for marker $label.
 ---
 
 # $label

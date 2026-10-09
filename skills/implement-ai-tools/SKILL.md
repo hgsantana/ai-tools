@@ -3,9 +3,7 @@ name: implement-ai-tools
 description: >
   Deliver changes by executing stages of an approved plan or directly through
   a simplified single-stage flow when no plan is present. Use for
-  /implement-ai-tools. Impact: after approval, edits files, runs tests, and
-  commits changes locally or to a plan branch. Destructive actions require
-  separate approval. Agent: session + implementer (model asked once).
+  /implement-ai-tools.
 argument-hint: "[slug of plan to implement | task description for simple execution]"
 ---
 

@@ -2,11 +2,7 @@
 name: vibe-ai-tools
 description: >
   Grill the user into a staged plan, then deliver it unattended, one clean
-  implementer per stage, to a pull request. Use for /vibe-ai-tools. Impact:
-  after approval, creates a branch, edits files, commits, pushes, and
-  opens a pull request unattended; edits and removals can be hard to undo.
-  Pre-existing history remains intact. Cloud and destructive operations
-  require separate approval. Agent: session + implementer (model asked once).
+  implementer per stage, to a pull request. Use for /vibe-ai-tools.
 argument-hint: "[the change to deliver]"
 ---
 

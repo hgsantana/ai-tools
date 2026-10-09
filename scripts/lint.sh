@@ -29,13 +29,9 @@ Checks:
                     subset of name, description, argument-hint (rule 6)
   skill name match  skills/<x>/SKILL.md declares name: <x>
   skill description every skill description is at most 500 characters,
-                    folded block included, states what the skill does, then
-                    Impact:, then Agent:, and names its own /<name> (rule 6)
-  agent field       Agent: is session, session + implementer, or
-                    session + implementer (model asked once) matching
-                    <implementer_job> and an executor="implementer"
-                    template; vibe-ai-tools, campaign-ai-tools,
-                    team-ai-tools, and ui-ai-tools (rule 6)
+                    folded block included, states what the skill does and
+                    when to use it, names its own /<name>, and omits retired
+                    Agent: and Impact: metadata (rule 6)
   skill layout      no skill-root markdown, every skill directory has
                     SKILL.md with semantic XML tags (<skill>, <session_workflow>,
                     <dispatch_templates>), no SKILL.md contains Continue? or Stake,
@@ -371,69 +367,34 @@ check_skill_description_cap() {
 }
 
 check_skill_description_content() {
-  # rule 6: description states what it does, then Impact:, then Agent:, and
-  # names its own slash command.
-  local d name f val before impact
+  # rule 6: description states what it does and when to use it, names its own
+  # slash command, and omits retired Agent: and Impact: metadata.
+  local d name f val
   for d in "$AI_TOOLS"/skills/*-ai-tools/; do
     [ -d "$d" ] || continue
     name=$(basename "$d")
     f="${d}SKILL.md"
     [ -f "$f" ] || continue
     val=$(yaml_frontmatter_folded_value "$f" description)
+    if [ -z "$val" ]; then
+      warn "skill description empty (rule 6): $f"
+      continue
+    fi
     case "$val" in
-      *"Impact:"*"Agent:"*)
-        before=$(printf '%s\n' "$val" | awk '{ sub(/Impact:.*/, ""); gsub(/^[ \t]+|[ \t]+$/, ""); print }')
-        impact=$(printf '%s\n' "$val" | awk '{ sub(/.*Impact:/, ""); sub(/Agent:.*/, ""); gsub(/^[ \t]+|[ \t]+$/, ""); print }')
-        if [ -n "$before" ] && [ -n "$impact" ]; then
-          ok "skill description has what + Impact + Agent: $f"
-        else
-          warn "skill description missing ordered Impact: and Agent: (rule 6): $f"
-        fi
+      *"Agent:"*)
+        warn "skill description contains retired Agent: (rule 6): $f"
+        ;;
+      *"Impact:"*)
+        warn "skill description contains retired Impact: (rule 6): $f"
         ;;
       *)
-        warn "skill description missing ordered Impact: and Agent: (rule 6): $f"
+        ok "skill description explains purpose without Agent:/Impact:: $f"
         ;;
     esac
     case "$val" in
       *"/$name"*) ok "skill description names /$name: $f" ;;
       *) warn "skill description does not name /$name (rule 6): $f" ;;
     esac
-  done
-}
-
-IMPLEMENTER_SKILLS="vibe-ai-tools campaign-ai-tools team-ai-tools ui-ai-tools implement-ai-tools"
-AGENT_SESSION="session"
-AGENT_IMPLEMENTER="session + implementer"
-AGENT_IMPLEMENTER_ASKED="session + implementer (model asked once)"
-
-check_skill_agent_field() {
-  # rule 6: Agent: value matches implementer usage. session never spawns
-  # implementers. session + implementer has an executor="implementer"
-  # template and no <implementer_job>. session + implementer (model asked
-  # once) has both. Allowed only in IMPLEMENTER_SKILLS.
-  local d name f val agent job impl expect_job expect_impl
-  for d in "$AI_TOOLS"/skills/*-ai-tools/; do
-    [ -d "$d" ] || continue
-    name=$(basename "$d"); f="${d}SKILL.md"
-    [ -f "$f" ] || continue
-    val=$(yaml_frontmatter_folded_value "$f" description)
-    case "$val" in *"Agent:"*) ;; *) continue ;; esac  # reported by check_skill_description_content
-    agent=$(printf '%s\n' "$val" | awk '{ sub(/.*Agent:[ \t]*/, ""); sub(/[ \t.]+$/, ""); print }')
-    case "$agent" in
-      "$AGENT_SESSION") expect_job=0; expect_impl=0 ;;
-      "$AGENT_IMPLEMENTER") expect_job=0; expect_impl=1 ;;
-      "$AGENT_IMPLEMENTER_ASKED") expect_job=1; expect_impl=1 ;;
-      *) warn "skill description has invalid Agent: '$agent' (rule 6): $f"; continue ;;
-    esac
-    job=0; xml_body "$f" | grep -q '<implementer_job>' && job=1
-    impl=0; xml_body "$f" | grep -q '<template [^>]*executor="implementer"' && impl=1
-    if [ "$job" != "$expect_job" ] || [ "$impl" != "$expect_impl" ]; then
-      warn "skill Agent: '$agent' disagrees with <implementer_job> ($job) or implementer templates ($impl) (rule 6): $f"
-    elif [ "$expect_impl" = 1 ] && ! in_list "$name" "$IMPLEMENTER_SKILLS"; then
-      warn "skill spawns implementers outside $IMPLEMENTER_SKILLS (rule 6): $f"
-    else
-      ok "skill Agent: matches implementer usage: $f ($agent)"
-    fi
   done
 }
 
@@ -1009,7 +970,6 @@ check_skill_name_match
 check_skill_layout
 check_skill_description_cap
 check_skill_description_content
-check_skill_agent_field
 check_instructions_cap
 check_instructions_headings
 check_line_endings
