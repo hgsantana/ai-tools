@@ -1,7 +1,7 @@
 ---
 name: copilot-ai-tools
 description: >
-  Dispatch a GitHub Copilot agent by tier (junior, mid, senior) or explicit model
+  Dispatch a GitHub Copilot agent by tier (junior, mid-level, senior) or explicit model
   and effort, via the copilot CLI or the harness subagent API. Use for
   /copilot-ai-tools to execute delegated coding, research, or operational tasks.
 argument-hint: "[tier | [model] [effort]] <task description>"
@@ -14,11 +14,11 @@ argument-hint: "[tier | [model] [effort]] <task description>"
 
   <session_workflow>
     <step id="1" name="resolve">
-      Resolve {MODEL}, {EFFORT}, and {TASK_PROMPT}; derive kebab-case {TOPIC}. A tier maps through this table; an explicit model or effort overrides it; nothing given selects `mid`.
+      Resolve {MODEL}, {EFFORT}, and {TASK_PROMPT}; derive kebab-case {TOPIC}. A tier maps through this table; an explicit model or effort overrides it; nothing given selects `mid-level`.
       | Tier | Model | Effort |
       |---|---|---|
       | `junior` | `gpt-6-luna` | `high` |
-      | `mid` | `gemini-3.8-flash` | `medium` |
+      | `mid-level` | `gemini-3.8-flash` | `medium` |
       | `senior` | `grok-4.7` | `high` |
       Models: a full identifier or `auto`; check an unknown one against `copilot --help` before rejecting. Efforts: `none`, `minimal` (`min`), `low`, `medium` (`med`), `high` (`hi`), `xhigh`, `max`.
     </step>

@@ -1,7 +1,7 @@
 ---
 name: claude-ai-tools
 description: >
-  Dispatch a Claude Code agent by tier (junior, mid, senior) or explicit model
+  Dispatch a Claude Code agent by tier (junior, mid-level, senior) or explicit model
   and effort, via the claude CLI or the harness subagent API. Use for
   /claude-ai-tools to execute delegated coding, research, or operational tasks.
 argument-hint: "[tier | [model] [effort]] <task description>"
@@ -14,11 +14,11 @@ argument-hint: "[tier | [model] [effort]] <task description>"
 
   <session_workflow>
     <step id="1" name="resolve">
-      Resolve {MODEL}, {EFFORT}, and {TASK_PROMPT}; derive kebab-case {TOPIC}. A tier maps through this table; an explicit model or effort overrides it; nothing given selects `mid`.
+      Resolve {MODEL}, {EFFORT}, and {TASK_PROMPT}; derive kebab-case {TOPIC}. A tier maps through this table; an explicit model or effort overrides it; nothing given selects `mid-level`.
       | Tier | Model | Effort |
       |---|---|---|
       | `junior` | `haiku` | `medium` |
-      | `mid` | `sonnet` | `medium` |
+      | `mid-level` | `sonnet` | `medium` |
       | `senior` | `opus` | `high` |
       Models: `haiku`, `sonnet`, `opus`, `fable`, or a full identifier; check an unknown one against `claude --help` before rejecting. Efforts: `low`, `medium` (`med`), `high` (`hi`), `xhigh`, `max`.
     </step>

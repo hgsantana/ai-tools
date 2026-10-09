@@ -1,7 +1,7 @@
 ---
 name: agy-ai-tools
 description: >
-  Dispatch an Antigravity agent by tier (junior, mid, senior) or explicit model
+  Dispatch an Antigravity agent by tier (junior, mid-level, senior) or explicit model
   and effort, via the agy CLI or the harness subagent API. Use for
   /agy-ai-tools to execute delegated coding, research, or operational tasks.
 argument-hint: "[tier | [model] [effort]] <task description>"
@@ -14,11 +14,11 @@ argument-hint: "[tier | [model] [effort]] <task description>"
 
   <session_workflow>
     <step id="1" name="resolve">
-      Resolve {MODEL}, {EFFORT}, and {TASK_PROMPT}; derive kebab-case {TOPIC}. A tier maps through this table; an explicit model or effort overrides it; nothing given selects `mid`.
+      Resolve {MODEL}, {EFFORT}, and {TASK_PROMPT}; derive kebab-case {TOPIC}. A tier maps through this table; an explicit model or effort overrides it; nothing given selects `mid-level`.
       | Tier | Model | Effort |
       |---|---|---|
       | `junior` | `gemini-3.8-flash` | `low` |
-      | `mid` | `gemini-3.8-flash` | `medium` |
+      | `mid-level` | `gemini-3.8-flash` | `medium` |
       | `senior` | `gemini-3.8-flash` | `high` |
       Models: `gemini-3.8-flash` (`flash`), `gemini-3.7-flash`, `gemini-3.6-flash`, `gemini-3.1-pro` (`pro`; low or high effort), `claude-sonnet-4-6` (`sonnet`), `claude-opus-4-6-thinking` (`opus`), `gpt-oss-120b-medium` (`gpt-oss`), or a full identifier; check an unknown one against `agy models` before rejecting. Efforts: `low`, `medium` (`med`), `high` (`hi`).
     </step>

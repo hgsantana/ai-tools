@@ -38,9 +38,9 @@ argument-hint: "[slug of plan to implement | task description for simple executi
     <rule id="implementer">`executor="implementer"`: {IMPLEMENTER} per `<rule id="implementer-offer">`, for code and tests. Default: Antigravity = Flash, Claude = Sonnet 5.5, Copilot = Gemini Flash 3.8.</rule>
     <rule id="session">Executes within the session itself without spawning a subagent.</rule>
     <rule id="senior">Senior tier agent dispatched per the current harness skill (`claude-ai-tools`, `copilot-ai-tools`, `agy-ai-tools`).</rule>
-    <rule id="mid-level">Mid tier agent dispatched per the current harness skill (`claude-ai-tools`, `copilot-ai-tools`, `agy-ai-tools`).</rule>
+    <rule id="mid-level">Mid-level tier agent dispatched per the current harness skill (`claude-ai-tools`, `copilot-ai-tools`, `agy-ai-tools`).</rule>
     <rule id="junior">Junior tier agent dispatched per the current harness skill (`claude-ai-tools`, `copilot-ai-tools`, `agy-ai-tools`).</rule>
-    <rule id="implementer-offer">Offer once as the final question of the initial grill-me batch who implements every stage ({IMPLEMENTER}): 1. the `mid` (recommended), `senior`, or `junior` tier of the current harness skill (`claude-ai-tools`, `copilot-ai-tools`, `agy-ai-tools`) showing model and effort; 2. a session subagent (`inherit`); 3. the session itself; 4. the harness default executor (`default-worker`).</rule>
+    <rule id="implementer-offer">Offer once as the final question of the initial grill-me batch who implements every stage ({IMPLEMENTER}): 1. the `mid-level` (recommended), `senior`, or `junior` tier of the current harness skill (`claude-ai-tools`, `copilot-ai-tools`, `agy-ai-tools`) showing model and effort; 2. a session subagent (`inherit`); 3. the session itself; 4. the harness default executor (`default-worker`).</rule>
     <rule id="native-spawn">Spawn subagents via native harness APIs: Claude Code `Agent`, Copilot `runSubagent`, Antigravity `invoke_subagent`.</rule>
     <rule id="payload-assembly">A delegated brief states it is an authorized delegated payload and passes only the brief and paths, never conversation context.</rule>
     <rule id="spawn-fallback">A failed default-worker task runs in the spawning context; a failed implementer spawn reports blocked, never falls back to the session.</rule>
