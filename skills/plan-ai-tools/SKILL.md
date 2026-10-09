@@ -35,7 +35,6 @@ argument-hint: "[the change to plan]"
   </session_workflow>
 
   <planning_protocol>
-    Adds to the harness default planning protocol, never replaces, the harness's own planning in every planning flow; the planner applies each rule where it fits. Planning writes nothing to disk until approved.
     <rule id="grill-me">Explore the codebase, then probe assumptions, edge cases, trade-offs, and scope. Ask all open questions at once in a batched `<user_interaction>` call, each with options and recommendation first, ending with a mandatory question offering {IMPLEMENTER} per implement-ai-tools `<rule id="implementer-offer">`. Analyze answers (by session, planner, architect, or reviewers per skill); ask follow-up batched rounds when open points, ambiguities, or new scope questions remain. Repeat until all points are settled. When everything is settled, send one chat message with the briefing, then another to confirm approval via `<user_interaction>`.</rule>
     <rule id="short-stages">Split the plan into short stages, each testable and committable on its own.</rule>
     <rule id="stage-format">Each stage lists files in scope, out-of-scope items, testable acceptance criteria, required tests, verification commands, and its Conventional Commit message.</rule>
@@ -47,12 +46,4 @@ argument-hint: "[the change to plan]"
     <rule id="transient-docs">Save all plan files, reports, decisions, and transient docs in `plans/<full-skill-name>/{SLUG}/*` or `docs/<full-skill-name>/*` (subfolders allowed; `docs/plan/{SLUG}/*` without a skill). Remaining artifacts (tool outputs, binaries like screenshots, caches) stay in harness temp (`${TMPDIR:-/tmp}/ai-tools/`). Any skill writing to `plans/<skill>/` or `docs/<skill>/*` deletes the entire skill plan directory upon delivery (`git rm -r plans/<skill>/{SLUG}` or `git rm -r docs/<skill>`), keeping the merged repo clean. On blocked execution, plans and docs are preserved on the branch for inspection.</rule>
     <rule id="present-plan">After briefing approval and {IMPLEMENTER} resolution, formulate the plan and present it with its stages and {IMPLEMENTER} in a concise chat message linking to the plan file on disk (in `plans/<skill>/{SLUG}/0-{SLUG}.md` or the harness temp dir); obtain explicit user approval via `<user_interaction>` before dispatching delivery.</rule>
   </planning_protocol>
-
-  <dispatch_templates>
-  </dispatch_templates>
-
-  <boundaries>
-    <rule id="protocol-source">Follow user-wide `<user_interaction>` and `<security_guardrails>`, and dispatch agents per implement-ai-tools `<harness_agents>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
-    <rule id="transient-planning">Planning writes nothing to repository code; save plan files in `plans/<skill>/{SLUG}/` (or `docs/<skill>/{SLUG}.md`), and temp artifacts in `${TMPDIR:-/tmp}/ai-tools/`.</rule>
-  </boundaries>
 </skill>
