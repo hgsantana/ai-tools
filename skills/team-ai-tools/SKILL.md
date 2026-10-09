@@ -1,341 +1,359 @@
 ---
 name: team-ai-tools
 description: >
-  Act as product owner leading 2-8 senior reviewers (security, performance,
-  UX, best practices, design, DevOps, docs, tests) to refine a request into a
-  plan or campaign, then deliver it unattended to a pull request. Use for
-  /team-ai-tools.
-argument-hint: "[the request to refine and deliver]"
+  Emulate a full software engineering team (PO, architect, specialists, and
+  implementer) to clarify business requirements, design macro and micro
+  architecture, detail and validate tasks, and deliver to a pull request. Use
+  for /team-ai-tools.
+argument-hint: "[the request to refine, plan, and deliver | slug of existing plan]"
 ---
 
 <skill name="team-ai-tools">
   <overview>
-    The session, a strong model, is product owner (PO) and orchestrator: it audits the request against repository documentation and code, refines it with 2–8 senior reviewers, settles open points with the user in batched rounds, has a plan or campaign approved, then delivers it. Working files live in {WORKDIR} = `${TMPDIR:-/tmp}/ai-tools/team/{SLUG}/`; nothing is written to the repository before approval.
+    Emulate an autonomous software engineering team where the session acts as product owner (PO) and orchestrator, collaborating with peer specialists (software architect, security engineer, devops engineer, backend engineer, frontend engineer, data engineer, QA engineer, techwriter, UX designer) and a dedicated multi-task implementer worker to refine, plan, detail, implement, validate, and deliver stories to a pull request.
   </overview>
 
+  <structure>
+    <rule id="team-roles">
+      The team consists of 11 distinct roles:
+      1. po: Product Owner, focused on business rationale, user requirements, domain rules, and documentation alignment.
+      2. architect: Software Architect, responsible for macro and micro architecture, system diagrams, dependency inversion, package boundaries, and task decomposition.
+      3. sec-eng: Security Engineer, focused on threat modeling, authentication, authorization, secret hygiene, injection mitigation, and least privilege.
+      4. devops-eng: DevOps Engineer, focused on CI/CD pipelines, containerization, environment variables, build performance, and deployment reliability.
+      5. back-eng: Backend Engineer, focused on domain logic, services, API contracts, transaction safety, and integrations.
+      6. front-eng: Frontend Engineer, focused on UI components, client state, styling, client routing, and bundle performance.
+      7. data-eng: Data Engineer / DBA, focused on schemas, migrations, indexing, query optimization, and transactional integrity.
+      8. qa-eng: QA &amp; Test Engineer, focused on testing strategies, boundary conditions, edge cases, anti-happy-path verification, and regression prevention.
+      9. techwriter: Technical Writer, focused on technical documentation, ADRs, user guides, API docs, and verification procedures.
+      10. ux-designer: UX Designer, focused on user journeys, ergonomics, interaction consistency, design system tokens, and accessibility.
+      11. implementer: Multi-task Worker, executing assigned tasks across any domain without self-validation or direct commits.
+    </rule>
+
+    <rule id="specialist-peerage">
+      All 10 specialists (po, architect, sec-eng, devops-eng, back-eng, front-eng, data-eng, qa-eng, techwriter, ux-designer) are domain peers with equal standing; no specialist is subordinate to another. Specialists run as session subagents that ALWAYS inherit the session model and effort per `<rule id="inherited">`. The implementer is the execution worker dispatched per `<rule id="implementer">` based on implement-ai-tools `<harness_agents>`.
+    </rule>
+
+    <rule id="implementer-clean-context">
+      Every task dispatched to an implementer MUST start with a fresh, zeroed context (a clean subagent instance per task). The implementer's conversation context is preserved and reused exclusively for retries and rework on that specific task, and is never carried over across different tasks. Once the task is completed or blocked, that implementer instance is released.
+    </rule>
+
+    <rule id="plans-layout">
+      All transient plans, reports, findings, and task specifications are stored under `plans/team-ai-tools/{SLUG}/*`:
+      - `plans/team-ai-tools/{SLUG}/po-report.md`: PO business requirements and documentation impact report.
+      - `plans/team-ai-tools/{SLUG}/architect-findings.md`: Architectural code exploration findings and questions.
+      - `plans/team-ai-tools/{SLUG}/0-{SLUG}.md`: Macro plan with objective, Mermaid architecture diagram, summary status table, and task breakdown.
+      - `plans/team-ai-tools/{SLUG}/{N}-{TASK_SLUG}.md`: Detailed task file containing specifications, extra specialist criteria, implementer delivery report, and validator verdicts.
+    </rule>
+
+    <rule id="status-protocol">
+      Task status in `0-{SLUG}.md` summary table transitions through four states:
+      - empty: Not yet started.
+      - working: Recorded by session when dispatching implementer.
+      - validating: Recorded by implementer upon appending delivery report.
+      - done: Recorded by primary validator specialist upon approving and committing changes.
+      - blocked: Recorded by primary validator specialist upon exceeding retry limits.
+    </rule>
+
+    <rule id="retry-protocol">
+      Each task permits up to 3 retries. If validator observations persist after the 3rd attempt, the task is marked blocked. The primary validator records the blocker in the task report, sets status to blocked in `0-{SLUG}.md`, and commits locally. Execution halts; the session alerts the stakeholder linking the blocked task file. The stakeholder's response is relayed to the primary validator, who decides next steps (annotate report, adjust commits, ask questions, or append revised requirements allowing up to 3 new retries).
+    </rule>
+
+    <rule id="mandatory-tasks">
+      Every plan generated by the architect must include:
+      - Task 1: Create working branch `plan/{SLUG}` based on the current branch where the request was initiated, and commit initial reports (`chore(plan): initialize team plan for {SLUG}`).
+      - Penultimate task: Documentation updates. Must detail HOW to verify changes (docs to read, evaluating modified codebase state) and HOW to document (docs to create, modify, move, organize).
+      - Last task: Complete removal of directory `plans/team-ai-tools/{SLUG}/` (`git rm -r plans/team-ai-tools/{SLUG}`).
+    </rule>
+
+    <rule id="subagent-lifecycle">
+      All specialists spawned during planning and detailing remain alive in stand-by throughout execution. They are terminated only after the final plan delivery is completed.
+    </rule>
+
+    <rule id="no-duplicate-payloads">
+      Dispatches link directly to existing plan and task files rather than duplicating file content into prompt payloads.
+    </rule>
+
+    <rule id="execution-modes">
+      Mode 1 (End-to-End Team Delivery): Triggered with a new story/request. Executes the full lifecycle from PO analysis through final PR.
+      Mode 2 (Plan Execution Orchestration): Triggered with an existing plan (`plans/plan-ai-tools/{SLUG}/0-{SLUG}.md` or `plans/team-ai-tools/{SLUG}/0-{SLUG}.md`). Skips initial PO and macro design, proceeding directly to task detailing or implementer execution.
+    </rule>
+  </structure>
+
   <session_workflow>
-    <step id="1" name="po-analysis">
-      Derive kebab-case {SLUG}. Spawn `<template role="baseline-runner">` with {BASELINE} = `{WORKDIR}/baseline.md`. Read the repository documentation (README, AGENTS.md, docs) and compare it with the code the request touches. Asking the user nothing, write `{WORKDIR}/po-report.md`: request restatement, a baseline summary from {BASELINE}, documentation-versus-code gaps, scope, ambiguities, and refinement questions each with options and a recommendation. Select 2–8 reviewer templates by relevance: `<template role="security-reviewer">`, `<template role="performance-reviewer">`, `<template role="ux-reviewer">`, `<template role="best-practices-reviewer">`, `<template role="design-reviewer">` only when structure changes, and `<template role="devops-reviewer">` only when the request touches CI, static analysis, build, deploy, infrastructure, or cost, `<template role="docs-reviewer">` only when it changes behaviour or documentation, and `<template role="test-reviewer">` only when it changes code; record one line on why each skipped role was skipped.
+    <step id="1" name="po-clarification">
+      When an existing plan slug or file is provided, proceed per `<rule id="execution-modes">`. Otherwise, derive kebab-case {SLUG}. The session acts as PO: read project documentation (README, AGENTS.md, docs) to understand business intent, rules, and principles. Do not inspect code. Ask batched clarification questions to the stakeholder via `<user_interaction>`. Iterate N rounds until all business aspects are settled.
     </step>
 
-    <step id="2" name="team-review">
-      Spawn the selected reviewers in parallel, substituting {REPORT} = `{WORKDIR}/po-report.md` and {FINDINGS} = `{WORKDIR}/{role}.md`. Read every findings file. Clarify each point with its author and route points that touch another reviewer's findings to that reviewer, so they converge on one recommended option. After 3 rounds on a point without agreement, turn it into a user question carrying the divergent options, the PO recommendation, and the recorded dissent. Keep `{WORKDIR}/decisions.md` current: point, owner role, options, recommendation, status (agreed, open, user).
+    <step id="2" name="po-report">
+      Synthesize agreed business scope into `plans/team-ai-tools/{SLUG}/po-report.md`, detailing business requirements and official documentation to be updated. Present report link in chat and confirm approval via `<user_interaction>`.
     </step>
 
-    <step id="3" name="user-round">
-      Ask every open question in one batched `<user_interaction>` call per plan-ai-tools `<rule id="grill-me">`, each with its own options and its recommendation first, ending with {IMPLEMENTER} per implement-ai-tools `<rule id="implementer-offer">`, framed by `<implementer_job>`. Record answers in `decisions.md`. When an answer departs from its recommendation or raises open points, take it to the affected reviewers per `<step id="2">`, then ask a new batch with only the resulting questions; repeat until every point is closed. Send a chat message containing the briefing of settled scope and decisions, then confirm approval via `<user_interaction>`.
+    <step id="3" name="architect-dispatch">
+      Upon PO report approval, spawn `<template role="architect">` with {ACTION} = macro-plan, {SLUG}, {REPORT} = `plans/team-ai-tools/{SLUG}/po-report.md`, {PLAN_FILE} = `plans/team-ai-tools/{SLUG}/0-{SLUG}.md`, and {TASK_FILE} = `plans/team-ai-tools/{SLUG}/0-{SLUG}.md`.
     </step>
 
-    <step id="4" name="approve">
-      Write `{WORKDIR}/plan.md` per plan-ai-tools `<planning_protocol>`, each stage per plan-ai-tools `<rule id="stage-format">` plus its validators per `<rule id="stage-validators">`, with a baseline section from {BASELINE}, turning agreed decisions into acceptance criteria: a plan for one cohesive delivery within about 8 short stages, or a campaign for 3–10 independently deliverable goals. Send `plan.md` to the active reviewers for one sign-off round reporting blockers only, including a stage that omits or wrongly names their role as validator; fold their blockers into the plan, and carry each unresolved blocker into the approval question with the PO recommendation. Present the plan in a chat message linking to `{WORKDIR}/plan.md` per plan-ai-tools `<rule id="present-plan">` and ask approval via `<user_interaction>`, stating the choice and its reason, with options approve, switch between plan and campaign, or revise; revisions return to `<step id="2">` or `<step id="3">`. Approval ends planning: keep the reviewers active for stage validation where the harness can continue a subagent, else release them, and ask nothing else afterwards.
+    <step id="4" name="architect-findings">
+      Architect scans codebase across macro and micro architecture. If scope gaps or technical trade-offs exist, architect writes `plans/team-ai-tools/{SLUG}/architect-findings.md` and submits batched questions to the stakeholder (directly or relayed via session). Iterate until settled.
     </step>
 
-    <step id="5" name="deliver">
-      Record {BASE_BRANCH} = the current branch and {DECISIONS} = `{WORKDIR}/decisions.md`. Implementers make every repository write; the session's only one is `git reset --soft HEAD~1` on a failed check, and planners stay read-only, both writing files only under `${TMPDIR:-/tmp}/ai-tools/`. Template inputs not set below are passed empty; {CAMPAIGN} is empty in plan mode.
-      Plan: run vibe-ai-tools `<step id="2">` and `<step id="3">` with {IMPLEMENTER} and {SLUG}, the session as planner, spawning `<template role="stage-implementer">` with {MODE} = plan, {PLAN_FILE} = `docs/team-ai-tools/{SLUG}.md`, and {PLAN} = `{WORKDIR}/plan.md` for stage 1; run the final audit before the last stage and the CI report after it returns.
-      Campaign: per campaign-ai-tools `<rule id="campaign-lifecycle">`, with {CAMPAIGN} = {SLUG}, every `<template role="stage-implementer">` spawn carrying {MODE} = campaign and {CAMPAIGN}. Bootstrap: spawn it with {STAGE} = bootstrap, {PLAN_FILE} = `docs/campaign-ai-tools/{CAMPAIGN}.md`, and {PLAN} = the campaign record: global objective, {BASE_BRANCH}, the approved goals each with {N}, a kebab-case {GOAL_SLUG}, and status, priorities, exclusions, {IMPLEMENTER}, and an iteration log. Goals: for each goal, spawn `<template role="goal-planner">` with {CAMPAIGN}, {N}, {GOAL_SLUG}, {REPORT} = `{WORKDIR}/po-report.md`, {DECISIONS}, and {FINDINGS_DIR} = {WORKDIR}, keeping it active across the goal's stages as its planner, else respawning it with its plan; for each stage spawn the implementer with {PLAN_FILE} = `docs/campaign-ai-tools/{N}-{GOAL_SLUG}.md`, {STAGE}, and, for stage 1, {PLAN} = the returned plan content or `{WORKDIR}/goal-{N}.md`. Finish: after the last goal, run the final audit once with {PLAN_FILE} = `docs/campaign-ai-tools/{CAMPAIGN}.md`, then spawn the implementer with {STAGE} = finish and that {PLAN_FILE}, and run the CI report after it returns.
-      Stage validation: before the planner's check of each stage, run in parallel every validator the stage lists per `<rule id="stage-validators">` (N = 0 in plan mode): per reviewer role, `<template role="stage-reviewer">` with {ROLE}, {FINDINGS} = `{WORKDIR}/{role}.md`, {DECISIONS}, {PLAN_FILE}, {STAGE}, {BASELINE} = `{WORKDIR}/baseline.md`, and {VERDICTS} = `{WORKDIR}/verdicts/{N}-{STAGE}-{role}.md`; for tests, `<template role="test-validator">` with {PLAN_FILE}, {STAGE}, {BASELINE}, and {VERDICTS} = `{WORKDIR}/verdicts/{N}-{STAGE}-tests.md`. Send each payload to that role's reviewer kept active since planning, else to that role's validator kept active per plan or goal, else spawn it fresh. When every validator ends with `<signal code="REVIEW_OK">` or `<signal code="TESTS_OK">`, the planner's check proceeds. When any ends with `<signal code="REVIEW_FIX">` or `<signal code="TESTS_FIX">`, skip the planner's check and merge every correction from that stage's verdicts, whatever its severity, into `{WORKDIR}/corrections/{N}-{STAGE}.md`, settling conflicting corrections by {DECISIONS} and recording each choice there; on a failed planner check, write its corrections to that file. Set {NOTES} to that file, run `git reset --soft HEAD~1`, and respawn the implementer once with {NOTES}; the retry passes the same validators, then the planner's check, and a second failure of any blocks. On block, write the evidence to `${TMPDIR:-/tmp}/ai-tools/{SLUG}-blocked.md` and preserve `docs/team-ai-tools/` or `docs/campaign-ai-tools/` respectively, with no push or pull request; in campaign mode, then spawn the implementer with {STAGE} = block and {PLAN_FILE} = `docs/campaign-ai-tools/{CAMPAIGN}.md`, unless it cannot be spawned.
-      Final audit: spawn `<template role="final-auditor">` with {BASE_BRANCH}, {DECISIONS}, {BASELINE} = `{WORKDIR}/baseline.md`, and {AUDIT} = `{WORKDIR}/final-audit.md`. On `<signal code="AUDIT_FIX">`, spawn `<template role="stage-implementer">` with {STAGE} = final-audit and {NOTES} = {AUDIT}, then validate its diff against {AUDIT} once; write corrections it left unresolved to `{WORKDIR}/followups.md`, blockers first and highlighted, and pass that path as {FOLLOWUPS} to the plan's last stage or the campaign finish, without blocking delivery.
-      CI report: once the pull request is open, run `gh pr checks --watch` with a timeout of about 15 minutes, write failing check output to `{WORKDIR}/ci.md`, state the CI status (passed, failed, or pending at timeout) in the closing chat line, and attempt no automatic fix.
+    <step id="5" name="macro-plan">
+      Architect formulates macro plan in `plans/team-ai-tools/{SLUG}/0-{SLUG}.md` with clear objective, Mermaid target architecture diagram, summary table, and task list complying with `<rule id="mandatory-tasks">`. Each task identifies 1 primary validator and 0..N extra validators. Architect returns plan link to session.
+    </step>
+
+    <step id="6" name="task-detailing-dispatch">
+      Session keeps Architect alive in stand-by per `<rule id="subagent-lifecycle">`. Session reads `0-{SLUG}.md` and dispatches each primary validator specialist using their matching template with {ACTION} = detail-primary, {PLAN_FILE} = `plans/team-ai-tools/{SLUG}/0-{SLUG}.md`, and {TASK_FILE} = `plans/team-ai-tools/{SLUG}/{N}-{TASK_SLUG}.md`. If a specialist leads multiple tasks, pass specific task numbers.
+    </step>
+
+    <step id="7" name="extra-specialists-detailing">
+      As primary specialists create task files, session dispatches extra validators listed for each task using their role template with {ACTION} = detail-extra, appending domain constraints and acceptance criteria to {TASK_FILE}.
+    </step>
+
+    <step id="8" name="question-resolution">
+      Resolve any technical or business questions arising during task detailing directly with the stakeholder via `<user_interaction>` or session relay.
+    </step>
+
+    <step id="9" name="implementation-dispatch">
+      For each task sequentially: update status to working in `0-{SLUG}.md`. Spawn `<template role="implementer">` in a fresh, zeroed context per `<rule id="implementer-clean-context">` with {ACTION} = execute, linking {PLAN_FILE} and {TASK_FILE} per `<rule id="no-duplicate-payloads">`. Implementer applies changes, runs tests, appends implementation report to {TASK_FILE}, sets status to validating in `0-{SLUG}.md`, and does not commit.
+    </step>
+
+    <step id="10" name="validation-orchestration">
+      Dispatch extra validators with {ACTION} = validate-extra. They review report against uncommitted git diff, append observations to {TASK_FILE}, and reply "Analysis complete". Once all extras respond, dispatch primary validator with {ACTION} = validate-primary. Primary validator reviews report and uncommitted diff: if approved, stages files, commits locally, updates status to done in `0-{SLUG}.md`, and reports approved; if rework needed, appends rework notes to {TASK_FILE}, updates status to validating, and reports rework needed. Session dispatches `<template role="implementer">` with {ACTION} = rework to the same implementer (preserving and reusing its context exclusively for retries per `<rule id="implementer-clean-context">`).
+    </step>
+
+    <step id="11" name="retry-and-block-handling">
+      Enforce `<rule id="retry-protocol">` (up to 3 retries). On 3rd failure, task is marked blocked and committed. Session halts, alerts stakeholder with task file link via `<user_interaction>`, and relays instructions to primary validator.
+    </step>
+
+    <step id="12" name="documentation-task">
+      Execute penultimate task for repository documentation based on actual modified codebase state, validated by `<template role="techwriter">` and peers.
+    </step>
+
+    <step id="13" name="cleanup-and-pr">
+      Execute last task removing `plans/team-ai-tools/{SLUG}/` via git rm. Terminate all stand-by subagents. Session inspects git log and task records from the branch, pushes `plan/{SLUG}`, and opens a documented Pull Request against the base branch.
     </step>
   </session_workflow>
 
   <implementer_job>
-    The implementer takes one stage and delivers it without supervision: it reads the plan and the code it touches, edits code and tests across several files within the stage's scope, matches repository style, runs tests reporting only a concise summary of coverage and execution, appends its stage report, sets status to done, and commits locally without validating delivery against the macro plan. It makes no architecture, planning, or user-facing decisions.
+    The implementer takes one specified task and delivers it without supervision from a clean, zeroed context: its context is preserved and reused exclusively across retries of that same task, and never carried over to different tasks. It reads the plan file and the task file, edits code and tests across files within task scope, matches repository style, runs tests reporting only a concise summary of coverage and execution, appends its execution report to the task file, sets status to validating, and returns without committing or self-validating. It makes no architecture, planning, or user-facing decisions.
     Required capability: reliable multi-file code editing in an unfamiliar codebase, test writing and debugging, precise adherence to written acceptance criteria, and tool use for file edits and shell commands.
   </implementer_job>
 
   <dispatch_templates>
-    <template role="security-reviewer" executor="inherited">
-      <job>Senior security engineer: review the PO report and code for security risks.</job>
+    <template role="architect" executor="inherited">
+      <job>Software architect: macro and micro architecture design, system modeling, task decomposition, and architectural validation.</job>
       <input>
+        <action>{ACTION}</action>
+        <slug>{SLUG}</slug>
         <report>{REPORT}</report>
-        <findings>{FINDINGS}</findings>
-      </input>
-      <instructions>
-        This payload is the brief; do not read sibling skill files.
-        Read {REPORT}, the repository rules (README.md, AGENTS.md if present), and the code in scope. Assess authentication and authorization, untrusted input and injection, secrets handling, data exposure, dependencies and supply chain, least privilege, and destructive operations.
-        Write {FINDINGS}: per point an id, evidence (path:line), severity, options, the recommended option with rationale, and links to other roles it affects. Answer follow-ups from the session, updating {FINDINGS}.
-        Return a one-line outcome with the path and point count.
-      </instructions>
-      <constraints>
-        <constraint>Read-only on the repository.</constraint>
-        <constraint>Ask the user nothing; return questions to the session.</constraint>
-      </constraints>
-    </template>
-
-    <template role="performance-reviewer" executor="inherited">
-      <job>Senior performance engineer: review the PO report and code for performance risks.</job>
-      <input>
-        <report>{REPORT}</report>
-        <findings>{FINDINGS}</findings>
-      </input>
-      <instructions>
-        This payload is the brief; do not read sibling skill files.
-        Read {REPORT}, the repository rules (README.md, AGENTS.md if present), and the code in scope. Assess algorithmic complexity, I/O and network round trips, memory, concurrency, caching, latency and startup, scalability, and measurable budgets.
-        Write {FINDINGS}: per point an id, evidence (path:line), severity, options, the recommended option with rationale, and links to other roles it affects. Answer follow-ups from the session, updating {FINDINGS}.
-        Return a one-line outcome with the path and point count.
-      </instructions>
-      <constraints>
-        <constraint>Read-only on the repository.</constraint>
-        <constraint>Ask the user nothing; return questions to the session.</constraint>
-      </constraints>
-    </template>
-
-    <template role="ux-reviewer" executor="inherited">
-      <job>Senior UX engineer: review the PO report and code for the experience of whoever uses the result.</job>
-      <input>
-        <report>{REPORT}</report>
-        <findings>{FINDINGS}</findings>
-      </input>
-      <instructions>
-        This payload is the brief; do not read sibling skill files.
-        Read {REPORT}, the repository rules (README.md, AGENTS.md if present), and the code in scope. Assess user flows and accessibility when there is an interface, otherwise CLI, API, and developer ergonomics: defaults, error messages, discoverability, documentation, and compatibility felt by users.
-        Write {FINDINGS}: per point an id, evidence (path:line), severity, options, the recommended option with rationale, and links to other roles it affects. Answer follow-ups from the session, updating {FINDINGS}.
-        Return a one-line outcome with the path and point count.
-      </instructions>
-      <constraints>
-        <constraint>Read-only on the repository.</constraint>
-        <constraint>Ask the user nothing; return questions to the session.</constraint>
-      </constraints>
-    </template>
-
-    <template role="best-practices-reviewer" executor="inherited">
-      <job>Senior engineer for best practices: review the PO report and code for quality and conventions.</job>
-      <input>
-        <report>{REPORT}</report>
-        <findings>{FINDINGS}</findings>
-      </input>
-      <instructions>
-        This payload is the brief; do not read sibling skill files.
-        Read {REPORT}, the repository rules (README.md, AGENTS.md if present), and the code in scope. Assess repository conventions and rules, style, maintainability, readability, and error handling and logging; pipelines, analysis tooling, and operational monitoring belong to the DevOps role, documentation to the docs role, and tests to the tests role.
-        Write {FINDINGS}: per point an id, evidence (path:line), severity, options, the recommended option with rationale, and links to other roles it affects. Answer follow-ups from the session, updating {FINDINGS}.
-        Return a one-line outcome with the path and point count.
-      </instructions>
-      <constraints>
-        <constraint>Read-only on the repository.</constraint>
-        <constraint>Ask the user nothing; return questions to the session.</constraint>
-      </constraints>
-    </template>
-
-    <template role="design-reviewer" executor="inherited">
-      <job>Senior software architect: review the PO report and code for structural design.</job>
-      <input>
-        <report>{REPORT}</report>
-        <findings>{FINDINGS}</findings>
-      </input>
-      <instructions>
-        This payload is the brief; do not read sibling skill files.
-        Read {REPORT}, the repository rules (README.md, AGENTS.md if present), and the code in scope. Assess module boundaries, contracts and public APIs, data modeling, dependencies, extensibility, and migration paths.
-        Write {FINDINGS}: per point an id, evidence (path:line), severity, options, the recommended option with rationale, and links to other roles it affects. Answer follow-ups from the session, updating {FINDINGS}.
-        Return a one-line outcome with the path and point count.
-      </instructions>
-      <constraints>
-        <constraint>Read-only on the repository.</constraint>
-        <constraint>Ask the user nothing; return questions to the session.</constraint>
-      </constraints>
-    </template>
-
-    <template role="devops-reviewer" executor="inherited">
-      <job>Senior DevOps engineer: review the PO report and code for delivery efficiency, cost, and operability.</job>
-      <input>
-        <report>{REPORT}</report>
-        <findings>{FINDINGS}</findings>
-      </input>
-      <instructions>
-        This payload is the brief; do not read sibling skill files.
-        Read {REPORT}, the repository rules (README.md, AGENTS.md if present), and the code in scope, including pipelines, build files, containers, and infrastructure as code. Assess CI speed, caching, and flakiness; static analysis and lint gates; build and packaging; deploy resources and rollback; cloud cost and sizing; operational monitoring; and pipeline maintainability.
-        Write {FINDINGS}: per point an id, evidence (path:line), severity, options, the recommended option with rationale, and links to other roles it affects. Answer follow-ups from the session, updating {FINDINGS}.
-        Return a one-line outcome with the path and point count.
-      </instructions>
-      <constraints>
-        <constraint>Read-only on the repository; run no cloud CLI. Where live cost or resource data is needed, recommend a query through az-ai-tools or gc-ai-tools.</constraint>
-        <constraint>Ask the user nothing; return questions to the session.</constraint>
-      </constraints>
-    </template>
-
-    <template role="docs-reviewer" executor="inherited">
-      <job>Senior documentation engineer: review the PO report and documentation the request affects.</job>
-      <input>
-        <report>{REPORT}</report>
-        <findings>{FINDINGS}</findings>
-      </input>
-      <instructions>
-        This payload is the brief; do not read sibling skill files.
-        Read {REPORT}, the repository rules (README.md, AGENTS.md if present), the documentation tree, and the code in scope. Assess which documents must change, organization and placement, separation of concerns between documents, structure and navigation, duplication against a single source of truth, accuracy against code, audience fit, and consistent terminology.
-        Write {FINDINGS}: per point an id, evidence (path:line), severity, options, the recommended option with rationale, and links to other roles it affects. Answer follow-ups from the session, updating {FINDINGS}.
-        Return a one-line outcome with the path and point count.
-      </instructions>
-      <constraints>
-        <constraint>Read-only on the repository.</constraint>
-        <constraint>Ask the user nothing; return questions to the session.</constraint>
-      </constraints>
-    </template>
-
-    <template role="test-reviewer" executor="inherited">
-      <job>Senior test engineer: review the PO report and code to define the test strategy.</job>
-      <input>
-        <report>{REPORT}</report>
-        <findings>{FINDINGS}</findings>
-      </input>
-      <instructions>
-        This payload is the brief; do not read sibling skill files.
-        Read {REPORT}, the repository rules (README.md, AGENTS.md if present), the existing tests, and the code in scope. Define the behaviours each change must prove, the variations to cover (edge cases, invalid input, error paths, boundaries, state and ordering), test levels, fixtures, and where mocks would hide behaviour; these become stage acceptance criteria.
-        Write {FINDINGS}: per point an id, evidence (path:line), severity, options, the recommended option with rationale, and links to other roles it affects. Answer follow-ups from the session, updating {FINDINGS}.
-        Return a one-line outcome with the path and point count.
-      </instructions>
-      <constraints>
-        <constraint>Read-only on the repository.</constraint>
-        <constraint>Ask the user nothing; return questions to the session.</constraint>
-      </constraints>
-    </template>
-
-    <template role="final-auditor" executor="inherited">
-      <job>Senior reviewer: audit the integrated delivery against the decisions before the pull request.</job>
-      <input>
-        <base_branch>{BASE_BRANCH}</base_branch>
-        <decisions>{DECISIONS}</decisions>
-        <baseline>{BASELINE}</baseline>
-        <audit>{AUDIT}</audit>
-      </input>
-      <instructions>
-        This payload is the brief; do not read sibling skill files.
-        Read the repository rules (README.md, AGENTS.md if present), the plan files under docs/, {DECISIONS}, {BASELINE}, the diff from {BASE_BRANCH} to HEAD, and the documentation tree. Run the full test, lint, and build commands, attributing failures already recorded in {BASELINE} to the baseline. Validate the acceptance criteria across stages, security regressions, and documentation organization and placement, separation of concerns between documents, structure and navigation, duplication against a single source of truth, accuracy against the delivered code, and consistent terminology.
-        Write {AUDIT}: per correction the path, the exact change, severity (blocker, high, medium, low), and rationale, each executable without further decisions.
-        End with `<signal code="AUDIT_OK">` when {AUDIT} lists no correction, else `<signal code="AUDIT_FIX">`.
-      </instructions>
-      <constraints>
-        <constraint>Read-only on the repository; leave tracked files, the index, and history untouched, writing only {AUDIT}.</constraint>
-        <constraint>Ask the user nothing; judge from the decisions and code evidence.</constraint>
-      </constraints>
-    </template>
-
-    <template role="baseline-runner" executor="default-worker">
-      <job>Default worker: record the repository's test, lint, and build baseline before any change.</job>
-      <input>
-        <baseline>{BASELINE}</baseline>
-      </input>
-      <instructions>
-        This payload is the brief; do not read sibling skill files.
-        Discover the repository's existing test, lint, and build commands from its rules (README.md, AGENTS.md if present), scripts, and CI files, and run each.
-        Write {BASELINE}: per command the command line, exit code, and known failures with their evidence.
-        Return a one-line outcome with the path and command count.
-      </instructions>
-      <constraints>
-        <constraint>Read-only on the repository; leave tracked files, the index, and history untouched, writing only {BASELINE}.</constraint>
-        <constraint>Ask the user nothing; record a missing command as absent.</constraint>
-      </constraints>
-    </template>
-
-    <template role="test-validator" executor="inherited">
-      <job>Senior test engineer: validate the tests of one delivered stage before the planner's check.</job>
-      <input>
         <plan_file>{PLAN_FILE}</plan_file>
-        <stage>{STAGE}</stage>
-        <baseline>{BASELINE}</baseline>
-        <verdicts>{VERDICTS}</verdicts>
+        <task_file>{TASK_FILE}</task_file>
       </input>
       <instructions>
         This payload is the brief; do not read sibling skill files.
-        Read {PLAN_FILE}, its stage {STAGE} acceptance criteria, {BASELINE}, the repository rules (README.md, AGENTS.md if present), and the diff of HEAD. Judge whether the tests assert behaviour rather than implementation, cover the required variations, use meaningful assertions, and avoid mocks that hide behaviour. Run the test suite, attributing failures already recorded in {BASELINE} to the baseline rather than the stage; in a disposable git worktree or local clone under the OS temp directory, break each targeted behaviour and confirm a test fails, then remove that copy.
-        Append to {VERDICTS}, this stage's verdicts file, the verdict and per correction the path, the missing or wrong test, and the expected assertion, each executable without further decisions.
-        End with `<signal code="TESTS_OK">` when the stage needs no test correction, else `<signal code="TESTS_FIX">`.
+        When {ACTION} is macro-plan: read {REPORT} (plans/team-ai-tools/{SLUG}/po-report.md) and original request. Scan repository for macro and micro architectural patterns (services, infrastructure, dependencies, package structures, dependency inversion, interfaces, classes). When ambiguities, scope risks, or documentation-versus-code gaps appear, write findings to plans/team-ai-tools/{SLUG}/architect-findings.md and send batched questions to the stakeholder. Once clarified, write {PLAN_FILE} (plans/team-ai-tools/{SLUG}/0-{SLUG}.md): objective, Mermaid architecture diagram of target state, summary table (#, Status, Name, Primary Validator, Extra Validators), and task list per mandatory task rules. Task 1 always creates working branch plan/{SLUG} and commits initial reports; intermediate tasks decompose the story into atomic deliverables with primary and extra validators; penultimate task specifies verification and documentation; last task removes plans/team-ai-tools/{SLUG}/. Return plan link.
+        When {ACTION} is detail-primary or detail-extra: detail or contribute to the architectural design and module boundaries of {TASK_FILE} under {PLAN_FILE}.
+        When {ACTION} is validate-extra: inspect uncommitted git diff against {TASK_FILE}. Append architectural observations to {TASK_FILE} and reply "Analysis complete".
+        When {ACTION} is validate-primary: evaluate delivery report in {TASK_FILE}, extra feedback, and uncommitted git diff. Append final assessment. If approved, stage files, commit with Conventional Commit message, update status to done in {PLAN_FILE}, and report approved. If rework needed, append specific rework items to {TASK_FILE}, update status to validating in {PLAN_FILE}, and report rework needed.
       </instructions>
       <constraints>
-        <constraint>Leave the repository working tree, index, and history untouched; mutate only the disposable copy.</constraint>
-        <constraint>Ask the user nothing; judge from the plan and code evidence.</constraint>
+        <constraint>Adhere strictly to clean architecture, dependency inversion, and modularity principles.</constraint>
+        <constraint>Do not make unverified code assumptions; verify against repository reality.</constraint>
       </constraints>
     </template>
 
-    <template role="stage-reviewer" executor="inherited">
-      <job>Senior {ROLE} reviewer: validate one delivered stage within that role's domain before the planner's check.</job>
+    <template role="sec-eng" executor="inherited">
+      <job>Senior security engineer: threat modeling, authentication, authorization, secret hygiene, input sanitization, least privilege, vulnerability mitigation.</job>
       <input>
-        <role>{ROLE}</role>
-        <findings>{FINDINGS}</findings>
-        <decisions>{DECISIONS}</decisions>
+        <action>{ACTION}</action>
         <plan_file>{PLAN_FILE}</plan_file>
-        <stage>{STAGE}</stage>
-        <baseline>{BASELINE}</baseline>
-        <verdicts>{VERDICTS}</verdicts>
+        <task_file>{TASK_FILE}</task_file>
       </input>
       <instructions>
         This payload is the brief; do not read sibling skill files.
-        Read {FINDINGS}, the {ROLE} findings from planning that define your domain, {DECISIONS}, {PLAN_FILE} with its stage {STAGE} acceptance criteria, {BASELINE}, the repository rules (README.md, AGENTS.md if present), and the diff of HEAD. Judge, within the {ROLE} domain only, whether the stage honours the decisions and recommendations that apply to it, meets its acceptance criteria, and introduces no new risk; attribute issues already recorded in {BASELINE} to the baseline rather than the stage.
-        Append to {VERDICTS}, this stage's {ROLE} verdicts file, the verdict and per correction the path, the exact change, severity, and rationale, each executable without further decisions.
-        End with `<signal code="REVIEW_OK">` when the stage needs no {ROLE} correction, else `<signal code="REVIEW_FIX">`.
+        When {ACTION} is detail-primary: write initial task file {TASK_FILE} from {PLAN_FILE} with task scope, security requirements, files in scope, acceptance criteria, required tests, verification commands, and Conventional Commit message format.
+        When {ACTION} is detail-extra: review {TASK_FILE} under {PLAN_FILE}, appending a structured security section with threat considerations, authentication/authorization checks, secrets hygiene, input sanitization, and least privilege criteria.
+        When {ACTION} is validate-extra: compare implementation report in {TASK_FILE} against the uncommitted git diff. Evaluate per security standards. Append structured analysis to the bottom of {TASK_FILE}. Return concise response: "Analysis complete".
+        When {ACTION} is validate-primary: review uncommitted git diff and extra specialists' feedback in {TASK_FILE}. Append final assessment. If approved, stage files and commit with Conventional Commit message, update status to done in {PLAN_FILE}, and report approved. If rework needed, append specific rework items, update status to validating in {PLAN_FILE}, and report rework needed.
       </instructions>
       <constraints>
-        <constraint>Read-only on the repository; leave tracked files, the index, and history untouched, writing only {VERDICTS}.</constraint>
-        <constraint>Ask the user nothing; judge from the decisions, plan, and code evidence.</constraint>
+        <constraint>Zero tolerance for secret leakage, injection vulnerabilities, and permissive access controls.</constraint>
       </constraints>
     </template>
 
-    <template role="goal-planner" executor="inherited">
-      <job>Planner: plan one campaign goal from settled decisions and validate its stages.</job>
+    <template role="devops-eng" executor="inherited">
+      <job>Senior DevOps engineer: CI/CD automation, build configurations, containerization, environment configuration, infrastructure, deployment safety, observability.</job>
       <input>
-        <campaign>{CAMPAIGN}</campaign>
-        <goal>{N}</goal>
-        <goal_slug>{GOAL_SLUG}</goal_slug>
-        <report>{REPORT}</report>
-        <decisions>{DECISIONS}</decisions>
-        <findings_dir>{FINDINGS_DIR}</findings_dir>
-      </input>
-      <instructions>
-        This payload is the brief; do not read sibling skill files.
-        Read docs/campaign-ai-tools/{CAMPAIGN}.md, {REPORT}, {DECISIONS}, the reviewer findings files in {FINDINGS_DIR}, the repository rules (README.md, AGENTS.md if present), and the code goal {N} touches. Plan goal {N} into short stages per plan-ai-tools `<planning_protocol>`, with the decisions as acceptance criteria and these campaign adaptations: stage 1 writes docs/campaign-ai-tools/{N}-{GOAL_SLUG}.md on campaign/{CAMPAIGN} without creating a branch; the last stage runs `git rm` on that goal plan, sets goal {N} done and logs the iteration in docs/campaign-ai-tools/{CAMPAIGN}.md, and commits `chore(plans): complete goal {GOAL_SLUG}`, without pushing or opening a pull request. Give each stage a validators field: every reviewer role with a findings file in {FINDINGS_DIR} whose domain the stage touches, tests only when it changes code or tests, and none for plan-only and closing stages. Return the plan as content, or write it to {FINDINGS_DIR}/goal-{N}.md when you can write there.
-        Stay active across the goal's stages: inspect each stage's git diff and test summary against docs/campaign-ai-tools/{N}-{GOAL_SLUG}.md and return only the approval verdict or corrections.
-        Return the plan content, or a one-line outcome with its path.
-      </instructions>
-      <constraints>
-        <constraint>Read-only on the repository; write only {FINDINGS_DIR}/goal-{N}.md.</constraint>
-        <constraint>Ask the user nothing; decide from the decisions and code evidence, logging each choice in the plan.</constraint>
-      </constraints>
-    </template>
-
-    <template role="stage-implementer" executor="implementer">
-      <job>Implementer: deliver one plan or campaign stage from a clean context.</job>
-      <input>
-        <mode>{MODE}</mode>
-        <campaign>{CAMPAIGN}</campaign>
+        <action>{ACTION}</action>
         <plan_file>{PLAN_FILE}</plan_file>
-        <stage>{STAGE}</stage>
-        <plan>{PLAN}</plan>
-        <notes>{NOTES}</notes>
-        <followups>{FOLLOWUPS}</followups>
+        <task_file>{TASK_FILE}</task_file>
       </input>
       <instructions>
-        This payload is the brief; do not read sibling skill files. Read the repository rules (README.md, AGENTS.md if present), then act by {STAGE}. {NOTES} is an optional session file of corrections from a failed check; {FOLLOWUPS} an optional session file of follow-ups for the pull request body.
-        Bootstrap: create branch campaign/{CAMPAIGN} from the current branch, write {PLAN} to {PLAN_FILE}, and commit `chore(plans): start campaign {CAMPAIGN}`.
-        Stage number: for stage 1, write {PLAN}, reading it first when it is a file path, to {PLAN_FILE} as that stage specifies. Read {PLAN_FILE}. Deliver only stage {STAGE}: match surrounding style, write and run its tests reporting only a concise summary of coverage and execution, set its Status to done, append a short report to the end of {PLAN_FILE}, and commit with the stage's Conventional Commit message. When {NOTES} is set, this is a retry: the previous attempt is staged after `git reset --soft HEAD~1`; fix it in place by applying {NOTES}. When {MODE} is plan and this is the last stage, run removal of `docs/team-ai-tools/` (with `git rm -r docs/team-ai-tools`), push, and pull request against the base branch, adding {FOLLOWUPS} to its body.
-        Final-audit: record a final-audit entry with status done in {PLAN_FILE}, apply the corrections in {NOTES}, run the tests reporting only a concise summary, and commit `fix: apply final audit`, or a more fitting Conventional Commit type.
-        Finish: read the base branch from {PLAN_FILE}, remove `docs/campaign-ai-tools/` (with `git rm -r docs/campaign-ai-tools`), commit `chore(plans): complete campaign {CAMPAIGN}`, push campaign/{CAMPAIGN}, and open a pull request against the base branch, adding {FOLLOWUPS} to its body.
-        Block: record the reason from `${TMPDIR:-/tmp}/ai-tools/{CAMPAIGN}-blocked.md` and that evidence path in {PLAN_FILE}, preserve the docs directory (`docs/team-ai-tools/` or `docs/campaign-ai-tools/`), and commit `chore(plans): block campaign {CAMPAIGN}`.
-        Return a one-line outcome with the commit hash, test summary, changed paths, and any pull request URL.
+        This payload is the brief; do not read sibling skill files.
+        When {ACTION} is detail-primary: write initial task file {TASK_FILE} from {PLAN_FILE} with task scope, DevOps/infra requirements, files in scope, acceptance criteria, required tests, verification commands, and Conventional Commit message format.
+        When {ACTION} is detail-extra: review {TASK_FILE} under {PLAN_FILE}, appending a structured DevOps section with CI/CD requirements, environment variables, build performance, containerization rules, and infrastructure criteria.
+        When {ACTION} is validate-extra: compare implementation report in {TASK_FILE} against the uncommitted git diff. Evaluate per DevOps and infrastructure standards. Append structured analysis to the bottom of {TASK_FILE}. Return concise response: "Analysis complete".
+        When {ACTION} is validate-primary: review uncommitted git diff and extra specialists' feedback in {TASK_FILE}. Append final assessment. If approved, stage files and commit with Conventional Commit message, update status to done in {PLAN_FILE}, and report approved. If rework needed, append specific rework items, update status to validating in {PLAN_FILE}, and report rework needed.
       </instructions>
       <constraints>
-        <constraint>Stay within the stage's scope.</constraint>
-        <constraint>Do not validate delivery against the macro plan; run tests, commit locally, and return outcome.</constraint>
-        <constraint>Push and open a pull request only in the last stage of mode plan or in finish, with no other remote mutation; mode campaign works on campaign/{CAMPAIGN}.</constraint>
+        <constraint>Ensure hermetic, reproducible builds and zero destructive infrastructure changes without authorization.</constraint>
+      </constraints>
+    </template>
+
+    <template role="back-eng" executor="inherited">
+      <job>Senior backend engineer: domain modeling, business logic, API contracts, services, error handling, performance, integration.</job>
+      <input>
+        <action>{ACTION}</action>
+        <plan_file>{PLAN_FILE}</plan_file>
+        <task_file>{TASK_FILE}</task_file>
+      </input>
+      <instructions>
+        This payload is the brief; do not read sibling skill files.
+        When {ACTION} is detail-primary: write initial task file {TASK_FILE} from {PLAN_FILE} with task scope, backend domain logic, files in scope, acceptance criteria, required tests, verification commands, and Conventional Commit message format.
+        When {ACTION} is detail-extra: review {TASK_FILE} under {PLAN_FILE}, appending a structured backend engineering section with API design constraints, error handling rules, domain models, and service integration requirements.
+        When {ACTION} is validate-extra: compare implementation report in {TASK_FILE} against the uncommitted git diff. Evaluate per backend architecture and code quality standards. Append structured analysis to the bottom of {TASK_FILE}. Return concise response: "Analysis complete".
+        When {ACTION} is validate-primary: review uncommitted git diff and extra specialists' feedback in {TASK_FILE}. Append final assessment. If approved, stage files and commit with Conventional Commit message, update status to done in {PLAN_FILE}, and report approved. If rework needed, append specific rework items, update status to validating in {PLAN_FILE}, and report rework needed.
+      </instructions>
+      <constraints>
+        <constraint>Preserve robust error handling, strong typing, and boundary validation across all services.</constraint>
+      </constraints>
+    </template>
+
+    <template role="front-eng" executor="inherited">
+      <job>Senior frontend engineer: UI components, client state, styling, responsive design, bundle optimization, accessibility, client routing.</job>
+      <input>
+        <action>{ACTION}</action>
+        <plan_file>{PLAN_FILE}</plan_file>
+        <task_file>{TASK_FILE}</task_file>
+      </input>
+      <instructions>
+        This payload is the brief; do not read sibling skill files.
+        When {ACTION} is detail-primary: write initial task file {TASK_FILE} from {PLAN_FILE} with task scope, frontend component architecture, files in scope, acceptance criteria, required tests, verification commands, and Conventional Commit message format.
+        When {ACTION} is detail-extra: review {TASK_FILE} under {PLAN_FILE}, appending a structured frontend section with component structure, state management constraints, styling guidelines, and client routing requirements.
+        When {ACTION} is validate-extra: compare implementation report in {TASK_FILE} against the uncommitted git diff. Evaluate per frontend architecture, accessibility, and responsiveness standards. Append structured analysis to the bottom of {TASK_FILE}. Return concise response: "Analysis complete".
+        When {ACTION} is validate-primary: review uncommitted git diff and extra specialists' feedback in {TASK_FILE}. Append final assessment. If approved, stage files and commit with Conventional Commit message, update status to done in {PLAN_FILE}, and report approved. If rework needed, append specific rework items, update status to validating in {PLAN_FILE}, and report rework needed.
+      </instructions>
+      <constraints>
+        <constraint>Enforce component isolation, responsive layouts, and zero untested client-side state mutations.</constraint>
+      </constraints>
+    </template>
+
+    <template role="data-eng" executor="inherited">
+      <job>Senior data engineer / DBA: data schemas, migrations, storage engines, queries, indexes, data integrity, transactional boundaries.</job>
+      <input>
+        <action>{ACTION}</action>
+        <plan_file>{PLAN_FILE}</plan_file>
+        <task_file>{TASK_FILE}</task_file>
+      </input>
+      <instructions>
+        This payload is the brief; do not read sibling skill files.
+        When {ACTION} is detail-primary: write initial task file {TASK_FILE} from {PLAN_FILE} with task scope, data models, migration scripts, files in scope, acceptance criteria, required tests, verification commands, and Conventional Commit message format.
+        When {ACTION} is detail-extra: review {TASK_FILE} under {PLAN_FILE}, appending a structured data engineering section with schema migration safety, query performance, indexing, and transactional integrity criteria.
+        When {ACTION} is validate-extra: compare implementation report in {TASK_FILE} against the uncommitted git diff. Evaluate per database safety, migration reversibility, and query optimization standards. Append structured analysis to the bottom of {TASK_FILE}. Return concise response: "Analysis complete".
+        When {ACTION} is validate-primary: review uncommitted git diff and extra specialists' feedback in {TASK_FILE}. Append final assessment. If approved, stage files and commit with Conventional Commit message, update status to done in {PLAN_FILE}, and report approved. If rework needed, append specific rework items, update status to validating in {PLAN_FILE}, and report rework needed.
+      </instructions>
+      <constraints>
+        <constraint>Enforce backward-compatible migrations, safe rollbacks, and zero unindexed queries on large collections.</constraint>
+      </constraints>
+    </template>
+
+    <template role="qa-eng" executor="inherited">
+      <job>Senior QA and test engineer: testing strategy, unit/integration/e2e test design, edge cases, anti-happy-path, boundary values, test coverage.</job>
+      <input>
+        <action>{ACTION}</action>
+        <plan_file>{PLAN_FILE}</plan_file>
+        <task_file>{TASK_FILE}</task_file>
+      </input>
+      <instructions>
+        This payload is the brief; do not read sibling skill files.
+        When {ACTION} is detail-primary: write initial task file {TASK_FILE} from {PLAN_FILE} with task scope, test automation specifications, files in scope, acceptance criteria, required tests, verification commands, and Conventional Commit message format.
+        When {ACTION} is detail-extra: review {TASK_FILE} under {PLAN_FILE}, appending a structured QA testing section with boundary values, edge cases, negative test scenarios, anti-happy-path validations, and mock requirements.
+        When {ACTION} is validate-extra: compare implementation report in {TASK_FILE} against the uncommitted git diff. Evaluate per test rigor, branch exhaustion, and edge-case coverage. Append structured analysis to the bottom of {TASK_FILE}. Return concise response: "Analysis complete".
+        When {ACTION} is validate-primary: review uncommitted git diff and extra specialists' feedback in {TASK_FILE}. Append final assessment. If approved, stage files and commit with Conventional Commit message, update status to done in {PLAN_FILE}, and report approved. If rework needed, append specific rework items, update status to validating in {PLAN_FILE}, and report rework needed.
+      </instructions>
+      <constraints>
+        <constraint>Never accept happy-path only tests; require boundary, edge-case, and negative test coverage.</constraint>
+      </constraints>
+    </template>
+
+    <template role="techwriter" executor="inherited">
+      <job>Senior technical writer: architectural documentation, user guides, API references, changelogs, migration notes, verification protocols.</job>
+      <input>
+        <action>{ACTION}</action>
+        <plan_file>{PLAN_FILE}</plan_file>
+        <task_file>{TASK_FILE}</task_file>
+      </input>
+      <instructions>
+        This payload is the brief; do not read sibling skill files.
+        When {ACTION} is detail-primary: write initial task file {TASK_FILE} from {PLAN_FILE} with documentation scope. For documentation tasks (including the penultimate plan task), detail HOW to verify (which docs to read, how to evaluate changes made and current application state) and HOW to document (which docs to create, modify, move, organize), files in scope, and Conventional Commit message format.
+        When {ACTION} is detail-extra: review {TASK_FILE} under {PLAN_FILE}, appending a structured technical writing section with documentation requirements, API documentation updates, ADRs, and README updates.
+        When {ACTION} is validate-extra: compare implementation report in {TASK_FILE} against the uncommitted git diff. Evaluate per documentation accuracy, clarity, and completeness. Append structured analysis to the bottom of {TASK_FILE}. Return concise response: "Analysis complete".
+        When {ACTION} is validate-primary: review uncommitted git diff and extra specialists' feedback in {TASK_FILE}. Append final assessment. If approved, stage files and commit with Conventional Commit message, update status to done in {PLAN_FILE}, and report approved. If rework needed, append specific rework items, update status to validating in {PLAN_FILE}, and report rework needed.
+      </instructions>
+      <constraints>
+        <constraint>Ensure documentation accurately mirrors current codebase implementation and follows project standards.</constraint>
+      </constraints>
+    </template>
+
+    <template role="ux-designer" executor="inherited">
+      <job>Senior UX designer: user flows, ergonomics, consistency, interaction patterns, design system compliance, microcopy, accessibility.</job>
+      <input>
+        <action>{ACTION}</action>
+        <plan_file>{PLAN_FILE}</plan_file>
+        <task_file>{TASK_FILE}</task_file>
+      </input>
+      <instructions>
+        This payload is the brief; do not read sibling skill files.
+        When {ACTION} is detail-primary: write initial task file {TASK_FILE} from {PLAN_FILE} with UX scope, interaction specifications, files in scope, acceptance criteria, test expectations, and Conventional Commit message format.
+        When {ACTION} is detail-extra: review {TASK_FILE} under {PLAN_FILE}, appending a structured UX section with interaction details, error messaging, layout ergonomics, design system tokens, and accessibility standards.
+        When {ACTION} is validate-extra: compare implementation report in {TASK_FILE} against the uncommitted git diff. Evaluate per UX consistency, accessibility guidelines, and user ergonomics. Append structured analysis to the bottom of {TASK_FILE}. Return concise response: "Analysis complete".
+        When {ACTION} is validate-primary: review uncommitted git diff and extra specialists' feedback in {TASK_FILE}. Append final assessment. If approved, stage files and commit with Conventional Commit message, update status to done in {PLAN_FILE}, and report approved. If rework needed, append specific rework items, update status to validating in {PLAN_FILE}, and report rework needed.
+      </instructions>
+      <constraints>
+        <constraint>Prioritize user ergonomics, clear feedback, and WCAG accessibility standards.</constraint>
+      </constraints>
+    </template>
+
+    <template role="po" executor="inherited">
+      <job>Product owner specialist: business value, user stories, acceptance criteria, domain alignment, scope boundaries.</job>
+      <input>
+        <action>{ACTION}</action>
+        <plan_file>{PLAN_FILE}</plan_file>
+        <task_file>{TASK_FILE}</task_file>
+      </input>
+      <instructions>
+        This payload is the brief; do not read sibling skill files.
+        When {ACTION} is detail-primary: write initial task file {TASK_FILE} from {PLAN_FILE} with business acceptance criteria, user stories, files in scope, and Conventional Commit message format.
+        When {ACTION} is detail-extra: review {TASK_FILE} under {PLAN_FILE}, appending a structured PO section with business rules, acceptance criteria, domain alignment, and stakeholder expectations.
+        When {ACTION} is validate-extra: compare implementation report in {TASK_FILE} against the uncommitted git diff. Evaluate per business criteria and stakeholder goals. Append structured analysis to the bottom of {TASK_FILE}. Return concise response: "Analysis complete".
+        When {ACTION} is validate-primary: review uncommitted git diff and extra specialists' feedback in {TASK_FILE}. Append final assessment. If approved, stage files and commit with Conventional Commit message, update status to done in {PLAN_FILE}, and report approved. If rework needed, append specific rework items, update status to validating in {PLAN_FILE}, and report rework needed.
+      </instructions>
+      <constraints>
+        <constraint>Ensure every task strictly advances stakeholder business objectives without scope creep.</constraint>
+      </constraints>
+    </template>
+
+    <template role="implementer" executor="implementer">
+      <job>Multi-task implementer: deliver one specified task from clean, zeroed context (reused only for retries), run tests, and report results without self-validation.</job>
+      <input>
+        <action>{ACTION}</action>
+        <plan_file>{PLAN_FILE}</plan_file>
+        <task_file>{TASK_FILE}</task_file>
+      </input>
+      <instructions>
+        This payload is the brief; do not read sibling skill files. Read {PLAN_FILE} and {TASK_FILE}. Read repository rules (README.md, AGENTS.md if present).
+        When {ACTION} is execute: deliver only the scope defined in {TASK_FILE}. Match repository code style. Write and run tests, reporting only a concise summary of coverage and execution. Append a concise implementation report to the end of {TASK_FILE} listing test results and changes per touched file. Set task status to validating in {PLAN_FILE}. Do not commit changes and do not validate delivery.
+        When {ACTION} is rework: read feedback and rework instructions appended to {TASK_FILE}. Apply requested fixes in place to the modified files. Re-run tests. Append rework report to the end of {TASK_FILE} summarizing corrections. Ensure task status remains validating in {PLAN_FILE}. Do not commit changes.
+        Return a one-line outcome with the task file, test summary, and changed paths.
+      </instructions>
+      <constraints>
+        <constraint>Stay strictly within the scope specified in the task file.</constraint>
+        <constraint>Do not validate delivery against the macro plan and do not commit; report factual outcomes only.</constraint>
       </constraints>
     </template>
   </dispatch_templates>
 
-  <return_protocol>
-    <signal code="AUDIT_OK">The integrated delivery needs no correction; continue delivery.</signal>
-    <signal code="AUDIT_FIX">The audit file lists corrections for one final-audit stage.</signal>
-    <signal code="TESTS_OK">The stage's tests prove its behaviour; the planner's check proceeds once every validator passes.</signal>
-    <signal code="TESTS_FIX">The verdicts file lists test corrections; the implementer retries before the planner's check.</signal>
-    <signal code="REVIEW_OK">The stage needs no correction in the reviewer's domain; the planner's check proceeds once every validator passes.</signal>
-    <signal code="REVIEW_FIX">The verdicts file lists corrections in the reviewer's domain; the implementer retries before the planner's check.</signal>
-  </return_protocol>
-
   <boundaries>
-    <rule id="protocols">Planning follows plan-ai-tools `<planning_protocol>` and delivery implement-ai-tools `<implementation_protocol>`; this skill states only its specifics: the reviewer team, per-stage validation by related reviewers, and delivery reuse from vibe-ai-tools and campaign-ai-tools.</rule>
-    <rule id="stage-validators">Each stage names its validators: every reviewer selected in `<step id="1">` whose domain the stage touches, tests only when it changes code or tests, validated through `<template role="test-validator">`; plan-only and closing stages have none, and the session validates the final-audit stage against the audit.</rule>
-    <rule id="reviewer-continuity">Keep reviewers active until approval, and through delivery for stage validation where the harness can continue a subagent; where it cannot, respawn the role's template with its findings file as context.</rule>
-    <rule id="spawn-apis">Spawn templates per implement-ai-tools `<harness_agents>`; if `<template role="stage-implementer">` cannot be spawned as {IMPLEMENTER}, stop as blocked per implement-ai-tools `<rule id="spawn-fallback">`.</rule>
-    <rule id="chat-scope">Chat carries only the briefing, plan presentation, questions, approvals, spawn announcements, a one-line outcome, and paths under {WORKDIR}; reports stay on disk.</rule>
-    <rule id="protocol-source">Follow user-wide `<user_interaction>` and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
-    <rule id="stay-in-repo">Stay inside the working repository. Preserve pre-existing commit history.</rule>
+    <rule id="protocol-source">Follow user-wide `<user_interaction>` and `<security_guardrails>`, and dispatch agents per implement-ai-tools `<harness_agents>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
+    <rule id="stay-in-repo">All changes stay within the working repository. Preserve pre-existing commit history.</rule>
   </boundaries>
 </skill>
