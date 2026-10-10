@@ -32,4 +32,15 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/.
     <rule id="commit-message-body">It should provide additional context, reasoning, or details about the change in the commit body. Use bullet points or paragraphs as needed.</rule>
     <rule id="never-push">Never push to remote, unless explicitly instructed by the user or when following a skill that demands it to open a new PR.</rule>
   </conventional_commits>
+
+  <boundaries>
+    <rule id="implementer-types">Standard implementer types resolved dynamically by the executing harness at runtime:
+      - `mid-level`: Mid-level tier of current harness skill (`agy-ai-tools`, `claude-ai-tools`, `copilot-ai-tools`) - recommended.
+      - `harness-default`: Default subagent worker of current harness (Antigravity = `Flash`; Claude = `Sonnet`; Copilot = `Gemini 3.8 Flash (Copilot)`).
+      - `session-subagent`: Subagent spawned with clean, zeroed context inheriting current session model and effort.
+      - `senior`: Senior tier of current harness skill (`agy-ai-tools`, `claude-ai-tools`, `copilot-ai-tools`).
+      - `junior`: Junior tier of current harness skill (`agy-ai-tools`, `claude-ai-tools`, `copilot-ai-tools`).
+      - `session`: The interactive session itself implements directly without spawning a subagent.
+    </rule>
+  </boundaries>
 </user_instructions>

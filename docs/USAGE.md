@@ -16,6 +16,8 @@ Skills provide session-directed workflows. Testing, interaction, and security pr
 
 | Skill | Use it for | Example |
 |---|---|---|
+| `/plan-ai-tools` | Formulate a user story as PO, resolve implementer choice, and draft a technical execution plan with an Architect | `/plan-ai-tools add user authentication` |
+| `/implement-ai-tools` | Execute an approved plan stage-by-stage with specialist planning, isolated implementer execution, and validation | `/implement-ai-tools add-user-authentication` |
 | `/az-ai-tools` | Inspect or manage Azure resources, subscriptions, infrastructure, and costs with `az` | `/az-ai-tools list costly idle resources` |
 | `/gc-ai-tools` | Inspect or manage Google Cloud projects, infrastructure, and costs with `gcloud` | `/gc-ai-tools show resources in project-x` |
 | `/agy-ai-tools`, `/claude-ai-tools`, `/copilot-ai-tools` | Dispatch an agent by tier (`junior`, `mid-level`, `senior`) or explicit model and effort | `/claude-ai-tools senior review the auth module` |
