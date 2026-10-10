@@ -21,7 +21,7 @@ argument-hint: "[story or feature description to plan and implement]"
       - For all questions, trade-offs, or doubts raised by the Architect or Specialists, the session decides autonomously without consulting the user.
       - Core decision criterion: prioritize options that carry zero financial cost and ensure easy backup and reversibility for critical issues.
       - Escalation threshold: the session pauses to query the user via `<user_interaction>` only if neither zero-cost nor easily reversible options are possible (e.g., unavoidable paid third-party services, irreversible data loss, or destructive infrastructure actions).
-      - All autonomous decisions and settled trade-offs are explicitly recorded in the "Decisões" section of `0-{SLUG}.md`.
+      - All autonomous decisions and settled trade-offs are explicitly recorded in the "Decisions" section of `0-{SLUG}.md`.
     </rule>
 
     <rule id="autonomous-workflow-integration">Workflow chaining across plan-ai-tools and implement-ai-tools:
@@ -37,7 +37,7 @@ argument-hint: "[story or feature description to plan and implement]"
 
   <session_workflow>
     <step id="1" name="interactive-story-refinement">
-      Execute plan-ai-tools `<step id="1">` through plan-ai-tools `<step id="6">`: act as PO to settle implementer choice, review repository documentation without inspecting application code, clarify ambiguities and acceptance criteria with the user via `<user_interaction>`, write `docs/plan-ai-tools/{SLUG}/historia-{SLUG}.md`, announce the story link, and collect user story approval.
+      Execute plan-ai-tools `<step id="1">` through plan-ai-tools `<step id="6">`: act as PO to settle implementer choice, review repository documentation without inspecting application code, clarify ambiguities and acceptance criteria with the user via `<user_interaction>`, write `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md`, announce the story link, and collect user story approval.
     </step>
 
     <step id="2" name="autonomous-planning">

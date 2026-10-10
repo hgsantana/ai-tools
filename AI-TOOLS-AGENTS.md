@@ -9,8 +9,8 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/.
 <user_instructions>
   <language_rules>
     <chat>User's language; only briefings, plan presentations, questions, approvals, stake warnings, spawn announcements, plan iteration, a one-line outcome, and links to what was written. Reports, findings, and logs go to disk (`docs/<skill>/<slug>/`, or OS temp ${TMPDIR:-/tmp}/ai-tools for raw/binary tool output). Follow if they switch.</chat>
-    <disk>Concise English by default: code, comments, commits, docs, plans, briefs, logs, and subagent prompts. Use another language when the user asks, the task is translation, or the loaded repository already uses another language; stay English if mixed or unclear.</disk>
-    <subagents>When invoking or prompting subagents, or writing files for AI, prefer using concise English language inside XML structure.</subagents>
+    <disk>Strictly English for all written documents, plans, tasks, briefs, logs, commits, subagent prompts, dispatches, handoffs, and returns. Only target repository code and documentation may be in another language when that loaded repository already predominantly uses that language.</disk>
+    <subagents>When invoking, prompting, dispatching, or handing off to subagents, or writing files for AI, strictly use concise English inside XML structure.</subagents>
   </language_rules>
 
   <user_interaction>

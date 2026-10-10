@@ -15,14 +15,14 @@ argument-hint: "[story or feature description to plan]"
 
   <boundaries>
     <rule id="ubiquitous-language">Standard project domain terminology:
-      - `História` (User Story): Business-level structuring of the user request written to `docs/plan-ai-tools/{SLUG}/historia-{SLUG}.md` by the PO session.
-      - `Plano` (Plan): Technical artifact written to `docs/plan-ai-tools/{SLUG}/0-{SLUG}.md` decomposed into atomic tasks, guiding technical execution.
-      - `Tarefa` (Task): Atomic, committable deliverable written to `docs/plan-ai-tools/{SLUG}/{N}-{TASK_SLUG}.md` by a Specialist.
-      - `Especialista` (Specialist): Subagent dispatched with clean zeroed context and assigned a specific domain role.
-      - `Validador` (Validator): The specialist responsible for reviewing task implementation against the uncommitted git diff.
-      - `Usuário` (User): Person interacting with the session.
+      - `Story` (User Story): Business-level structuring of the user request written to `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md` by the PO session.
+      - `Plan`: Technical artifact written to `docs/plan-ai-tools/{SLUG}/0-{SLUG}.md` decomposed into atomic tasks, guiding technical execution.
+      - `Task`: Atomic, committable deliverable written to `docs/plan-ai-tools/{SLUG}/{N}-{TASK_SLUG}.md` by a Specialist.
+      - `Specialist`: Subagent dispatched with clean zeroed context and assigned a specific domain role.
+      - `Validator`: The specialist responsible for reviewing task implementation against the uncommitted git diff.
+      - `User`: Person interacting with the session.
       - `PO` (Product Owner): The interactive session itself. Focuses exclusively on repository documentation and business domain requirements without reading application code.
-      - `Arquiteto` (Architect): Dispatched specialist subagent who designs architecture, creates the general plan `0-{SLUG}.md`, assigns specialists, and specifies architectural decisions.
+      - `Architect`: Dispatched specialist subagent who designs architecture, creates the general plan `0-{SLUG}.md`, assigns specialists, and specifies architectural decisions.
       - `Implementer`: Dispatched agent that executes code and tests for a task.
     </rule>
 
@@ -73,11 +73,11 @@ argument-hint: "[story or feature description to plan]"
     </step>
 
     <step id="4" name="write-story">
-      Write the finalized user story to `docs/plan-ai-tools/{SLUG}/historia-{SLUG}.md`. Include business context, scope boundaries, acceptance criteria, documentation requirements, and the selected implementer type (as a type identifier, not a specific model).
+      Write the finalized user story to `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md`. Include business context, scope boundaries, acceptance criteria, documentation requirements, and the selected implementer type (as a type identifier, not a specific model).
     </step>
 
     <step id="5" name="story-announcement">
-      Send an atomic chat message to the user containing the link to `docs/plan-ai-tools/{SLUG}/historia-{SLUG}.md`. This message is an independent, complete step sent before requesting approval.
+      Send an atomic chat message to the user containing the link to `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md`. This message is an independent, complete step sent before requesting approval.
     </step>
 
     <step id="6" name="story-approval">
@@ -85,12 +85,12 @@ argument-hint: "[story or feature description to plan]"
     </step>
 
     <step id="7" name="dispatch-architect">
-      Spawn `<template role="architect">` with clean zeroed context (inheriting session model and effort) with {ACTION} = macro-plan, passing {SLUG}, {STORY_FILE} = `docs/plan-ai-tools/{SLUG}/historia-{SLUG}.md`, {PLAN_FILE} = `docs/plan-ai-tools/{SLUG}/0-{SLUG}.md`, and empty {FEEDBACK}.
+      Spawn `<template role="architect">` with clean zeroed context (inheriting session model and effort) with {ACTION} = macro-plan, passing {SLUG}, {STORY_FILE} = `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md`, {PLAN_FILE} = `docs/plan-ai-tools/{SLUG}/0-{SLUG}.md`, and empty {FEEDBACK}.
     </step>
 
     <step id="8" name="architect-planning">
       Architect reads {STORY_FILE}, inspects repository code in scope, identifies points of change, and drafts `0-{SLUG}.md`. The plan must contain:
-      1. A task status table: `#`, `Status` (empty for unexecuted, `working`, `validating`, `retry<1..3>`, `blocked`, `done`), `Tarefa` (name), and `Especialista` (assigned specialist from `<rule id="specialists-catalog">`).
+      1. A task status table: `#`, `Status` (empty for unexecuted, `working`, `validating`, `retry<1..3>`, `blocked`, `done`), `Task` (name), and `Specialist` (assigned specialist from `<rule id="specialists-catalog">`).
       2. Technical objective.
       3. Mermaid target architecture diagram(s).
       4. Atomic, self-contained, and committable task list with summarized technical descriptions and assigned specialists.
@@ -98,15 +98,15 @@ argument-hint: "[story or feature description to plan]"
     </step>
 
     <step id="9" name="architect-clarifications">
-      If doubts arise, Architect sends batched questions with recommendations to the PO session per `<rule id="architect-question-rounds">`. Session answers or relays critical decisions to the user. All settled decisions are appended to the "Decisões" section of `0-{SLUG}.md`.
+      If doubts arise, Architect sends batched questions with recommendations to the PO session per `<rule id="architect-question-rounds">`. Session answers or relays critical decisions to the user. All settled decisions are appended to the "Decisions" section of `0-{SLUG}.md`.
     </step>
 
     <step id="10" name="architect-handover">
-      Architect concludes plan drafting, appends decisions, and replies to the session with: "Plano concluído com sucesso: docs/plan-ai-tools/{SLUG}/0-{SLUG}.md".
+      Architect concludes plan drafting, appends decisions, and replies to the session with: "Plan completed successfully: docs/plan-ai-tools/{SLUG}/0-{SLUG}.md".
     </step>
 
     <step id="11" name="plan-announcement">
-      Session outputs an atomic chat message to the user with: "Plano concluído com sucesso: docs/plan-ai-tools/{SLUG}/0-{SLUG}.md" along with the link to `docs/plan-ai-tools/{SLUG}/historia-{SLUG}.md`.
+      Session outputs an atomic chat message to the user with: "Plan completed successfully: docs/plan-ai-tools/{SLUG}/0-{SLUG}.md" along with the link to `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md`.
     </step>
 
     <step id="12" name="plan-approval">
@@ -118,7 +118,7 @@ argument-hint: "[story or feature description to plan]"
     </step>
 
     <step id="14" name="branch-and-commit">
-      Upon plan approval, create git branch `plan/{SLUG}` based on the current branch. Stage and commit `docs/plan-ai-tools/{SLUG}/historia-{SLUG}.md` and `docs/plan-ai-tools/{SLUG}/0-{SLUG}.md` with Conventional Commit message `chore(plan): initialize plan and story for {SLUG}`.
+      Upon plan approval, create git branch `plan/{SLUG}` based on the current branch. Stage and commit `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md` and `docs/plan-ai-tools/{SLUG}/0-{SLUG}.md` with Conventional Commit message `chore(plan): initialize plan and story for {SLUG}`.
     </step>
 
     <step id="15" name="completion-notice">
@@ -148,18 +148,18 @@ argument-hint: "[story or feature description to plan]"
         3. Identify existing points of extension and new components needed.
         4. If major discrepancies with {STORY_FILE} appear, send batched questions with recommended options to the PO session (up to 3 rounds).
         5. Write {PLAN_FILE} (`docs/plan-ai-tools/{SLUG}/0-{SLUG}.md`):
-           - Task status table with columns: `#`, `Status` (initially blank), `Tarefa`, `Especialista`.
+           - Task status table with columns: `#`, `Status` (initially blank), `Task`, `Specialist`.
            - Technical objective.
            - Mermaid architecture diagram(s) showing target modules, classes, and service boundaries.
            - Atomic task breakdown: each task must be self-sufficient and independently committable, with technical summary and assigned specialist (from architect, sec-eng, devops-eng, back-eng, front-eng, data-eng, qa-eng, techwriter, ux-designer).
            - Architectural decisions and general rules guiding specialists and implementers.
-           - "Decisões" section recording resolved questions and choices.
-        6. Return concise outcome: "Plano concluído com sucesso: {PLAN_FILE}".
+           - "Decisions" section recording resolved questions and choices.
+        6. Return concise outcome: "Plan completed successfully: {PLAN_FILE}".
 
         When {ACTION} is re-plan:
         1. Read {STORY_FILE}, existing {PLAN_FILE}, and user {FEEDBACK}.
         2. Adjust architecture diagrams, task breakdown, specialist assignments, and decisions in {PLAN_FILE}.
-        3. Return concise outcome: "Plano concluído com sucesso: {PLAN_FILE}".
+        3. Return concise outcome: "Plan completed successfully: {PLAN_FILE}".
       </instructions>
       <constraints>
         <constraint>Adhere strictly to clean architecture, dependency inversion, and modularity principles.</constraint>

@@ -1,6 +1,6 @@
 # ai-tools
 
-> **Version 0.0.76-ALPHA** — under active development. Suitable for testing; alpha versions provide neither guarantees nor backward compatibility (rule 4).
+> **Version 0.0.77-ALPHA** — under active development. Suitable for testing; alpha versions provide neither guarantees nor backward compatibility (rule 4).
 
 ## Overview
 
@@ -63,7 +63,7 @@ Normative for every human and every AI maintaining this repository.
 7. Every installed skill directory, slash command, and frontmatter `name:` ends in `-ai-tools`; bare names such as `plan` and `az` remain uninstalled.
 8. Use extreme concision: remove ambiguity and redundancy while preserving every instruction, rule, and intention.
 9. Skills and `AI-TOOLS-AGENTS.md` state what to do in the [Semantic XML grammar](#semantic-xml-grammar): every cross-reference is a backticked tag reference that resolves (`<template role="...">`, `<step id="...">`), every variable is a `{PLACEHOLDER}`, every `<rule>` has an `id`, and every `<template>` names its `role` and `executor`. Blocks of `plan-ai-tools`, `implement-ai-tools`, and `AI-TOOLS-AGENTS.md` can be cited in other skills; any modification to these blocks or skills may require updating consuming skills. Skills never duplicate the harness native subagent API list. Prose citations of this README use section anchors, never rule numbers. A negative (`never`, `do not`) is used only when it reinforces an essential positive, or when the positive phrasing would lose force or not make sense.
-10. Repository files use concise English; chat uses the user's language. Rule 23 assigns content between them.
+10. All repository text—skills, instructions, dispatch templates, question options, answers, returns/outcomes, prompts, scripts, comments, and documentation—must strictly be in English. This is an absolute repository rule. The sole exception is in `AI-TOOLS-AGENTS.md` where user interaction in chat (`<chat>`, `<user_interaction>`) follows the active session language used by the user. Only target repository code and repository documentation may be in another language when that loaded repository already predominantly uses that language. Rule 23 assigns content between chat and disk.
 11. Skills contain neither **Stake** nor **Continue?** headings; destructive actions, cost generation, and mutations require explicit user approval per user-wide `<security_guardrails>`.
 
 ### Semantic XML grammar

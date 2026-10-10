@@ -10,16 +10,16 @@ argument-hint: "[slug of plan to implement]"
 
 <skill name="implement-ai-tools">
   <overview>
-    Execute approved plans stage by stage using just-in-time task planning, isolated code implementation, and strict specialist validation. For each task defined in `docs/plan-ai-tools/{SLUG}/0-{SLUG}.md`, the session dispatches the designated Specialist with clean context to write `<N>-<slug-tarefa>.md`, dispatches the resolved Implementer with clean context to write code, execute tests, run linters, and record a factual report, and re-engages the Specialist to validate the delivery against the uncommitted git diff and commit on approval. Upon completing all tasks, the session removes the plan directory, commits the cleanup, pushes the plan branch, and creates a pull request.
+    Execute approved plans stage by stage using just-in-time task planning, isolated code implementation, and strict specialist validation. For each task defined in `docs/plan-ai-tools/{SLUG}/0-{SLUG}.md`, the session dispatches the designated Specialist with clean context to write `<N>-{TASK_SLUG}.md`, dispatches the resolved Implementer with clean context to write code, execute tests, run linters, and record a factual report, and re-engages the Specialist to validate the delivery against the uncommitted git diff and commit on approval. Upon completing all tasks, the session removes the plan directory, commits the cleanup, pushes the plan branch, and creates a pull request.
   </overview>
 
   <boundaries>
     <rule id="ubiquitous-language">Standard project domain terminology:
-      - `História` (User Story): Business requirements artifact located at `docs/plan-ai-tools/{SLUG}/historia-{SLUG}.md`.
-      - `Plano` (Plan): Macro technical execution plan located at `docs/plan-ai-tools/{SLUG}/0-{SLUG}.md`.
-      - `Tarefa` (Task): Technical specification for a single atomic unit of work located at `docs/plan-ai-tools/{SLUG}/{N}-{TASK_SLUG}.md`.
-      - `Especialista` (Specialist): Subagent with clean zeroed context assigned to plan, advise, and validate a task per its domain.
-      - `Validador` (Validator): The specialist when performing validation and committing the task.
+      - `Story` (User Story): Business requirements artifact located at `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md`.
+      - `Plan`: Macro technical execution plan located at `docs/plan-ai-tools/{SLUG}/0-{SLUG}.md`.
+      - `Task`: Technical specification for a single atomic unit of work located at `docs/plan-ai-tools/{SLUG}/{N}-{TASK_SLUG}.md`.
+      - `Specialist`: Subagent with clean zeroed context assigned to plan, advise, and validate a task per its domain.
+      - `Validator`: The specialist when performing validation and committing the task.
       - `Implementer`: Subagent or session executor resolved per `<rule id="implementer-types">` to write code and tests.
     </rule>
 
@@ -63,11 +63,11 @@ argument-hint: "[slug of plan to implement]"
 
   <session_workflow>
     <step id="1" name="resolve-plan">
-      Identify target {SLUG} from argument, active branch `plan/{SLUG}`, or workspace scan of `docs/plan-ai-tools/*/0-*.md`. Read `docs/plan-ai-tools/{SLUG}/0-{SLUG}.md` and `docs/plan-ai-tools/{SLUG}/historia-{SLUG}.md`. Locate the first unexecuted or active task from the plan status table.
+      Identify target {SLUG} from argument, active branch `plan/{SLUG}`, or workspace scan of `docs/plan-ai-tools/*/0-*.md`. Read `docs/plan-ai-tools/{SLUG}/0-{SLUG}.md` and `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md`. Locate the first unexecuted or active task from the plan status table.
     </step>
 
     <step id="2" name="dispatch-task-planner">
-      For task {TASK_NUM}, identify the assigned specialist role ({SPECIALIST_ROLE}) from `0-{SLUG}.md`. Spawn `<template role="specialist">` with clean zeroed context, {ACTION} = detail-task, passing {SLUG}, {TASK_NUM}, {TASK_SLUG}, {STORY_FILE} = `docs/plan-ai-tools/{SLUG}/historia-{SLUG}.md`, {PLAN_FILE} = `docs/plan-ai-tools/{SLUG}/0-{SLUG}.md`, {TASK_FILE} = `docs/plan-ai-tools/{SLUG}/{TASK_NUM}-{TASK_SLUG}.md`, {SPECIALIST_ROLE}, and {SPECIALIST_SUMMARY} from `<rule id="specialist-summaries">`.
+      For task {TASK_NUM}, identify the assigned specialist role ({SPECIALIST_ROLE}) from `0-{SLUG}.md`. Spawn `<template role="specialist">` with clean zeroed context, {ACTION} = detail-task, passing {SLUG}, {TASK_NUM}, {TASK_SLUG}, {STORY_FILE} = `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md`, {PLAN_FILE} = `docs/plan-ai-tools/{SLUG}/0-{SLUG}.md`, {TASK_FILE} = `docs/plan-ai-tools/{SLUG}/{TASK_NUM}-{TASK_SLUG}.md`, {SPECIALIST_ROLE}, and {SPECIALIST_SUMMARY} from `<rule id="specialist-summaries">`.
     </step>
 
     <step id="3" name="task-planning-wait">
@@ -75,7 +75,7 @@ argument-hint: "[slug of plan to implement]"
     </step>
 
     <step id="4" name="dispatch-implementer">
-      Update task status to `working` in `0-{SLUG}.md`. Resolve implementer type declared in `historia-{SLUG}.md` per `<rule id="implementer-types">`. Spawn `<template role="implementer">` with clean zeroed context, {ACTION} = execute-task, passing {SLUG}, {TASK_NUM}, {STORY_FILE}, {PLAN_FILE}, {TASK_FILE}, and empty {REWORK_NOTES}.
+      Update task status to `working` in `0-{SLUG}.md`. Resolve implementer type declared in `story-{SLUG}.md` per `<rule id="implementer-types">`. Spawn `<template role="implementer">` with clean zeroed context, {ACTION} = execute-task, passing {SLUG}, {TASK_NUM}, {STORY_FILE}, {PLAN_FILE}, {TASK_FILE}, and empty {REWORK_NOTES}.
     </step>
 
     <step id="5" name="implementer-execution-wait">
