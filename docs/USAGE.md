@@ -18,6 +18,7 @@ Skills provide session-directed workflows. Testing, interaction, and security pr
 |---|---|---|
 | `/plan-ai-tools` | Formulate a user story as PO, resolve implementer choice, and draft a technical execution plan with an Architect | `/plan-ai-tools add user authentication` |
 | `/implement-ai-tools` | Execute an approved plan stage-by-stage with specialist planning, isolated implementer execution, and validation | `/implement-ai-tools add-user-authentication` |
+| `/vibe-ai-tools` | Refine a user story as PO interactively, then autonomously execute planning, task implementation, and PR creation | `/vibe-ai-tools add user authentication` |
 | `/az-ai-tools` | Inspect or manage Azure resources, subscriptions, infrastructure, and costs with `az` | `/az-ai-tools list costly idle resources` |
 | `/gc-ai-tools` | Inspect or manage Google Cloud projects, infrastructure, and costs with `gcloud` | `/gc-ai-tools show resources in project-x` |
 | `/agy-ai-tools`, `/claude-ai-tools`, `/copilot-ai-tools` | Dispatch an agent by tier (`junior`, `mid-level`, `senior`) or explicit model and effort | `/claude-ai-tools senior review the auth module` |
@@ -27,7 +28,7 @@ Skills provide session-directed workflows. Testing, interaction, and security pr
 
 ### Who does the work
 
-Every skill runs on the session's model. The session handles user alignment, judgment, commits, and short pointers to disk; builds, tests, and bulk fact collection go to the harness's default subagent.
+Every skill runs on the session's model. The session handles user alignment, judgment, commits, and short pointers to disk; builds, tests, and bulk fact collection go to the harness's default subagent. In `/vibe-ai-tools`, the session refines the story interactively with the user and then takes full autonomous ownership of subsequent technical decisions—favoring zero-cost and easily reversible choices—executing planning and implementation through to PR creation.
 
 ### Agent dispatch
 
