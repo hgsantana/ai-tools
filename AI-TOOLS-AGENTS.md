@@ -26,6 +26,7 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/.
   </security_guardrails>
 
   <conventional_commits>
+    If not in a git repository, ignore these rules.
     <rule id="always-commit">Always commit changes to the repository when you fulfill an user request. If the user requests a correction of the commit you've just delivered in the session, amend the existing commit.</rule>
     <rule id="commit-message-format">Use Conventional Commits format for commit messages: `{type}({scope}): {description}` with optional body and footer. Types include `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`.</rule>
     <rule id="commit-message-content">Commit messages should be concise, clear, and descriptive of the change. Avoid vague messages like "update" or "fix".</rule>
