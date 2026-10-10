@@ -34,7 +34,7 @@ Development checks live under `scripts/` beside `scripts/shell/`, outside the in
 11. **no binaries** — All tracked files under `skills/` and `scripts/` must be plain text.
 12. **`dev/tmp` untracked** — No files under `dev/tmp` may be committed to git (rule 22).
 13. **xml grammar** — All semantic XML bodies must be balanced, use vocabulary tags registered in the README [Semantic XML grammar](../README.md#semantic-xml-grammar), provide unique IDs for `<rule>`, numeric IDs for `<step>`, codes/types for `<signal>`, `<state>`, `<response>`, and valid executors for `<template>` (rule 9).
-14. **xml references** — All backticked tag references (`<rule id="...">`, `<template role="...">`, qualified references) must resolve to valid definitions in the source files (rule 9).
+14. **xml references** — All backticked tag references (`<rule id="...">`, `<template role="...">`, qualified references) must resolve to valid definitions in the source files (rule 9). Blocks from `plan-ai-tools`, `implement-ai-tools`, and `AI-TOOLS-AGENTS.md` can be cited in other skills; any modification to these blocks or skills may require updating consuming skills.
 15. **placeholder parity** — Every `{PLACEHOLDER}` used in a `<template>` body must be declared in its `<input>`, and every declared input placeholder must be used (rule 9).
 16. **vocabulary parity** — The structural XML tags in the README grammar table and the linter's `XML_VOCAB` list must match exactly (rule 9).
 17. **version bump** — When run with `--base <ref>`, verifies that any modification to shipped files (`skills/`, `scripts/`, `AI-TOOLS-AGENTS.md`) includes a version bump in `README.md` (rule 4).
