@@ -35,12 +35,9 @@ Checks:
   skill layout      no skill-root markdown, every skill directory has
                     SKILL.md with semantic XML tags (<skill>, <session_workflow>,
                     <dispatch_templates>), no SKILL.md contains Continue? or Stake,
-                    plan-ai-tools has <planning_protocol>, implement-ai-tools has
-                    <harness_agents>, <implementation_protocol>, and <simple_tasks_protocol>,
-                    AI-TOOLS-AGENTS.md has no <execution_protocol>, implement-ai-tools defines
-                    rules for default-worker and implementer, never <agents>,
-                    <dispatch_protocol>, or <worker, YAML applyTo/alwaysApply,
-                    optional $HOME/.ai-tools/USER-AGENTS.md, and no references to deleted files (rules 5, 11)
+                    AI-TOOLS-AGENTS.md has no retired <agents>, <dispatch_protocol>,
+                    or <worker, YAML applyTo/alwaysApply, optional $HOME/.ai-tools/USER-AGENTS.md,
+                    and no references to deleted files (rules 5, 11)
   instructions cap  AI-TOOLS-AGENTS.md is at most 10000 characters (rule 3)
   instructions      AI-TOOLS-AGENTS.md has no ## sub-heading (rule 3)
   headings
@@ -62,10 +59,8 @@ Checks:
                     unique id, every <step> a numeric id, and <case>,
                     <response>, <signal>, <state> their id, type, or code,
                     and every <template> a role and an executor that is one
-                    of default-worker, implementer, or inherited AND
-                    has a matching <rule id> inside implement-ai-tools
-                    <harness_agents>, never an agent attribute (rule 9,
-                    Semantic XML grammar)
+                    of default-worker, implementer, or inherited,
+                    never an agent attribute (rule 9, Semantic XML grammar)
   xml references    every backticked tag reference resolves: attribute
                     references to a definition in the same or the qualified
                     file, bare references to the vocabulary (rule 9)
@@ -75,9 +70,8 @@ Checks:
                     the same tags (rule 9)
   rule anchors      no SKILL.md or AI-TOOLS-AGENTS.md cites a README rule number
                     (rule 9)
-  spawn protocol    every SKILL.md with a <template> cites
-  citation          <harness_agents>, and no SKILL.md duplicates the
-                    harness native subagent API list (Copilot runSubagent)
+  spawn protocol    no SKILL.md duplicates the harness native subagent API list
+  citation          (Copilot runSubagent)
   rule citations    README rules numbered 1..N without gaps; every rule N
                     cited in tracked docs and scripts is within 1..N (rule 1)
   harness table     lib.sh harness keys, skills roots, and instructions
@@ -200,7 +194,7 @@ check_skill_name_match() {
 
 check_skill_layout() {
   local f d name rid
-  local gated="vibe-ai-tools campaign-ai-tools team-ai-tools ui-ai-tools az-ai-tools gc-ai-tools gh-ai-tools agy-ai-tools claude-ai-tools copilot-ai-tools plan-ai-tools implement-ai-tools"
+  local gated="az-ai-tools gc-ai-tools gh-ai-tools agy-ai-tools claude-ai-tools copilot-ai-tools"
   local maintainer="update-ai-tools remove-ai-tools"
 
   f="$AI_TOOLS/skills/SKILL-CONTRACT.md"
@@ -212,34 +206,6 @@ check_skill_layout() {
     [ -f "$f" ] || continue
     warn "skill-root markdown file must not exist: $f"
   done
-
-  f="$AI_TOOLS/skills/plan-ai-tools/SKILL.md"
-  if grep -q '<planning_protocol>' "$f"; then
-    ok "plan-ai-tools has planning_protocol tag: $f"
-  else
-    warn "plan-ai-tools missing '<planning_protocol>' tag: $f"
-  fi
-
-  f="$AI_TOOLS/skills/implement-ai-tools/SKILL.md"
-  if grep -q '<implementation_protocol>' "$f" && grep -q '<simple_tasks_protocol>' "$f" && grep -q '<harness_agents>' "$f"; then
-    ok "implement-ai-tools has harness_agents, implementation_protocol and simple_tasks_protocol tags: $f"
-  else
-    warn "implement-ai-tools missing '<harness_agents>', '<implementation_protocol>', or '<simple_tasks_protocol>' tag: $f"
-  fi
-
-  for rid in default-worker implementer; do
-    if awk '/<harness_agents>/{p=1} p&&/<\/harness_agents>/{p=0} p' "$f" | grep -qF "<rule id=\"$rid\">"; then
-      ok "implement-ai-tools harness_agents defines rule $rid: $f"
-    else
-      warn "implement-ai-tools harness_agents missing <rule id=\"$rid\">: $f"
-    fi
-  done
-
-  if grep -q 'authorized delegated payload' "$f"; then
-    ok "implement-ai-tools notes authorized delegated payload: $f"
-  else
-    warn "implement-ai-tools missing authorized delegated payload: $f"
-  fi
 
   f="$AI_TOOLS/AI-TOOLS-AGENTS.md"
   if grep -q '<planning_protocol>' "$f" || grep -q '<implementation_protocol>' "$f" || grep -q '<execution_protocol>' "$f" || grep -q '<harness_agents>' "$f"; then
@@ -505,7 +471,7 @@ check_no_binaries() {
 # The vocabulary of structural tags (README, "Semantic XML grammar"). A tag
 # outside it, outside <input>, is a finding: register a new tag in the README
 # table and here in the same commit.
-XML_VOCAB="user_instructions system_overview planning_protocol implementation_protocol harness_agents simple_tasks_protocol unit_tests language_rules chat disk user_interaction fallback security_guardrails conventional_commits skill overview session_workflow step dispatch_templates template job input instructions constraints constraint status_protocol states state return_protocol signal plan_file_format structure boundaries rule default implementer_job"
+XML_VOCAB="user_instructions system_overview unit_tests language_rules chat disk user_interaction fallback security_guardrails conventional_commits skill overview session_workflow step dispatch_templates template job input instructions constraints constraint status_protocol states state return_protocol signal boundaries rule default"
 
 xml_files() {
   local f
@@ -556,18 +522,7 @@ xml_references() {
 }
 
 valid_executors() {
-  # usage: valid_executors -- space-separated executor names that are both
-  # one of the three known executor kinds and have a matching <rule id> inside
-  # implement-ai-tools's <harness_agents> (rule 9). A skill <template> whose
-  # executor is not in this set is a lint finding, even if it names one of the
-  # three known kinds by spelling alone.
-  local rule_ids e out=""
-  rule_ids=$(awk '/<harness_agents>/{p=1} p&&/<\/harness_agents>/{p=0} p' "$AI_TOOLS/skills/implement-ai-tools/SKILL.md" \
-    | grep -oE '<rule id="[a-z0-9-]+"' | sed -E 's/<rule id="([a-z0-9-]+)"/\1/' )
-  for e in default-worker implementer inherited; do
-    if in_list "$e" "$(echo "$rule_ids" | tr '\n' ' ')"; then out="$out $e"; fi
-  done
-  echo "${out# }"
+  echo "default-worker implementer inherited"
 }
 
 check_xml_grammar() {
@@ -680,8 +635,6 @@ EOF
           ok "reference resolves: <$name $attr=\"$val\"> in $f"
         elif [ -z "$q" ] && xml_body "$AI_TOOLS/AI-TOOLS-AGENTS.md" | grep -q "<${name}[^>]* ${attr}=\"${val}\""; then
           ok "reference resolves: <$name $attr=\"$val\"> in $f"
-        elif [ -z "$q" ] && xml_body "$AI_TOOLS/skills/implement-ai-tools/SKILL.md" | grep -q "<${name}[^>]* ${attr}=\"${val}\""; then
-          ok "reference resolves: <$name $attr=\"$val\"> in $f"
         else
           warn "unresolved reference <$name $attr=\"$val\"> in $f (looked in $target)"
         fi
@@ -757,24 +710,14 @@ EOF
 }
 
 # --- Check: spawn protocol citation (rule 9) --------------------------------
-# Every skill that spawns a template cites the centralized execution protocol
-# instead of restating it, and the harness native subagent API list lives
-# only in implement-ai-tools.
+# No skill duplicates the harness native subagent API list.
 
 check_spawn_protocol_citation() {
   local f
   for f in "$AI_TOOLS"/skills/*/SKILL.md; do
     [ -f "$f" ] || continue
-    if grep -q '<template' "$f"; then
-      # shellcheck disable=SC2016 # literal backticked citation text, not command substitution
-      if grep -qF '`<harness_agents>`' "$f"; then
-        ok "cites harness_agents: $f"
-      else
-        warn "SKILL.md has a <template> but does not cite \`<harness_agents>\`: $f"
-      fi
-    fi
-    if [ "$f" != "$AI_TOOLS/skills/implement-ai-tools/SKILL.md" ] && grep -qF 'Copilot runSubagent' "$f"; then
-      warn "SKILL.md repeats the harness native subagent API list (belongs only in implement-ai-tools): $f"
+    if grep -qF 'Copilot runSubagent' "$f"; then
+      warn "SKILL.md repeats the harness native subagent API list: $f"
     else
       ok "no duplicated native subagent API list: $f"
     fi

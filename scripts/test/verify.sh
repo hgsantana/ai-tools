@@ -36,7 +36,7 @@ case_verify_skill_absent() {
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
 
-  dest="$root/home/.claude/skills/vibe-ai-tools"
+  dest="$root/home/.claude/skills/gc-ai-tools"
   rm -rf "$dest" || fatal "$T_CASE: cannot remove $dest"
 
   before=$(t_snapshot "$root/home")
@@ -57,7 +57,7 @@ case_verify_skill_differs() {
   t_run "$root" "$root/home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
 
-  dest="$root/home/.claude/skills/vibe-ai-tools"
+  dest="$root/home/.claude/skills/gc-ai-tools"
   rm -rf "$dest" || fatal "$T_CASE: cannot remove $dest"
   mkdir -p "$dest"
   printf 'unrelated file\n' > "$dest/SKILL.md"
@@ -85,7 +85,7 @@ case_verify_rejects_external_symlinks() {
   printf 'external\n' > "$ext_instr"
 
   mkdir -p "$home/.claude/skills"
-  ln -s "$ext_skill" "$home/.claude/skills/vibe-ai-tools"
+  ln -s "$ext_skill" "$home/.claude/skills/gc-ai-tools"
   ln -s "$ext_instr" "$home/.claude/CLAUDE.md"
 
   before=$(t_snapshot "$home")

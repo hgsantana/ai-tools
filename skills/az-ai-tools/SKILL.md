@@ -62,7 +62,7 @@ argument-hint: "[what to inspect or change in Azure]"
     <rule id="reads-free-mutations-approved">Read-only queries run freely; every mutation requires separate user approval.</rule>
     <rule id="state-cost">State cost impact (SKU, ongoing cost, billable status) before any resource creation.</rule>
     <rule id="outputs-on-disk">Save large outputs and logs to ${TMPDIR:-/tmp}/ai-tools/ rather than flooding session context.</rule>
-    <rule id="protocol-source">Follow user-wide `<user_interaction>` and `<security_guardrails>`, and dispatch agents per implement-ai-tools `<harness_agents>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
-    <rule id="default-worker">Spawn each `<template executor="default-worker">` per implement-ai-tools `<harness_agents>`, assembling nested payloads per implement-ai-tools `<rule id="payload-assembly">`.</rule>
+    <rule id="protocol-source">Follow user-wide `<user_interaction>` and `<security_guardrails>`. A repository `AGENTS.md` or `README.md` still overrides those rules there.</rule>
+    <rule id="default-worker">Spawn each `<template executor="default-worker">` via the harness default subagent, passing only the brief and paths, never conversation context.</rule>
   </boundaries>
 </skill>

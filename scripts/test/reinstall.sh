@@ -54,7 +54,7 @@ case_reinstall_stale_link_removed() {
   t_run "$root" "$root/home/.ai-tools/scripts/shell/update.sh" --harnesses claude-code
   t_assert_exit 0
   t_assert_absent "$T_STALE_LINK_PATH"
-  t_assert_symlink "$root/home/.claude/skills/vibe-ai-tools" "$root/home/.ai-tools"
+  t_assert_symlink "$root/home/.claude/skills/gc-ai-tools" "$root/home/.ai-tools"
 
   t_cleanup "$root"
 }
@@ -160,9 +160,9 @@ case_reinstall_all_harnesses() {
 
   t_run "$root" "$home/.ai-tools/scripts/shell/update.sh" --harnesses all
   t_assert_exit 0
-  t_assert_symlink "$home/.claude/skills/vibe-ai-tools" "$home/.ai-tools"
-  t_assert_symlink "$home/.copilot/skills/vibe-ai-tools" "$home/.ai-tools"
-  t_assert_symlink "$home/.gemini/config/skills/vibe-ai-tools" "$home/.ai-tools"
+  t_assert_symlink "$home/.claude/skills/gc-ai-tools" "$home/.ai-tools"
+  t_assert_symlink "$home/.copilot/skills/gc-ai-tools" "$home/.ai-tools"
+  t_assert_symlink "$home/.gemini/config/skills/gc-ai-tools" "$home/.ai-tools"
 
   t_cleanup "$root"
 }

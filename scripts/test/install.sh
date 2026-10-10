@@ -166,14 +166,14 @@ case_install_copies_migrated_to_symlinks() {
   t_fixture
   root="$T_ROOT"
 
-  source_skill="$root/home/.ai-tools/skills/vibe-ai-tools"
-  mkdir -p "$root/home/.claude/skills/vibe-ai-tools"
-  cp -R "$source_skill"/* "$root/home/.claude/skills/vibe-ai-tools/"
+  source_skill="$root/home/.ai-tools/skills/gc-ai-tools"
+  mkdir -p "$root/home/.claude/skills/gc-ai-tools"
+  cp -R "$source_skill"/* "$root/home/.claude/skills/gc-ai-tools/"
   cp "$root/home/.ai-tools/AI-TOOLS-AGENTS.md" "$root/home/.claude/CLAUDE.md"
 
   t_install "$root" --harnesses claude-code
   t_assert_exit 0
-  t_assert_symlink "$root/home/.claude/skills/vibe-ai-tools" "$root/home/.ai-tools"
+  t_assert_symlink "$root/home/.claude/skills/gc-ai-tools" "$root/home/.ai-tools"
   t_assert_symlink "$root/home/.claude/CLAUDE.md" "$root/home/.ai-tools"
 
   t_cleanup "$root"
@@ -212,9 +212,9 @@ case_install_antigravity_instructions() {
   t_install "$root" --harnesses antigravity
   t_assert_exit 0
   t_assert_symlink "$root/home/.gemini/GEMINI.md" "$root/home/.ai-tools"
-  t_assert_symlink "$root/home/.gemini/config/skills/vibe-ai-tools" "$root/home/.ai-tools"
+  t_assert_symlink "$root/home/.gemini/config/skills/gc-ai-tools" "$root/home/.ai-tools"
   t_assert_symlink "$root/home/.gemini/config/skills/az-ai-tools" "$root/home/.ai-tools"
-  t_assert_absent "$root/home/.gemini/skills/vibe-ai-tools"
+  t_assert_absent "$root/home/.gemini/skills/gc-ai-tools"
 
   t_cleanup "$root"
 }
@@ -243,9 +243,9 @@ case_install_all_includes_undetected_harnesses() {
 
   t_install "$root" --harnesses all
   t_assert_exit 0
-  t_assert_symlink "$home/.claude/skills/vibe-ai-tools" "$home/.ai-tools"
-  t_assert_symlink "$home/.copilot/skills/vibe-ai-tools" "$home/.ai-tools"
-  t_assert_symlink "$home/.gemini/config/skills/vibe-ai-tools" "$home/.ai-tools"
+  t_assert_symlink "$home/.claude/skills/gc-ai-tools" "$home/.ai-tools"
+  t_assert_symlink "$home/.copilot/skills/gc-ai-tools" "$home/.ai-tools"
+  t_assert_symlink "$home/.gemini/config/skills/gc-ai-tools" "$home/.ai-tools"
   t_assert_symlink "$home/.copilot/instructions/ai-tools.instructions.md" "$home/.ai-tools"
 
   t_cleanup "$root"
@@ -344,7 +344,7 @@ case_bootstrap_clones_then_installs() {
   t_run "$root" "$AI_TOOLS/scripts/shell/install-bash.sh" --harnesses claude-code
   t_assert_exit 0
   t_assert_regular_file "$home/.ai-tools/scripts/shell/install.sh"
-  t_assert_symlink "$home/.claude/skills/vibe-ai-tools" "$home/.ai-tools"
+  t_assert_symlink "$home/.claude/skills/gc-ai-tools" "$home/.ai-tools"
 
   t_cleanup "$root"
 }
@@ -380,7 +380,7 @@ case_install_parent_symlink_protects_agents_md() {
   t_assert_exit 2
   t_assert_line "refusing \$HOME/.ai-tools/USER-AGENTS.md alias:"
   t_assert_content "$home/.ai-tools/USER-AGENTS.md" "user overrides"
-  t_assert_symlink "$home/.claude/skills/vibe-ai-tools" "$home/.ai-tools"
+  t_assert_symlink "$home/.claude/skills/gc-ai-tools" "$home/.ai-tools"
 
   t_cleanup "$root"
 }
@@ -395,7 +395,7 @@ case_install_home_with_spaces() {
   t_run_at "$root" "$home" "$home/.ai-tools" \
     "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
-  t_assert_symlink "$home/.claude/skills/vibe-ai-tools" "$home/.ai-tools"
+  t_assert_symlink "$home/.claude/skills/gc-ai-tools" "$home/.ai-tools"
   t_assert_symlink "$home/.claude/CLAUDE.md" "$home/.ai-tools"
 
   t_cleanup "$root"

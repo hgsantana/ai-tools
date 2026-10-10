@@ -208,7 +208,7 @@ case_update_stale_copy_refreshed() {
   home="$root/home"
   marker="stalecopy"
   instructions="$home/.claude/CLAUDE.md"
-  skill="$home/.claude/skills/vibe-ai-tools"
+  skill="$home/.claude/skills/gc-ai-tools"
 
   t_run_no_symlink "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
@@ -221,7 +221,7 @@ case_update_stale_copy_refreshed() {
   t_assert_exit 0
   t_assert_line "copied (will not track updates):"
   t_assert_same_content "$instructions" "$home/.ai-tools/AI-TOOLS-AGENTS.md"
-  t_assert_same_content "$skill" "$home/.ai-tools/skills/vibe-ai-tools"
+  t_assert_same_content "$skill" "$home/.ai-tools/skills/gc-ai-tools"
 
   t_cleanup "$root"
 }
@@ -233,7 +233,7 @@ case_update_modified_copy_kept() {
   root="$T_ROOT"
   home="$root/home"
   marker="modcopy"
-  target="$home/.claude/skills/vibe-ai-tools/SKILL.md"
+  target="$home/.claude/skills/gc-ai-tools/SKILL.md"
 
   t_run_no_symlink "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
@@ -268,7 +268,7 @@ case_update_up_to_date_copy() {
   t_run_no_symlink "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   t_assert_exit 0
 
-  # t_origin_commit only touches vibe-ai-tools/SKILL.md; az-ai-tools's copy
+  # t_origin_commit only touches gc-ai-tools/SKILL.md; az-ai-tools's copy
   # stays equal to its (unchanged) source across the reset.
   t_origin_commit "$marker"
 
@@ -285,7 +285,7 @@ case_update_overwrite_modified_copy() {
   t_fixture
   root="$T_ROOT"
   home="$root/home"
-  skill="$home/.claude/skills/vibe-ai-tools"
+  skill="$home/.claude/skills/gc-ai-tools"
 
   t_run_no_symlink "$root" "$home/.ai-tools/scripts/shell/install.sh" --harnesses claude-code
   printf '\nlocal edit that should be replaced\n' >> "$skill/SKILL.md"
