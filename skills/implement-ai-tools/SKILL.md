@@ -10,7 +10,7 @@ argument-hint: "[slug of plan to implement]"
 
 <skill name="implement-ai-tools">
   <overview>
-    Execute approved plans stage by stage using just-in-time task planning, isolated code implementation, and strict specialist validation. For each task defined in `docs/plan-ai-tools/{SLUG}/0-{SLUG}.md`, the session dispatches the designated Specialist with clean context to write `<N>-{TASK_SLUG}.md`, dispatches the resolved Implementer with clean context to write code, execute tests, run linters, and record a factual report, and re-engages the Specialist to validate the delivery against the uncommitted git diff and commit on approval. Upon completing all tasks, the session removes the plan directory, commits the cleanup, pushes the plan branch, and creates a pull request.
+    Execute approved plans stage by stage using just-in-time task planning, isolated code implementation, and strict specialist validation. For each task defined in `docs/plan-ai-tools/{SLUG}/0-{SLUG}.md`, the session dispatches the designated Specialist with clean context to write `<N>-{TASK_SLUG}.md` detailing changes and required test behaviors, dispatches the resolved Implementer with clean context to write code, author and execute tests, run linters, and record a factual report, and re-engages the Specialist to validate the delivery against the uncommitted git diff (verifying test existence and genuine behavior coverage) and commit on approval. Upon completing all tasks, the session removes the plan directory, commits the cleanup, pushes the plan branch, and creates a pull request.
   </overview>
 
   <boundaries>
@@ -40,7 +40,7 @@ argument-hint: "[slug of plan to implement]"
     <rule id="implementer-rules">The Implementer executes under strict agnostic constraints:
       - Delivers strictly the scope defined in the task file, referencing the user story and general plan.
       - If blocked or if planned instructions contradict codebase realities, stops immediately and notifies the session (which consults the specialist).
-      - Runs tests and static analysis linters, fixing defects until all checks pass.
+      - Authors tests covering specified behaviors (unit tests, smoke tests, schema checks, linters per task nature) and runs test suites, fixing defects until all checks pass.
       - Appends a concise, factual implementation report to the task file covering changed files, test/lint outcomes, obstacles, and resolved specialist decisions (no self-evaluation).
       - Updates task status to `validating` in `0-{SLUG}.md`.
       - Does not commit changes locally.
@@ -71,7 +71,7 @@ argument-hint: "[slug of plan to implement]"
     </step>
 
     <step id="3" name="task-planning-wait">
-      Specialist drafts {TASK_FILE} with technical objective, touched files list, Mermaid relationship diagram, and suggested implementation steps. If questions arise, specialist queries PO or Architect via session relay (up to 3 rounds). Specialist finishes and returns concise outcome with {TASK_FILE} link. Specialist remains active on standby.
+      Specialist drafts {TASK_FILE} with technical objective, touched files list, test behaviors to verify per file/change (unit tests for code; smoke tests, linters, or schema validations for non-code files), Mermaid relationship diagram, and suggested implementation steps. If questions arise, specialist queries PO or Architect via session relay (up to 3 rounds). Specialist finishes and returns concise outcome with {TASK_FILE} link. Specialist remains active on standby.
     </step>
 
     <step id="4" name="dispatch-implementer">
@@ -87,9 +87,9 @@ argument-hint: "[slug of plan to implement]"
     </step>
 
     <step id="7" name="validation-and-verdict">
-      Specialist compares implementation report against uncommitted `git diff`:
-      1. If approved: Specialist sets task status to `done` in `0-{SLUG}.md`, stages files, commits locally with Conventional Commit message, and returns approved outcome. Session terminates specialist and implementer, and advances to the next task (`<step id="2">`).
-      2. If rework needed: Specialist sets status to `retry<1..3>` in `0-{SLUG}.md`, appends rework items to {TASK_FILE}, and returns rework outcome. Session dispatches the live implementer with {ACTION} = rework-task and {REWORK_NOTES} (looping back to `<step id="5">` up to 3 attempts).
+      Specialist compares implementation report against uncommitted `git diff`, explicitly verifying that tests were written and genuinely validate defined behaviors (unit tests, smoke tests, validation scripts, or pipeline checks per task type):
+      1. If approved: Specialist confirms test presence and rigor, sets task status to `done` in `0-{SLUG}.md`, stages files, commits locally with Conventional Commit message, and returns approved outcome. Session terminates specialist and implementer, and advances to the next task (`<step id="2">`).
+      2. If rework needed (missing tests, superficial verification, defects, or domain deviation): Specialist sets status to `retry<1..3>` in `0-{SLUG}.md`, appends rework items to {TASK_FILE}, and returns rework outcome. Session dispatches the live implementer with {ACTION} = rework-task and {REWORK_NOTES} (looping back to `<step id="5">` up to 3 attempts).
       3. If 3 attempts exhausted: Specialist sets status to `blocked` in `0-{SLUG}.md`. Session sends an atomic chat message linking {TASK_FILE}, followed by an interactive prompt via `<user_interaction>` asking the user for extra instructions (+3 retries) or abort per `<rule id="retry-and-blocked">`.
     </step>
 
@@ -124,19 +124,21 @@ argument-hint: "[slug of plan to implement]"
         3. Write {TASK_FILE} (`docs/plan-ai-tools/{SLUG}/{TASK_NUM}-{TASK_SLUG}.md`):
            - General task objective in technical terms.
            - List of files to create or modify, with brief description of expected changes.
+           - Test behaviors per file or change: concrete summary of expected behaviors to verify via unit tests (for application code) or suitable alternatives based on task nature (smoke tests, linter rules, schema validations, or integrity checks for non-code assets such as XML, JSON, markdown, CI pipelines, or configuration files).
            - Mermaid diagram illustrating relationships between affected components.
-           - Suggested sequential implementation steps for the implementer (without writing code).
+           - Suggested sequential implementation steps for the implementer (without writing code), explicitly including authoring tests and verifications for the defined behaviors.
         4. Return concise outcome with link to {TASK_FILE}. Remain active on standby.
 
         When {ACTION} is validate-task:
         1. Read implementation report in {TASK_FILE} and compare against uncommitted git diff.
-        2. Evaluate adherence to task specifications, test coverage, and domain quality ({SPECIALIST_SUMMARY}).
-        3. Append review observations and verdict to {TASK_FILE}.
-        4. If approved: update task {TASK_NUM} status to `done` in {PLAN_FILE}, stage files, commit locally with Conventional Commit message, and return approved outcome with {TASK_FILE}.
-        5. If rework needed: update task {TASK_NUM} status to `retry<attempt>` (1..3) or `blocked` (if attempt exceeds 3) in {PLAN_FILE}, append specific rework instructions to {TASK_FILE}, and return rework outcome with {TASK_FILE}.
+        2. Verify that corresponding tests were actually written (e.g., unit tests for code; smoke tests, validation scripts, schema checks, or linters for non-code files, pipelines, or configs) and assert that they genuinely test the behaviors defined in {TASK_FILE} rather than superficial assertions.
+        3. Evaluate adherence to task specifications, test coverage and execution results, code quality, and domain principles ({SPECIALIST_SUMMARY}).
+        4. Append review observations and verdict to {TASK_FILE}.
+        5. If approved: update task {TASK_NUM} status to `done` in {PLAN_FILE}, stage files, commit locally with Conventional Commit message, and return approved outcome with {TASK_FILE}.
+        6. If rework needed (including missing tests, tests failing to verify defined behaviors, defects, or domain regressions): update task {TASK_NUM} status to `retry<attempt>` (1..3) or `blocked` (if attempt exceeds 3) in {PLAN_FILE}, append specific rework instructions to {TASK_FILE}, and return rework outcome with {TASK_FILE}.
       </instructions>
       <constraints>
-        <constraint>Maintain strict domain standards and never approve unverified or failing implementations.</constraint>
+        <constraint>Maintain strict domain standards and never approve implementations that lack required tests or fail to genuinely verify defined behaviors.</constraint>
       </constraints>
     </template>
 
@@ -156,14 +158,14 @@ argument-hint: "[slug of plan to implement]"
         When {ACTION} is execute-task:
         1. Read {STORY_FILE}, {PLAN_FILE}, and {TASK_FILE} for task {TASK_NUM} of plan {SLUG}.
         2. Implement changes strictly within the scope defined in {TASK_FILE}. If blocked or if planned instructions contradict codebase realities, stop immediately and notify the session.
-        3. Execute test suites and static analysis tools/linters. Fix defects until all tests and checks pass.
-        4. Append a concise, factual implementation report to {TASK_FILE} detailing changed files, test/lint outcomes, blockers encountered, and specialist decisions applied. Do not include self-evaluations.
+        3. Author tests covering defined behaviors (unit tests for code; smoke tests, schema validations, or linters for non-code files per task specification) and execute test suites and static analysis linters. Fix defects until all tests and checks pass.
+        4. Append a concise, factual implementation report to {TASK_FILE} detailing changed files, tests written and executed, test/lint outcomes, blockers encountered, and specialist decisions applied. Do not include self-evaluations.
         5. Update task {TASK_NUM} status to `validating` in {PLAN_FILE}.
         6. Do not commit changes locally. Return concise outcome with link to {TASK_FILE}.
 
         When {ACTION} is rework-task:
         1. Read {REWORK_NOTES} and feedback appended to {TASK_FILE}.
-        2. Apply requested fixes in place to affected files.
+        2. Apply requested fixes in place to affected files, tests, or validation scripts.
         3. Re-run tests and linters, fixing any new failures.
         4. Append rework summary to {TASK_FILE} and ensure task {TASK_NUM} status remains `validating` in {PLAN_FILE}.
         5. Do not commit changes locally. Return concise outcome with link to {TASK_FILE}.
