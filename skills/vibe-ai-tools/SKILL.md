@@ -63,7 +63,7 @@ argument-hint: "[story or feature description to plan and implement]"
 
   <session_workflow>
     <step id="1" name="implementer-inquiry">
-      Derive kebab-case {SLUG}. Prompt the user via `<user_interaction>` to select the {IMPLEMENTER} type per `<rule id="implementer-selection">`, omitting `session`.
+      Derive kebab-case {SLUG}. Prompt the user via `<user_interaction>` to select the {IMPLEMENTER} type per `<rule id="implementer-selection">`.
     </step>
 
     <step id="2" name="po-doc-analysis">

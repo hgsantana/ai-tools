@@ -61,7 +61,7 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
     </step>
 
     <step id="2" name="implementer-inquiry">
-      Prompt the user via `<user_interaction>` to select the {IMPLEMENTER} type per `<rule id="implementer-selection">`, omitting `session`.
+      Prompt the user via `<user_interaction>` to select the {IMPLEMENTER} type per `<rule id="implementer-selection">`.
     </step>
 
     <step id="3" name="po-doc-analysis">

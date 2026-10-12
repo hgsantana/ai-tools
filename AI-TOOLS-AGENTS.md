@@ -37,13 +37,13 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/.
   <implementers>
     If not using ai-tools skills, ignore these rules.
     <rule id="implementer-types">Standard implementer types resolved dynamically by the executing harness at runtime:
-      - `mid-level`: Mid-level tier of current harness skill (`agy-ai-tools`, `claude-ai-tools`, `copilot-ai-tools`) - recommended.
-      - `harness-default`: Default subagent worker of current harness (Antigravity = `Flash`; Claude = `Sonnet`; Copilot = `Gemini 3.8 Flash (Copilot)`).
+      - `harness-default`: Default subagent worker of current harness (Antigravity = `Flash`; Claude = `Sonnet`; Copilot = `Gemini 3.8 Flash (Copilot)`) - recommended.
+      - `mid-level`: Mid-level tier of current harness skill (`agy-ai-tools`, `claude-ai-tools`, `copilot-ai-tools`).
       - `session-subagent`: Subagent spawned with clean, zeroed context inheriting current session model and effort.
       - `senior`: Senior tier of current harness skill (`agy-ai-tools`, `claude-ai-tools`, `copilot-ai-tools`).
       - `junior`: Junior tier of current harness skill (`agy-ai-tools`, `claude-ai-tools`, `copilot-ai-tools`).
-      - `session`: The interactive session itself implements directly without spawning a subagent.
+      - `session`: The interactive session itself implements directly without spawning a subagent. Offered only by skills where it makes sense: those whose session implements, not those whose session only orchestrates.
     </rule>
-    <rule id="implementer-selection">A skill that dispatches implementers asks who implements new work before writing its story or campaign file: offer the types of `<rule id="implementer-types">` via `<user_interaction>`, `mid-level` first as recommended, omitting `session` when that skill's session only orchestrates. The file records only the type name, never a model; whoever dispatches resolves it at dispatch time through the harness subagent API or the matching tier skill CLI.</rule>
+    <rule id="implementer-selection">A skill that dispatches implementers asks who implements new work before writing its story or campaign file: offer the types of `<rule id="implementer-types">` via `<user_interaction>`, in that order, `harness-default` first as recommended. The file records only the type name, never a model; whoever dispatches resolves it at dispatch time through the harness subagent API or the matching tier skill CLI.</rule>
   </implementers>
 </user_instructions>
