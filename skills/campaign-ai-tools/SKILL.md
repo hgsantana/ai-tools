@@ -32,7 +32,14 @@ argument-hint: "[campaign goal to pursue across the repository]"
       - It commits twice: the campaign file at the start and the campaign cleanup at the end.
     </rule>
 
-    <rule id="implementer-selection">The session asks who implements the campaign per plan-ai-tools `<rule id="implementer-selection">`, recommending `mid-level` and omitting `session`, since the session never implements. The campaign file records only the resolved type name, resolved at dispatch time per `<rule id="implementer-types">`.</rule>
+    <rule id="implementer-selection">The session asks who implements the campaign:
+      - `mid-level`: Mid-level tier of the current harness skill (`agy-ai-tools`, `claude-ai-tools`, `copilot-ai-tools`) - recommended.
+      - `harness-default`: Default subagent worker of the current harness (Antigravity = Flash; Claude = Sonnet; Copilot = Gemini 3.8 Flash (Copilot)).
+      - `session-subagent`: Subagent spawned with clean context inheriting current session model and effort.
+      - `senior`: Senior tier of the current harness skill.
+      - `junior`: Junior tier of the current harness skill.
+      The campaign file records only the resolved type name, resolved at dispatch time per `<rule id="implementer-types">`. This skill omits `session`, since the session never implements.
+    </rule>
 
     <rule id="cycle-limits">Campaign termination:
       - The campaign ends after 10 productive cycles (`<signal code="CYCLE_DONE">` or `<signal code="CYCLE_BLOCKED">`).

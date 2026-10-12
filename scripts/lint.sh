@@ -62,8 +62,10 @@ Checks:
                     of default-worker, implementer, or inherited,
                     never an agent attribute (rule 9, Semantic XML grammar)
   xml references    every backticked tag reference resolves: attribute
-                    references to a definition in the same or the qualified
-                    file, bare references to the vocabulary (rule 9)
+                    references to a definition in the same file or in
+                    AI-TOOLS-AGENTS.md, bare references to the vocabulary;
+                    a reference qualified by another skill is a finding,
+                    since skills are self-contained (rule 9)
   placeholder parity every {PLACEHOLDER} a <template> uses is declared in its
                     <input>, and every declared one is used (rule 9)
   vocabulary parity the README Semantic XML grammar table and XML_VOCAB list
@@ -497,9 +499,6 @@ xml_file_for() {
   # or nothing when the word before the backtick is not a qualifier.
   case "$1" in
     AI-TOOLS-AGENTS|USER-AGENTS) echo "$AI_TOOLS/AI-TOOLS-AGENTS.md" ;;
-    *-ai-tools)
-      if [ -f "$AI_TOOLS/skills/$1/SKILL.md" ]; then echo "$AI_TOOLS/skills/$1/SKILL.md"; fi
-      ;;
   esac
 }
 
@@ -627,6 +626,14 @@ EOF
         *" "*) attr=${ref#* }; val=${attr#*=\"}; val=${val%\"}; attr=${attr%%=*} ;;
       esac
       target=""
+      case "$q" in
+        *-ai-tools)
+          if [ -f "$AI_TOOLS/skills/$q/SKILL.md" ] && [ "$f" != "$AI_TOOLS/skills/$q/SKILL.md" ]; then
+            warn "cross-skill reference $q <$ref> in $f (skills are self-contained)"
+            continue
+          fi
+          ;;
+      esac
       [ -n "$q" ] && target=$(xml_file_for "$q")
       [ -n "$target" ] || q=""
       [ -n "$target" ] || target="$f"

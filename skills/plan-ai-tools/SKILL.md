@@ -1,138 +1,141 @@
 ---
 name: plan-ai-tools
 description: >
-  Guide business story formulation and technical plan generation. The session acts
-  as PO to clarify scope, questions, and trade-offs, then dispatches an Architect
-  subagent to design architecture and decompose tasks into an approved plan. Use
-  for /plan-ai-tools.
-argument-hint: "[story or feature description to plan]"
+  Plan and deliver one story. The session acts as PO to settle scope and the
+  implementer and write the story, a clean-context Planner subagent writes the
+  plan of atomic tasks, and on approval a Tech Lead subagent details each task,
+  drives single-task implementers, and validates and commits, ending with a
+  pull request. Given the slug of an existing plan, it goes straight to
+  orchestration. Use for /plan-ai-tools.
+argument-hint: "[story or feature description to plan, or slug of a plan to implement]"
 ---
 
 <skill name="plan-ai-tools">
   <overview>
-    Formulate a business user story and a decomposed technical execution plan. The session acts as the Product Owner (PO), reviewing repository documentation without reading application code, asking batched questions with recommended options, settling the implementer choice, and writing the story to disk. Once approved, the session dispatches an Architect subagent with clean context to perform technical code intake, draft the target architecture with Mermaid diagrams, decompose work into atomic tasks with assigned Specialists, and record architectural decisions. The approved plan and story are committed to a dedicated plan branch before implementation via implement-ai-tools.
+    Formulate a business user story, plan it, and deliver it. The session is Product Owner (PO) and orchestrator: it reviews repository documentation without reading application code, asks batched questions with recommended options, settles the implementer choice, writes the story, and from then on only dispatches subagents and branches on their returns. Planning, execution, and validation belong to subagents. One Planner with clean context, inheriting session model and effort, inspects the code in scope and writes a plan of atomic, independently committable tasks. After the approved story and plan are committed to a dedicated plan branch, the session offers implementation: one Tech Lead with clean context writes each task file, dispatches one clean-context Implementer of the story type, validates the delivery against the uncommitted git diff, and commits approved work. When a task exhausts its attempts the session asks the user for extra instructions or abort. Once every task is done, the session removes the plan directory, pushes the plan branch, and creates a pull request. Invoked with the slug of an existing plan, the session skips planning and goes straight to orchestration.
   </overview>
 
   <boundaries>
     <rule id="ubiquitous-language">Standard project domain terminology:
-      - `Story` (User Story): Business-level structuring of the user request written to `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md` by the PO session.
-      - `Plan`: Technical artifact written to `docs/plan-ai-tools/{SLUG}/0-{SLUG}.md` decomposed into atomic tasks, guiding technical execution.
-      - `Task`: Atomic, committable deliverable written to `docs/plan-ai-tools/{SLUG}/{N}-{TASK_SLUG}.md` by a Specialist.
-      - `Specialist`: Subagent dispatched with clean zeroed context and assigned a specific domain role.
-      - `Validator`: The specialist responsible for reviewing task implementation against the uncommitted git diff.
+      - `Story` (User Story): Business-level structuring of the user request written to `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md` by the PO session, recording the implementer type.
+      - `Plan`: Technical artifact written to `docs/plan-ai-tools/{SLUG}/0-{SLUG}.md` by the Planner, decomposed into atomic tasks, with the task status table.
+      - `Task`: Technical specification for a single atomic unit of work located at `docs/plan-ai-tools/{SLUG}/{N}-{TASK_SLUG}.md`, written by the Tech Lead.
       - `User`: Person interacting with the session.
       - `PO` (Product Owner): The interactive session itself. Focuses exclusively on repository documentation and business domain requirements without reading application code.
-      - `Architect`: Dispatched specialist subagent who designs architecture, creates the general plan `0-{SLUG}.md`, assigns specialists, and specifies architectural decisions.
-      - `Implementer`: Dispatched agent that executes code and tests for a task.
+      - `Planner`: Clean-context subagent inheriting session model and effort; full-stack architect that inspects the code and writes the plan.
+      - `Tech Lead`: Clean-context subagent inheriting session model and effort; full-stack architect that details tasks, dispatches implementers, validates, and commits.
+      - `Implementer`: Clean-context agent of the story implementer type, resolved per `<rule id="implementer-types">`; lives for one task.
     </rule>
 
-    <rule id="po-role">The session embodies the Product Owner role exclusively:
-      - The PO never reads application source code; it evaluates the user request against repository documentation (README.md, AGENTS.md, docs/).
-      - The PO resolves scope boundaries, business logic, user-facing behavior, and ambiguities.
+    <rule id="session-role">The session is PO and orchestrator only:
+      - As PO it never reads application source code; it evaluates the user request against repository documentation (README.md, AGENTS.md, docs/) and resolves scope boundaries, business logic, user-facing behavior, and ambiguities.
       - If documentation is missing, outdated, or requires adjustments, the PO includes documentation adequacy as a mandatory story requirement.
+      - As orchestrator it dispatches the Planner and the Tech Lead and branches solely on their returns per `<return_protocol>`; it writes no plan and no task file.
+      - It never reads task files, diffs, or code to validate, rework, or re-judge a delivery; validation belongs to the Tech Lead.
     </rule>
 
-    <rule id="implementer-selection">The first mandatory question asked by the PO before executing any workflow step resolves who will implement the story:
+    <rule id="implementer-selection">The first mandatory question asked by the PO before planning a new story resolves who will implement it:
       - `mid-level`: Mid-level tier of the current harness skill (`agy-ai-tools`, `claude-ai-tools`, `copilot-ai-tools`) - recommended.
       - `harness-default`: Default subagent worker of the current harness (Antigravity = Flash; Claude = Sonnet; Copilot = Gemini 3.8 Flash (Copilot)).
       - `session-subagent`: Subagent spawned with clean context inheriting current session model and effort.
       - `senior`: Senior tier of the current harness skill.
       - `junior`: Junior tier of the current harness skill.
-      - `session`: The interactive session itself implements directly.
-      The story file records only the resolved type name so that any harness executing the plan can resolve it dynamically via `<rule id="implementer-types">`.
+      The story file records only the resolved type name so that any harness executing the plan can resolve it dynamically via `<rule id="implementer-types">`. This skill omits `session`, since the session never implements.
     </rule>
 
-    <rule id="specialists-catalog">Specialist roles available for task assignment in the macro plan:
-      - `architect`: Software architect — macro/micro architecture design, system modeling, modularity, dependency boundaries, architectural rules, and validation.
-      - `sec-eng`: Senior security engineer — threat modeling, authentication, authorization, secret hygiene, input sanitization, least privilege, vulnerability mitigation.
-      - `devops-eng`: Senior DevOps engineer — CI/CD automation, build configurations, containerization, environment configuration, infrastructure safety, observability.
-      - `back-eng`: Senior backend engineer — domain modeling, business logic, API contracts, services, error handling, performance, integration.
-      - `front-eng`: Senior frontend engineer — UI components, client state, styling, responsive design, bundle optimization, accessibility, client routing.
-      - `data-eng`: Senior data engineer / DBA — schemas, migrations, storage engines, queries, indexes, data integrity, transactional boundaries.
-      - `qa-eng`: Senior QA and test engineer — testing strategy, unit/integration/e2e tests, edge cases, anti-happy-path, boundary values, test coverage.
-      - `techwriter`: Senior technical writer — architectural documentation, user guides, API references, changelogs, migration notes, verification protocols.
-      - `ux-designer`: Senior UX designer — user flows, ergonomics, consistency, interaction patterns, design system compliance, microcopy, accessibility.
+    <rule id="transient-docs">Story, plan, task files, and decisions belong under `docs/plan-ai-tools/{SLUG}/`. Raw tool outputs, binary caches, and temporary data go to `${TMPDIR:-/tmp}/ai-tools`. In-repo plan files are committed along the workflow.</rule>
+
+    <rule id="planner-question-rounds">If the Planner finds major discrepancies between the story and repository code, it sends batched questions with recommended options to the PO session, up to 3 rounds. The PO answers directly; decisions involving financial costs, irreversible data loss, or destructive operations are relayed to the user and await explicit confirmation. Settled answers are recorded in the "Decisions" section of the plan.</rule>
+
+    <rule id="clean-context-lifecycle">Planner and Tech Lead are spawned with clean, zeroed context; continuity between them lives only in the plan directory and git history. Every Implementer is spawned with clean, zeroed context for one task, stays alive for rework of that task, and is terminated once the task is accepted or blocked.</rule>
+
+    <rule id="retry-and-blocked">A task allows up to 3 implementation attempts. When the third attempt fails validation, the Tech Lead sets the task status to `blocked`, leaves that task's uncommitted changes in place for inspection, commits only the plan and task files, and returns `<signal code="PLAN_BLOCKED">`. The session sends an atomic chat message linking the task file, then prompts the user via `<user_interaction>` to provide extra instructions for 3 additional attempts or abort.</rule>
+
+    <rule id="finalization-and-pr">Upon `<signal code="PLAN_DONE">`:
+      - The session removes the plan directory (`git rm -r docs/plan-ai-tools/{SLUG}`) and commits with `chore(plan): complete {SLUG} delivery`.
+      - The session pushes branch `plan/{SLUG}` to remote.
+      - The session inspects `git log` difference against the base branch and creates a pull request formatted with a business overview followed by technical change highlights.
     </rule>
-
-    <rule id="transient-docs">All user-facing artifacts, user stories, general plans, task files, and decisions belong under `docs/plan-ai-tools/{SLUG}/`. Raw tool outputs, binary caches, and temporary data go to `${TMPDIR:-/tmp}/ai-tools`. In-repo plan files are committed along the workflow.</rule>
-
-    <rule id="architect-question-rounds">If the Architect encounters major discrepancies between the user story and repository code, it sends batched questions with recommended options to the PO session. The PO answers directly, up to a maximum of 3 rounds. If critical ambiguities remain after 3 rounds, the PO asks the user whether to continue for another 3 rounds. For critical decisions involving financial costs, irreversible data loss, or destructive operations, the PO relays the question directly to the user and awaits explicit confirmation before proceeding.</rule>
   </boundaries>
 
+  <return_protocol>
+    <signal code="PLAN_DONE">Every task in the plan validated and committed; worktree clean.</signal>
+    <signal code="PLAN_BLOCKED">One task exhausted its attempts per `<rule id="retry-and-blocked">`; the line names its task file.</signal>
+    <signal code="DISPATCH_UNAVAILABLE">The Tech Lead cannot dispatch an Implementer of the story type from its environment; nothing written or committed.</signal>
+  </return_protocol>
+
   <session_workflow>
-    <step id="1" name="implementer-inquiry">
-      Derive kebab-case {SLUG}. Prompt the user via `<user_interaction>` with the mandatory first question to select the {IMPLEMENTER} type per `<rule id="implementer-selection">`, recommending `mid-level`.
+    <step id="1" name="resolve-entry">
+      Derive kebab-case {SLUG} from the argument, or from the active branch `plan/{SLUG}` when no argument is given. When `docs/plan-ai-tools/{SLUG}/0-{SLUG}.md` and `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md` exist, the plan is already made: check out `plan/{SLUG}` and go straight to `<step id="12">`. Otherwise plan a new story from `<step id="2">`.
     </step>
 
-    <step id="2" name="po-doc-analysis">
-      Session acts as PO: read repository documentation (README.md, AGENTS.md, docs/). Do not inspect application code. Evaluate user request feasibility from a business perspective. If documentation is lacking or outdated, mark documentation updates as a mandatory requirement.
+    <step id="2" name="implementer-inquiry">
+      Prompt the user via `<user_interaction>` with the mandatory first question to select the {IMPLEMENTER} type per `<rule id="implementer-selection">`, recommending `mid-level`.
     </step>
 
-    <step id="3" name="po-clarification">
+    <step id="3" name="po-doc-analysis">
+      Session acts as PO per `<rule id="session-role">`: read repository documentation (README.md, AGENTS.md, docs/). Do not inspect application code. Evaluate user request feasibility from a business perspective. If documentation is lacking or outdated, mark documentation updates as a mandatory requirement.
+    </step>
+
+    <step id="4" name="po-clarification">
       Conduct clarification rounds with the user via `<user_interaction>` in batched questions (each with a recommended option first). Resolve ambiguities, business rules, acceptance criteria, edge cases, and scope trade-offs. Repeat until all points are settled.
     </step>
 
-    <step id="4" name="write-story">
+    <step id="5" name="write-story">
       Write the finalized user story to `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md`. Include business context, scope boundaries, acceptance criteria, documentation requirements, and the selected implementer type (as a type identifier, not a specific model).
     </step>
 
-    <step id="5" name="story-announcement">
-      Send an atomic chat message to the user containing the link to `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md`. This message is an independent, complete step sent before requesting approval.
-    </step>
-
     <step id="6" name="story-approval">
-      Prompt the user via `<user_interaction>` asking whether they approve the story or request modifications. If modifications are requested, iterate through `<step id="3">` to `<step id="5">` until approved.
+      Send an atomic chat message linking the story file, then prompt the user via `<user_interaction>` to approve it or request modifications. Iterate `<step id="4">` and `<step id="5">` until approved.
     </step>
 
-    <step id="7" name="dispatch-architect">
-      Spawn `<template role="architect">` with clean zeroed context (inheriting session model and effort) with {ACTION} = macro-plan, passing {SLUG}, {STORY_FILE} = `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md`, {PLAN_FILE} = `docs/plan-ai-tools/{SLUG}/0-{SLUG}.md`, and empty {FEEDBACK}.
+    <step id="7" name="dispatch-planner">
+      Announce the spawn in one chat line. Spawn `<template role="planner">` with clean zeroed context, inheriting session model and effort, with {ACTION} = plan, passing {SLUG}, {STORY_FILE} = `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md`, {PLAN_FILE} = `docs/plan-ai-tools/{SLUG}/0-{SLUG}.md`, and empty {FEEDBACK}.
     </step>
 
-    <step id="8" name="architect-planning">
-      Architect reads {STORY_FILE}, inspects repository code in scope, identifies points of change, and drafts `0-{SLUG}.md`. The plan must contain:
-      1. A task status table: `#`, `Status` (empty for unexecuted, `working`, `validating`, `retry<1..3>`, `blocked`, `done`), `Task` (name), and `Specialist` (assigned specialist from `<rule id="specialists-catalog">`).
-      2. Technical objective.
-      3. Mermaid target architecture diagram(s).
-      4. Atomic, self-contained, and committable task list with summarized technical descriptions and assigned specialists.
-      5. Architectural decisions and general rules.
+    <step id="8" name="planner-clarifications">
+      Answer the Planner's batched questions per `<rule id="planner-question-rounds">`, relaying critical decisions to the user, until the Planner returns the plan path.
     </step>
 
-    <step id="9" name="architect-clarifications">
-      If doubts arise, Architect sends batched questions with recommendations to the PO session per `<rule id="architect-question-rounds">`. Session answers or relays critical decisions to the user. All settled decisions are appended to the "Decisions" section of `0-{SLUG}.md`.
+    <step id="9" name="plan-approval">
+      Send an atomic chat message linking the plan and story files, then prompt the user via `<user_interaction>` to approve the plan or request modifications. On modifications, update {STORY_FILE} if necessary, dispatch the live Planner with {ACTION} = re-plan and {FEEDBACK} containing the user requests, and repeat this step until approved.
     </step>
 
-    <step id="10" name="architect-handover">
-      Architect concludes plan drafting, appends decisions, and replies to the session with: "Plan completed successfully: docs/plan-ai-tools/{SLUG}/0-{SLUG}.md".
+    <step id="10" name="branch-and-commit">
+      Create git branch `plan/{SLUG}` based on the current branch. Stage and commit only the story and plan files with Conventional Commit message `chore(plan): initialize plan and story for {SLUG}`. Terminate the Planner.
     </step>
 
-    <step id="11" name="plan-announcement">
-      Session outputs an atomic chat message to the user with: "Plan completed successfully: docs/plan-ai-tools/{SLUG}/0-{SLUG}.md" along with the link to `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md`.
+    <step id="11" name="offer-implementation">
+      Send an atomic chat message announcing that planning is finalized on branch `plan/{SLUG}`, with links to the story and plan. Then prompt the user via `<user_interaction>` offering to implement the plan now. If approved, proceed to `<step id="12">`; otherwise conclude the session, pointing out that invoking this skill with {SLUG} resumes at orchestration.
     </step>
 
-    <step id="12" name="plan-approval">
-      Prompt the user via `<user_interaction>` asking whether they approve the plan or request modifications.
+    <step id="12" name="dispatch-tech-lead">
+      Read the {IMPLEMENTER} type from the story. Announce the spawn in one chat line. Spawn `<template role="tech-lead">` with clean zeroed context, inheriting session model and effort, passing {SLUG}, {IMPLEMENTER}, {STORY_FILE}, {PLAN_FILE}, {PLAN_DIR} = `docs/plan-ai-tools/{SLUG}`, and {FEEDBACK} empty on the first dispatch. Append `<template role="implementer">` verbatim to the payload so the Tech Lead can dispatch it.
     </step>
 
-    <step id="13" name="plan-iteration">
-      If modifications are requested, update {STORY_FILE} if necessary, then dispatch the live Architect with {ACTION} = re-plan and {FEEDBACK} containing user requests. Repeat `<step id="11">` and `<step id="12">` until the user approves.
+    <step id="13" name="tech-lead-return">
+      Wait for the Tech Lead signal and branch per `<rule id="session-role">` without reading or validating anything:
+      1. `<signal code="PLAN_DONE">`: proceed to `<step id="15">`.
+      2. `<signal code="PLAN_BLOCKED">`: proceed to `<step id="14">`.
+      3. `<signal code="DISPATCH_UNAVAILABLE">`: report it to the user in one line and conclude, leaving the plan branch untouched.
     </step>
 
-    <step id="14" name="branch-and-commit">
-      Upon plan approval, create git branch `plan/{SLUG}` based on the current branch. Stage and commit `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md` and `docs/plan-ai-tools/{SLUG}/0-{SLUG}.md` with Conventional Commit message `chore(plan): initialize plan and story for {SLUG}`.
+    <step id="14" name="blocked-escalation">
+      Escalate per `<rule id="retry-and-blocked">`. On extra instructions, return to `<step id="12">` with {FEEDBACK} set to them. On abort, leave branch `plan/{SLUG}` and the plan directory in place for inspection and report the blocked task in one line.
     </step>
 
-    <step id="15" name="completion-notice">
-      Send an atomic chat message to the user announcing that planning is finalized on branch `plan/{SLUG}` with links to the user story and macro plan.
+    <step id="15" name="plan-cleanup">
+      Remove the plan directory via `git rm -r docs/plan-ai-tools/{SLUG}` and commit with `chore(plan): complete {SLUG} delivery` per `<rule id="finalization-and-pr">`.
     </step>
 
-    <step id="16" name="offer-implementation">
-      Prompt the user via `<user_interaction>` offering to start implement-ai-tools directly within the current session to execute the story and plan (`/implement-ai-tools {SLUG}`). If approved, immediately transition into the implementation workflow; otherwise conclude the session.
+    <step id="16" name="push-and-pr">
+      Push branch `plan/{SLUG}` to remote. Inspect git log diff against base branch and open a pull request formatted with a business overview followed by technical change highlights per `<rule id="finalization-and-pr">`. Send a one-line outcome with the pull request link.
     </step>
   </session_workflow>
 
   <dispatch_templates>
-    <template role="architect" executor="inherited">
-      <job>Software architect: macro architecture design, system modeling, task decomposition, architectural rules, and technical validation.</job>
+    <template role="planner" executor="inherited">
+      <job>Full-stack architect: inspect the code in scope and decompose one story into a plan of atomic, independently committable tasks.</job>
       <input>
         <action>{ACTION}</action>
         <slug>{SLUG}</slug>
@@ -142,28 +145,83 @@ argument-hint: "[story or feature description to plan]"
       </input>
       <instructions>
         This payload is the brief; do not read sibling skill files.
-        When {ACTION} is macro-plan:
-        1. Read user story for {SLUG} from {STORY_FILE}.
-        2. Perform repository intake across files, modules, and dependencies in scope. Do not assume; verify actual code patterns.
-        3. Identify existing points of extension and new components needed.
-        4. If major discrepancies with {STORY_FILE} appear, send batched questions with recommended options to the PO session (up to 3 rounds).
-        5. Write {PLAN_FILE} (`docs/plan-ai-tools/{SLUG}/0-{SLUG}.md`):
-           - Task status table with columns: `#`, `Status` (initially blank), `Task`, `Specialist`.
-           - Technical objective.
-           - Mermaid architecture diagram(s) showing target modules, classes, and service boundaries.
-           - Atomic task breakdown: each task must be self-sufficient and independently committable, with technical summary and assigned specialist (from architect, sec-eng, devops-eng, back-eng, front-eng, data-eng, qa-eng, techwriter, ux-designer).
-           - Architectural decisions and general rules guiding specialists and implementers.
-           - "Decisions" section recording resolved questions and choices.
-        6. Return concise outcome: "Plan completed successfully: {PLAN_FILE}".
+        When {ACTION} is plan:
+        1. Read the story for {SLUG} from {STORY_FILE}.
+        2. Inspect the files, modules, and dependencies in scope. Verify against actual code; do not assume. Identify existing points of extension and new components needed.
+        3. If major discrepancies with {STORY_FILE} appear, send batched questions with recommended options to the PO session (up to 3 rounds).
+        4. Write {PLAN_FILE}: task status table with columns `#`, `Status` (blank, `working`, `validating`, `retry` plus attempt number, `blocked`, `done`), and `Task`; technical objective; Mermaid diagram of the affected components; atomic, self-contained, independently committable tasks with technical summaries and dependencies; a "Decisions" section recording resolved questions and choices.
+        5. Return a one-line outcome with {PLAN_FILE}.
 
         When {ACTION} is re-plan:
-        1. Read {STORY_FILE}, existing {PLAN_FILE}, and user {FEEDBACK}.
-        2. Adjust architecture diagrams, task breakdown, specialist assignments, and decisions in {PLAN_FILE}.
-        3. Return concise outcome: "Plan completed successfully: {PLAN_FILE}".
+        1. Read {STORY_FILE}, the existing {PLAN_FILE}, and {FEEDBACK}.
+        2. Adjust the diagram, task breakdown, and decisions in {PLAN_FILE}.
+        3. Return a one-line outcome with {PLAN_FILE}.
       </instructions>
       <constraints>
-        <constraint>Adhere strictly to clean architecture, dependency inversion, and modularity principles.</constraint>
+        <constraint>Plan only: write nothing but {PLAN_FILE}, change no code, and commit nothing.</constraint>
         <constraint>Do not make unverified code assumptions; verify against repository reality.</constraint>
+      </constraints>
+    </template>
+
+    <template role="tech-lead" executor="inherited">
+      <job>Full-stack architect executing one approved plan: detail each task, dispatch single-task implementers, validate and commit their deliveries.</job>
+      <input>
+        <slug>{SLUG}</slug>
+        <implementer>{IMPLEMENTER}</implementer>
+        <story_file>{STORY_FILE}</story_file>
+        <plan_file>{PLAN_FILE}</plan_file>
+        <plan_dir>{PLAN_DIR}</plan_dir>
+        <feedback>{FEEDBACK}</feedback>
+      </input>
+      <instructions>
+        This payload is the brief; do not read sibling skill files. You own every task specification and every validation of plan {SLUG}; nobody reviews your work afterwards. Keep the plan as written: settle task-level questions yourself, and change no scope.
+        Intake:
+        1. Read {STORY_FILE} and {PLAN_FILE}: scope, acceptance criteria, decisions, and the task status table.
+        2. Confirm you can dispatch an agent of type {IMPLEMENTER}, resolved per `<rule id="implementer-types">`, through the harness subagent API or the matching tier skill CLI. If you cannot, write nothing and return `<signal code="DISPATCH_UNAVAILABLE">`.
+        3. Resume at the first task whose status is not `done`. When that task is `blocked`, apply {FEEDBACK} as the user's extra instructions, keep its existing task file and uncommitted changes as the starting point, and grant it 3 new attempts.
+        Execute each remaining task in order, one at a time:
+        4. Write the task file in {PLAN_DIR}, named by task number and kebab-case task slug: technical objective, files to create or modify with expected changes, test behaviors to verify per change (unit tests for code; smoke tests, linters, or schema validations for non-code assets), and suggested implementation steps without writing code. Verify against actual code; do not assume. Set the task status to `working`.
+        5. Spawn one fresh agent of type {IMPLEMENTER} with clean zeroed context, sending the implementer template appended to this brief with its action set to execute-task and its fields filled for this task. Answer its questions yourself.
+        6. Validate the delivery against the uncommitted git diff and the task file: tests exist and genuinely verify the defined behaviors, test and lint runs pass, scope is respected, quality holds. Append observations and verdict to the task file.
+        7. If approved: set the task status to `done`, stage the task's files with the plan and task files, commit locally with a Conventional Commit message, and terminate the implementer.
+        8. If rework is needed: set the status to `retry` plus attempt number, append rework items to the task file, and send them to the live implementer with action rework-task; validate again. After 3 failed attempts, set the status to `blocked`, terminate the implementer, leave the task's uncommitted changes in place, commit only {PLAN_FILE} and the task file, and return one line naming the task file and ending with `<signal code="PLAN_BLOCKED">`.
+        Close:
+        9. When every task is `done`, leave the worktree clean and return one line ending with `<signal code="PLAN_DONE">`.
+      </instructions>
+      <constraints>
+        <constraint>Never implement task code yourself and never approve a delivery that lacks tests genuinely verifying the defined behaviors.</constraint>
+        <constraint>Commit locally only; never push, never mutate cloud resources, never touch files outside the plan scope.</constraint>
+      </constraints>
+    </template>
+
+    <template role="implementer" executor="implementer">
+      <job>Single-task implementer: deliver code and tests for one task and report factual results without self-validation.</job>
+      <input>
+        <action>{ACTION}</action>
+        <task_num>{TASK_NUM}</task_num>
+        <story_file>{STORY_FILE}</story_file>
+        <plan_file>{PLAN_FILE}</plan_file>
+        <task_file>{TASK_FILE}</task_file>
+        <rework_notes>{REWORK_NOTES}</rework_notes>
+      </input>
+      <instructions>
+        This payload is the brief; do not read sibling skill files. The Tech Lead that dispatched you is your only counterpart.
+        When {ACTION} is execute-task:
+        1. Read {STORY_FILE}, {PLAN_FILE}, and {TASK_FILE} for task {TASK_NUM}.
+        2. Implement changes strictly within the scope defined in {TASK_FILE}. If blocked or if planned instructions contradict codebase realities, stop immediately and notify the Tech Lead.
+        3. Author tests covering the defined behaviors (unit tests for code; smoke tests, schema validations, or linters for non-code files) and run test suites and linters. Fix defects until all checks pass.
+        4. Append a concise, factual implementation report to {TASK_FILE}: changed files, tests written and executed, test and lint outcomes, blockers, and Tech Lead decisions applied. No self-evaluation.
+        5. Update task {TASK_NUM} status to `validating` in {PLAN_FILE}.
+        6. Do not commit. Return a concise outcome with {TASK_FILE}.
+
+        When {ACTION} is rework-task:
+        1. Read {REWORK_NOTES} and the feedback appended to {TASK_FILE}.
+        2. Apply the requested fixes in place, re-run tests and linters, and fix new failures.
+        3. Append a rework summary to {TASK_FILE} and keep task {TASK_NUM} status `validating` in {PLAN_FILE}.
+        4. Do not commit. Return a concise outcome with {TASK_FILE}.
+      </instructions>
+      <constraints>
+        <constraint>Stay strictly within task scope and report factual results only, without local commits.</constraint>
       </constraints>
     </template>
   </dispatch_templates>
