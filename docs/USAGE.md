@@ -19,6 +19,7 @@ Skills provide session-directed workflows. Testing, interaction, and security pr
 | `/plan-ai-tools` | Formulate a user story as PO, resolve implementer choice, and draft a technical execution plan with an Architect | `/plan-ai-tools add user authentication` |
 | `/implement-ai-tools` | Execute an approved plan stage-by-stage with specialist planning, isolated implementer execution, and validation | `/implement-ai-tools add-user-authentication` |
 | `/vibe-ai-tools` | Refine a user story as PO interactively, then autonomously execute planning, task implementation, and PR creation | `/vibe-ai-tools add user authentication` |
+| `/campaign-ai-tools` | Settle a campaign scope and implementer, then run up to 10 unattended cycles in which a Planner scans the repository, plans one work point, and drives and validates single-task implementers | `/campaign-ai-tools raise unit test coverage of the domain layer` |
 | `/az-ai-tools` | Inspect or manage Azure resources, subscriptions, infrastructure, and costs with `az` | `/az-ai-tools list costly idle resources` |
 | `/gc-ai-tools` | Inspect or manage Google Cloud projects, infrastructure, and costs with `gcloud` | `/gc-ai-tools show resources in project-x` |
 | `/stripe-ai-tools` | Inspect, integrate, and manage Stripe payments, Checkout Sessions, products, and webhooks | `/stripe-ai-tools integrate checkout session` |
@@ -29,7 +30,7 @@ Skills provide session-directed workflows. Testing, interaction, and security pr
 
 ### Who does the work
 
-Every skill runs on the session's model. The session handles user alignment, judgment, commits, and short pointers to disk; builds, tests, and bulk fact collection go to the harness's default subagent. In `/vibe-ai-tools`, the session refines the story interactively with the user and then takes full autonomous ownership of subsequent technical decisions—favoring zero-cost and easily reversible choices—executing planning and implementation through to PR creation.
+Every skill runs on the session's model. The session handles user alignment, judgment, commits, and short pointers to disk; builds, tests, and bulk fact collection go to the harness's default subagent. In `/vibe-ai-tools`, the session refines the story interactively with the user and then takes full autonomous ownership of subsequent technical decisions—favoring zero-cost and easily reversible choices—executing planning and implementation through to PR creation. In `/campaign-ai-tools`, the session only settles scope and implementer with the user, dispatches one clean-context Planner per cycle, and makes the first and last commits on the local `campaign/<slug>` branch; each Planner plans, dispatches implementers, validates, and commits, and the session never reads or judges a delivery. The campaign stops after 10 productive cycles or after 2 consecutive Planners find nothing left to do, and the branch is never pushed.
 
 ### Agent dispatch
 

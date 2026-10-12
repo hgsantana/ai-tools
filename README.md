@@ -1,6 +1,6 @@
 # ai-tools
 
-> **Version 0.0.79-ALPHA** — under active development. Suitable for testing; alpha versions provide neither guarantees nor backward compatibility (rule 4).
+> **Version 0.0.80-ALPHA** — under active development. Suitable for testing; alpha versions provide neither guarantees nor backward compatibility (rule 4).
 
 ## Overview
 
@@ -72,7 +72,7 @@ The semantic-XML bodies (`AI-TOOLS-AGENTS.md` and every `SKILL.md`) follow one g
 
 - **Angle brackets** appear only as structural tags from the vocabulary below, or as a backticked reference to one: `` `<template role="stage-implementer">` ``, `` `<step id="2">` ``, `` `<security_guardrails>` ``. Once backticked spans are removed, every body is balanced XML.
 - **Variables** are brace placeholders: `{SLUG}`, `{BASE_BRANCH}`, `{COMMANDS}`. Every placeholder a `<template>` uses is declared in its `<input>`, and every declared one is used; the session substitutes them before spawning.
-- **References** carrying an attribute (`role`, `id`, `code`, `type`) resolve to a definition in the same file, in user-wide instructions, or in the skill named by the word before the backtick: `` plan-ai-tools `<session_workflow>` ``, `` `<rule id="payload-assembly">` ``. A bare reference names a vocabulary tag. Blocks from `plan-ai-tools`, `implement-ai-tools`, and `AI-TOOLS-AGENTS.md` can be cited across skills (such as in `vibe-ai-tools`); any modification to these blocks or skills may require updating downstream skills that consume them.
+- **References** carrying an attribute (`role`, `id`, `code`, `type`) resolve to a definition in the same file, in user-wide instructions, or in the skill named by the word before the backtick: `` plan-ai-tools `<session_workflow>` ``, `` `<rule id="payload-assembly">` ``. A bare reference names a vocabulary tag. Blocks from `plan-ai-tools`, `implement-ai-tools`, and `AI-TOOLS-AGENTS.md` can be cited across skills (such as in `vibe-ai-tools` and `campaign-ai-tools`); any modification to these blocks or skills may require updating downstream skills that consume them.
 - **Identity**: every `<rule>` carries a kebab-case `id`, unique in its file; every `<template>` carries a functional `role` and an `executor`; `<step>` ids are numeric per workflow; `<case>`, `<response>`, `<signal>`, and `<state>` carry `id`, `type`, or `code`.
 - **Executors**: templates declare an `executor` (such as `default-worker`, the harness default subagent) and where each runs. Work the session does itself is a `<step>`, never a template.
 - **Agent tiers**: `agy-ai-tools`, `claude-ai-tools`, and `copilot-ai-tools` each hardcode a `junior`, `mid-level`, and `senior` model and effort for their harness; there is no central manifest or local model configuration.
