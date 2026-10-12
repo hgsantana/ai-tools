@@ -35,6 +35,7 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/.
   </conventional_commits>
 
   <boundaries>
+    If not using ai-tools skills, ignore these rules.
     <rule id="implementer-types">Standard implementer types resolved dynamically by the executing harness at runtime:
       - `mid-level`: Mid-level tier of current harness skill (`agy-ai-tools`, `claude-ai-tools`, `copilot-ai-tools`) - recommended.
       - `harness-default`: Default subagent worker of current harness (Antigravity = `Flash`; Claude = `Sonnet`; Copilot = `Gemini 3.8 Flash (Copilot)`).
