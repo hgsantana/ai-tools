@@ -34,16 +34,6 @@ argument-hint: "[story or feature description, or slug of a team plan to resume]
       - If documentation is missing, outdated, or requires adjustments, the PO includes documentation adequacy as a mandatory story requirement.
     </rule>
 
-    <rule id="implementer-selection">The first mandatory question asked by the PO before planning a new story resolves who will implement it:
-      - `mid-level`: Mid-level tier of the current harness skill (`agy-ai-tools`, `claude-ai-tools`, `copilot-ai-tools`) - recommended.
-      - `harness-default`: Default subagent worker of the current harness (Antigravity = Flash; Claude = Sonnet; Copilot = Gemini 3.8 Flash (Copilot)).
-      - `session-subagent`: Subagent spawned with clean context inheriting current session model and effort.
-      - `senior`: Senior tier of the current harness skill.
-      - `junior`: Junior tier of the current harness skill.
-      - `session`: The interactive session itself implements directly.
-      The story file records only the resolved type name so that any harness executing the plan can resolve it dynamically via `<rule id="implementer-types">`.
-    </rule>
-
     <rule id="specialists-catalog">Specialist roles available for task assignment in the macro plan, each with the domain guidelines injected into its dispatches ({SPECIALIST_SUMMARY}):
       - `architect`: Software architect — modularity, clean architecture, dependency inversion, interface contracts, loose coupling, verifying assumptions against code.
       - `sec-eng`: Senior security engineer — zero trust, threat modeling, input sanitization, authentication and authorization, secret hygiene, least privilege, OWASP Top 10 mitigations.
@@ -92,7 +82,7 @@ argument-hint: "[story or feature description, or slug of a team plan to resume]
     </step>
 
     <step id="2" name="implementer-inquiry">
-      Prompt the user via `<user_interaction>` with the mandatory first question to select the {IMPLEMENTER} type per `<rule id="implementer-selection">`.
+      Prompt the user via `<user_interaction>` to select the {IMPLEMENTER} type per `<rule id="implementer-selection">`.
     </step>
 
     <step id="3" name="po-doc-analysis">

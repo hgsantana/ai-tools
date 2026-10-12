@@ -32,15 +32,6 @@ argument-hint: "[campaign goal to pursue across the repository]"
       - It commits twice: the campaign file at the start and the campaign cleanup at the end.
     </rule>
 
-    <rule id="implementer-selection">The session asks who implements the campaign:
-      - `mid-level`: Mid-level tier of the current harness skill (`agy-ai-tools`, `claude-ai-tools`, `copilot-ai-tools`) - recommended.
-      - `harness-default`: Default subagent worker of the current harness (Antigravity = Flash; Claude = Sonnet; Copilot = Gemini 3.8 Flash (Copilot)).
-      - `session-subagent`: Subagent spawned with clean context inheriting current session model and effort.
-      - `senior`: Senior tier of the current harness skill.
-      - `junior`: Junior tier of the current harness skill.
-      The campaign file records only the resolved type name, resolved at dispatch time per `<rule id="implementer-types">`. This skill omits `session`, since the session never implements.
-    </rule>
-
     <rule id="cycle-limits">Campaign termination:
       - The campaign ends after 10 productive cycles (`<signal code="CYCLE_DONE">` or `<signal code="CYCLE_BLOCKED">`).
       - A cycle returning `<signal code="CYCLE_EMPTY">` is an empty attempt and does not consume a cycle number; the session dispatches a fresh Planner for the same cycle number.
@@ -70,7 +61,7 @@ argument-hint: "[campaign goal to pursue across the repository]"
     </step>
 
     <step id="2" name="implementer-inquiry">
-      Prompt the user via `<user_interaction>` to select the {IMPLEMENTER} type per `<rule id="implementer-selection">`.
+      Prompt the user via `<user_interaction>` to select the {IMPLEMENTER} type per `<rule id="implementer-selection">`, omitting `session`.
     </step>
 
     <step id="3" name="write-campaign">

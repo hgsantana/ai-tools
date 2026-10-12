@@ -34,15 +34,6 @@ argument-hint: "[story or feature description to plan and implement]"
       - It never reads diffs or code to validate, rework, or re-judge a delivery; validation belongs to the Tech Lead.
     </rule>
 
-    <rule id="implementer-selection">The first mandatory question asked by the PO resolves who will implement the story:
-      - `mid-level`: Mid-level tier of the current harness skill (`agy-ai-tools`, `claude-ai-tools`, `copilot-ai-tools`) - recommended.
-      - `harness-default`: Default subagent worker of the current harness (Antigravity = Flash; Claude = Sonnet; Copilot = Gemini 3.8 Flash (Copilot)).
-      - `session-subagent`: Subagent spawned with clean context inheriting current session model and effort.
-      - `senior`: Senior tier of the current harness skill.
-      - `junior`: Junior tier of the current harness skill.
-      The story file records only the resolved type name, resolved at dispatch time per `<rule id="implementer-types">`. This skill omits `session`, since the session never implements.
-    </rule>
-
     <rule id="autonomous-decision-policy">Autonomous decision authority and escalation threshold:
       - Following user story approval in `<step id="5">`, the session assumes total responsibility for all subsequent technical decisions.
       - For all questions, trade-offs, or doubts raised by the Planner, the session decides autonomously without consulting the user.
@@ -72,12 +63,7 @@ argument-hint: "[story or feature description to plan and implement]"
 
   <session_workflow>
     <step id="1" name="implementer-inquiry">
-      Derive kebab-case {SLUG}. Prompt the user via `<user_interaction>` with the mandatory first question to select the {      - `mid-level`: Mid-level tier of the current harness skill (`agy-ai-tools`, `claude-ai-tools`, `copilot-ai-tools`) - recommended.
-      - `harness-default`: Default subagent worker of the current harness (Antigravity = Flash; Claude = Sonnet; Copilot = Gemini 3.8 Flash (Copilot)).
-      - `session-subagent`: Subagent spawned with clean context inheriting current session model and effort.
-      - `senior`: Senior tier of the current harness skill.
-      - `junior`: Junior tier of the current harness skill.
-EMENTER} type per `<rule id="implementer-selection">`, recommending `mid-level`.
+      Derive kebab-case {SLUG}. Prompt the user via `<user_interaction>` to select the {IMPLEMENTER} type per `<rule id="implementer-selection">`, omitting `session`.
     </step>
 
     <step id="2" name="po-doc-analysis">
@@ -113,12 +99,7 @@ EMENTER} type per `<rule id="implementer-selection">`, recommending `mid-level`.
     </step>
 
     <step id="10" name="dispatch-tech-lead">
-      Announce the spawn in one chat line. Spawn `<template role="tech-lead">` with clean zeroed context, inheriting session model and effort, passing {SLUG}, {      - `mid-level`: Mid-level tier of the current harness skill (`agy-ai-tools`, `claude-ai-tools`, `copilot-ai-tools`) - recommended.
-      - `harness-default`: Default subagent worker of the current harness (Antigravity = Flash; Claude = Sonnet; Copilot = Gemini 3.8 Flash (Copilot)).
-      - `session-subagent`: Subagent spawned with clean context inheriting current session model and effort.
-      - `senior`: Senior tier of the current harness skill.
-      - `junior`: Junior tier of the current harness skill.
-EMENTER}, {STORY_FILE}, {PLAN_FILE}, {PLAN_DIR} = `docs/vibe-ai-tools/{SLUG}`, and {FEEDBACK} empty on the first dispatch. Append `<template role="implementer">` verbatim to the payload so the Tech Lead can dispatch it.
+      Announce the spawn in one chat line. Spawn `<template role="tech-lead">` with clean zeroed context, inheriting session model and effort, passing {SLUG}, {IMPLEMENTER}, {STORY_FILE}, {PLAN_FILE}, {PLAN_DIR} = `docs/vibe-ai-tools/{SLUG}`, and {FEEDBACK} empty on the first dispatch. Append `<template role="implementer">` verbatim to the payload so the Tech Lead can dispatch it.
     </step>
 
     <step id="11" name="tech-lead-return">

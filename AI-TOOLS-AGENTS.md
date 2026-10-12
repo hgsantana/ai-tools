@@ -34,7 +34,7 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/.
     <rule id="never-push">Never push to remote, unless explicitly instructed by the user or when following a skill that demands it to open a new PR.</rule>
   </conventional_commits>
 
-  <boundaries>
+  <implementers>
     If not using ai-tools skills, ignore these rules.
     <rule id="implementer-types">Standard implementer types resolved dynamically by the executing harness at runtime:
       - `mid-level`: Mid-level tier of current harness skill (`agy-ai-tools`, `claude-ai-tools`, `copilot-ai-tools`) - recommended.
@@ -44,5 +44,6 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/.
       - `junior`: Junior tier of current harness skill (`agy-ai-tools`, `claude-ai-tools`, `copilot-ai-tools`).
       - `session`: The interactive session itself implements directly without spawning a subagent.
     </rule>
-  </boundaries>
+    <rule id="implementer-selection">A skill that dispatches implementers asks who implements new work before writing its story or campaign file: offer the types of `<rule id="implementer-types">` via `<user_interaction>`, `mid-level` first as recommended, omitting `session` when that skill's session only orchestrates. The file records only the type name, never a model; whoever dispatches resolves it at dispatch time through the harness subagent API or the matching tier skill CLI.</rule>
+  </implementers>
 </user_instructions>

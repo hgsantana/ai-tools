@@ -34,15 +34,6 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
       - It never reads task files, diffs, or code to validate, rework, or re-judge a delivery; validation belongs to the Tech Lead.
     </rule>
 
-    <rule id="implementer-selection">The first mandatory question asked by the PO before planning a new story resolves who will implement it:
-      - `mid-level`: Mid-level tier of the current harness skill (`agy-ai-tools`, `claude-ai-tools`, `copilot-ai-tools`) - recommended.
-      - `harness-default`: Default subagent worker of the current harness (Antigravity = Flash; Claude = Sonnet; Copilot = Gemini 3.8 Flash (Copilot)).
-      - `session-subagent`: Subagent spawned with clean context inheriting current session model and effort.
-      - `senior`: Senior tier of the current harness skill.
-      - `junior`: Junior tier of the current harness skill.
-      The story file records only the resolved type name so that any harness executing the plan can resolve it dynamically via `<rule id="implementer-types">`. This skill omits `session`, since the session never implements.
-    </rule>
-
     <rule id="transient-docs">Story, plan, task files, and decisions belong under `docs/plan-ai-tools/{SLUG}/`. Raw tool outputs, binary caches, and temporary data go to `${TMPDIR:-/tmp}/ai-tools`. In-repo plan files are committed along the workflow.</rule>
 
     <rule id="planner-question-rounds">If the Planner finds major discrepancies between the story and repository code, it sends batched questions with recommended options to the PO session, up to 3 rounds. The PO answers directly; decisions involving financial costs, irreversible data loss, or destructive operations are relayed to the user and await explicit confirmation. Settled answers are recorded in the "Decisions" section of the plan.</rule>
@@ -70,7 +61,7 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
     </step>
 
     <step id="2" name="implementer-inquiry">
-      Prompt the user via `<user_interaction>` with the mandatory first question to select the {IMPLEMENTER} type per `<rule id="implementer-selection">`, recommending `mid-level`.
+      Prompt the user via `<user_interaction>` to select the {IMPLEMENTER} type per `<rule id="implementer-selection">`, omitting `session`.
     </step>
 
     <step id="3" name="po-doc-analysis">
