@@ -5,8 +5,8 @@ description: >
   campaign scope and implementer with the user, commits the campaign file on a
   dedicated branch, then dispatches one clean-context Planner per cycle to scan
   the repository, plan one work point, drive single-task implementers, and
-  validate and commit their deliveries, for up to 10 cycles or until nothing is
-  left to do. Use for /campaign-ai-tools.
+  validate and commit their deliveries, until nothing is left to do. Use for
+  /campaign-ai-tools.
 argument-hint: "[campaign goal to pursue across the repository]"
 ---
 
@@ -29,14 +29,14 @@ argument-hint: "[campaign goal to pursue across the repository]"
       - It interacts with the user exclusively to settle campaign scope and implementer type, and to report the final outcome.
       - It dispatches cycles and branches solely on the Planner return signal per `<return_protocol>`.
       - It never reads plans, task files, diffs, or code, and never validates, reworks, or re-judges a delivery; validation belongs to the Planner.
-      - It commits twice: the campaign file at the start and the campaign cleanup at the end.
+      - It commits at most twice: the campaign file at the start and the campaign cleanup at the end, the latter skipped when the campaign aborts.
     </rule>
 
-    <rule id="cycle-limits">Campaign termination:
-      - The campaign ends after 10 productive cycles (`<signal code="CYCLE_DONE">` or `<signal code="CYCLE_BLOCKED">`).
+    <rule id="campaign-termination">Campaign termination:
       - A cycle returning `<signal code="CYCLE_EMPTY">` is an empty attempt and does not consume a cycle number; the session dispatches a fresh Planner for the same cycle number.
       - The campaign ends when 2 consecutive attempts return `<signal code="CYCLE_EMPTY">`; a productive cycle resets that count.
       - The campaign ends immediately on `<signal code="DISPATCH_UNAVAILABLE">`.
+      - The campaign aborts when a Planner ends without a signal of `<return_protocol>`: the session dispatches no further cycle and leaves the worktree and the campaign directory untouched for inspection.
     </rule>
 
     <rule id="autonomous-decision-policy">After scope approval the campaign runs unattended. The Planner settles every technical question itself, choosing zero-cost and easily reversible options. A work point that requires financial cost, irreversible data loss, a destructive operation, or a cloud mutation is out of bounds: the Planner records it as `blocked` in the cycle log with the reason and selects another work point.</rule>
@@ -81,10 +81,11 @@ argument-hint: "[campaign goal to pursue across the repository]"
     </step>
 
     <step id="7" name="cycle-return">
-      Wait for the Planner signal and branch per `<rule id="cycle-limits">` without reading or validating anything:
-      1. `<signal code="CYCLE_DONE">` or `<signal code="CYCLE_BLOCKED">`: count one productive cycle and reset the empty count. Below 10 productive cycles, return to `<step id="6">`; otherwise proceed to `<step id="8">`.
+      Wait for the Planner signal and branch per `<rule id="campaign-termination">` without reading or validating anything:
+      1. `<signal code="CYCLE_DONE">` or `<signal code="CYCLE_BLOCKED">`: count one productive cycle and reset the empty count. Then return to `<step id="6">`.
       2. `<signal code="CYCLE_EMPTY">`: count one empty attempt. On the first consecutive one, return to `<step id="6">` with the same {CYCLE}; on the second, proceed to `<step id="8">`.
       3. `<signal code="DISPATCH_UNAVAILABLE">`: proceed to `<step id="8">`.
+      4. No signal of `<return_protocol>`, because the Planner died or returned anything else: skip `<step id="8">` and proceed to `<step id="9">`.
     </step>
 
     <step id="8" name="final-commit">
@@ -92,7 +93,7 @@ argument-hint: "[campaign goal to pursue across the repository]"
     </step>
 
     <step id="9" name="outcome">
-      Send a one-line outcome to the user: branch `campaign/{SLUG}`, productive cycles run, cycles blocked, and the stop reason (cycle limit, nothing left to do, or dispatch unavailable).
+      Send a one-line outcome to the user: branch `campaign/{SLUG}`, productive cycles run, cycles blocked, and the stop reason (nothing left to do, dispatch unavailable, or Planner returned without a signal). On an abort, add that the campaign directory and any uncommitted changes were left in place.
     </step>
   </session_workflow>
 
