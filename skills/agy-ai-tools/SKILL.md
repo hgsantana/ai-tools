@@ -18,9 +18,9 @@ argument-hint: "[tier | [model] [effort]] <task description>"
       | Tier | Model | Effort |
       |---|---|---|
       | `junior` | `gemini-3.8-flash` | `low` |
-      | `mid-level` | `gemini-3.8-flash` | `medium` |
-      | `senior` | `gemini-3.8-flash` | `high` |
-      Models: `gemini-3.8-flash` (`flash`), `gemini-3.7-flash`, `gemini-3.6-flash`, `gemini-3.1-pro` (`pro`; low or high effort), `claude-sonnet-4-6` (`sonnet`), `claude-opus-4-6-thinking` (`opus`), `gpt-oss-120b-medium` (`gpt-oss`), or a full identifier; check an unknown one against `agy models` before rejecting. Efforts: `low`, `medium` (`med`), `high` (`hi`).
+      | `mid-level` | `gemini-4-argon` | `medium` |
+      | `senior` | `gemini-4-argon` | `high` |
+      Models: `gemini-4-argon` (`argon`), `gemini-3.8-flash` (`flash`), `claude-sonnet-5-5` (`sonnet`), `claude-opus-5-5` (`opus`), `gpt-oss-120b-medium` (`gpt-oss`; medium effort), or a full identifier; check an unknown one against `agy models` before rejecting. Efforts: `low`, `medium` (`med`), `high` (`hi`).
     </step>
 
     <step id="2" name="guardrail">
