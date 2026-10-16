@@ -45,5 +45,6 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/.
       - `senior`: Senior tier of the specified harness (`agy-ai-tools`, `claude-ai-tools`, `copilot-ai-tools`).
     </rule>
     <rule id="implementer-selection">A skill that dispatches implementers uses `harness-default` without asking, unless the user's request names another type of `<rule id="implementer-types">`. A tier is specified with harness `agy`, `claude`, or `copilot` ("claude junior" is `junior` of `claude-ai-tools`); without one it takes the current harness. Ask via `<user_interaction>` only when the requested implementer matches no type valid for the skill. The story or campaign file records the type, with its harness for a tier (`claude junior`), never a model. Whoever dispatches resolves it at dispatch time: a tier through its harness tier skill, only via that harness's CLI when it is not the current one; any other type through the harness subagent API.</rule>
+    <rule id="implementer-lifecycle">Every implementer is spawned fresh, with clean zeroed context, for one delivery attempt and ends on its return. Rework, a retry after a stop or a block, and a resumed task each go to a fresh implementer, which continues from the task file and the uncommitted worktree.</rule>
   </implementers>
 </user_instructions>

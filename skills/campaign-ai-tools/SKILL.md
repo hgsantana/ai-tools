@@ -12,7 +12,7 @@ argument-hint: "[campaign goal to pursue across the repository]"
 
 <skill name="campaign-ai-tools">
   <overview>
-    Pursue one repository-wide goal through repeated autonomous cycles. The session settles the campaign scope interactively with the user, resolves the implementer type, creates branch `campaign/{SLUG}` from the current local branch, and commits the campaign file. It then dispatches one Planner subagent per cycle with clean context, inheriting session model and effort. Each Planner acts as a full-stack architect: it scans the repository for one work point matching the campaign, writes and commits a plan, dispatches one clean-context Implementer per task, validates each delivery, and commits approved work. The session neither reads nor judges any delivery: it settles scope, dispatches cycles on the Planner's return signal, and makes the first and last commits of the campaign.
+    Pursue one repository-wide goal through repeated autonomous cycles. The session settles the campaign scope interactively with the user, resolves the implementer type, creates branch `campaign/{SLUG}` from the current local branch, and commits the campaign file. It then dispatches one Planner subagent per cycle with clean context, inheriting session model and effort. Each Planner acts as a full-stack architect: it scans the repository for one work point matching the campaign, writes and commits a plan, dispatches one clean-context Implementer per delivery attempt, validates each delivery, and commits approved work. The session neither reads nor judges any delivery: it settles scope, dispatches cycles on the Planner's return signal, and makes the first and last commits of the campaign.
   </overview>
 
   <boundaries>
@@ -21,7 +21,7 @@ argument-hint: "[campaign goal to pursue across the repository]"
       - `Cycle`: One Planner lifetime covering scan, plan, task execution, and validation of a single work point.
       - `Work point`: One cohesive spot in the repository where the campaign goal applies and has not yet been addressed.
       - `Planner`: Clean-context subagent inheriting session model and effort; full-stack architect that plans, dispatches implementers, validates, and commits.
-      - `Implementer`: Clean-context agent of the campaign implementer type; lives for one task.
+      - `Implementer`: Clean-context agent of the campaign implementer type; lives for one delivery attempt per `<rule id="implementer-lifecycle">`.
       - `Cycle log`: Table in the campaign file with columns `#`, `Status` (`working`, `done`, `blocked`), `Work point`, and `Plan`, maintained by Planners as the memory shared across cycles.
     </rule>
 
@@ -41,7 +41,7 @@ argument-hint: "[campaign goal to pursue across the repository]"
 
     <rule id="autonomous-decision-policy">After scope approval the campaign runs unattended. The Planner settles every technical question itself, choosing zero-cost and easily reversible options. A work point that requires financial cost, irreversible data loss, a destructive operation, or a cloud mutation is out of bounds: the Planner records it as `blocked` in the cycle log with the reason and selects another work point.</rule>
 
-    <rule id="clean-context-lifecycle">Every Planner is spawned with clean, zeroed context and ends with its cycle; continuity across cycles lives only in the campaign file and git history. Every Implementer is spawned with clean, zeroed context for one task, stays alive for rework of that task, and is terminated once the task is accepted or blocked.</rule>
+    <rule id="clean-context-lifecycle">Every Planner is spawned with clean, zeroed context and ends with its cycle; continuity across cycles lives only in the campaign file and git history. Every Implementer follows `<rule id="implementer-lifecycle">`: it ends on its return, and rework or a retry goes to a fresh one.</rule>
 
     <rule id="retry-and-blocked">A task allows up to 3 implementation attempts. When the third attempt fails validation, the Planner discards that task's uncommitted changes, sets the task status to `blocked`, skips the remaining tasks that depend on it, and closes the cycle as `blocked`.</rule>
 
@@ -120,10 +120,10 @@ argument-hint: "[campaign goal to pursue across the repository]"
         7. Stage only those two files and commit with `chore(campaign): plan cycle {CYCLE} of {SLUG}`.
         Execute each task in order, one at a time:
         8. Write the task file in {CYCLE_DIR}, named by task number and kebab-case task slug: technical objective, files to create or modify with expected changes, test behaviors to verify per change (unit tests for code; smoke tests, linters, or schema validations for non-code assets), and suggested implementation steps without writing code. Set the task status to `working`.
-        9. Spawn one fresh agent of type {IMPLEMENTER} with clean zeroed context, sending the implementer template appended to this brief with its action set to execute-task and its fields filled for this task. Answer its questions yourself.
+        9. Spawn one fresh agent of type {IMPLEMENTER} with clean zeroed context, sending the implementer template appended to this brief with its action set to execute-task and its fields filled for this task. It ends on its return. If it stops on a blocker, correct the task file yourself and spawn a fresh one with the same action.
         10. Validate the delivery against the uncommitted git diff and the task file: tests exist and genuinely verify the defined behaviors, test and lint runs pass, scope is respected, quality holds. Append observations and verdict to the task file.
-        11. If approved: set the task status to `done`, stage the task's files, commit locally with a Conventional Commit message, and terminate the implementer.
-        12. If rework is needed: set the status to `retry` plus attempt number, append rework items to the task file, and send them to the live implementer with action rework-task; validate again. After 3 failed attempts, discard that task's uncommitted changes, set the status to `blocked`, terminate the implementer, skip tasks that depend on it, and continue with independent ones.
+        11. If approved: set the task status to `done`, stage the task's files, commit locally with a Conventional Commit message.
+        12. If rework is needed: set the status to `retry` plus attempt number, append rework items to the task file, and spawn a fresh agent of type {IMPLEMENTER} with action rework-task and rework notes pointing at them; validate again. After 3 failed attempts, discard that task's uncommitted changes, set the status to `blocked`, skip tasks that depend on it, and continue with independent ones.
         Close:
         13. Update the cycle {CYCLE} row in {CAMPAIGN_FILE} to `done`, or to `blocked` with the reason when any task was blocked or skipped. Commit remaining plan state with `chore(campaign): close cycle {CYCLE} of {SLUG}` and leave the worktree clean.
         14. Return one line ending with `<signal code="CYCLE_DONE">` or `<signal code="CYCLE_BLOCKED">`.
@@ -148,16 +148,16 @@ argument-hint: "[campaign goal to pursue across the repository]"
       <instructions>
         This payload is the brief; do not read sibling skill files. The Planner that dispatched you is your only counterpart.
         When {ACTION} is execute-task:
-        1. Read {CAMPAIGN_FILE}, {PLAN_FILE}, and {TASK_FILE} for task {TASK_NUM}.
-        2. Implement changes strictly within the scope defined in {TASK_FILE}. If blocked or if planned instructions contradict codebase realities, stop immediately and notify the Planner.
+        1. Read {CAMPAIGN_FILE}, {PLAN_FILE}, and {TASK_FILE} for task {TASK_NUM}. Take any uncommitted changes already in the worktree as your starting point.
+        2. Implement changes strictly within the scope defined in {TASK_FILE}. If blocked or if planned instructions contradict codebase realities, stop immediately and return one line stating it.
         3. Author tests covering the defined behaviors (unit tests for code; smoke tests, schema validations, or linters for non-code files) and run test suites and linters. Fix defects until all checks pass.
         4. Append a concise, factual implementation report to {TASK_FILE}: changed files, tests written and executed, test and lint outcomes, blockers, and Planner decisions applied. No self-evaluation.
         5. Update task {TASK_NUM} status to `validating` in {PLAN_FILE}.
         6. Do not commit. Return a concise outcome with {TASK_FILE}.
 
         When {ACTION} is rework-task:
-        1. Read {REWORK_NOTES} and the feedback appended to {TASK_FILE}.
-        2. Apply the requested fixes in place, re-run tests and linters, and fix new failures.
+        1. Read {CAMPAIGN_FILE}, {PLAN_FILE}, {TASK_FILE} with its reports and the feedback appended to it, and {REWORK_NOTES}. The uncommitted changes in the worktree are the previous attempt; rework them in place.
+        2. Apply the requested fixes, re-run tests and linters, and fix new failures. If blocked, stop immediately and return one line stating it.
         3. Append a rework summary to {TASK_FILE} and keep task {TASK_NUM} status `validating` in {PLAN_FILE}.
         4. Do not commit. Return a concise outcome with {TASK_FILE}.
       </instructions>

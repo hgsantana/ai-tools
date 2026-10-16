@@ -12,7 +12,7 @@ argument-hint: "[story or feature description, or slug of a team plan to resume]
 
 <skill name="team-ai-tools">
   <overview>
-    Plan and deliver one story with a team of specialist subagents. The session acts as the Product Owner (PO), reviewing repository documentation without reading application code, asking batched questions with recommended options, resolving the implementer, and writing the story to disk. Once approved, the session dispatches an Architect subagent with clean context to perform technical code intake, draft the target architecture with Mermaid diagrams, decompose work into atomic tasks with assigned Specialists, and record architectural decisions. After plan approval, for each task the session dispatches the designated Specialist with clean context to write the task file detailing changes and required test behaviors, dispatches the resolved Implementer with clean context to write code, author and execute tests, run linters, and record a factual report, and re-engages the Specialist to validate the delivery against the uncommitted git diff and commit on approval. Upon completing all tasks, the session removes the plan directory, commits the cleanup, pushes the team branch, and creates a pull request.
+    Plan and deliver one story with a team of specialist subagents. The session acts as the Product Owner (PO), reviewing repository documentation without reading application code, asking batched questions with recommended options, resolving the implementer, and writing the story to disk. Once approved, the session dispatches an Architect subagent with clean context to perform technical code intake, draft the target architecture with Mermaid diagrams, decompose work into atomic tasks with assigned Specialists, and record architectural decisions. After plan approval, for each task the session dispatches the designated Specialist with clean context to write the task file detailing changes and required test behaviors, dispatches a fresh resolved Implementer per delivery attempt to write code, author and execute tests, run linters, and record a factual report, and re-engages the Specialist to validate the delivery against the uncommitted git diff and commit on approval. Upon completing all tasks, the session removes the plan directory, commits the cleanup, pushes the team branch, and creates a pull request.
   </overview>
 
   <boundaries>
@@ -25,7 +25,7 @@ argument-hint: "[story or feature description, or slug of a team plan to resume]
       - `User`: Person interacting with the session.
       - `PO` (Product Owner): The interactive session itself. Focuses exclusively on repository documentation and business domain requirements without reading application code.
       - `Architect`: Dispatched specialist subagent who designs architecture, creates the general plan `0-{SLUG}.md`, assigns specialists, and specifies architectural decisions.
-      - `Implementer`: Subagent or session executor resolved per `<rule id="implementer-types">` to write code and tests for a task.
+      - `Implementer`: Clean-context agent of the story implementer type, resolved per `<rule id="implementer-selection">`, that writes code and tests for one delivery attempt per `<rule id="implementer-lifecycle">`.
     </rule>
 
     <rule id="po-role">The session embodies the Product Owner role exclusively:
@@ -50,11 +50,11 @@ argument-hint: "[story or feature description, or slug of a team plan to resume]
 
     <rule id="architect-question-rounds">If the Architect encounters major discrepancies between the user story and repository code, it sends batched questions with recommended options to the PO session. The PO answers directly, up to a maximum of 3 rounds. If critical ambiguities remain after 3 rounds, the PO asks the user whether to continue for another 3 rounds. For critical decisions involving financial costs, irreversible data loss, or destructive operations, the PO relays the question directly to the user and awaits explicit confirmation before proceeding.</rule>
 
-    <rule id="clean-context-lifecycle">Specialist and Implementer instances are spawned with clean, zeroed context for each task. Both remain active exclusively while their task is underway (for queries, execution, and validation). Once a task is committed or finalized, both instances are terminated. No context carries over across distinct tasks.</rule>
+    <rule id="clean-context-lifecycle">Specialist instances are spawned with clean, zeroed context for each task, remain active exclusively while their task is underway (for queries and validation), and are terminated once it is committed or finalized. Every Implementer follows `<rule id="implementer-lifecycle">`: it ends on its return, and rework or a retry goes to a fresh one. No context carries over across distinct tasks.</rule>
 
     <rule id="implementer-rules">The Implementer executes under strict agnostic constraints:
       - Delivers strictly the scope defined in the task file, referencing the user story and general plan.
-      - If blocked or if planned instructions contradict codebase realities, stops immediately and notifies the session (which consults the specialist).
+      - If blocked or if planned instructions contradict codebase realities, stops immediately and returns one line stating it; the session consults the live specialist and spawns a fresh implementer.
       - Authors tests covering specified behaviors (unit tests, smoke tests, schema checks, linters per task nature) and runs test suites, fixing defects until all checks pass.
       - Appends a concise, factual implementation report to the task file covering changed files, test/lint outcomes, obstacles, and resolved specialist decisions (no self-evaluation).
       - Updates task status to `validating` in `0-{SLUG}.md`.
@@ -63,10 +63,10 @@ argument-hint: "[story or feature description, or slug of a team plan to resume]
 
     <rule id="retry-and-blocked">Retry and escalation protocol:
       - The validator records review observations and verdict at the bottom of the task file.
-      - On rework, the validator updates task status to `retry<1..3>` in `0-{SLUG}.md` and appends rework notes. The session dispatches the live implementer with rework instructions.
+      - On rework, the validator updates task status to `retry<1..3>` in `0-{SLUG}.md` and appends rework notes. The session spawns a fresh implementer with rework instructions.
       - A task allows up to 3 attempts. If the third attempt fails, the validator sets status to `blocked` in `0-{SLUG}.md`.
       - On blocked status, the session sends an atomic chat message linking the task report.
-      - After sending the announcement, the session prompts the user via `<user_interaction>` asking whether to provide extra instructions for 3 additional retries or abort.
+      - After sending the announcement, the session prompts the user via `<user_interaction>` asking whether to provide extra instructions for 3 additional retries, delivered by a fresh implementer, or abort.
     </rule>
 
     <rule id="finalization-and-pr">Upon completion of all tasks:
@@ -151,11 +151,11 @@ argument-hint: "[story or feature description, or slug of a team plan to resume]
     </step>
 
     <step id="18" name="dispatch-implementer">
-      Update task status to `working` in `0-{SLUG}.md`. Resolve the implementer type recorded in `story-{SLUG}.md` per `<rule id="implementer-selection">`. Spawn `<template role="implementer">` with clean zeroed context, {ACTION} = execute-task, passing {SLUG}, {TASK_NUM}, {STORY_FILE}, {PLAN_FILE}, {TASK_FILE}, and empty {REWORK_NOTES}.
+      On the first attempt, update task status to `working` in `0-{SLUG}.md` and set {ACTION} = execute-task with empty {REWORK_NOTES}. Resolve the implementer type recorded in `story-{SLUG}.md` per `<rule id="implementer-selection">`. Spawn `<template role="implementer">` as one fresh agent with clean zeroed context, passing {ACTION}, {SLUG}, {TASK_NUM}, {STORY_FILE}, {PLAN_FILE}, {TASK_FILE}, and {REWORK_NOTES}. It ends on its return per `<rule id="implementer-lifecycle">`.
     </step>
 
     <step id="19" name="implementer-execution-wait">
-      Implementer executes per `<rule id="implementer-rules">`: changes, tests and linters, factual report appended to {TASK_FILE}, task status `validating` in `0-{SLUG}.md`, and outcome with {TASK_FILE} link. If blocked, implementer notifies session, which consults the live specialist and relays guidance back.
+      Implementer executes per `<rule id="implementer-rules">`: changes, tests and linters, factual report appended to {TASK_FILE}, task status `validating` in `0-{SLUG}.md`, and outcome with {TASK_FILE} link. If the implementer stops on a blocker, the session relays its line to the live specialist, which records guidance in {TASK_FILE}, then repeats `<step id="18">` with a fresh implementer and the same {ACTION} and {REWORK_NOTES}.
     </step>
 
     <step id="20" name="dispatch-validator">
@@ -164,9 +164,9 @@ argument-hint: "[story or feature description, or slug of a team plan to resume]
 
     <step id="21" name="validation-and-verdict">
       Specialist compares implementation report against uncommitted `git diff`, explicitly verifying that tests were written and genuinely validate defined behaviors (unit tests, smoke tests, validation scripts, or pipeline checks per task type):
-      1. If approved: Specialist confirms test presence and rigor, sets task status to `done` in `0-{SLUG}.md`, stages files, commits locally with Conventional Commit message, and returns approved outcome. Session terminates specialist and implementer per `<rule id="clean-context-lifecycle">`, and advances to the next task (`<step id="15">`).
-      2. If rework needed (missing tests, superficial verification, defects, or domain deviation): Specialist sets status to `retry<1..3>` in `0-{SLUG}.md`, appends rework items to {TASK_FILE}, and returns rework outcome. Session dispatches the live implementer with {ACTION} = rework-task and {REWORK_NOTES} (looping back to `<step id="19">` up to 3 attempts).
-      3. If 3 attempts exhausted: Specialist sets status to `blocked` in `0-{SLUG}.md`. Session sends an atomic chat message linking {TASK_FILE}, followed by an interactive prompt via `<user_interaction>` asking the user for extra instructions (+3 retries) or abort per `<rule id="retry-and-blocked">`.
+      1. If approved: Specialist confirms test presence and rigor, sets task status to `done` in `0-{SLUG}.md`, stages files, commits locally with Conventional Commit message, and returns approved outcome. Session terminates the specialist per `<rule id="clean-context-lifecycle">`, and advances to the next task (`<step id="15">`).
+      2. If rework needed (missing tests, superficial verification, defects, or domain deviation): Specialist sets status to `retry<1..3>` in `0-{SLUG}.md`, appends rework items to {TASK_FILE}, and returns rework outcome. Session repeats `<step id="18">` with a fresh implementer, {ACTION} = rework-task, and {REWORK_NOTES} pointing at the rework items (up to 3 attempts).
+      3. If 3 attempts exhausted: Specialist sets status to `blocked` in `0-{SLUG}.md`. Session sends an atomic chat message linking {TASK_FILE}, followed by an interactive prompt via `<user_interaction>` asking the user for extra instructions (+3 retries) or abort per `<rule id="retry-and-blocked">`. On extra instructions, repeat `<step id="18">` with a fresh implementer, {ACTION} = rework-task, and {REWORK_NOTES} set to them.
     </step>
 
     <step id="22" name="plan-cleanup">
@@ -268,16 +268,16 @@ argument-hint: "[story or feature description, or slug of a team plan to resume]
       <instructions>
         This payload is the brief; do not read sibling skill files.
         When {ACTION} is execute-task:
-        1. Read {STORY_FILE}, {PLAN_FILE}, and {TASK_FILE} for task {TASK_NUM} of plan {SLUG}.
-        2. Implement changes strictly within the scope defined in {TASK_FILE}. If blocked or if planned instructions contradict codebase realities, stop immediately and notify the session.
+        1. Read {STORY_FILE}, {PLAN_FILE}, and {TASK_FILE} for task {TASK_NUM} of plan {SLUG}. Take any uncommitted changes already in the worktree as your starting point.
+        2. Implement changes strictly within the scope defined in {TASK_FILE}. If blocked or if planned instructions contradict codebase realities, stop immediately and return one line stating it.
         3. Author tests covering defined behaviors (unit tests for code; smoke tests, schema validations, or linters for non-code files per task specification) and execute test suites and static analysis linters. Fix defects until all tests and checks pass.
         4. Append a concise, factual implementation report to {TASK_FILE} detailing changed files, tests written and executed, test/lint outcomes, blockers encountered, and specialist decisions applied. Do not include self-evaluations.
         5. Update task {TASK_NUM} status to `validating` in {PLAN_FILE}.
         6. Do not commit changes locally. Return concise outcome with link to {TASK_FILE}.
 
         When {ACTION} is rework-task:
-        1. Read {REWORK_NOTES} and feedback appended to {TASK_FILE}.
-        2. Apply requested fixes in place to affected files, tests, or validation scripts.
+        1. Read {STORY_FILE}, {PLAN_FILE}, {TASK_FILE} with its reports and feedback appended to it, and {REWORK_NOTES}. The uncommitted changes in the worktree are the previous attempt; rework them in place.
+        2. Apply requested fixes to affected files, tests, or validation scripts. If blocked, stop immediately and return one line stating it.
         3. Re-run tests and linters, fixing any new failures.
         4. Append rework summary to {TASK_FILE} and ensure task {TASK_NUM} status remains `validating` in {PLAN_FILE}.
         5. Do not commit changes locally. Return concise outcome with link to {TASK_FILE}.

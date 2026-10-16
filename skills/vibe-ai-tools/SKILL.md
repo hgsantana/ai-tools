@@ -12,7 +12,7 @@ argument-hint: "[story or feature description to plan and implement]"
 
 <skill name="vibe-ai-tools">
   <overview>
-    Refine one story with the user, then deliver it unattended. The session acts as Product Owner (PO) during story refinement, clarifying scope, business rules, and acceptance criteria with the user and resolving the implementer. From story approval onward the session is an autonomous orchestrator that owns every technical decision, strictly prioritizing zero-cost and easily reversible choices. Planning, execution, and validation belong to subagents, each dispatched by the session with clean context. One Planner, inheriting session model and effort, inspects the code in scope and writes the general plan: the overall architecture and the separation into atomic, independently committable tasks, with enough direction for each task to be detailed later. The session checks that plan against the story and approves it itself, commits story and plan to a dedicated branch, and the Planner ends. For each task in order, the session dispatches one Task Planner to write the task file within the boundary the plan gave that task, then one Implementer of the story type to deliver code and tests, then one Evaluator, inheriting session model and effort, to judge the story, plan, and task file against the uncommitted git diff and the implementation report and commit approved work. Evaluator and Implementer end with their task and fresh ones are born for the next. Once every task is done, the session removes the plan directory, pushes the branch, and creates a pull request.
+    Refine one story with the user, then deliver it unattended. The session acts as Product Owner (PO) during story refinement, clarifying scope, business rules, and acceptance criteria with the user and resolving the implementer. From story approval onward the session is an autonomous orchestrator that owns every technical decision, strictly prioritizing zero-cost and easily reversible choices. Planning, execution, and validation belong to subagents, each dispatched by the session with clean context. One Planner, inheriting session model and effort, inspects the code in scope and writes the general plan: the overall architecture and the separation into atomic, independently committable tasks, with enough direction for each task to be detailed later. The session checks that plan against the story and approves it itself, commits story and plan to a dedicated branch, and the Planner ends. For each task in order, the session dispatches one Task Planner to write the task file within the boundary the plan gave that task, then one Implementer of the story type to deliver code and tests, then one Evaluator, inheriting session model and effort, to judge the story, plan, and task file against the uncommitted git diff and the implementation report and commit approved work. Each Implementer lives for one delivery attempt, so rework goes to a fresh one; the Evaluator ends with its task. Once every task is done, the session removes the plan directory, pushes the branch, and creates a pull request.
   </overview>
 
   <boundaries>
@@ -24,7 +24,7 @@ argument-hint: "[story or feature description to plan and implement]"
       - `PO` (Product Owner): The interactive session during story refinement. Focuses exclusively on repository documentation and business domain requirements without reading application code.
       - `Planner`: Clean-context subagent inheriting session model and effort; full-stack architect that inspects the code and writes the general plan.
       - `Task Planner`: Clean-context subagent inheriting session model and effort; details one task inside the boundary the plan gave it.
-      - `Implementer`: Clean-context agent of the story implementer type, resolved per `<rule id="implementer-types">`; lives for one task.
+      - `Implementer`: Clean-context agent of the story implementer type, resolved per `<rule id="implementer-selection">`; lives for one delivery attempt per `<rule id="implementer-lifecycle">`.
       - `Evaluator`: Clean-context subagent inheriting session model and effort; judges one task's delivery and commits it when approved.
     </rule>
 
@@ -45,7 +45,7 @@ argument-hint: "[story or feature description to plan and implement]"
 
     <rule id="transient-docs">Story, plan, task files, and decisions belong under `docs/vibe-ai-tools/{SLUG}/`. Raw tool outputs, binary caches, and temporary data go to `${TMPDIR:-/tmp}/ai-tools`. In-repo plan files are committed along the workflow.</rule>
 
-    <rule id="clean-context-lifecycle">Every subagent is spawned with clean, zeroed context; continuity between them lives only in the plan directory and git history. The Planner ends once the plan is approved and committed. A Task Planner ends once it returns its task file. The Implementer and the Evaluator of a task stay alive through its rework and its blocked recovery and are terminated once the task is approved or aborted; the next task gets fresh ones.</rule>
+    <rule id="clean-context-lifecycle">Every subagent is spawned with clean, zeroed context; continuity between them lives only in the plan directory and git history. The Planner ends once the plan is approved and committed. A Task Planner ends once it returns its task file. Every Implementer follows `<rule id="implementer-lifecycle">`: it ends on its return, and rework or a retry goes to a fresh one. The Evaluator of a task stays alive through its rework and its blocked recovery and is terminated once the task is approved or aborted; the next task gets a fresh one.</rule>
 
     <rule id="retry-and-blocked">A task allows up to 3 implementation attempts: the first delivery plus 2 reworks. When the third attempt fails validation, the Evaluator sets the task status to `blocked`, leaves that task's uncommitted changes in place for inspection, commits only the plan and task files, and returns `<signal code="TASK_BLOCKED">`. The session first attempts one autonomous recovery per task: it reads the blocked task file, writes extra instructions per `<rule id="autonomous-decision-policy">`, and grants 3 additional attempts. If the task blocks again or recovery is impossible, the session sends an atomic chat message linking the task file, then prompts the user via `<user_interaction>` to provide extra instructions for 3 additional attempts or abort.</rule>
 
@@ -103,7 +103,7 @@ argument-hint: "[story or feature description to plan and implement]"
     </step>
 
     <step id="10" name="resolve-task">
-      Read the task status table from the plan. When every task is `done`, proceed to `<step id="16">`. Otherwise take the first task whose status is not `done` as {TASK_NUM} with its {TASK_SLUG}, set {TASK_FILE} = `docs/vibe-ai-tools/{SLUG}/{TASK_NUM}-{TASK_SLUG}.md`, {ATTEMPT} = 1, and empty {FEEDBACK}.
+      Read the task status table from the plan. When every task is `done`, proceed to `<step id="16">`. Otherwise take the first task whose status is not `done` as {TASK_NUM} with its {TASK_SLUG}, set {TASK_FILE} = `docs/vibe-ai-tools/{SLUG}/{TASK_NUM}-{TASK_SLUG}.md`, {ATTEMPT} = 1, and empty {FEEDBACK} and {REWORK_NOTES}.
     </step>
 
     <step id="11" name="dispatch-task-planner">
@@ -111,24 +111,24 @@ argument-hint: "[story or feature description to plan and implement]"
     </step>
 
     <step id="12" name="dispatch-implementer">
-      Announce the spawn in one chat line. Spawn `<template role="implementer">` as one fresh agent of type {IMPLEMENTER}, resolved per `<rule id="implementer-selection">`, with clean zeroed context and {ACTION} = execute-task, passing {TASK_NUM}, {STORY_FILE}, {PLAN_FILE}, {TASK_FILE}, and empty {REWORK_NOTES}. When that type cannot be dispatched from this environment, report it to the user in one line and conclude, leaving the branch untouched. Branch on its return:
+      Announce the spawn in one chat line. Spawn `<template role="implementer">` as one fresh agent of type {IMPLEMENTER}, resolved per `<rule id="implementer-selection">`, with clean zeroed context and {ACTION} = execute-task, or rework-task when {REWORK_NOTES} is non-empty, passing {TASK_NUM}, {STORY_FILE}, {PLAN_FILE}, {TASK_FILE}, and {REWORK_NOTES}. When that type cannot be dispatched from this environment, report it to the user in one line and conclude, leaving the branch untouched. The Implementer ends on its return per `<rule id="implementer-lifecycle">`; branch on it:
       1. `<signal code="TASK_DELIVERED">`: proceed to `<step id="13">`.
-      2. `<signal code="TASK_STOPPED">`: spawn a fresh `<template role="task-planner">` with {ACTION} = revise-task and {FEEDBACK} set to the Implementer's line, terminate it on `<signal code="TASK_PLANNED">`, then send the live Implementer {ACTION} = execute-task again and repeat this branch.
+      2. `<signal code="TASK_STOPPED">`: spawn a fresh `<template role="task-planner">` with {ACTION} = revise-task and {FEEDBACK} set to the Implementer's line, terminate it on `<signal code="TASK_PLANNED">`, then repeat this step with a fresh Implementer and the same {REWORK_NOTES}.
     </step>
 
     <step id="13" name="dispatch-evaluator">
-      Announce the spawn in one chat line. Spawn `<template role="evaluator">` with clean zeroed context, inheriting session model and effort, passing {SLUG}, {TASK_NUM}, {ATTEMPT}, {STORY_FILE}, {PLAN_FILE}, {TASK_FILE}, and {FEEDBACK}.
+      When the Evaluator of this task is alive, send it a new validation request with the current {ATTEMPT} and {FEEDBACK}. Otherwise announce the spawn in one chat line and spawn `<template role="evaluator">` with clean zeroed context, inheriting session model and effort, passing {SLUG}, {TASK_NUM}, {ATTEMPT}, {STORY_FILE}, {PLAN_FILE}, {TASK_FILE}, and {FEEDBACK}.
     </step>
 
     <step id="14" name="evaluator-verdict">
       Wait for the Evaluator signal and branch per `<rule id="session-role">` without reading or validating anything:
-      1. `<signal code="TASK_APPROVED">`: terminate the Evaluator and the Implementer per `<rule id="clean-context-lifecycle">` and return to `<step id="10">`.
-      2. `<signal code="TASK_REWORK">`: increment {ATTEMPT}. Send the live Implementer {ACTION} = rework-task with {REWORK_NOTES} pointing at the rework items in {TASK_FILE}. On `<signal code="TASK_DELIVERED">`, send the live Evaluator a new validation request with the new {ATTEMPT} and repeat this step.
+      1. `<signal code="TASK_APPROVED">`: terminate the Evaluator per `<rule id="clean-context-lifecycle">` and return to `<step id="10">`.
+      2. `<signal code="TASK_REWORK">`: increment {ATTEMPT}, set {REWORK_NOTES} pointing at the rework items in {TASK_FILE}, and return to `<step id="12">`.
       3. `<signal code="TASK_BLOCKED">`: proceed to `<step id="15">`.
     </step>
 
     <step id="15" name="blocked-recovery">
-      Recover or escalate per `<rule id="retry-and-blocked">`. With extra instructions, whether the session's own or the user's, set {FEEDBACK} to them and {ATTEMPT} = 1, send the live Implementer {ACTION} = rework-task with {REWORK_NOTES} = {FEEDBACK}, and on `<signal code="TASK_DELIVERED">` send the live Evaluator a new validation request carrying {FEEDBACK}; continue at `<step id="14">`. On abort, terminate both, leave branch `vibe/{SLUG}` and the plan directory in place for inspection, and report the blocked task in one line.
+      Recover or escalate per `<rule id="retry-and-blocked">`. With extra instructions, whether the session's own or the user's, set {FEEDBACK} to them, {ATTEMPT} = 1, and {REWORK_NOTES} = {FEEDBACK}, and return to `<step id="12">`. On abort, terminate the Evaluator, leave branch `vibe/{SLUG}` and the plan directory in place for inspection, and report the blocked task in one line.
     </step>
 
     <step id="16" name="plan-cleanup">
@@ -216,7 +216,7 @@ argument-hint: "[story or feature description to plan and implement]"
       <instructions>
         This payload is the brief; do not read sibling skill files. The session that dispatched you is your only counterpart.
         When {ACTION} is execute-task:
-        1. Read {STORY_FILE}, {PLAN_FILE}, and {TASK_FILE} for task {TASK_NUM}.
+        1. Read {STORY_FILE}, {PLAN_FILE}, and {TASK_FILE} for task {TASK_NUM}. Take any uncommitted changes already in the worktree as your starting point.
         2. Implement changes strictly within the scope defined in {TASK_FILE}. If blocked or if planned instructions contradict codebase realities, stop immediately and return one line stating it, ending with `<signal code="TASK_STOPPED">`.
         3. Author tests covering the defined behaviors (unit tests for code; smoke tests, schema validations, or linters for non-code files) and run test suites and linters. Fix defects until all checks pass.
         4. Append a concise, factual implementation report to {TASK_FILE}: changed files, tests written and executed, test and lint outcomes, and blockers. No self-evaluation.
@@ -224,8 +224,8 @@ argument-hint: "[story or feature description to plan and implement]"
         6. Do not commit. Return one line with {TASK_FILE} ending with `<signal code="TASK_DELIVERED">`.
 
         When {ACTION} is rework-task:
-        1. Read {REWORK_NOTES} and the feedback appended to {TASK_FILE}.
-        2. Apply the requested fixes in place, re-run tests and linters, and fix new failures.
+        1. Read {STORY_FILE}, {PLAN_FILE}, {TASK_FILE} with its reports and the feedback appended to it, and {REWORK_NOTES}. The uncommitted changes in the worktree are the previous attempt; rework them in place.
+        2. Apply the requested fixes, re-run tests and linters, and fix new failures. If blocked, return one line stating it, ending with `<signal code="TASK_STOPPED">`.
         3. Append a rework summary to {TASK_FILE} and set task {TASK_NUM} status to `validating` in {PLAN_FILE}.
         4. Do not commit. Return one line with {TASK_FILE} ending with `<signal code="TASK_DELIVERED">`.
       </instructions>

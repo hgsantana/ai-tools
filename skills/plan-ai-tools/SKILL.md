@@ -13,7 +13,7 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
 
 <skill name="plan-ai-tools">
   <overview>
-    Formulate a business user story, plan it, and deliver it. The session is Product Owner (PO) and orchestrator: it reviews repository documentation without reading application code, asks batched questions with recommended options, resolves the implementer, writes the story, and from then on only dispatches subagents and branches on their returns. Planning, execution, and validation belong to subagents, each dispatched by the session with clean context. One Planner, inheriting session model and effort, inspects the code in scope and writes the general plan: the overall architecture and the separation into atomic, independently committable tasks, with enough direction for each task to be detailed later. After the approved story and plan are committed to a dedicated plan branch, the Planner ends and the session offers implementation. For each task in order, the session dispatches one Task Planner to write the task file within the boundary the plan gave that task, then one Implementer of the story type to deliver code and tests, then one Evaluator, inheriting session model and effort, to judge the story, plan, and task file against the uncommitted git diff and the implementation report and commit approved work. Evaluator and Implementer end with their task and fresh ones are born for the next. When a task exhausts its attempts the session asks the user for extra instructions or abort. Once every task is done, the session removes the plan directory, pushes the plan branch, and creates a pull request. Invoked with the slug of an existing plan, the session skips planning and goes straight to orchestration.
+    Formulate a business user story, plan it, and deliver it. The session is Product Owner (PO) and orchestrator: it reviews repository documentation without reading application code, asks batched questions with recommended options, resolves the implementer, writes the story, and from then on only dispatches subagents and branches on their returns. Planning, execution, and validation belong to subagents, each dispatched by the session with clean context. One Planner, inheriting session model and effort, inspects the code in scope and writes the general plan: the overall architecture and the separation into atomic, independently committable tasks, with enough direction for each task to be detailed later. After the approved story and plan are committed to a dedicated plan branch, the Planner ends and the session offers implementation. For each task in order, the session dispatches one Task Planner to write the task file within the boundary the plan gave that task, then one Implementer of the story type to deliver code and tests, then one Evaluator, inheriting session model and effort, to judge the story, plan, and task file against the uncommitted git diff and the implementation report and commit approved work. Each Implementer lives for one delivery attempt, so rework goes to a fresh one; the Evaluator ends with its task. When a task exhausts its attempts the session asks the user for extra instructions or abort. Once every task is done, the session removes the plan directory, pushes the plan branch, and creates a pull request. Invoked with the slug of an existing plan, the session skips planning and goes straight to orchestration.
   </overview>
 
   <boundaries>
@@ -25,7 +25,7 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
       - `PO` (Product Owner): The interactive session itself. Focuses exclusively on repository documentation and business domain requirements without reading application code.
       - `Planner`: Clean-context subagent inheriting session model and effort; full-stack architect that inspects the code and writes the general plan.
       - `Task Planner`: Clean-context subagent inheriting session model and effort; details one task inside the boundary the plan gave it.
-      - `Implementer`: Clean-context agent of the story implementer type, resolved per `<rule id="implementer-types">`; lives for one task.
+      - `Implementer`: Clean-context agent of the story implementer type, resolved per `<rule id="implementer-selection">`; lives for one delivery attempt per `<rule id="implementer-lifecycle">`.
       - `Evaluator`: Clean-context subagent inheriting session model and effort; judges one task's delivery and commits it when approved.
     </rule>
 
@@ -40,7 +40,7 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
 
     <rule id="planner-question-rounds">If the Planner finds major discrepancies between the story and repository code, or a Task Planner finds that its task cannot be delivered inside the boundary the plan gave it, it sends batched questions with recommended options to the PO session, up to 3 rounds. The PO answers directly; decisions involving financial costs, irreversible data loss, or destructive operations are relayed to the user and await explicit confirmation. Settled answers are recorded in the "Decisions" section of the plan or of the task file.</rule>
 
-    <rule id="clean-context-lifecycle">Every subagent is spawned with clean, zeroed context; continuity between them lives only in the plan directory and git history. The Planner ends once the plan is approved and committed. A Task Planner ends once it returns its task file. The Implementer and the Evaluator of a task stay alive through its rework and its blocked escalation and are terminated once the task is approved or aborted; the next task gets fresh ones.</rule>
+    <rule id="clean-context-lifecycle">Every subagent is spawned with clean, zeroed context; continuity between them lives only in the plan directory and git history. The Planner ends once the plan is approved and committed. A Task Planner ends once it returns its task file. Every Implementer follows `<rule id="implementer-lifecycle">`: it ends on its return, and rework or a retry goes to a fresh one. The Evaluator of a task stays alive through its rework and its blocked escalation and is terminated once the task is approved or aborted; the next task gets a fresh one.</rule>
 
     <rule id="retry-and-blocked">A task allows up to 3 implementation attempts: the first delivery plus 2 reworks. When the third attempt fails validation, the Evaluator sets the task status to `blocked`, leaves that task's uncommitted changes in place for inspection, commits only the plan and task files, and returns `<signal code="TASK_BLOCKED">`. The session sends an atomic chat message linking the task file, then prompts the user via `<user_interaction>` to provide extra instructions for 3 additional attempts or abort.</rule>
 
@@ -106,11 +106,11 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
     </step>
 
     <step id="12" name="resolve-task">
-      Read the {IMPLEMENTER} type from the story and the task status table from the plan, per `<rule id="session-role">`. Take the first task whose status is not `done` as {TASK_NUM} with its {TASK_SLUG}, set {TASK_FILE} = `docs/plan-ai-tools/{SLUG}/{TASK_NUM}-{TASK_SLUG}.md`, {ATTEMPT} = 1, and empty {FEEDBACK}:
+      Read the {IMPLEMENTER} type from the story and the task status table from the plan, per `<rule id="session-role">`. Take the first task whose status is not `done` as {TASK_NUM} with its {TASK_SLUG}, set {TASK_FILE} = `docs/plan-ai-tools/{SLUG}/{TASK_NUM}-{TASK_SLUG}.md`, {ATTEMPT} = 1, and empty {FEEDBACK} and {REWORK_NOTES}:
       1. Every task `done`: proceed to `<step id="18">`.
       2. Status blank: proceed to `<step id="13">`.
       3. Status `blocked`: proceed to `<step id="17">`.
-      4. Any other status, left by an interrupted run: the task file exists; proceed to `<step id="14">`, where the fresh Implementer takes the uncommitted changes as its starting point.
+      4. Any other status, left by an interrupted run: the task file exists; proceed to `<step id="14">`, where the fresh Implementer takes the uncommitted changes as its starting point per `<rule id="implementer-lifecycle">`.
     </step>
 
     <step id="13" name="dispatch-task-planner">
@@ -118,24 +118,24 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
     </step>
 
     <step id="14" name="dispatch-implementer">
-      Announce the spawn in one chat line. Spawn `<template role="implementer">` as one fresh agent of type {IMPLEMENTER}, resolved per `<rule id="implementer-selection">`, with clean zeroed context and {ACTION} = execute-task, passing {TASK_NUM}, {STORY_FILE}, {PLAN_FILE}, {TASK_FILE}, and empty {REWORK_NOTES}. When that type cannot be dispatched from this environment, report it to the user in one line and conclude, leaving the plan branch untouched. Branch on its return:
+      Announce the spawn in one chat line. Spawn `<template role="implementer">` as one fresh agent of type {IMPLEMENTER}, resolved per `<rule id="implementer-selection">`, with clean zeroed context and {ACTION} = execute-task, or rework-task when {REWORK_NOTES} is non-empty, passing {TASK_NUM}, {STORY_FILE}, {PLAN_FILE}, {TASK_FILE}, and {REWORK_NOTES}. When that type cannot be dispatched from this environment, report it to the user in one line and conclude, leaving the plan branch untouched. The Implementer ends on its return per `<rule id="implementer-lifecycle">`; branch on it:
       1. `<signal code="TASK_DELIVERED">`: proceed to `<step id="15">`.
-      2. `<signal code="TASK_STOPPED">`: spawn a fresh `<template role="task-planner">` with {ACTION} = revise-task and {FEEDBACK} set to the Implementer's line, terminate it on `<signal code="TASK_PLANNED">`, then send the live Implementer {ACTION} = execute-task again and repeat this branch.
+      2. `<signal code="TASK_STOPPED">`: spawn a fresh `<template role="task-planner">` with {ACTION} = revise-task and {FEEDBACK} set to the Implementer's line, terminate it on `<signal code="TASK_PLANNED">`, then repeat this step with a fresh Implementer and the same {REWORK_NOTES}.
     </step>
 
     <step id="15" name="dispatch-evaluator">
-      Announce the spawn in one chat line. Spawn `<template role="evaluator">` with clean zeroed context, inheriting session model and effort, passing {SLUG}, {TASK_NUM}, {ATTEMPT}, {STORY_FILE}, {PLAN_FILE}, {TASK_FILE}, and {FEEDBACK}.
+      When the Evaluator of this task is alive, send it a new validation request with the current {ATTEMPT} and {FEEDBACK}. Otherwise announce the spawn in one chat line and spawn `<template role="evaluator">` with clean zeroed context, inheriting session model and effort, passing {SLUG}, {TASK_NUM}, {ATTEMPT}, {STORY_FILE}, {PLAN_FILE}, {TASK_FILE}, and {FEEDBACK}.
     </step>
 
     <step id="16" name="evaluator-verdict">
       Wait for the Evaluator signal and branch per `<rule id="session-role">` without reading or validating anything:
-      1. `<signal code="TASK_APPROVED">`: terminate the Evaluator and the Implementer per `<rule id="clean-context-lifecycle">` and return to `<step id="12">`.
-      2. `<signal code="TASK_REWORK">`: increment {ATTEMPT}. Send the live Implementer {ACTION} = rework-task with {REWORK_NOTES} pointing at the rework items in {TASK_FILE}. On `<signal code="TASK_DELIVERED">`, send the live Evaluator a new validation request with the new {ATTEMPT} and repeat this step.
+      1. `<signal code="TASK_APPROVED">`: terminate the Evaluator per `<rule id="clean-context-lifecycle">` and return to `<step id="12">`.
+      2. `<signal code="TASK_REWORK">`: increment {ATTEMPT}, set {REWORK_NOTES} pointing at the rework items in {TASK_FILE}, and return to `<step id="14">`.
       3. `<signal code="TASK_BLOCKED">`: proceed to `<step id="17">`.
     </step>
 
     <step id="17" name="blocked-escalation">
-      Escalate per `<rule id="retry-and-blocked">`. On extra instructions, set {FEEDBACK} to them and {ATTEMPT} = 1, send {ACTION} = rework-task with {REWORK_NOTES} = {FEEDBACK} to the live Implementer, or to a fresh one spawned per `<step id="14">` when none is alive, and on `<signal code="TASK_DELIVERED">` send the validation request to the live Evaluator, or spawn one per `<step id="15">`; continue at `<step id="16">`. On abort, terminate both, leave branch `plan/{SLUG}` and the plan directory in place for inspection, and report the blocked task in one line.
+      Escalate per `<rule id="retry-and-blocked">`. On extra instructions, set {FEEDBACK} to them, {ATTEMPT} = 1, and {REWORK_NOTES} = {FEEDBACK}, and return to `<step id="14">`. On abort, terminate the Evaluator, leave branch `plan/{SLUG}` and the plan directory in place for inspection, and report the blocked task in one line.
     </step>
 
     <step id="18" name="plan-cleanup">
@@ -231,8 +231,8 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
         6. Do not commit. Return one line with {TASK_FILE} ending with `<signal code="TASK_DELIVERED">`.
 
         When {ACTION} is rework-task:
-        1. Read {REWORK_NOTES} and the feedback appended to {TASK_FILE}.
-        2. Apply the requested fixes in place, re-run tests and linters, and fix new failures.
+        1. Read {STORY_FILE}, {PLAN_FILE}, {TASK_FILE} with its reports and the feedback appended to it, and {REWORK_NOTES}. The uncommitted changes in the worktree are the previous attempt; rework them in place.
+        2. Apply the requested fixes, re-run tests and linters, and fix new failures. If blocked, return one line stating it, ending with `<signal code="TASK_STOPPED">`.
         3. Append a rework summary to {TASK_FILE} and set task {TASK_NUM} status to `validating` in {PLAN_FILE}.
         4. Do not commit. Return one line with {TASK_FILE} ending with `<signal code="TASK_DELIVERED">`.
       </instructions>
