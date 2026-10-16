@@ -1,8 +1,8 @@
 ---
 name: plan-ai-tools
 description: >
-  Plan and deliver one story. The session acts as PO to settle scope and the
-  implementer and write the story, and a clean-context Planner writes the
+  Plan and deliver one story. The session acts as PO to settle scope, resolve the
+  implementer, and write the story, and a clean-context Planner writes the
   general plan. On approval the session orchestrates each task: a Task Planner
   details it, a single-task Implementer delivers it, and a clean-context
   Evaluator judges the diff against story and plan and commits, ending with a
@@ -13,7 +13,7 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
 
 <skill name="plan-ai-tools">
   <overview>
-    Formulate a business user story, plan it, and deliver it. The session is Product Owner (PO) and orchestrator: it reviews repository documentation without reading application code, asks batched questions with recommended options, settles the implementer choice, writes the story, and from then on only dispatches subagents and branches on their returns. Planning, execution, and validation belong to subagents, each dispatched by the session with clean context. One Planner, inheriting session model and effort, inspects the code in scope and writes the general plan: the overall architecture and the separation into atomic, independently committable tasks, with enough direction for each task to be detailed later. After the approved story and plan are committed to a dedicated plan branch, the Planner ends and the session offers implementation. For each task in order, the session dispatches one Task Planner to write the task file within the boundary the plan gave that task, then one Implementer of the story type to deliver code and tests, then one Evaluator, inheriting session model and effort, to judge the story, plan, and task file against the uncommitted git diff and the implementation report and commit approved work. Evaluator and Implementer end with their task and fresh ones are born for the next. When a task exhausts its attempts the session asks the user for extra instructions or abort. Once every task is done, the session removes the plan directory, pushes the plan branch, and creates a pull request. Invoked with the slug of an existing plan, the session skips planning and goes straight to orchestration.
+    Formulate a business user story, plan it, and deliver it. The session is Product Owner (PO) and orchestrator: it reviews repository documentation without reading application code, asks batched questions with recommended options, resolves the implementer, writes the story, and from then on only dispatches subagents and branches on their returns. Planning, execution, and validation belong to subagents, each dispatched by the session with clean context. One Planner, inheriting session model and effort, inspects the code in scope and writes the general plan: the overall architecture and the separation into atomic, independently committable tasks, with enough direction for each task to be detailed later. After the approved story and plan are committed to a dedicated plan branch, the Planner ends and the session offers implementation. For each task in order, the session dispatches one Task Planner to write the task file within the boundary the plan gave that task, then one Implementer of the story type to deliver code and tests, then one Evaluator, inheriting session model and effort, to judge the story, plan, and task file against the uncommitted git diff and the implementation report and commit approved work. Evaluator and Implementer end with their task and fresh ones are born for the next. When a task exhausts its attempts the session asks the user for extra instructions or abort. Once every task is done, the session removes the plan directory, pushes the plan branch, and creates a pull request. Invoked with the slug of an existing plan, the session skips planning and goes straight to orchestration.
   </overview>
 
   <boundaries>
@@ -65,8 +65,8 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
       Derive kebab-case {SLUG} from the argument, or from the active branch `plan/{SLUG}` when no argument is given. When `docs/plan-ai-tools/{SLUG}/0-{SLUG}.md` and `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md` exist, the plan is already made: check out `plan/{SLUG}` and go straight to `<step id="12">`. Otherwise plan a new story from `<step id="2">`.
     </step>
 
-    <step id="2" name="implementer-inquiry">
-      Prompt the user via `<user_interaction>` to select the {IMPLEMENTER} type per `<rule id="implementer-selection">`.
+    <step id="2" name="resolve-implementer">
+      Set the {IMPLEMENTER} type per `<rule id="implementer-selection">`: `harness-default` unless the user's request names another.
     </step>
 
     <step id="3" name="po-doc-analysis">
@@ -78,7 +78,7 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
     </step>
 
     <step id="5" name="write-story">
-      Write the finalized user story to `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md`. Include business context, scope boundaries, acceptance criteria, documentation requirements, and the selected implementer type (as a type identifier, not a specific model).
+      Write the finalized user story to `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md`. Include business context, scope boundaries, acceptance criteria, documentation requirements, and the {IMPLEMENTER} type as recorded per `<rule id="implementer-selection">`.
     </step>
 
     <step id="6" name="story-approval">
@@ -118,7 +118,7 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
     </step>
 
     <step id="14" name="dispatch-implementer">
-      Announce the spawn in one chat line. Spawn `<template role="implementer">` as one fresh agent of type {IMPLEMENTER}, resolved per `<rule id="implementer-types">` through the harness subagent API or the matching tier skill CLI, with clean zeroed context and {ACTION} = execute-task, passing {TASK_NUM}, {STORY_FILE}, {PLAN_FILE}, {TASK_FILE}, and empty {REWORK_NOTES}. When that type cannot be dispatched from this environment, report it to the user in one line and conclude, leaving the plan branch untouched. Branch on its return:
+      Announce the spawn in one chat line. Spawn `<template role="implementer">` as one fresh agent of type {IMPLEMENTER}, resolved per `<rule id="implementer-selection">`, with clean zeroed context and {ACTION} = execute-task, passing {TASK_NUM}, {STORY_FILE}, {PLAN_FILE}, {TASK_FILE}, and empty {REWORK_NOTES}. When that type cannot be dispatched from this environment, report it to the user in one line and conclude, leaving the plan branch untouched. Branch on its return:
       1. `<signal code="TASK_DELIVERED">`: proceed to `<step id="15">`.
       2. `<signal code="TASK_STOPPED">`: spawn a fresh `<template role="task-planner">` with {ACTION} = revise-task and {FEEDBACK} set to the Implementer's line, terminate it on `<signal code="TASK_PLANNED">`, then send the live Implementer {ACTION} = execute-task again and repeat this branch.
     </step>

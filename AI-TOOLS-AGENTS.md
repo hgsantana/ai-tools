@@ -37,13 +37,13 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/.
   <implementers>
     If not using ai-tools skills, ignore these rules.
     <rule id="implementer-types">Standard implementer types resolved dynamically by the executing harness at runtime:
-      - `harness-default`: Default subagent worker of current harness (Antigravity = `Flash`; Claude = `Sonnet`; Copilot = `Gemini 3.8 Flash (Copilot)`) - recommended.
-      - `mid-level`: Mid-level tier of current harness skill (`agy-ai-tools`, `claude-ai-tools`, `copilot-ai-tools`).
+      - `harness-default`: Default subagent worker of current harness (Antigravity = `Flash`; Claude = `Sonnet`; Copilot = `Gemini 3.8 Flash (Copilot)`) - the default.
       - `session-subagent`: Subagent spawned with clean, zeroed context inheriting current session model and effort.
-      - `senior`: Senior tier of current harness skill (`agy-ai-tools`, `claude-ai-tools`, `copilot-ai-tools`).
-      - `junior`: Junior tier of current harness skill (`agy-ai-tools`, `claude-ai-tools`, `copilot-ai-tools`).
-      - `session`: The interactive session itself implements directly without spawning a subagent. Offered only by skills where it makes sense: those whose session implements, not those whose session only orchestrates.
+      - `session`: The interactive session itself implements directly without spawning a subagent. Valid only in skills whose session implements, not those whose session only orchestrates.
+      - `junior`: Junior tier of the specified harness (`agy-ai-tools`, `claude-ai-tools`, `copilot-ai-tools`).
+      - `mid-level`: Mid-level tier of the specified harness (`agy-ai-tools`, `claude-ai-tools`, `copilot-ai-tools`).
+      - `senior`: Senior tier of the specified harness (`agy-ai-tools`, `claude-ai-tools`, `copilot-ai-tools`).
     </rule>
-    <rule id="implementer-selection">A skill that dispatches implementers asks who implements new work before writing its story or campaign file: offer the types of `<rule id="implementer-types">` via `<user_interaction>`, in that order, `harness-default` first as recommended. The file records only the type name, never a model; whoever dispatches resolves it at dispatch time through the harness subagent API or the matching tier skill CLI.</rule>
+    <rule id="implementer-selection">A skill that dispatches implementers uses `harness-default` without asking, unless the user's request names another type of `<rule id="implementer-types">`. A tier is specified with harness `agy`, `claude`, or `copilot` ("claude junior" is `junior` of `claude-ai-tools`); without one it takes the current harness. Ask via `<user_interaction>` only when the requested implementer matches no type valid for the skill. The story or campaign file records the type, with its harness for a tier (`claude junior`), never a model. Whoever dispatches resolves it at dispatch time: a tier through its harness tier skill, only via that harness's CLI when it is not the current one; any other type through the harness subagent API.</rule>
   </implementers>
 </user_instructions>

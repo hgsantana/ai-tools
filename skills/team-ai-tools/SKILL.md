@@ -12,7 +12,7 @@ argument-hint: "[story or feature description, or slug of a team plan to resume]
 
 <skill name="team-ai-tools">
   <overview>
-    Plan and deliver one story with a team of specialist subagents. The session acts as the Product Owner (PO), reviewing repository documentation without reading application code, asking batched questions with recommended options, settling the implementer choice, and writing the story to disk. Once approved, the session dispatches an Architect subagent with clean context to perform technical code intake, draft the target architecture with Mermaid diagrams, decompose work into atomic tasks with assigned Specialists, and record architectural decisions. After plan approval, for each task the session dispatches the designated Specialist with clean context to write the task file detailing changes and required test behaviors, dispatches the resolved Implementer with clean context to write code, author and execute tests, run linters, and record a factual report, and re-engages the Specialist to validate the delivery against the uncommitted git diff and commit on approval. Upon completing all tasks, the session removes the plan directory, commits the cleanup, pushes the team branch, and creates a pull request.
+    Plan and deliver one story with a team of specialist subagents. The session acts as the Product Owner (PO), reviewing repository documentation without reading application code, asking batched questions with recommended options, resolving the implementer, and writing the story to disk. Once approved, the session dispatches an Architect subagent with clean context to perform technical code intake, draft the target architecture with Mermaid diagrams, decompose work into atomic tasks with assigned Specialists, and record architectural decisions. After plan approval, for each task the session dispatches the designated Specialist with clean context to write the task file detailing changes and required test behaviors, dispatches the resolved Implementer with clean context to write code, author and execute tests, run linters, and record a factual report, and re-engages the Specialist to validate the delivery against the uncommitted git diff and commit on approval. Upon completing all tasks, the session removes the plan directory, commits the cleanup, pushes the team branch, and creates a pull request.
   </overview>
 
   <boundaries>
@@ -81,8 +81,8 @@ argument-hint: "[story or feature description, or slug of a team plan to resume]
       Derive kebab-case {SLUG} from the argument. If `docs/team-ai-tools/{SLUG}/0-{SLUG}.md` exists, or the active branch is `team/{SLUG}` holding that file, resume at `<step id="15">`. Otherwise start a new story at `<step id="2">`.
     </step>
 
-    <step id="2" name="implementer-inquiry">
-      Prompt the user via `<user_interaction>` to select the {IMPLEMENTER} type per `<rule id="implementer-selection">`.
+    <step id="2" name="resolve-implementer">
+      Set the {IMPLEMENTER} type per `<rule id="implementer-selection">`: `harness-default` unless the user's request names another.
     </step>
 
     <step id="3" name="po-doc-analysis">
@@ -94,7 +94,7 @@ argument-hint: "[story or feature description, or slug of a team plan to resume]
     </step>
 
     <step id="5" name="write-story">
-      Write the finalized user story to `docs/team-ai-tools/{SLUG}/story-{SLUG}.md`. Include business context, scope boundaries, acceptance criteria, documentation requirements, and the selected implementer type (as a type identifier, not a specific model).
+      Write the finalized user story to `docs/team-ai-tools/{SLUG}/story-{SLUG}.md`. Include business context, scope boundaries, acceptance criteria, documentation requirements, and the {IMPLEMENTER} type as recorded per `<rule id="implementer-selection">`.
     </step>
 
     <step id="6" name="story-approval">
@@ -151,7 +151,7 @@ argument-hint: "[story or feature description, or slug of a team plan to resume]
     </step>
 
     <step id="18" name="dispatch-implementer">
-      Update task status to `working` in `0-{SLUG}.md`. Resolve implementer type declared in `story-{SLUG}.md` per `<rule id="implementer-types">`. Spawn `<template role="implementer">` with clean zeroed context, {ACTION} = execute-task, passing {SLUG}, {TASK_NUM}, {STORY_FILE}, {PLAN_FILE}, {TASK_FILE}, and empty {REWORK_NOTES}.
+      Update task status to `working` in `0-{SLUG}.md`. Resolve the implementer type recorded in `story-{SLUG}.md` per `<rule id="implementer-selection">`. Spawn `<template role="implementer">` with clean zeroed context, {ACTION} = execute-task, passing {SLUG}, {TASK_NUM}, {STORY_FILE}, {PLAN_FILE}, {TASK_FILE}, and empty {REWORK_NOTES}.
     </step>
 
     <step id="19" name="implementer-execution-wait">

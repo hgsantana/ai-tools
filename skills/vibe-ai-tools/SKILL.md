@@ -12,7 +12,7 @@ argument-hint: "[story or feature description to plan and implement]"
 
 <skill name="vibe-ai-tools">
   <overview>
-    Refine one story with the user, then deliver it unattended. The session acts as Product Owner (PO) during story refinement, clarifying scope, business rules, and acceptance criteria with the user and settling the implementer choice. From story approval onward the session is an autonomous orchestrator that owns every technical decision, strictly prioritizing zero-cost and easily reversible choices. Planning, execution, and validation belong to subagents, each dispatched by the session with clean context. One Planner, inheriting session model and effort, inspects the code in scope and writes the general plan: the overall architecture and the separation into atomic, independently committable tasks, with enough direction for each task to be detailed later. The session checks that plan against the story and approves it itself, commits story and plan to a dedicated branch, and the Planner ends. For each task in order, the session dispatches one Task Planner to write the task file within the boundary the plan gave that task, then one Implementer of the story type to deliver code and tests, then one Evaluator, inheriting session model and effort, to judge the story, plan, and task file against the uncommitted git diff and the implementation report and commit approved work. Evaluator and Implementer end with their task and fresh ones are born for the next. Once every task is done, the session removes the plan directory, pushes the branch, and creates a pull request.
+    Refine one story with the user, then deliver it unattended. The session acts as Product Owner (PO) during story refinement, clarifying scope, business rules, and acceptance criteria with the user and resolving the implementer. From story approval onward the session is an autonomous orchestrator that owns every technical decision, strictly prioritizing zero-cost and easily reversible choices. Planning, execution, and validation belong to subagents, each dispatched by the session with clean context. One Planner, inheriting session model and effort, inspects the code in scope and writes the general plan: the overall architecture and the separation into atomic, independently committable tasks, with enough direction for each task to be detailed later. The session checks that plan against the story and approves it itself, commits story and plan to a dedicated branch, and the Planner ends. For each task in order, the session dispatches one Task Planner to write the task file within the boundary the plan gave that task, then one Implementer of the story type to deliver code and tests, then one Evaluator, inheriting session model and effort, to judge the story, plan, and task file against the uncommitted git diff and the implementation report and commit approved work. Evaluator and Implementer end with their task and fresh ones are born for the next. Once every task is done, the session removes the plan directory, pushes the branch, and creates a pull request.
   </overview>
 
   <boundaries>
@@ -66,8 +66,8 @@ argument-hint: "[story or feature description to plan and implement]"
   </return_protocol>
 
   <session_workflow>
-    <step id="1" name="implementer-inquiry">
-      Derive kebab-case {SLUG}. Prompt the user via `<user_interaction>` to select the {IMPLEMENTER} type per `<rule id="implementer-selection">`.
+    <step id="1" name="resolve-implementer">
+      Derive kebab-case {SLUG}. Set the {IMPLEMENTER} type per `<rule id="implementer-selection">`: `harness-default` unless the user's request names another.
     </step>
 
     <step id="2" name="po-doc-analysis">
@@ -79,7 +79,7 @@ argument-hint: "[story or feature description to plan and implement]"
     </step>
 
     <step id="4" name="write-story">
-      Write the finalized user story to `docs/vibe-ai-tools/{SLUG}/story-{SLUG}.md`. Include business context, scope boundaries, acceptance criteria, documentation requirements, and the selected implementer type (as a type identifier, not a specific model).
+      Write the finalized user story to `docs/vibe-ai-tools/{SLUG}/story-{SLUG}.md`. Include business context, scope boundaries, acceptance criteria, documentation requirements, and the {IMPLEMENTER} type as recorded per `<rule id="implementer-selection">`.
     </step>
 
     <step id="5" name="story-approval">
@@ -111,7 +111,7 @@ argument-hint: "[story or feature description to plan and implement]"
     </step>
 
     <step id="12" name="dispatch-implementer">
-      Announce the spawn in one chat line. Spawn `<template role="implementer">` as one fresh agent of type {IMPLEMENTER}, resolved per `<rule id="implementer-types">` through the harness subagent API or the matching tier skill CLI, with clean zeroed context and {ACTION} = execute-task, passing {TASK_NUM}, {STORY_FILE}, {PLAN_FILE}, {TASK_FILE}, and empty {REWORK_NOTES}. When that type cannot be dispatched from this environment, report it to the user in one line and conclude, leaving the branch untouched. Branch on its return:
+      Announce the spawn in one chat line. Spawn `<template role="implementer">` as one fresh agent of type {IMPLEMENTER}, resolved per `<rule id="implementer-selection">`, with clean zeroed context and {ACTION} = execute-task, passing {TASK_NUM}, {STORY_FILE}, {PLAN_FILE}, {TASK_FILE}, and empty {REWORK_NOTES}. When that type cannot be dispatched from this environment, report it to the user in one line and conclude, leaving the branch untouched. Branch on its return:
       1. `<signal code="TASK_DELIVERED">`: proceed to `<step id="13">`.
       2. `<signal code="TASK_STOPPED">`: spawn a fresh `<template role="task-planner">` with {ACTION} = revise-task and {FEEDBACK} set to the Implementer's line, terminate it on `<signal code="TASK_PLANNED">`, then send the live Implementer {ACTION} = execute-task again and repeat this branch.
     </step>

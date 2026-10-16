@@ -2,7 +2,7 @@
 name: campaign-ai-tools
 description: >
   Run an unattended multi-cycle campaign over a repository. The session settles
-  campaign scope and implementer with the user, commits the campaign file on a
+  campaign scope with the user, resolves the implementer, commits the campaign file on a
   dedicated branch, then dispatches one clean-context Planner per cycle to scan
   the repository, plan one work point, drive single-task implementers, and
   validate and commit their deliveries, until nothing is left to do. Use for
@@ -12,7 +12,7 @@ argument-hint: "[campaign goal to pursue across the repository]"
 
 <skill name="campaign-ai-tools">
   <overview>
-    Pursue one repository-wide goal through repeated autonomous cycles. The session settles the campaign scope and the implementer type interactively with the user, creates branch `campaign/{SLUG}` from the current local branch, and commits the campaign file. It then dispatches one Planner subagent per cycle with clean context, inheriting session model and effort. Each Planner acts as a full-stack architect: it scans the repository for one work point matching the campaign, writes and commits a plan, dispatches one clean-context Implementer per task, validates each delivery, and commits approved work. The session neither reads nor judges any delivery: it settles scope, dispatches cycles on the Planner's return signal, and makes the first and last commits of the campaign.
+    Pursue one repository-wide goal through repeated autonomous cycles. The session settles the campaign scope interactively with the user, resolves the implementer type, creates branch `campaign/{SLUG}` from the current local branch, and commits the campaign file. It then dispatches one Planner subagent per cycle with clean context, inheriting session model and effort. Each Planner acts as a full-stack architect: it scans the repository for one work point matching the campaign, writes and commits a plan, dispatches one clean-context Implementer per task, validates each delivery, and commits approved work. The session neither reads nor judges any delivery: it settles scope, dispatches cycles on the Planner's return signal, and makes the first and last commits of the campaign.
   </overview>
 
   <boundaries>
@@ -26,7 +26,7 @@ argument-hint: "[campaign goal to pursue across the repository]"
     </rule>
 
     <rule id="session-role">The session is orchestrator only:
-      - It interacts with the user exclusively to settle campaign scope and implementer type, and to report the final outcome.
+      - It interacts with the user exclusively to settle campaign scope and to report the final outcome.
       - It dispatches cycles and branches solely on the Planner return signal per `<return_protocol>`.
       - It never reads plans, task files, diffs, or code, and never validates, reworks, or re-judges a delivery; validation belongs to the Planner.
       - It commits at most twice: the campaign file at the start and the campaign cleanup at the end, the latter skipped when the campaign aborts.
@@ -60,12 +60,12 @@ argument-hint: "[campaign goal to pursue across the repository]"
       Derive kebab-case {SLUG}. Read repository documentation (README.md, AGENTS.md, docs/) without inspecting application code. Conduct clarification rounds with the user via `<user_interaction>` in batched questions, recommended option first, until the campaign goal, in-scope and out-of-scope areas, the definition of a finished work point, and constraints are settled.
     </step>
 
-    <step id="2" name="implementer-inquiry">
-      Prompt the user via `<user_interaction>` to select the {IMPLEMENTER} type per `<rule id="implementer-selection">`.
+    <step id="2" name="resolve-implementer">
+      Set the {IMPLEMENTER} type per `<rule id="implementer-selection">`: `harness-default` unless the user's request names another.
     </step>
 
     <step id="3" name="write-campaign">
-      Write `docs/campaign-ai-tools/{SLUG}/campaign-{SLUG}.md` with the campaign goal, scope boundaries, definition of a finished work point, constraints, the selected implementer type, and an empty cycle log per `<rule id="ubiquitous-language">`.
+      Write `docs/campaign-ai-tools/{SLUG}/campaign-{SLUG}.md` with the campaign goal, scope boundaries, definition of a finished work point, constraints, the {IMPLEMENTER} type as recorded per `<rule id="implementer-selection">`, and an empty cycle log per `<rule id="ubiquitous-language">`.
     </step>
 
     <step id="4" name="campaign-approval">
@@ -113,7 +113,7 @@ argument-hint: "[campaign goal to pursue across the repository]"
         1. Read {CAMPAIGN_FILE}: goal, scope boundaries, definition of a finished work point, constraints, and the cycle log of work points already done or blocked.
         2. Scan the repository for one cohesive work point where the campaign goal applies, inside scope and absent from the cycle log. Verify against actual code; do not assume. Skip any work point requiring financial cost, irreversible data loss, a destructive operation, or a cloud mutation.
         3. If no work point remains, write nothing, commit nothing, and return `<signal code="CYCLE_EMPTY">`.
-        4. Confirm you can dispatch an agent of type {IMPLEMENTER}, resolved per `<rule id="implementer-types">`, through the harness subagent API or the matching tier skill CLI. If you cannot, write nothing and return `<signal code="DISPATCH_UNAVAILABLE">`.
+        4. Confirm you can dispatch an agent of type {IMPLEMENTER}, resolved per `<rule id="implementer-selection">`. If you cannot, write nothing and return `<signal code="DISPATCH_UNAVAILABLE">`.
         Plan:
         5. Write `{CYCLE_DIR}/0-plan.md`: task status table with columns `#`, `Status` (blank, `working`, `validating`, `retry` plus attempt number, `blocked`, `done`), and `Task`; the work point and technical objective; Mermaid diagram of the affected components; atomic, self-contained, independently committable tasks with technical summaries and dependencies; decisions taken.
         6. Append a row for cycle {CYCLE} to the cycle log in {CAMPAIGN_FILE} with status `working`, the work point, and the plan path.
