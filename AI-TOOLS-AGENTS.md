@@ -25,6 +25,13 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/.
     <rule id="confirm-destructive">Prefer reversible local work. Confirm destructive or shared-state operations — force-push, dropping tables, production deploys.</rule>
   </security_guardrails>
 
+  <engineering_rigor>
+    <rule id="blast-radius-check">Before changing any function, type, signature, or contract, search the repository for all references and callers and account for every affected file before editing.</rule>
+    <rule id="zero-stubs">Deliver complete, production-ready implementations. Never leave `TODO` comments, elided blocks, or placeholder stubs; explicitly handle errors, null or empty states, strict types, and edge cases.</rule>
+    <rule id="adversarial-review">On non-trivial changes, perform an adversarial code review—via a subagent or dedicated review pass—checking the diff for silent bugs, race conditions, unhandled edge cases, and regressions across affected files.</rule>
+    <rule id="verification-gate">Never consider a task complete without running the relevant build, linter, typecheck, or test suite in the terminal and confirming clean execution.</rule>
+  </engineering_rigor>
+
   <conventional_commits>
     If not in a git repository, ignore these rules.
     <rule id="always-commit">Always commit changes to the repository when you fulfill an user request. If the user requests a correction of the commit you've just delivered in the session, amend the existing commit.</rule>

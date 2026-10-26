@@ -1,6 +1,6 @@
 # ai-tools
 
-> **Version 0.0.86-ALPHA** — under active development. Suitable for testing; alpha versions provide neither guarantees nor backward compatibility (rule 4).
+> **Version 0.0.87-ALPHA** — under active development. Suitable for testing; alpha versions provide neither guarantees nor backward compatibility (rule 4).
 
 ## Overview
 
@@ -83,7 +83,7 @@ Vocabulary. A new tag is registered here and in `scripts/lint.sh` (`XML_VOCAB`) 
 | Tag | File | Meaning |
 |---|---|---|
 | `<user_instructions>` | AI-TOOLS-AGENTS | root |
-| `<system_overview>`, `<unit_tests>`, `<language_rules>`, `<user_interaction>`, `<security_guardrails>`, `<conventional_commits>`, `<implementers>` | AI-TOOLS-AGENTS | top-level sections |
+| `<system_overview>`, `<unit_tests>`, `<language_rules>`, `<user_interaction>`, `<security_guardrails>`, `<engineering_rigor>`, `<conventional_commits>`, `<implementers>` | AI-TOOLS-AGENTS | top-level sections |
 | `<chat>`, `<disk>`, `<subagents>` | AI-TOOLS-AGENTS | language destinations |
 | `<default>`, `<fallback>` | AI-TOOLS-AGENTS | native-tool question rule and its chat fallback |
 | `<skill name>` | skills | root |
