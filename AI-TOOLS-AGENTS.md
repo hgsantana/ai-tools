@@ -38,7 +38,6 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/.
     <rule id="commit-message-format">Use Conventional Commits format for commit messages: `{type}({scope}): {description}` with optional body and footer. Types include `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`.</rule>
     <rule id="commit-message-content">Commit messages should be concise, clear, and descriptive of the change. Avoid vague messages like "update" or "fix".</rule>
     <rule id="commit-message-body">It should provide additional context, reasoning, or details about the change in the commit body. Use bullet points or paragraphs as needed.</rule>
-    <rule id="never-push">Never push to remote, unless explicitly instructed by the user or when following a skill that demands it to open a new PR.</rule>
   </conventional_commits>
 
   <implementers>
