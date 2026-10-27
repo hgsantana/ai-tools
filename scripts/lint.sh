@@ -196,7 +196,7 @@ check_skill_name_match() {
 
 check_skill_layout() {
   local f d name rid
-  local gated="az-ai-tools gc-ai-tools gh-ai-tools agy-ai-tools claude-ai-tools copilot-ai-tools"
+  local gated="az-ai-tools gc-ai-tools gh-ai-tools agy-ai-tools claude-ai-tools codex-ai-tools copilot-ai-tools"
   local maintainer="update-ai-tools remove-ai-tools"
 
   f="$AI_TOOLS/skills/SKILL-CONTRACT.md"
