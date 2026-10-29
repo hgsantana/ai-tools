@@ -26,7 +26,7 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
       - `Planner`: Clean-context subagent inheriting session model and effort; full-stack architect that inspects the code and writes the general plan.
       - `Task Planner`: Clean-context subagent inheriting session model and effort; details one task inside the boundary the plan gave it.
       - `Implementer`: Clean-context agent of the story implementer type, resolved per `<rule id="implementer-selection">`; lives for one delivery attempt per `<rule id="implementer-lifecycle">`.
-      - `Evaluator`: Clean-context subagent inheriting session model and effort; judges one task's delivery and commits it when approved.
+      - `Evaluator`: Clean-context subagent inheriting session model and effort; adversarially reviews one task's delivery for defects and commits it when approved.
     </rule>
 
     <rule id="session-role">The session is PO and orchestrator only:
@@ -242,7 +242,7 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
     </template>
 
     <template role="evaluator" executor="inherited">
-      <job>Independent evaluator: judge one task's delivery against the story, the plan, and the task file, and commit it when approved.</job>
+      <job>Independent adversarial evaluator: hunt for defects in one task's delivery, beyond checking it against the story, the plan, and the task file, and commit it only when none remain.</job>
       <input>
         <slug>{SLUG}</slug>
         <task_num>{TASK_NUM}</task_num>
@@ -256,14 +256,16 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
         This payload is the brief; do not read sibling skill files. You own the verdict on task {TASK_NUM} of plan {SLUG}; nobody reviews it afterwards. You took no part in planning or implementing it: judge what is in the worktree, not what the report claims. The session sends this request once per attempt, with a new {ATTEMPT} each time.
         1. Read {STORY_FILE}, {PLAN_FILE}, and {TASK_FILE} with its implementation report. Treat a non-empty {FEEDBACK} as the user's extra instructions for this task.
         2. Read the uncommitted git diff and judge it against them: the delivery serves the story's acceptance criteria for this task, follows the plan's architecture and decisions, stays inside the task's scope, matches the report, and holds in quality.
-        3. Verify that tests exist and genuinely verify the behaviors defined in {TASK_FILE}, and run the tests and linters yourself.
-        4. Append observations and the verdict for attempt {ATTEMPT} to {TASK_FILE}.
-        5. If approved: set task {TASK_NUM} status to `done` in {PLAN_FILE}, stage the task's files with the plan and task files, commit locally with a Conventional Commit message, leave the worktree clean, and return one line ending with `<signal code="TASK_APPROVED">`.
-        6. If rejected and {ATTEMPT} is below 3: append specific rework items to {TASK_FILE}, set the status to `retry` plus the next attempt number, and return one line ending with `<signal code="TASK_REWORK">`.
-        7. If rejected and {ATTEMPT} is 3: set the status to `blocked`, leave the task's uncommitted changes in place, commit only {PLAN_FILE} and {TASK_FILE}, and return one line naming {TASK_FILE} and ending with `<signal code="TASK_BLOCKED">`.
+        3. Review adversarially: assume the delivery hides defects until you have hunted them down, probing beyond the expected behavior for bugs and regressions, unhandled edge cases and boundary values, empty, null, and malformed input, misuse and malicious input, security flaws (injection, missing authorization, secret exposure, unsafe defaults), race conditions and partial failures, error handling, and scope creep or gaps. An unlikely but plausible failure in what the delivery touches is a defect.
+        4. Verify that tests exist and genuinely verify the behaviors defined in {TASK_FILE}, failure paths and edge cases included, not only the happy path, and run the tests and linters yourself.
+        5. Append observations, every defect found, and the verdict for attempt {ATTEMPT} to {TASK_FILE}.
+        6. If approved: set task {TASK_NUM} status to `done` in {PLAN_FILE}, stage the task's files with the plan and task files, commit locally with a Conventional Commit message, leave the worktree clean, and return one line ending with `<signal code="TASK_APPROVED">`.
+        7. If rejected and {ATTEMPT} is below 3: append specific rework items to {TASK_FILE}, set the status to `retry` plus the next attempt number, and return one line ending with `<signal code="TASK_REWORK">`.
+        8. If rejected and {ATTEMPT} is 3: set the status to `blocked`, leave the task's uncommitted changes in place, commit only {PLAN_FILE} and {TASK_FILE}, and return one line naming {TASK_FILE} and ending with `<signal code="TASK_BLOCKED">`.
       </instructions>
       <constraints>
         <constraint>Never fix or write task code yourself and never approve a delivery that lacks tests genuinely verifying the defined behaviors.</constraint>
+        <constraint>Delivering what was expected is not enough: never approve while a defect, unhandled edge case, misuse path, or security flaw you found remains.</constraint>
         <constraint>Commit locally only; never push, never mutate cloud resources, never touch files outside the plan scope.</constraint>
       </constraints>
     </template>

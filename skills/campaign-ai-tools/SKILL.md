@@ -20,7 +20,7 @@ argument-hint: "[campaign goal to pursue across the repository]"
       - `Campaign`: Repository-wide goal recorded in `docs/campaign-ai-tools/{SLUG}/campaign-{SLUG}.md` with scope, exclusions, implementer type, and the cycle log.
       - `Cycle`: One Planner lifetime covering scan, plan, task execution, and validation of a single work point.
       - `Work point`: One cohesive spot in the repository where the campaign goal applies and has not yet been addressed.
-      - `Planner`: Clean-context subagent inheriting session model and effort; full-stack architect that plans, dispatches implementers, validates, and commits.
+      - `Planner`: Clean-context subagent inheriting session model and effort; full-stack architect that plans, dispatches implementers, adversarially validates, and commits.
       - `Implementer`: Clean-context agent of the campaign implementer type; lives for one delivery attempt per `<rule id="implementer-lifecycle">`.
       - `Cycle log`: Table in the campaign file with columns `#`, `Status` (`working`, `done`, `blocked`), `Work point`, and `Plan`, maintained by Planners as the memory shared across cycles.
     </rule>
@@ -121,7 +121,7 @@ argument-hint: "[campaign goal to pursue across the repository]"
         Execute each task in order, one at a time:
         8. Write the task file in {CYCLE_DIR}, named by task number and kebab-case task slug: technical objective, files to create or modify with expected changes, test behaviors to verify per change (unit tests for code; smoke tests, linters, or schema validations for non-code assets), and suggested implementation steps without writing code. Set the task status to `working`.
         9. Spawn one fresh agent of type {IMPLEMENTER} with clean zeroed context, sending the implementer template appended to this brief with its action set to execute-task and its fields filled for this task. It ends on its return. If it stops on a blocker, correct the task file yourself and spawn a fresh one with the same action.
-        10. Validate the delivery against the uncommitted git diff and the task file: tests exist and genuinely verify the defined behaviors, test and lint runs pass, scope is respected, quality holds. Append observations and verdict to the task file.
+        10. Validate the delivery against the uncommitted git diff and the task file: tests exist and genuinely verify the defined behaviors, failure paths and edge cases included, not only the happy path; test and lint runs pass, scope is respected, quality holds. Then review adversarially: assume the delivery hides defects until you have hunted them down, probing beyond the expected behavior for bugs and regressions, unhandled edge cases and boundary values, empty, null, and malformed input, misuse and malicious input, security flaws (injection, missing authorization, secret exposure, unsafe defaults), race conditions and partial failures, error handling, and scope creep or gaps. An unlikely but plausible failure in what the delivery touches is a defect. Append observations, every defect found, and verdict to the task file.
         11. If approved: set the task status to `done`, stage the task's files, commit locally with a Conventional Commit message.
         12. If rework is needed: set the status to `retry` plus attempt number, append rework items to the task file, and spawn a fresh agent of type {IMPLEMENTER} with action rework-task and rework notes pointing at them; validate again. After 3 failed attempts, discard that task's uncommitted changes, set the status to `blocked`, skip tasks that depend on it, and continue with independent ones.
         Close:
@@ -131,6 +131,7 @@ argument-hint: "[campaign goal to pursue across the repository]"
       <constraints>
         <constraint>One work point per cycle; never repeat a work point already present in the cycle log.</constraint>
         <constraint>Never implement task code yourself and never approve a delivery that lacks tests genuinely verifying the defined behaviors.</constraint>
+        <constraint>Delivering what was expected is not enough: never approve while a defect, unhandled edge case, misuse path, or security flaw you found remains.</constraint>
         <constraint>Commit locally only; never push, never mutate cloud resources, never touch files outside the campaign scope.</constraint>
       </constraints>
     </template>

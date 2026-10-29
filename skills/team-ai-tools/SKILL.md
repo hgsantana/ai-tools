@@ -21,7 +21,7 @@ argument-hint: "[story or feature description, or slug of a team plan to resume]
       - `Plan`: Technical artifact written to `docs/team-ai-tools/{SLUG}/0-{SLUG}.md` decomposed into atomic tasks, guiding technical execution.
       - `Task`: Atomic, committable deliverable specified in `docs/team-ai-tools/{SLUG}/{N}-{TASK_SLUG}.md` by a Specialist.
       - `Specialist`: Subagent dispatched with clean zeroed context and assigned a specific domain role to plan, advise, and validate a task.
-      - `Validator`: The Specialist when reviewing task implementation against the uncommitted git diff and committing the task.
+      - `Validator`: The Specialist when adversarially reviewing task implementation against the uncommitted git diff, hunting for defects, and committing the task.
       - `User`: Person interacting with the session.
       - `PO` (Product Owner): The interactive session itself. Focuses exclusively on repository documentation and business domain requirements without reading application code.
       - `Architect`: Dispatched specialist subagent who designs architecture, creates the general plan `0-{SLUG}.md`, assigns specialists, and specifies architectural decisions.
@@ -163,9 +163,9 @@ argument-hint: "[story or feature description, or slug of a team plan to resume]
     </step>
 
     <step id="21" name="validation-and-verdict">
-      Specialist compares implementation report against uncommitted `git diff`, explicitly verifying that tests were written and genuinely validate defined behaviors (unit tests, smoke tests, validation scripts, or pipeline checks per task type):
+      Specialist compares implementation report against uncommitted `git diff`, explicitly verifying that tests were written and genuinely validate defined behaviors (unit tests, smoke tests, validation scripts, or pipeline checks per task type), and adversarially hunts for bugs, edge cases, misuse, security flaws, and scope deviations beyond the expected behavior:
       1. If approved: Specialist confirms test presence and rigor, sets task status to `done` in `0-{SLUG}.md`, stages files, commits locally with Conventional Commit message, and returns approved outcome. Session terminates the specialist per `<rule id="clean-context-lifecycle">`, and advances to the next task (`<step id="15">`).
-      2. If rework needed (missing tests, superficial verification, defects, or domain deviation): Specialist sets status to `retry<1..3>` in `0-{SLUG}.md`, appends rework items to {TASK_FILE}, and returns rework outcome. Session repeats `<step id="18">` with a fresh implementer, {ACTION} = rework-task, and {REWORK_NOTES} pointing at the rework items (up to 3 attempts).
+      2. If rework needed (missing tests, superficial verification, defects, unhandled edge cases, misuse paths, security flaws, or domain deviation): Specialist sets status to `retry<1..3>` in `0-{SLUG}.md`, appends rework items to {TASK_FILE}, and returns rework outcome. Session repeats `<step id="18">` with a fresh implementer, {ACTION} = rework-task, and {REWORK_NOTES} pointing at the rework items (up to 3 attempts).
       3. If 3 attempts exhausted: Specialist sets status to `blocked` in `0-{SLUG}.md`. Session sends an atomic chat message linking {TASK_FILE}, followed by an interactive prompt via `<user_interaction>` asking the user for extra instructions (+3 retries) or abort per `<rule id="retry-and-blocked">`. On extra instructions, repeat `<step id="18">` with a fresh implementer, {ACTION} = rework-task, and {REWORK_NOTES} set to them.
     </step>
 
@@ -216,7 +216,7 @@ argument-hint: "[story or feature description, or slug of a team plan to resume]
     </template>
 
     <template role="specialist" executor="inherited">
-      <job>Domain specialist: task planning, architectural guidance, and delivery validation.</job>
+      <job>Domain specialist: task planning, architectural guidance, and adversarial delivery validation.</job>
       <input>
         <action>{ACTION}</action>
         <slug>{SLUG}</slug>
@@ -243,14 +243,16 @@ argument-hint: "[story or feature description, or slug of a team plan to resume]
 
         When {ACTION} is validate-task:
         1. Read implementation report in {TASK_FILE} and compare against uncommitted git diff.
-        2. Verify that corresponding tests were actually written (e.g., unit tests for code; smoke tests, validation scripts, schema checks, or linters for non-code files, pipelines, or configs) and assert that they genuinely test the behaviors defined in {TASK_FILE} rather than superficial assertions.
+        2. Verify that corresponding tests were actually written (e.g., unit tests for code; smoke tests, validation scripts, schema checks, or linters for non-code files, pipelines, or configs) and assert that they genuinely test the behaviors defined in {TASK_FILE}, failure paths and edge cases included, rather than superficial or happy-path-only assertions.
         3. Evaluate adherence to task specifications, test coverage and execution results, code quality, and domain principles ({SPECIALIST_SUMMARY}).
-        4. Append review observations and verdict to {TASK_FILE}.
-        5. If approved: update task {TASK_NUM} status to `done` in {PLAN_FILE}, stage files, commit locally with Conventional Commit message, and return approved outcome with {TASK_FILE}.
-        6. If rework needed (including missing tests, tests failing to verify defined behaviors, defects, or domain regressions): update task {TASK_NUM} status to `retry<attempt>` (1..3) or `blocked` (if attempt exceeds 3) in {PLAN_FILE}, append specific rework instructions to {TASK_FILE}, and return rework outcome with {TASK_FILE}.
+        4. Review adversarially: assume the delivery hides defects until you have hunted them down, probing beyond the expected behavior for bugs and regressions, unhandled edge cases and boundary values, empty, null, and malformed input, misuse and malicious input, security flaws (injection, missing authorization, secret exposure, unsafe defaults), race conditions and partial failures, error handling, and scope creep or gaps, with the eye of {SPECIALIST_ROLE}. An unlikely but plausible failure in what the delivery touches is a defect.
+        5. Append review observations, every defect found, and verdict to {TASK_FILE}.
+        6. If approved: update task {TASK_NUM} status to `done` in {PLAN_FILE}, stage files, commit locally with Conventional Commit message, and return approved outcome with {TASK_FILE}.
+        7. If rework needed (including missing tests, tests failing to verify defined behaviors, defects found by the adversarial review, or domain regressions): update task {TASK_NUM} status to `retry<attempt>` (1..3) or `blocked` (if attempt exceeds 3) in {PLAN_FILE}, append specific rework instructions to {TASK_FILE}, and return rework outcome with {TASK_FILE}.
       </instructions>
       <constraints>
         <constraint>Maintain strict domain standards and never approve implementations that lack required tests or fail to genuinely verify defined behaviors.</constraint>
+        <constraint>Delivering what was expected is not enough: never approve while a defect, unhandled edge case, misuse path, or security flaw you found remains.</constraint>
       </constraints>
     </template>
 
