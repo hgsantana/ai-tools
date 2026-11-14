@@ -39,7 +39,11 @@ argument-hint: "[campaign goal to pursue across the repository]"
       - The campaign aborts when a Planner ends without a signal of `<return_protocol>`: the session dispatches no further cycle and leaves the worktree and the campaign directory untouched for inspection.
     </rule>
 
-    <rule id="autonomous-decision-policy">After scope approval the campaign runs unattended. The Planner settles every technical question itself, choosing zero-cost and easily reversible options. A work point that requires financial cost, irreversible data loss, a destructive operation, or a cloud mutation is out of bounds: the Planner selects another and records each one it skipped in the cycle log as an unnumbered `blocked` row with the reason, in the same commit as the cycle plan; a cycle without that commit records none. When only out-of-bounds work points remain, the Planner returns `<signal code="CYCLE_EMPTY">`.</rule>
+    <rule id="autonomous-decision-policy">After scope approval the campaign runs unattended. The Planner settles every technical question itself, choosing zero-cost and easily reversible options. A work point or task that requires financial cost, irreversible data loss, a destructive operation, or a cloud mutation is out of bounds:
+      - The Planner selects another work point and records each out-of-bounds one it skipped in the cycle log as an unnumbered `blocked` row with the reason, in the same commit as the cycle plan; a cycle without that commit records none.
+      - When only out-of-bounds work points remain, the Planner returns `<signal code="CYCLE_EMPTY">`; every return of that signal names the out-of-bounds work points, logged or skipped, with their reasons, and the final outcome relays them when the campaign ends on it.
+      - A task that proves out of bounds after its plan is committed is blocked at once per `<rule id="retry-and-blocked">`.
+    </rule>
 
     <rule id="clean-context-lifecycle">Every Planner is spawned with clean, zeroed context and ends with its cycle; continuity across cycles lives only in the campaign file and git history. Every Implementer follows `<rule id="implementer-lifecycle">`: it ends on its return, and rework or a retry goes to a fresh one.</rule>
 
@@ -51,7 +55,7 @@ argument-hint: "[campaign goal to pursue across the repository]"
   <return_protocol>
     <signal code="CYCLE_DONE">Work point planned, every task validated and committed.</signal>
     <signal code="CYCLE_BLOCKED">Work point planned and committed, at least one task blocked per `<rule id="retry-and-blocked">`.</signal>
-    <signal code="CYCLE_EMPTY">No remaining work point found for the campaign, or only out-of-bounds ones; nothing written or committed.</signal>
+    <signal code="CYCLE_EMPTY">No remaining work point found for the campaign, or only out-of-bounds ones; nothing written or committed, and the return names every out-of-bounds work point.</signal>
     <signal code="DISPATCH_UNAVAILABLE">The Planner cannot dispatch an Implementer of the campaign type from its environment; nothing written or committed.</signal>
   </return_protocol>
 
@@ -93,7 +97,7 @@ argument-hint: "[campaign goal to pursue across the repository]"
     </step>
 
     <step id="9" name="outcome">
-      Send a one-line outcome to the user: branch `campaign/{SLUG}`, productive cycles run, cycles blocked, and the stop reason (nothing left to do, dispatch unavailable, or Planner returned without a signal). On an abort, add that the campaign directory and any uncommitted changes were left in place.
+      Send a one-line outcome to the user: branch `campaign/{SLUG}`, productive cycles run, cycles blocked, the stop reason (nothing left to do, dispatch unavailable, or Planner returned without a signal), and, when nothing is left to do, the out-of-bounds work points the last Planner named, with their reasons. On an abort, add that the campaign directory and any uncommitted changes were left in place.
     </step>
   </session_workflow>
 
@@ -108,11 +112,11 @@ argument-hint: "[campaign goal to pursue across the repository]"
         <cycle_dir>{CYCLE_DIR}</cycle_dir>
       </input>
       <instructions>
-        This payload is the brief; do not read sibling skill files. You own every technical decision and every validation of cycle {CYCLE} of campaign {SLUG}; nobody reviews your work afterwards, and you never ask the user or the session anything. Decide autonomously, choosing zero-cost and easily reversible options.
+        This payload is the brief; do not read sibling skill files. You own every technical decision and every validation of cycle {CYCLE} of campaign {SLUG}; nobody reviews your work afterwards, and you never ask the user or the session anything. Decide autonomously, choosing zero-cost and easily reversible options. A work point or task that requires financial cost, irreversible data loss, a destructive operation, or a cloud mutation is out of bounds.
         Scan:
         1. Read {CAMPAIGN_FILE}: goal, scope boundaries, definition of a finished work point, constraints, and the cycle log of work points already done or blocked.
-        2. Scan the repository for one cohesive work point where the campaign goal applies, inside scope and absent from the cycle log. Skip as out of bounds any such work point requiring financial cost, irreversible data loss, a destructive operation, or a cloud mutation. Verify against actual code; do not assume.
-        3. If no work point remains, or only out-of-bounds ones do, write nothing, commit nothing, and return `<signal code="CYCLE_EMPTY">`.
+        2. Scan the repository for one cohesive work point where the campaign goal applies, inside scope and absent from the cycle log. Skip any such work point that is out of bounds. Verify against actual code; do not assume.
+        3. If no work point remains, or only out-of-bounds ones do, write nothing, commit nothing, and return one line that names every out-of-bounds work point, logged or skipped, with its reason, and ends with `<signal code="CYCLE_EMPTY">`.
         4. Confirm you can dispatch an agent of type {IMPLEMENTER}, resolved per `<rule id="implementer-selection">`. If you cannot, write nothing and return `<signal code="DISPATCH_UNAVAILABLE">`.
         Plan:
         5. Write `{CYCLE_DIR}/0-plan.md`: task status table with columns `#`, `Status` (blank, `working`, `validating`, `retry` plus attempt number, `blocked`, `done`), and `Task`; the work point and technical objective; Mermaid diagram of the affected components; atomic, self-contained, independently committable tasks with technical summaries and dependencies; decisions taken.
@@ -123,7 +127,7 @@ argument-hint: "[campaign goal to pursue across the repository]"
         9. Spawn one fresh agent of type {IMPLEMENTER} with clean zeroed context, sending the implementer template appended to this brief with its action set to execute-task and its fields filled for this task. It ends on its return. If it stops on a blocker, correct the task file yourself and spawn a fresh one with the same action.
         10. Validate the delivery against the uncommitted git diff and the task file: tests exist and genuinely verify the defined behaviors, failure paths and edge cases included, not only the happy path; test and lint runs pass, scope is respected, quality holds. Then review adversarially: assume the delivery hides defects until you have hunted them down, probing beyond the expected behavior for bugs and regressions, unhandled edge cases and boundary values, empty, null, and malformed input, misuse and malicious input, security flaws (injection, missing authorization, secret exposure, unsafe defaults), race conditions and partial failures, error handling, and scope creep or gaps. An unlikely but plausible failure in what the delivery touches is a defect. Append observations, every defect found, and verdict to the task file.
         11. If approved: set the task status to `done`, stage the task's files, commit locally with a Conventional Commit message.
-        12. If rework is needed: set the status to `retry` plus attempt number, append rework items to the task file, and spawn a fresh agent of type {IMPLEMENTER} with action rework-task and rework notes pointing at them; validate again. After 3 failed attempts, discard that task's uncommitted changes, set the status to `blocked`, skip tasks that depend on it, and continue with independent ones.
+        12. If rework is needed: set the status to `retry` plus attempt number, append rework items to the task file, and spawn a fresh agent of type {IMPLEMENTER} with action rework-task and rework notes pointing at them; validate again. After 3 failed attempts, discard that task's uncommitted changes, set the status to `blocked`, skip tasks that depend on it, and continue with independent ones. Block the same way, at once, a task that proves out of bounds.
         Close:
         13. Update the cycle {CYCLE} row in {CAMPAIGN_FILE} to `done`, or to `blocked` with the reason when any task was blocked or skipped. Commit remaining plan state with `chore(campaign): close cycle {CYCLE} of {SLUG}` and leave the worktree clean.
         14. Return one line ending with `<signal code="CYCLE_DONE">` when the cycle {CYCLE} row is `done`, else with `<signal code="CYCLE_BLOCKED">`.
