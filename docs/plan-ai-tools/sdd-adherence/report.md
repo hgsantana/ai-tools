@@ -31,7 +31,7 @@ These weigh more for agents than for people. Agents share no memory between disp
 | `agy-`, `claude-`, `codex-`, `copilot-ai-tools` | None | Transport of one task prompt | None | — |
 | `az-`, `gc-`, `gh-`, `stripe-ai-tools` | None | Operational queries behind approval guardrails | None | — |
 | `update-`, `remove-ai-tools` | None | Script runners | None | — |
-| `AI-TOOLS-AGENTS.md` | None | Already the constitution layer | None (section 6) | — |
+| `AI-TOOLS-AGENTS.md` | None | Already the constitution layer | None; one rule under D1 option C (section 7) | — |
 
 Size is the relative edit size: small, medium, large. G, T, C, and A items are defined in sections 4 and 5.
 
@@ -120,7 +120,7 @@ One requirement sentence plus Given/When/Then scenarios is the shape Spec Kit an
 | Block | Change |
 |---|---|
 | `<boundaries>` | New rules `story-format` (G1), `spec-authority` (G8); `session-role` lets the session read the coverage table (G5) |
-| `po-doc-analysis` | Also read any spec directory the repository keeps (`specs/`, `openspec/`, `.kiro/specs/`) as documentation |
+| `po-doc-analysis` | Also read any spec directory the repository keeps (`docs/specs/`, `specs/`, `openspec/`, `.kiro/specs/`) as documentation |
 | `po-clarification`, `write-story`, `story-approval` | Schema, assumptions, open markers, quality check (G1, G2) |
 | `<template role="planner">` | Ambiguity pass (G3); requirement IDs per task (G4); coverage table (G5); "Constraints and verification" section (G7) |
 | `plan-approval` (plan), `plan-validation` (vibe) | Gate on the coverage table (G5) |
@@ -149,7 +149,7 @@ No new gate or subagent: the campaign stays unattended.
 
 ### audit-ai-tools (optional)
 
-- A1. Specification conformance as a defect class. A kept spec drifts unless something enforces it; with D1 option B the audit becomes that enforcement. The Mapper lists the durable behavior sources (docs, spec directories, API schemas) in the perimeter, and an eighth lens flags implementation that contradicts them. Runbooks "audited as operational contracts" (`skills/audit-ai-tools/SKILL.md:46`) and the cross-layer fidelity lens (`:185`) cover part of it today.
+- A1. Specification conformance as a defect class. A kept spec drifts unless something enforces it; with D1 option B or C the audit becomes that enforcement. The Mapper lists the durable behavior sources (docs, spec directories, API schemas) in the perimeter, and an eighth lens flags implementation that contradicts them. Runbooks "audited as operational contracts" (`skills/audit-ai-tools/SKILL.md:46`) and the cross-layer fidelity lens (`:185`) cover part of it today.
 - A2. Remediation work packages (`:292`) gain expected behavior, preserved invariants, and the check that proves the fix, so a package is a ready story input.
 
 Cost: the skill is 50 KB and was just hardened; each lens adds load to every Scope Auditor.
@@ -159,17 +159,47 @@ Cost: the skill is 50 KB and was just hardened; each lens adds load to every Sco
 - No new XML vocabulary: every change fits `<rule>`, `<step>`, `<template>`, and `<signal>`.
 - New steps before `plan-cleanup` renumber later steps and every `<step id>` reference in plan, vibe, and team; `scripts/lint.sh` resolves them.
 - The story schema is duplicated in plan, vibe, and team, as README rules 5 and 9 require of self-contained skills. Hosting it once in `AI-TOOLS-AGENTS.md` is rejected: that file loads into every session of every harness, and only the story writer needs the schema because the story is self-describing to its readers.
-- `docs/USAGE.md` and the README version change in the same commit (rule 4). Rule 22 stays as written under D1 options A and B.
+- `docs/USAGE.md` and the README version change in the same commit (rule 4). Rule 22 stays as written under D1 options A and B; option C adds the durable spec location to it.
 - Runtime cost per story: one acceptance subagent, up to 2 convergence rounds, and longer story and plan files. No extra user gate.
 
 ## 7. Decisions for the user
 
 - D1. Spec lifecycle.
-  - A. Transient spec, pull request record: the plan directory is still removed; the acceptance table in the pull request body is the trace.
-  - B. A plus durable docs as the living spec (recommended): the story names, per requirement, the durable document that must state it, and acceptance verifies it. No new directory in target repositories; a repository that already keeps Spec Kit, OpenSpec, or Kiro specs gets them updated as documentation.
-  - C. A durable spec directory in every target repository, merged at finalization in the OpenSpec manner. Closest to spec-anchored, but it imposes a layout on every repository, changes README rule 22, and accumulates files nothing enforces.
+  - A. Discard everything, as today: the plan directory is removed and the acceptance table in the pull request body is the trace.
+  - B. A, with the repository's existing docs carrying the behavior: the story names, per requirement, the durable document that must state it, and acceptance verifies it. No new directory in target repositories.
+  - C. Keep a living spec; remove story, plan, and task files (recommended; detailed below). C over B because the PO reads only documentation: a structured durable spec is its best baseline for the next story, where B leaves that baseline in free prose.
+  - D. Keep spec, plan, and task files, as Spec Kit feature folders and the OpenSpec archive do. Not recommended: plan and task files are execution state that git history and the pull request already keep, they double what a reviewer reads, and a stale how-to is an instruction the next agent may follow.
 - D2. Rollout. Recommended: plan and vibe first, then team, then campaign; audit only if D1 is B or C.
 - D3. Amendments in vibe. Recommended: autonomous and listed in the pull request. The alternative, always asking the user, breaks the unattended run.
+
+### D1 option C in detail
+
+What stays and what goes at finalization:
+
+| Artifact | Fate | Reason |
+|---|---|---|
+| Requirements, scenarios, preserved behavior | Kept in the living spec | They describe behavior, which stays true until another story changes it |
+| Lasting architectural decisions | Promoted to an ADR or architecture doc by a documentation task | The plan that held them is removed |
+| Story (context, out of scope, assumptions, implementer, amendments) | Removed | It describes one change, not the system |
+| Plan and task files, with reports and verdicts | Removed | They describe a transition; after merge the code is the truth of HOW |
+| Acceptance table and plan decisions | Copied to the pull request body | The durable record of the run |
+
+Mechanics:
+
+- The kept spec is one current description per capability (`docs/specs/{capability}.md`, or the spec directory the repository already keeps), never a pile of story files: a second story that changes the behavior of the first would leave the first partly false.
+- The story edits that file in place on its own branch, so the branch diff of the spec is the delta and no merge step exists. The `Requirements` and `Preserved behavior` sections of the G1 schema move to the spec file; the story lists the requirement IDs it adds, changes, or removes.
+- Requirement IDs are scoped to the capability and never reused, because they outlive the story.
+- Untouched requirements of a touched capability are its preserved behavior: acceptance (G6) checks them too.
+- The spec grows as stories touch areas; nothing is backfilled.
+
+Guards, because a stale spec is worse than none for a PO that reads only documentation:
+
+- Acceptance (G6) fails when the delivered behavior and the spec disagree.
+- One rule in `AI-TOOLS-AGENTS.md` makes sessions outside the skills update the spec in the same commit as a behavior change.
+- `audit-ai-tools` lens A1 detects what slipped through.
+- The spec directory is opt-in per repository: the PO asks once when none exists, and its existence answers later runs.
+
+Impact beyond sections 5 and 6: README rule 22 names the durable location; `finalization-and-pr` in plan, vibe, and team keeps it; `campaign-ai-tools` reads the spec as preserved behavior and still removes its campaign directory.
 
 ## 8. Not recommended
 
