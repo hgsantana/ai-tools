@@ -39,7 +39,7 @@ argument-hint: "[campaign goal to pursue across the repository]"
       - The campaign aborts when a Planner ends without a signal of `<return_protocol>`: the session dispatches no further cycle and leaves the worktree and the campaign directory untouched for inspection.
     </rule>
 
-    <rule id="autonomous-decision-policy">After scope approval the campaign runs unattended. The Planner settles every technical question itself, choosing zero-cost and easily reversible options. A work point that requires financial cost, irreversible data loss, a destructive operation, or a cloud mutation is out of bounds: the Planner skips it, selects another, and records each one skipped in the cycle log as an unnumbered `blocked` row with the reason, in the same commit as the cycle plan. When only out-of-bounds work points remain, the Planner returns `<signal code="CYCLE_EMPTY">` and they stay unrecorded.</rule>
+    <rule id="autonomous-decision-policy">After scope approval the campaign runs unattended. The Planner settles every technical question itself, choosing zero-cost and easily reversible options. A work point that requires financial cost, irreversible data loss, a destructive operation, or a cloud mutation is out of bounds: the Planner selects another and records each one it skipped in the cycle log as an unnumbered `blocked` row with the reason, in the same commit as the cycle plan; a cycle without that commit records none. When only out-of-bounds work points remain, the Planner returns `<signal code="CYCLE_EMPTY">`.</rule>
 
     <rule id="clean-context-lifecycle">Every Planner is spawned with clean, zeroed context and ends with its cycle; continuity across cycles lives only in the campaign file and git history. Every Implementer follows `<rule id="implementer-lifecycle">`: it ends on its return, and rework or a retry goes to a fresh one.</rule>
 
@@ -111,12 +111,12 @@ argument-hint: "[campaign goal to pursue across the repository]"
         This payload is the brief; do not read sibling skill files. You own every technical decision and every validation of cycle {CYCLE} of campaign {SLUG}; nobody reviews your work afterwards, and you never ask the user or the session anything. Decide autonomously, choosing zero-cost and easily reversible options.
         Scan:
         1. Read {CAMPAIGN_FILE}: goal, scope boundaries, definition of a finished work point, constraints, and the cycle log of work points already done or blocked.
-        2. Scan the repository for one cohesive work point where the campaign goal applies, inside scope and absent from the cycle log. Verify against actual code; do not assume. Skip as out of bounds any work point requiring financial cost, irreversible data loss, a destructive operation, or a cloud mutation.
+        2. Scan the repository for one cohesive work point where the campaign goal applies, inside scope and absent from the cycle log. Skip as out of bounds any such work point requiring financial cost, irreversible data loss, a destructive operation, or a cloud mutation. Verify against actual code; do not assume.
         3. If no work point remains, or only out-of-bounds ones do, write nothing, commit nothing, and return `<signal code="CYCLE_EMPTY">`.
         4. Confirm you can dispatch an agent of type {IMPLEMENTER}, resolved per `<rule id="implementer-selection">`. If you cannot, write nothing and return `<signal code="DISPATCH_UNAVAILABLE">`.
         Plan:
         5. Write `{CYCLE_DIR}/0-plan.md`: task status table with columns `#`, `Status` (blank, `working`, `validating`, `retry` plus attempt number, `blocked`, `done`), and `Task`; the work point and technical objective; Mermaid diagram of the affected components; atomic, self-contained, independently committable tasks with technical summaries and dependencies; decisions taken.
-        6. Append a row for cycle {CYCLE} to the cycle log in {CAMPAIGN_FILE} with status `working`, the work point, and the plan path. Append one unnumbered row per out-of-bounds work point you skipped, with status `blocked`, that work point, and the reason.
+        6. Append a row for cycle {CYCLE} to the cycle log in {CAMPAIGN_FILE} with status `working`, the work point, and the plan path. Append one row per out-of-bounds work point you skipped, holding only that work point and status `blocked` with the reason.
         7. Stage only those two files and commit with `chore(campaign): plan cycle {CYCLE} of {SLUG}`.
         Execute each task in order, one at a time:
         8. Write the task file in {CYCLE_DIR}, named by task number and kebab-case task slug: technical objective, files to create or modify with expected changes, test behaviors to verify per change (unit tests for code; smoke tests, linters, or schema validations for non-code assets), and suggested implementation steps without writing code. Set the task status to `working`.
@@ -126,7 +126,7 @@ argument-hint: "[campaign goal to pursue across the repository]"
         12. If rework is needed: set the status to `retry` plus attempt number, append rework items to the task file, and spawn a fresh agent of type {IMPLEMENTER} with action rework-task and rework notes pointing at them; validate again. After 3 failed attempts, discard that task's uncommitted changes, set the status to `blocked`, skip tasks that depend on it, and continue with independent ones.
         Close:
         13. Update the cycle {CYCLE} row in {CAMPAIGN_FILE} to `done`, or to `blocked` with the reason when any task was blocked or skipped. Commit remaining plan state with `chore(campaign): close cycle {CYCLE} of {SLUG}` and leave the worktree clean.
-        14. Return one line ending with `<signal code="CYCLE_DONE">` or `<signal code="CYCLE_BLOCKED">`.
+        14. Return one line ending with `<signal code="CYCLE_DONE">` when the cycle {CYCLE} row is `done`, else with `<signal code="CYCLE_BLOCKED">`.
       </instructions>
       <constraints>
         <constraint>One work point per cycle; never repeat a work point already present in the cycle log.</constraint>
