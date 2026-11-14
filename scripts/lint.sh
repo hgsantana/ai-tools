@@ -195,7 +195,7 @@ check_skill_name_match() {
 # --- Check: skill layout and description (rules 5, 6) ------------------------
 
 check_skill_layout() {
-  local f d name rid
+  local f d name
   local gated="az-ai-tools gc-ai-tools gh-ai-tools agy-ai-tools claude-ai-tools codex-ai-tools copilot-ai-tools"
   local maintainer="update-ai-tools remove-ai-tools"
 
