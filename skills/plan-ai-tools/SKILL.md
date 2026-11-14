@@ -1,24 +1,25 @@
 ---
 name: plan-ai-tools
 description: >
-  Plan and deliver one story. The session acts as PO to settle scope, resolve the
-  implementer, and write the story, and a clean-context Planner writes the
-  general plan. On approval the session orchestrates each task: a Task Planner
-  details it, a single-task Implementer delivers it, and a clean-context
-  Evaluator judges the diff against story and plan and commits, ending with a
-  pull request. Given the slug of an existing plan, it goes straight to
-  orchestration. Use for /plan-ai-tools.
+  Plan and deliver one story, spec first. The session, as PO, writes the
+  requirements into the spec and the story; a clean-context Planner writes the
+  plan. On approval it orchestrates each task: a Task Planner details it, an
+  Implementer delivers it, and an Evaluator judges the diff against spec and plan
+  and commits. An Acceptor checks the whole branch against the spec before the
+  pull request. Given the slug of an existing plan, it resumes orchestration.
+  Use for /plan-ai-tools.
 argument-hint: "[story or feature description to plan, or slug of a plan to implement]"
 ---
 
 <skill name="plan-ai-tools">
   <overview>
-    Formulate a business user story, plan it, and deliver it. The session is Product Owner (PO) and orchestrator: it reviews repository documentation without reading application code, asks batched questions with recommended options, resolves the implementer, writes the story, and from then on only dispatches subagents and branches on their returns. Planning, execution, and validation belong to subagents, each dispatched by the session with clean context. One Planner, inheriting session model and effort, inspects the code in scope and writes the general plan: the overall architecture and the separation into atomic, independently committable tasks, with enough direction for each task to be detailed later. After the approved story and plan are committed to a dedicated plan branch, the Planner ends and the session offers implementation. For each task in order, the session dispatches one Task Planner to write the task file within the boundary the plan gave that task, then one Implementer of the story type to deliver code and tests, then one Evaluator, inheriting session model and effort, to judge the story, plan, and task file against the uncommitted git diff and the implementation report and commit approved work. Each Implementer lives for one delivery attempt, so rework goes to a fresh one; the Evaluator ends with its task. When a task exhausts its attempts the session asks the user for extra instructions or abort. Once every task is done, the session removes the plan directory, pushes the plan branch, and creates a pull request. Invoked with the slug of an existing plan, the session skips planning and goes straight to orchestration.
+    Formulate a business user story, plan it, and deliver it, spec first. The session is Product Owner (PO) and orchestrator: it reviews repository documentation without reading application code, asks batched questions with recommended options, resolves the implementer, writes the requirements into the spec and the change into the story, and from then on only dispatches subagents and branches on their returns. Planning, execution, and validation belong to subagents, each dispatched by the session with clean context. One Planner, inheriting session model and effort, inspects the code in scope, questions what the spec leaves unverifiable, and writes the general plan: the overall architecture, the constraints and verification commands, the separation into atomic, independently committable tasks, and the coverage of every requirement by a task, with enough direction for each task to be detailed later. After the approved story, spec, and plan are committed together to a dedicated plan branch, the Planner ends and the session offers implementation. For each task in order, the session dispatches one Task Planner to write the task file within the boundary the plan gave that task, then one Implementer of the story type to deliver code and tests, then one Evaluator, inheriting session model and effort, to judge the diff scenario by scenario against the spec, the plan, and the task file and the implementation report, and commit approved work. Each Implementer lives for one delivery attempt, so rework goes to a fresh one; the Evaluator ends with its task. When a task exhausts its attempts the session asks the user for extra instructions or abort. Once every task is done, an Acceptor judges the whole branch against the spec and sends gaps back through the task loop; the session then removes the plan directory, keeps the spec, pushes the plan branch, and creates a pull request carrying the acceptance table. Invoked with the slug of an existing plan, the session skips planning and goes straight to orchestration.
   </overview>
 
   <boundaries>
     <rule id="ubiquitous-language">Standard project domain terminology:
-      - `Story` (User Story): Business-level structuring of the user request written to `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md` by the PO session, recording the implementer type.
+      - `Spec`: Requirements and scenarios, the authority on behavior, in `{SPEC_DIR}/{CAPABILITY}.md` per `<rule id="spec-format">`, written by the PO session.
+      - `Story` (User Story): The change, in `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md` per `<rule id="story-format">`, written by the PO session: context, the requirement IDs it adds, changes, or removes, scope, and the implementer type.
       - `Plan`: General technical artifact written to `docs/plan-ai-tools/{SLUG}/0-{SLUG}.md` by the Planner: overall architecture and task separation, with the task status table.
       - `Task`: Technical specification for a single atomic unit of work located at `docs/plan-ai-tools/{SLUG}/{N}-{TASK_SLUG}.md`, written by the Task Planner.
       - `User`: Person interacting with the session.
@@ -27,37 +28,68 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
       - `Task Planner`: Clean-context subagent inheriting session model and effort; details one task inside the boundary the plan gave it.
       - `Implementer`: Clean-context agent of the story implementer type, resolved per `<rule id="implementer-selection">`; lives for one delivery attempt per `<rule id="implementer-lifecycle">`.
       - `Evaluator`: Clean-context subagent inheriting session model and effort; adversarially reviews one task's delivery for defects and commits it when approved.
+      - `Acceptor`: Clean-context subagent inheriting session model and effort; judges the whole branch against the spec before the pull request.
+    </rule>
+
+    <rule id="spec-format">Requirements live in spec files, the authority on behavior:
+      - {SPEC_DIR} is the spec directory the repository keeps: `docs/specs`, or its own, in the format and identifiers already used there. When the repository keeps none and its documentation settles no spec policy, the PO asks the user once whether to keep one at `docs/specs`; if declined, {SPEC_DIR} is `docs/plan-ai-tools/{SLUG}/specs`, removed with the plan directory.
+      - One file per capability, a kebab-case area of behavior, `{SPEC_DIR}/{CAPABILITY}.md`, states current behavior: a one-paragraph purpose, then one `### R{N}. {NAME}` heading per requirement holding one sentence of observable behavior ("The system must ...") and its scenarios as `- R{N}.S{M} Given ..., when ..., then ...` lines, with a failure scenario wherever failure is possible.
+      - IDs are unique within a file and never renumbered or reused; outside its file an ID carries the capability: `{CAPABILITY}/R{N}.S{M}`.
+      - A story edits these files in place, so the diff of {SPEC_DIR} against the base branch is the change. Existing behavior the change must not break, when no requirement states it yet, is written as a requirement too. Every requirement of a touched file that the story leaves unchanged is preserved behavior.
+      - Spec files state behavior only, free of implementation detail and vague qualifiers; an unsettled point is marked `[NEEDS CLARIFICATION: question]` until settled.
+    </rule>
+
+    <rule id="story-format">The story states one change, in these sections:
+      - `Context and goal`: who needs what, and why.
+      - `Requirements`: per spec file, the IDs this story adds, changes, or removes, marking `existing` an added requirement that documents current behavior.
+      - `Out of scope`: explicit non-goals.
+      - `Delivery`: the {IMPLEMENTER} type per `<rule id="implementer-selection">` and {BASE_BRANCH}, the branch current when the story is written.
+      - When they apply: `Constraints` (imposed limits and measurable thresholds), `Documentation` (durable documents other than the spec that must reflect the change), `Assumptions and clarifications` (defaults assumed and questions settled with the user), and `Amendments` (changes after approval per `<rule id="spec-authority">`: what, why, and who approved).
+    </rule>
+
+    <rule id="story-quality">Before each approval request the PO verifies and corrects until all hold: every requirement the story adds or changes states one observable behavior and has at least one scenario; the story is one independently deliverable outcome, else the PO proposes a split to the user; no `[NEEDS CLARIFICATION]` marker remains.</rule>
+
+    <rule id="spec-authority">The spec is the authority on behavior and the story on the scope of this change, after approval too:
+      - A decision that adds, changes, or removes observable behavior is an amendment, whatever raised it: a Planner or Task Planner question, a plan modification, a blocked task, or an acceptance gap. Once the user confirms it, the session edits the spec files and logs it under `Amendments` in the story; when branch `plan/{SLUG}` exists, it commits only those files with `docs(spec): amend {SLUG}`.
+      - When an amendment leaves a requirement without a task, the session has the Planner re-plan, the live one before the plan is committed and a fresh `<template role="planner">` afterwards, with {ACTION} = re-plan and {FEEDBACK} naming the amendment.
+      - A decision that leaves behavior unchanged stays in the "Decisions" section of the plan or of the task file.
     </rule>
 
     <rule id="session-role">The session is PO and orchestrator only:
-      - As PO it never reads application source code; it evaluates the user request against repository documentation (README.md, AGENTS.md, docs/) and resolves scope boundaries, business logic, user-facing behavior, and ambiguities.
+      - As PO it never reads application source code; it evaluates the user request against repository documentation (README.md, AGENTS.md, docs/, and the spec directory the repository keeps) and resolves scope boundaries, business logic, user-facing behavior, and ambiguities.
       - If documentation is missing, outdated, or requires adjustments, the PO includes documentation adequacy as a mandatory story requirement.
       - As orchestrator it dispatches every subagent itself and branches solely on their returns per `<return_protocol>`; no subagent dispatches another. It writes no plan and no task file.
-      - From the plan it reads only the task status table, to pick the next task. It never reads task files, diffs, or code to validate, rework, or re-judge a delivery; validation belongs to the Evaluator.
+      - From the plan it reads only the task status table, to pick the next task, the coverage table, to gate plan approval, and the last acceptance section and the decisions, to write the pull request. It never reads task files, diffs, or code to validate, rework, or re-judge a delivery; validation belongs to the Evaluator and the Acceptor.
     </rule>
 
-    <rule id="transient-docs">Story, plan, task files, and decisions belong under `docs/plan-ai-tools/{SLUG}/`. Raw tool outputs, binary caches, and temporary data go to `${TMPDIR:-/tmp}/ai-tools`. In-repo plan files are committed along the workflow.</rule>
+    <rule id="transient-docs">Story, plan, task files, and decisions belong under `docs/plan-ai-tools/{SLUG}/`. A kept spec lives in {SPEC_DIR}, outside that directory, and survives its removal. Raw tool outputs, binary caches, and temporary data go to `${TMPDIR:-/tmp}/ai-tools`. In-repo plan files are committed along the workflow.</rule>
 
-    <rule id="planner-question-rounds">If the Planner finds major discrepancies between the story and repository code, or a Task Planner finds that its task cannot be delivered inside the boundary the plan gave it, it sends batched questions with recommended options to the PO session, up to 3 rounds. The PO answers directly; decisions involving financial costs, irreversible data loss, or destructive operations are relayed to the user and await explicit confirmation. Settled answers are recorded in the "Decisions" section of the plan or of the task file.</rule>
+    <rule id="planner-question-rounds">If the Planner finds a requirement it cannot turn into a verifiable check, requirements that contradict each other, or major discrepancies between the spec and repository code, or a Task Planner finds that its task cannot be delivered inside the boundary the plan gave it, it sends batched questions with recommended options to the PO session, up to 3 rounds. The PO answers directly; decisions involving financial costs, irreversible data loss, or destructive operations are relayed to the user and await explicit confirmation. An answer that changes behavior is an amendment per `<rule id="spec-authority">`; other settled answers are recorded in the "Decisions" section of the plan or of the task file.</rule>
 
-    <rule id="clean-context-lifecycle">Every subagent is spawned with clean, zeroed context; continuity between them lives only in the plan directory and git history. The Planner ends once the plan is approved and committed. A Task Planner ends once it returns its task file. Every Implementer follows `<rule id="implementer-lifecycle">`: it ends on its return, and rework or a retry goes to a fresh one. The Evaluator of a task stays alive through its rework and its blocked escalation and is terminated once the task is approved or aborted; the next task gets a fresh one.</rule>
+    <rule id="clean-context-lifecycle">Every subagent is spawned with clean, zeroed context; continuity between them lives only in the plan directory and git history. The Planner ends once the plan is approved and committed. A Task Planner ends once it returns its task file. Every Implementer follows `<rule id="implementer-lifecycle">`: it ends on its return, and rework or a retry goes to a fresh one. The Evaluator of a task stays alive through its rework and its blocked escalation and is terminated once the task is approved or aborted; the next task gets a fresh one. Each acceptance round gets a fresh Acceptor, which ends on its return.</rule>
 
     <rule id="retry-and-blocked">A task allows up to 3 implementation attempts: the first delivery plus 2 reworks. When the third attempt fails validation, the Evaluator sets the task status to `blocked`, leaves that task's uncommitted changes in place for inspection, commits only the plan and task files, and returns `<signal code="TASK_BLOCKED">`. The session sends an atomic chat message linking the task file, then prompts the user via `<user_interaction>` to provide extra instructions for 3 additional attempts or abort.</rule>
 
-    <rule id="finalization-and-pr">Once every task is `done`:
-      - The session removes the plan directory (`git rm -r docs/plan-ai-tools/{SLUG}`) and commits with `chore(plan): complete {SLUG} delivery`.
+    <rule id="story-acceptance">Once every task is `done`, a fresh Acceptor judges the whole branch against the spec and the story. On gaps it appends convergence tasks to the plan and the session runs them through the task loop, for at most 2 convergence rounds. When the third acceptance still finds a gap, the Acceptor returns `<signal code="STORY_BLOCKED">`; the session sends an atomic chat message linking the plan, then prompts the user via `<user_interaction>` to provide extra instructions for 3 more acceptance rounds, amend the spec per `<rule id="spec-authority">`, or abort.</rule>
+
+    <rule id="finalization-and-pr">Once the story is accepted:
+      - The session copies the last acceptance table and the "Decisions" of the plan and the `Amendments` of the story to `${TMPDIR:-/tmp}/ai-tools/{SLUG}-pr.md`.
+      - The session removes the plan directory (`git rm -r docs/plan-ai-tools/{SLUG}`) and commits with `chore(plan): complete {SLUG} delivery`; a kept spec stays.
       - The session pushes branch `plan/{SLUG}` to remote.
-      - The session inspects `git log` difference against the base branch and creates a pull request formatted with a business overview followed by technical change highlights.
+      - The session inspects `git log` difference against {BASE_BRANCH} and creates a pull request formatted with a business overview, the acceptance table, the amendments, the decisions, and technical change highlights.
     </rule>
   </boundaries>
 
   <return_protocol>
     <signal code="TASK_PLANNED">Task Planner: task file written or revised; task status `working`.</signal>
     <signal code="TASK_DELIVERED">Implementer: changes and tests in the worktree, report appended to the task file; task status `validating`.</signal>
-    <signal code="TASK_STOPPED">Implementer: the task file contradicts the codebase or a blocker prevents delivery; the line states it.</signal>
+    <signal code="TASK_STOPPED">Implementer: the task file contradicts the codebase or the spec, or a blocker prevents delivery; the line states it.</signal>
     <signal code="TASK_APPROVED">Evaluator: delivery approved and committed; task status `done`; worktree clean.</signal>
     <signal code="TASK_REWORK">Evaluator: delivery rejected with rework items appended to the task file; task status `retry` plus the next attempt number.</signal>
     <signal code="TASK_BLOCKED">Evaluator: third attempt rejected per `<rule id="retry-and-blocked">`; task status `blocked`.</signal>
+    <signal code="STORY_ACCEPTED">Acceptor: every requirement met on the whole branch; acceptance table committed in the plan.</signal>
+    <signal code="STORY_GAPS">Acceptor: unmet requirements appended to the plan as convergence tasks and committed.</signal>
+    <signal code="STORY_BLOCKED">Acceptor: third acceptance still unmet per `<rule id="story-acceptance">`.</signal>
   </return_protocol>
 
   <session_workflow>
@@ -70,19 +102,19 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
     </step>
 
     <step id="3" name="po-doc-analysis">
-      Session acts as PO per `<rule id="session-role">`: read repository documentation (README.md, AGENTS.md, docs/). Do not inspect application code. Evaluate user request feasibility from a business perspective. If documentation is lacking or outdated, mark documentation updates as a mandatory requirement.
+      Session acts as PO per `<rule id="session-role">`: read repository documentation (README.md, AGENTS.md, docs/, and the spec directory the repository keeps). Do not inspect application code. Evaluate user request feasibility from a business perspective and against the requirements already specified. If documentation is lacking or outdated, mark documentation updates as a mandatory requirement.
     </step>
 
     <step id="4" name="po-clarification">
-      Conduct clarification rounds with the user via `<user_interaction>` in batched questions (each with a recommended option first). Resolve ambiguities, business rules, acceptance criteria, edge cases, and scope trade-offs. Repeat until all points are settled.
+      Conduct clarification rounds with the user via `<user_interaction>` in batched questions (each with a recommended option first), including the spec directory question of `<rule id="spec-format">` when it applies. Resolve ambiguities, business rules, requirements and their scenarios, edge cases, and scope trade-offs. Repeat until all points are settled, recording a gap too small to ask about as an assumption.
     </step>
 
     <step id="5" name="write-story">
-      Write the finalized user story to `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md`. Include business context, scope boundaries, acceptance criteria, documentation requirements, and the {IMPLEMENTER} type as recorded per `<rule id="implementer-selection">`.
+      Write the requirements into the spec files under {SPEC_DIR} per `<rule id="spec-format">`, editing existing files in place, and the story to `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md` per `<rule id="story-format">`, recording the {IMPLEMENTER} type and the current branch as {BASE_BRANCH}. Verify both per `<rule id="story-quality">`.
     </step>
 
     <step id="6" name="story-approval">
-      Send an atomic chat message linking the story file, then prompt the user via `<user_interaction>` to approve it or request modifications. Iterate `<step id="4">` and `<step id="5">` until approved.
+      Send an atomic chat message linking the story file and the spec files it touches, then prompt the user via `<user_interaction>` to approve them or request modifications. Iterate `<step id="4">` and `<step id="5">` until approved.
     </step>
 
     <step id="7" name="dispatch-planner">
@@ -90,23 +122,23 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
     </step>
 
     <step id="8" name="planner-clarifications">
-      Answer the Planner's batched questions per `<rule id="planner-question-rounds">`, relaying critical decisions to the user, until the Planner returns the plan path.
+      Answer the Planner's batched questions per `<rule id="planner-question-rounds">`, relaying critical decisions to the user and applying amendments per `<rule id="spec-authority">`, until the Planner returns the plan path.
     </step>
 
     <step id="9" name="plan-approval">
-      Send an atomic chat message linking the plan and story files, then prompt the user via `<user_interaction>` to approve the plan or request modifications. On modifications, update {STORY_FILE} if necessary, dispatch the live Planner with {ACTION} = re-plan and {FEEDBACK} containing the user requests, and repeat this step until approved.
+      Read the coverage table of the plan per `<rule id="session-role">`: every requirement the story adds, changes, or removes and every `Documentation` item names a task. On gaps, dispatch the live Planner with {ACTION} = re-plan and {FEEDBACK} listing them, and check again. Then send an atomic chat message linking the plan and story files, and prompt the user via `<user_interaction>` to approve the plan or request modifications. On modifications, amend per `<rule id="spec-authority">` when behavior changes, dispatch the live Planner with {ACTION} = re-plan and {FEEDBACK} containing the user requests, and repeat this step until approved.
     </step>
 
     <step id="10" name="branch-and-commit">
-      Create git branch `plan/{SLUG}` based on the current branch. Stage and commit only the story and plan files with Conventional Commit message `chore(plan): initialize plan and story for {SLUG}`. Terminate the Planner.
+      Create git branch `plan/{SLUG}` based on {BASE_BRANCH}. Stage and commit only the story, spec, and plan files with Conventional Commit message `chore(plan): initialize plan and story for {SLUG}`. Terminate the Planner.
     </step>
 
     <step id="11" name="offer-implementation">
-      Send an atomic chat message announcing that planning is finalized on branch `plan/{SLUG}`, with links to the story and plan. Then prompt the user via `<user_interaction>` offering to implement the plan now. If approved, proceed to `<step id="12">`; otherwise conclude the session, pointing out that invoking this skill with {SLUG} resumes at orchestration.
+      Send an atomic chat message announcing that planning is finalized on branch `plan/{SLUG}`, with links to the story, the spec files, and the plan. Then prompt the user via `<user_interaction>` offering to implement the plan now. If approved, proceed to `<step id="12">`; otherwise conclude the session, pointing out that invoking this skill with {SLUG} resumes at orchestration.
     </step>
 
     <step id="12" name="resolve-task">
-      Read the {IMPLEMENTER} type from the story and the task status table from the plan, per `<rule id="session-role">`. Take the first task whose status is not `done` as {TASK_NUM} with its {TASK_SLUG}, set {TASK_FILE} = `docs/plan-ai-tools/{SLUG}/{TASK_NUM}-{TASK_SLUG}.md`, {ATTEMPT} = 1, and empty {FEEDBACK} and {REWORK_NOTES}:
+      Read the {IMPLEMENTER} type and {BASE_BRANCH} from the story and the task status table from the plan, per `<rule id="session-role">`. Take the first task whose status is not `done` as {TASK_NUM} with its {TASK_SLUG}, set {TASK_FILE} = `docs/plan-ai-tools/{SLUG}/{TASK_NUM}-{TASK_SLUG}.md`, {ATTEMPT} = 1, and empty {FEEDBACK} and {REWORK_NOTES}:
       1. Every task `done`: proceed to `<step id="18">`.
       2. Status blank: proceed to `<step id="13">`.
       3. Status `blocked`: proceed to `<step id="17">`.
@@ -135,15 +167,22 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
     </step>
 
     <step id="17" name="blocked-escalation">
-      Escalate per `<rule id="retry-and-blocked">`. On extra instructions, set {FEEDBACK} to them, {ATTEMPT} = 1, and {REWORK_NOTES} = {FEEDBACK}, and return to `<step id="14">`. On abort, terminate the Evaluator, leave branch `plan/{SLUG}` and the plan directory in place for inspection, and report the blocked task in one line.
+      Escalate per `<rule id="retry-and-blocked">`. On extra instructions, apply any amendment they carry per `<rule id="spec-authority">`, set {FEEDBACK} to them, {ATTEMPT} = 1, and {REWORK_NOTES} = {FEEDBACK}, and return to `<step id="14">`. On abort, terminate the Evaluator, leave branch `plan/{SLUG}` and the plan directory in place for inspection, and report the blocked task in one line.
     </step>
 
-    <step id="18" name="plan-cleanup">
-      Remove the plan directory via `git rm -r docs/plan-ai-tools/{SLUG}` and commit with `chore(plan): complete {SLUG} delivery` per `<rule id="finalization-and-pr">`.
+    <step id="18" name="story-acceptance">
+      When {ROUND} is unset, set {ROUND} = 1 and empty {ACCEPTANCE_NOTES}. Announce the spawn in one chat line. Spawn `<template role="acceptor">` with clean zeroed context, inheriting session model and effort, passing {SLUG}, {ROUND}, {BASE_BRANCH}, {STORY_FILE}, {PLAN_FILE}, and {ACCEPTANCE_NOTES}. It ends on its return; branch per `<rule id="story-acceptance">` without reading or validating anything:
+      1. `<signal code="STORY_ACCEPTED">`: proceed to `<step id="19">`.
+      2. `<signal code="STORY_GAPS">`: increment {ROUND} and return to `<step id="12">`.
+      3. `<signal code="STORY_BLOCKED">`: escalate. On extra instructions, set {ACCEPTANCE_NOTES} to them and {ROUND} = 1, and repeat this step. On an amendment, apply it per `<rule id="spec-authority">`, set {ROUND} = 1, and return to `<step id="12">`. On abort, leave branch `plan/{SLUG}` and the plan directory in place for inspection, and report the unmet requirements in one line.
     </step>
 
-    <step id="19" name="push-and-pr">
-      Push branch `plan/{SLUG}` to remote. Inspect git log diff against base branch and open a pull request formatted with a business overview followed by technical change highlights per `<rule id="finalization-and-pr">`. Send a one-line outcome with the pull request link.
+    <step id="19" name="plan-cleanup">
+      Copy the acceptance table, decisions, and amendments to `${TMPDIR:-/tmp}/ai-tools/{SLUG}-pr.md`, then remove the plan directory via `git rm -r docs/plan-ai-tools/{SLUG}` and commit with `chore(plan): complete {SLUG} delivery`, per `<rule id="finalization-and-pr">`.
+    </step>
+
+    <step id="20" name="push-and-pr">
+      Push branch `plan/{SLUG}` to remote. Inspect git log diff against {BASE_BRANCH} and open a pull request formatted per `<rule id="finalization-and-pr">`. Send a one-line outcome with the pull request link.
     </step>
   </session_workflow>
 
@@ -160,16 +199,16 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
       <instructions>
         This payload is the brief; do not read sibling skill files.
         When {ACTION} is plan:
-        1. Read the story for {SLUG} from {STORY_FILE}.
+        1. Read the story for {SLUG} from {STORY_FILE} and every spec file it names: the requirements it adds, changes, or removes, and the unchanged ones of the same files, which are preserved behavior.
         2. Inspect the files, modules, and dependencies in scope. Verify against actual code; do not assume. Identify existing points of extension and new components needed.
-        3. If major discrepancies with {STORY_FILE} appear, send batched questions with recommended options to the PO session (up to 3 rounds).
-        4. Write {PLAN_FILE} as a general plan: task status table with columns `#`, `Status` (blank, `working`, `validating`, `retry` plus attempt number, `blocked`, `done`), and `Task`; technical objective; overall architecture with a Mermaid diagram of the affected components; the tasks, each atomic, self-contained, and independently committable; a "Decisions" section recording resolved questions and choices.
-        5. Give each task what a Task Planner with no other context needs to detail it: a technical summary, the acceptance criteria of the story it serves, its boundary (modules and areas inside it, and what is left to other tasks), its dependencies on earlier tasks, and the architectural direction to follow. Leave file-level changes, test behaviors, and implementation steps to the Task Planner.
+        3. Send batched questions with recommended options to the PO session (up to 3 rounds) on any requirement you cannot turn into a verifiable check, requirements that contradict each other, and major discrepancies between the spec and the code.
+        4. Write {PLAN_FILE} as a general plan: task status table with columns `#`, `Status` (blank, `working`, `validating`, `retry` plus attempt number, `blocked`, `done`), and `Task`; technical objective; overall architecture with a Mermaid diagram of the affected components; "Constraints and verification", the repository rules and invariants that bind the design (AGENTS.md, README.md, ADRs, CI) and the exact build, lint, typecheck, and test commands; the tasks, each atomic, self-contained, and independently committable; "Coverage", a table from each requirement the story adds, changes, or removes and each `Documentation` item to the tasks that deliver it, marking `enabling` a task that serves none; a "Decisions" section recording resolved questions and choices, where a decision that changes the documented architecture also gets a documentation task.
+        5. Give each task what a Task Planner with no other context needs to detail it: a technical summary, the requirement and scenario IDs it delivers, its boundary (modules and areas inside it, and what is left to other tasks), its dependencies on earlier tasks, and the architectural direction to follow. Leave file-level changes, test behaviors, and implementation steps to the Task Planner.
         6. Return a one-line outcome with {PLAN_FILE}.
 
         When {ACTION} is re-plan:
-        1. Read {STORY_FILE}, the existing {PLAN_FILE}, and {FEEDBACK}.
-        2. Adjust the architecture, diagram, task separation, and decisions in {PLAN_FILE}.
+        1. Read {STORY_FILE}, the spec files it names, the existing {PLAN_FILE}, and {FEEDBACK}.
+        2. Adjust the architecture, diagram, task separation, coverage, and decisions in {PLAN_FILE}, leaving `done` tasks as they are.
         3. Return a one-line outcome with {PLAN_FILE}.
       </instructions>
       <constraints>
@@ -192,16 +231,16 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
       <instructions>
         This payload is the brief; do not read sibling skill files. Keep the plan as written: settle task-level questions yourself and change no scope.
         When {ACTION} is detail-task:
-        1. Read {STORY_FILE} and {PLAN_FILE} for plan {SLUG}: architecture, decisions, and task {TASK_NUM} with its summary, boundary, dependencies, and direction.
+        1. Read {STORY_FILE}, the spec files it names, and {PLAN_FILE} for plan {SLUG}: architecture, constraints and verification, decisions, and task {TASK_NUM} with its summary, requirement and scenario IDs, boundary, dependencies, and direction.
         2. Inspect the code inside the boundary of task {TASK_NUM}, plus what earlier tasks already committed. Verify against actual code; do not assume. Stay out of the areas the plan left to other tasks.
         3. If the task cannot be delivered inside its boundary, send batched questions with recommended options to the PO session (up to 3 rounds).
-        4. Write {TASK_FILE}: technical objective, files to create or modify with expected changes, test behaviors to verify per change (unit tests for code; smoke tests, linters, or schema validations for non-code assets), suggested implementation steps without writing code, and a "Decisions" section.
+        4. Write {TASK_FILE}: technical objective, the scenario IDs in scope, files to create or modify with expected changes, test behaviors to verify, at least one per scenario ID and each naming the ID it verifies, plus those the code needs beyond the spec (unit tests for code; smoke tests, linters, or schema validations for non-code assets), the verification commands of the plan that apply, suggested implementation steps without writing code, and a "Decisions" section.
         5. Set task {TASK_NUM} status to `working` in {PLAN_FILE}.
         6. Return one line with {TASK_FILE} ending with `<signal code="TASK_PLANNED">`.
 
         When {ACTION} is revise-task:
         1. Read {STORY_FILE}, {PLAN_FILE}, the existing {TASK_FILE}, and {FEEDBACK}, the contradiction or blocker the Implementer reported.
-        2. Verify it against actual code and correct {TASK_FILE} in place, recording the change under "Decisions".
+        2. Verify it against actual code and correct {TASK_FILE} in place, recording the change under "Decisions". When only a change to the spec resolves it, send that as a batched question to the PO session first.
         3. Return one line with {TASK_FILE} ending with `<signal code="TASK_PLANNED">`.
       </instructions>
       <constraints>
@@ -223,21 +262,21 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
       <instructions>
         This payload is the brief; do not read sibling skill files. The session that dispatched you is your only counterpart.
         When {ACTION} is execute-task:
-        1. Read {STORY_FILE}, {PLAN_FILE}, and {TASK_FILE} for task {TASK_NUM}. Take any uncommitted changes already in the worktree as your starting point.
-        2. Implement changes strictly within the scope defined in {TASK_FILE}. If blocked or if planned instructions contradict codebase realities, stop immediately and return one line stating it, ending with `<signal code="TASK_STOPPED">`.
-        3. Author tests covering the defined behaviors (unit tests for code; smoke tests, schema validations, or linters for non-code files) and run test suites and linters. Fix defects until all checks pass.
-        4. Append a concise, factual implementation report to {TASK_FILE}: changed files, tests written and executed, test and lint outcomes, and blockers. No self-evaluation.
+        1. Read {STORY_FILE}, the spec files it names, {PLAN_FILE}, and {TASK_FILE} for task {TASK_NUM}. Take any uncommitted changes already in the worktree as your starting point.
+        2. Implement changes strictly within the scope defined in {TASK_FILE}. If blocked or if planned instructions contradict codebase realities or the spec, stop immediately and return one line stating it, ending with `<signal code="TASK_STOPPED">`.
+        3. Author tests covering the defined behaviors (unit tests for code; smoke tests, schema validations, or linters for non-code files) and run the verification commands of {TASK_FILE}. Fix defects until all checks pass.
+        4. Append a concise, factual implementation report to {TASK_FILE}: changed files, a table from each scenario ID to its test and result, other tests written and executed, command outcomes, and blockers. No self-evaluation.
         5. Update task {TASK_NUM} status to `validating` in {PLAN_FILE}.
         6. Do not commit. Return one line with {TASK_FILE} ending with `<signal code="TASK_DELIVERED">`.
 
         When {ACTION} is rework-task:
-        1. Read {STORY_FILE}, {PLAN_FILE}, {TASK_FILE} with its reports and the feedback appended to it, and {REWORK_NOTES}. The uncommitted changes in the worktree are the previous attempt; rework them in place.
-        2. Apply the requested fixes, re-run tests and linters, and fix new failures. If blocked, return one line stating it, ending with `<signal code="TASK_STOPPED">`.
+        1. Read {STORY_FILE}, the spec files it names, {PLAN_FILE}, {TASK_FILE} with its reports and the feedback appended to it, and {REWORK_NOTES}. The uncommitted changes in the worktree are the previous attempt; rework them in place.
+        2. Apply the requested fixes, re-run the verification commands of {TASK_FILE}, and fix new failures. If blocked, return one line stating it, ending with `<signal code="TASK_STOPPED">`.
         3. Append a rework summary to {TASK_FILE} and set task {TASK_NUM} status to `validating` in {PLAN_FILE}.
         4. Do not commit. Return one line with {TASK_FILE} ending with `<signal code="TASK_DELIVERED">`.
       </instructions>
       <constraints>
-        <constraint>Stay strictly within task scope and report factual results only, without local commits.</constraint>
+        <constraint>Stay strictly within task scope, leave the spec files and the story untouched, and report factual results only, without local commits.</constraint>
       </constraints>
     </template>
 
@@ -255,18 +294,45 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
       <instructions>
         This payload is the brief; do not read sibling skill files. You own the verdict on task {TASK_NUM} of plan {SLUG}; nobody reviews it afterwards. You took no part in planning or implementing it: judge what is in the worktree, not what the report claims. The session sends this request once per attempt, with a new {ATTEMPT} each time.
         1. Read {STORY_FILE}, {PLAN_FILE}, and {TASK_FILE} with its implementation report. Treat a non-empty {FEEDBACK} as the user's extra instructions for this task.
-        2. Read the uncommitted git diff and judge it against them: the delivery serves the story's acceptance criteria for this task, follows the plan's architecture and decisions, stays inside the task's scope, matches the report, and holds in quality.
+        2. Read the uncommitted git diff and judge it scenario by scenario: for each scenario ID in the scope of {TASK_FILE}, the behavior is delivered and a test that would fail without it verifies it. Then judge that the delivery adds no behavior the spec does not ask for, breaks no preserved behavior, follows the plan's architecture, constraints, and decisions, stays inside the task's scope, matches the report, and holds in quality.
         3. Review adversarially: assume the delivery hides defects until you have hunted them down, probing beyond the expected behavior for bugs and regressions, unhandled edge cases and boundary values, empty, null, and malformed input, misuse and malicious input, security flaws (injection, missing authorization, secret exposure, unsafe defaults), race conditions and partial failures, error handling, and scope creep or gaps. An unlikely but plausible failure in what the delivery touches is a defect.
-        4. Verify that tests exist and genuinely verify the behaviors defined in {TASK_FILE}, failure paths and edge cases included, not only the happy path, and run the tests and linters yourself.
-        5. Append observations, every defect found, and the verdict for attempt {ATTEMPT} to {TASK_FILE}.
+        4. Verify that tests exist and genuinely verify the behaviors defined in {TASK_FILE}, failure paths and edge cases included, not only the happy path, and run the verification commands of {TASK_FILE} yourself.
+        5. Append to {TASK_FILE} the compliance table for attempt {ATTEMPT}, each scenario ID with `met` or `unmet` and its evidence, then observations, every defect found, and the verdict.
         6. If approved: set task {TASK_NUM} status to `done` in {PLAN_FILE}, stage the task's files with the plan and task files, commit locally with a Conventional Commit message, leave the worktree clean, and return one line ending with `<signal code="TASK_APPROVED">`.
         7. If rejected and {ATTEMPT} is below 3: append specific rework items to {TASK_FILE}, set the status to `retry` plus the next attempt number, and return one line ending with `<signal code="TASK_REWORK">`.
         8. If rejected and {ATTEMPT} is 3: set the status to `blocked`, leave the task's uncommitted changes in place, commit only {PLAN_FILE} and {TASK_FILE}, and return one line naming {TASK_FILE} and ending with `<signal code="TASK_BLOCKED">`.
       </instructions>
       <constraints>
-        <constraint>Never fix or write task code yourself and never approve a delivery that lacks tests genuinely verifying the defined behaviors.</constraint>
+        <constraint>Never fix or write task code yourself and never approve a delivery with an `unmet` scenario or without tests genuinely verifying the defined behaviors.</constraint>
         <constraint>Delivering what was expected is not enough: never approve while a defect, unhandled edge case, misuse path, or security flaw you found remains.</constraint>
         <constraint>Commit locally only; never push, never mutate cloud resources, never touch files outside the plan scope.</constraint>
+      </constraints>
+    </template>
+
+    <template role="acceptor" executor="inherited">
+      <job>Independent acceptance judge: check the whole branch of one story against every requirement of its spec before the pull request.</job>
+      <input>
+        <slug>{SLUG}</slug>
+        <round>{ROUND}</round>
+        <base_branch>{BASE_BRANCH}</base_branch>
+        <story_file>{STORY_FILE}</story_file>
+        <plan_file>{PLAN_FILE}</plan_file>
+        <acceptance_notes>{ACCEPTANCE_NOTES}</acceptance_notes>
+      </input>
+      <instructions>
+        This payload is the brief; do not read sibling skill files. You own the acceptance of story {SLUG}; nobody reviews it afterwards. You took no part in planning, implementing, or evaluating it: judge what is on the branch, not what the reports claim.
+        1. Read {STORY_FILE}, the spec files it names, and {PLAN_FILE}: constraints and verification, coverage, and decisions. Treat a non-empty {ACCEPTANCE_NOTES} as the user's extra instructions, granted after the story blocked.
+        2. Read the diff of the branch against {BASE_BRANCH}, the plan directory aside, and run every verification command of the plan.
+        3. Judge every requirement, scenario by scenario: one the story adds or changes is delivered and verified by a test that would fail without it; one it removes is gone with its tests; every other requirement of the touched spec files still holds; every `Documentation` item is reflected in its document; the spec files changed only in the requirements the story lists, and their text matches the delivered behavior.
+        4. Append an "Acceptance round {ROUND}" section to {PLAN_FILE}: a table with columns `ID`, `Requirement`, `Verdict` (`met` or `unmet`), and `Evidence` (the test or the diff location).
+        5. If every row is `met`: commit only {PLAN_FILE} with `chore(plan): accept {SLUG}` and return one line ending with `<signal code="STORY_ACCEPTED">`.
+        6. If a row is `unmet` and {ROUND} is below 3: append one convergence task per gap to {PLAN_FILE}, as a blank-status row in the task status table and an entry with technical summary, requirement and scenario IDs, boundary, dependencies, and direction, update the coverage table, commit only {PLAN_FILE} with `chore(plan): record acceptance gaps for {SLUG}`, and return one line ending with `<signal code="STORY_GAPS">`.
+        7. If a row is `unmet` and {ROUND} is 3: commit only {PLAN_FILE} with that same message and return one line naming the unmet IDs and ending with `<signal code="STORY_BLOCKED">`.
+      </instructions>
+      <constraints>
+        <constraint>Never fix code, tests, the spec, or the story yourself; write nothing but {PLAN_FILE}.</constraint>
+        <constraint>Never accept while a scenario lacks a test that genuinely verifies it or a verification command fails.</constraint>
+        <constraint>Commit locally only; never push, never mutate cloud resources.</constraint>
       </constraints>
     </template>
   </dispatch_templates>
