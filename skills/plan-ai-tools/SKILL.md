@@ -127,7 +127,7 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
     </step>
 
     <step id="9" name="plan-approval">
-      Read the coverage table of the plan per `<rule id="session-role">`: every requirement the story adds, changes, or removes and every `Documentation` item names a task, or, for a requirement marked `existing`, the tests that already verify it. On gaps, dispatch the live Planner with {ACTION} = re-plan and the gaps as its feedback, and check again, up to 3 times; gaps that remain go to the user with the approval request. Then send an atomic chat message linking the plan and story files, and prompt the user via `<user_interaction>` to approve the plan or request modifications. On modifications, amend per `<rule id="spec-authority">` when behavior changes, dispatch the live Planner with {ACTION} = re-plan and the user requests as its feedback, and repeat this step until approved. If the user abandons the story instead, undo the spec edits and remove `docs/plan-ai-tools/{SLUG}`.
+      Read the coverage table of the plan per `<rule id="session-role">`: every requirement the story adds, changes, or removes and every `Documentation` item names a task, or, for a requirement marked `existing`, the tests that already verify it. On gaps, dispatch the live Planner with {ACTION} = re-plan and the gaps as its feedback, and check again, up to 3 times; gaps that remain go to the user with the approval request. Then send an atomic chat message linking the plan and story files, and prompt the user via `<user_interaction>` to approve the plan or request modifications. On modifications, amend per `<rule id="spec-authority">` when behavior changes, dispatch the live Planner once with {ACTION} = re-plan and the user requests and any amendment as its feedback, and repeat this step until approved. If the user abandons the story instead, terminate the Planner, undo the spec edits, and remove `docs/plan-ai-tools/{SLUG}`.
     </step>
 
     <step id="10" name="branch-and-commit">
@@ -139,7 +139,7 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
     </step>
 
     <step id="12" name="resolve-task">
-      Read the {IMPLEMENTER} type and {BASE_BRANCH} from the story and the task status table from the plan, per `<rule id="session-role">`. Take the first task whose status is not `done` as {TASK_NUM} with its {TASK_SLUG}, set {TASK_FILE} = `docs/plan-ai-tools/{SLUG}/{TASK_NUM}-{TASK_SLUG}.md`, {ATTEMPT} = 1, and empty {FEEDBACK} and {REWORK_NOTES}:
+      Read the {IMPLEMENTER} type and {BASE_BRANCH} from the story and the task status table from the plan, per `<rule id="session-role">`. Take the first task whose status is not `done` as {TASK_NUM} with its {TASK_SLUG}, set {TASK_FILE} = `docs/plan-ai-tools/{SLUG}/{TASK_NUM}-{TASK_SLUG}.md`, or the existing task file of that number when the status is not blank, {ATTEMPT} = 1, {STOPS} = 0, and empty {FEEDBACK} and {REWORK_NOTES}:
       1. Every task `done`: proceed to `<step id="18">`.
       2. Status blank: proceed to `<step id="13">`.
       3. Status `blocked`: proceed to `<step id="17">`.
@@ -153,7 +153,7 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
     <step id="14" name="dispatch-implementer">
       Announce the spawn in one chat line. Spawn `<template role="implementer">` as one fresh agent of type {IMPLEMENTER}, resolved per `<rule id="implementer-selection">`, with clean zeroed context and {ACTION} = execute-task, or rework-task when {REWORK_NOTES} is non-empty, passing {TASK_NUM}, {STORY_FILE}, {PLAN_FILE}, {TASK_FILE}, and {REWORK_NOTES}. When that type cannot be dispatched from this environment, report it to the user in one line and conclude, leaving the plan branch untouched. The Implementer ends on its return per `<rule id="implementer-lifecycle">`; branch on it:
       1. `<signal code="TASK_DELIVERED">`: proceed to `<step id="15">`.
-      2. `<signal code="TASK_STOPPED">`: on the third stop of the same task, proceed to `<step id="17">`. Otherwise spawn a fresh `<template role="task-planner">` with {ACTION} = revise-task and the Implementer's line as its feedback, answer its questions per `<rule id="planner-question-rounds">`, terminate it on `<signal code="TASK_PLANNED">`, then repeat this step with a fresh Implementer and the same {REWORK_NOTES}.
+      2. `<signal code="TASK_STOPPED">`: increment {STOPS}; when it reaches 3, proceed to `<step id="17">`. Otherwise spawn a fresh `<template role="task-planner">` with {ACTION} = revise-task and the Implementer's line as its feedback, answer its questions per `<rule id="planner-question-rounds">`, terminate it on `<signal code="TASK_PLANNED">`, then repeat this step with a fresh Implementer and the same {REWORK_NOTES}.
     </step>
 
     <step id="15" name="dispatch-evaluator">
@@ -168,11 +168,11 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
     </step>
 
     <step id="17" name="blocked-escalation">
-      Escalate per `<rule id="retry-and-blocked">`. On extra instructions, apply any amendment they carry per `<rule id="spec-authority">`, set {FEEDBACK} to them, {ATTEMPT} = 1, and {REWORK_NOTES} = {FEEDBACK}, and return to `<step id="14">`. On abort, terminate the Evaluator when one is alive, leave branch `plan/{SLUG}` and the plan directory in place for inspection, and report the blocked task in one line.
+      Escalate per `<rule id="retry-and-blocked">`. On extra instructions, apply any amendment they carry per `<rule id="spec-authority">`, set {FEEDBACK} to them, {ATTEMPT} = 1, {STOPS} = 0, and {REWORK_NOTES} = {FEEDBACK}, and return to `<step id="14">`. On abort, terminate the Evaluator when one is alive, leave branch `plan/{SLUG}` and the plan directory in place for inspection, and report the blocked task in one line.
     </step>
 
     <step id="18" name="story-acceptance">
-      When {ROUND} is unset, set {ROUND} = 1 and empty {ACCEPTANCE_NOTES}. Announce the spawn in one chat line. Spawn `<template role="acceptor">` with clean zeroed context, inheriting session model and effort, passing {SLUG}, {ROUND}, {BASE_BRANCH}, {STORY_FILE}, {PLAN_FILE}, and {ACCEPTANCE_NOTES}. It ends on its return; branch per `<rule id="story-acceptance">` without reading or validating anything:
+      When {ROUND} is unset, as on a first or a resumed run, set {ROUND} = 1 and empty {ACCEPTANCE_NOTES}. Announce the spawn in one chat line. Spawn `<template role="acceptor">` with clean zeroed context, inheriting session model and effort, passing {SLUG}, {ROUND}, {BASE_BRANCH}, {STORY_FILE}, {PLAN_FILE}, and {ACCEPTANCE_NOTES}. It ends on its return; branch per `<rule id="story-acceptance">` without reading or validating anything:
       1. `<signal code="STORY_ACCEPTED">`: proceed to `<step id="19">`.
       2. `<signal code="STORY_GAPS">`: increment {ROUND} and return to `<step id="12">`.
       3. `<signal code="STORY_BLOCKED">`: escalate. On extra instructions, set {ACCEPTANCE_NOTES} to them and {ROUND} = 1, and repeat this step. On an amendment, apply it per `<rule id="spec-authority">`, set {ROUND} = 1, and return to `<step id="12">`. On abort, leave branch `plan/{SLUG}` and the plan directory in place for inspection, and report the unmet checks in one line.
@@ -272,8 +272,8 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
 
         When {ACTION} is rework-task:
         1. Read {STORY_FILE}, the spec files it names, {PLAN_FILE}, {TASK_FILE} with its reports and the feedback appended to it, and {REWORK_NOTES}. The uncommitted changes in the worktree are the previous attempt; rework them in place.
-        2. Apply the requested fixes, re-run the verification commands of {TASK_FILE}, and fix new failures. If blocked, return one line stating it, ending with `<signal code="TASK_STOPPED">`.
-        3. Append a rework summary to {TASK_FILE} and set task {TASK_NUM} status to `validating` in {PLAN_FILE}.
+        2. Apply the requested fixes, author any test the defined behaviors still lack, re-run the verification commands of {TASK_FILE}, and fix new failures. If blocked, return one line stating it, ending with `<signal code="TASK_STOPPED">`.
+        3. Append a rework summary to {TASK_FILE}, with the table from each scenario ID to its test and result brought up to date, and set task {TASK_NUM} status to `validating` in {PLAN_FILE}.
         4. Do not commit. Return one line with {TASK_FILE} ending with `<signal code="TASK_DELIVERED">`.
       </instructions>
       <constraints>
@@ -295,7 +295,7 @@ argument-hint: "[story or feature description to plan, or slug of a plan to impl
       <instructions>
         This payload is the brief; do not read sibling skill files. You own the verdict on task {TASK_NUM} of plan {SLUG}; nobody reviews it afterwards. You took no part in planning or implementing it: judge what is in the worktree, not what the report claims. The session sends this request once per attempt, with a new {ATTEMPT} each time.
         1. Read {STORY_FILE}, the spec files it names, {PLAN_FILE}, and {TASK_FILE} with its implementation report. Treat a non-empty {FEEDBACK} as the user's extra instructions for this task.
-        2. Read the uncommitted git diff and judge it scenario by scenario: for each scenario ID the plan assigns to task {TASK_NUM}, the behavior is delivered as its spec file states it and a test that would fail without it verifies it; a {TASK_FILE} that omits one of those IDs is a defect. Then judge that the delivery adds no behavior the spec does not ask for, leaves every other requirement of the touched spec files holding, follows the plan's architecture, constraints, and decisions, stays inside the task's scope, matches the report, and holds in quality.
+        2. Read the uncommitted git diff and judge it scenario by scenario: for each scenario ID the plan assigns to task {TASK_NUM} that its spec file still holds, the behavior is delivered as that file states it and a test that would fail without it verifies it; a {TASK_FILE} that omits one of those IDs is a defect. Then judge that the delivery adds no behavior the spec does not ask for, breaks no requirement of the touched spec files that held before this task, follows the plan's architecture, constraints, and decisions, stays inside the task's scope, matches the report, and holds in quality.
         3. Review adversarially: assume the delivery hides defects until you have hunted them down, probing beyond the expected behavior for bugs and regressions, unhandled edge cases and boundary values, empty, null, and malformed input, misuse and malicious input, security flaws (injection, missing authorization, secret exposure, unsafe defaults), race conditions and partial failures, error handling, and scope creep or gaps. An unlikely but plausible failure in what the delivery touches is a defect.
         4. Verify that tests exist and genuinely verify the behaviors defined in {TASK_FILE}, failure paths and edge cases included, not only the happy path, and run the verification commands of {TASK_FILE} yourself.
         5. Append to {TASK_FILE} the compliance table for attempt {ATTEMPT}, each scenario ID with `met` or `unmet` and its evidence, then observations, every defect found, and the verdict.

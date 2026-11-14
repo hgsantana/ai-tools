@@ -129,7 +129,7 @@ argument-hint: "[story or feature description to plan and implement]"
     </step>
 
     <step id="8" name="plan-validation">
-      Read the plan and check it against the story and the spec: the coverage table names a task for every requirement the story adds, changes, or removes and for every `Documentation` item, or, for a requirement marked `existing`, the tests that already verify it, and nothing exceeds `Out of scope`. On gaps, dispatch the live Planner with {ACTION} = re-plan and the gaps as its feedback, and repeat this step, up to 3 times; gaps that remain are escalated to the user via `<user_interaction>`. Approve the plan without prompting the user.
+      Read the plan and check it against the story and the spec: the coverage table names a task for every requirement the story adds, changes, or removes and for every `Documentation` item, or, for a requirement marked `existing`, the tests that already verify it, and nothing exceeds `Out of scope`. On gaps, dispatch the live Planner with {ACTION} = re-plan and the gaps as its feedback, and repeat this step, up to 3 times; gaps that remain are escalated to the user via `<user_interaction>`, to proceed with them, give guidance for one more re-plan, or abandon the story, which terminates the Planner, undoes the spec edits, and removes `docs/vibe-ai-tools/{SLUG}`. Otherwise approve the plan without prompting the user.
     </step>
 
     <step id="9" name="branch-and-commit">
@@ -137,7 +137,7 @@ argument-hint: "[story or feature description to plan and implement]"
     </step>
 
     <step id="10" name="resolve-task">
-      Read the task status table from the plan. When every task is `done`, proceed to `<step id="16">`. Otherwise take the first task whose status is not `done` as {TASK_NUM} with its {TASK_SLUG}, set {TASK_FILE} = `docs/vibe-ai-tools/{SLUG}/{TASK_NUM}-{TASK_SLUG}.md`, {ATTEMPT} = 1, and empty {FEEDBACK} and {REWORK_NOTES}.
+      Read the task status table from the plan. When every task is `done`, proceed to `<step id="16">`. Otherwise take the first task whose status is not `done` as {TASK_NUM} with its {TASK_SLUG}, set {TASK_FILE} = `docs/vibe-ai-tools/{SLUG}/{TASK_NUM}-{TASK_SLUG}.md`, {ATTEMPT} = 1, {STOPS} = 0, and empty {FEEDBACK} and {REWORK_NOTES}.
     </step>
 
     <step id="11" name="dispatch-task-planner">
@@ -147,7 +147,7 @@ argument-hint: "[story or feature description to plan and implement]"
     <step id="12" name="dispatch-implementer">
       Announce the spawn in one chat line. Spawn `<template role="implementer">` as one fresh agent of type {IMPLEMENTER}, resolved per `<rule id="implementer-selection">`, with clean zeroed context and {ACTION} = execute-task, or rework-task when {REWORK_NOTES} is non-empty, passing {TASK_NUM}, {STORY_FILE}, {PLAN_FILE}, {TASK_FILE}, and {REWORK_NOTES}. When that type cannot be dispatched from this environment, report it to the user in one line and conclude, leaving the branch untouched. The Implementer ends on its return per `<rule id="implementer-lifecycle">`; branch on it:
       1. `<signal code="TASK_DELIVERED">`: proceed to `<step id="13">`.
-      2. `<signal code="TASK_STOPPED">`: on the third stop of the same task, proceed to `<step id="15">`. Otherwise spawn a fresh `<template role="task-planner">` with {ACTION} = revise-task and the Implementer's line as its feedback, answer its questions on the user's behalf per `<rule id="autonomous-decision-policy">`, terminate it on `<signal code="TASK_PLANNED">`, then repeat this step with a fresh Implementer and the same {REWORK_NOTES}.
+      2. `<signal code="TASK_STOPPED">`: increment {STOPS}; when it reaches 3, proceed to `<step id="15">`. Otherwise spawn a fresh `<template role="task-planner">` with {ACTION} = revise-task and the Implementer's line as its feedback, answer its questions on the user's behalf per `<rule id="autonomous-decision-policy">`, terminate it on `<signal code="TASK_PLANNED">`, then repeat this step with a fresh Implementer and the same {REWORK_NOTES}.
     </step>
 
     <step id="13" name="dispatch-evaluator">
@@ -162,7 +162,7 @@ argument-hint: "[story or feature description to plan and implement]"
     </step>
 
     <step id="15" name="blocked-recovery">
-      Recover or escalate per `<rule id="retry-and-blocked">`. With extra instructions, whether the session's own or the user's, apply any amendment they carry per `<rule id="spec-authority">`, set {FEEDBACK} to them, {ATTEMPT} = 1, and {REWORK_NOTES} = {FEEDBACK}, and return to `<step id="12">`. On abort, terminate the Evaluator when one is alive, leave branch `vibe/{SLUG}` and the plan directory in place for inspection, and report the blocked task in one line.
+      Recover or escalate per `<rule id="retry-and-blocked">`. With extra instructions, whether the session's own or the user's, apply any amendment they carry per `<rule id="spec-authority">`, set {FEEDBACK} to them, {ATTEMPT} = 1, {STOPS} = 0, and {REWORK_NOTES} = {FEEDBACK}, and return to `<step id="12">`. On abort, terminate the Evaluator when one is alive, leave branch `vibe/{SLUG}` and the plan directory in place for inspection, and report the blocked task in one line.
     </step>
 
     <step id="16" name="story-acceptance">
@@ -266,8 +266,8 @@ argument-hint: "[story or feature description to plan and implement]"
 
         When {ACTION} is rework-task:
         1. Read {STORY_FILE}, the spec files it names, {PLAN_FILE}, {TASK_FILE} with its reports and the feedback appended to it, and {REWORK_NOTES}. The uncommitted changes in the worktree are the previous attempt; rework them in place.
-        2. Apply the requested fixes, re-run the verification commands of {TASK_FILE}, and fix new failures. If blocked, return one line stating it, ending with `<signal code="TASK_STOPPED">`.
-        3. Append a rework summary to {TASK_FILE} and set task {TASK_NUM} status to `validating` in {PLAN_FILE}.
+        2. Apply the requested fixes, author any test the defined behaviors still lack, re-run the verification commands of {TASK_FILE}, and fix new failures. If blocked, return one line stating it, ending with `<signal code="TASK_STOPPED">`.
+        3. Append a rework summary to {TASK_FILE}, with the table from each scenario ID to its test and result brought up to date, and set task {TASK_NUM} status to `validating` in {PLAN_FILE}.
         4. Do not commit. Return one line with {TASK_FILE} ending with `<signal code="TASK_DELIVERED">`.
       </instructions>
       <constraints>
@@ -289,7 +289,7 @@ argument-hint: "[story or feature description to plan and implement]"
       <instructions>
         This payload is the brief; do not read sibling skill files. You own the verdict on task {TASK_NUM} of plan {SLUG}; nobody reviews it afterwards, and you never ask the user or the session anything. You took no part in planning or implementing it: judge what is in the worktree, not what the report claims. The session sends this request once per attempt, with a new {ATTEMPT} each time.
         1. Read {STORY_FILE}, the spec files it names, {PLAN_FILE}, and {TASK_FILE} with its implementation report. Treat a non-empty {FEEDBACK} as extra instructions for this task, granted after it blocked.
-        2. Read the uncommitted git diff and judge it scenario by scenario: for each scenario ID the plan assigns to task {TASK_NUM}, the behavior is delivered as its spec file states it and a test that would fail without it verifies it; a {TASK_FILE} that omits one of those IDs is a defect. Then judge that the delivery adds no behavior the spec does not ask for, leaves every other requirement of the touched spec files holding, follows the plan's architecture, constraints, and decisions, stays inside the task's scope, matches the report, and holds in quality.
+        2. Read the uncommitted git diff and judge it scenario by scenario: for each scenario ID the plan assigns to task {TASK_NUM} that its spec file still holds, the behavior is delivered as that file states it and a test that would fail without it verifies it; a {TASK_FILE} that omits one of those IDs is a defect. Then judge that the delivery adds no behavior the spec does not ask for, breaks no requirement of the touched spec files that held before this task, follows the plan's architecture, constraints, and decisions, stays inside the task's scope, matches the report, and holds in quality.
         3. Review adversarially: assume the delivery hides defects until you have hunted them down, probing beyond the expected behavior for bugs and regressions, unhandled edge cases and boundary values, empty, null, and malformed input, misuse and malicious input, security flaws (injection, missing authorization, secret exposure, unsafe defaults), race conditions and partial failures, error handling, and scope creep or gaps. An unlikely but plausible failure in what the delivery touches is a defect.
         4. Verify that tests exist and genuinely verify the behaviors defined in {TASK_FILE}, failure paths and edge cases included, not only the happy path, and run the verification commands of {TASK_FILE} yourself.
         5. Append to {TASK_FILE} the compliance table for attempt {ATTEMPT}, each scenario ID with `met` or `unmet` and its evidence, then observations, every defect found, and the verdict.

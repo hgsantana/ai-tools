@@ -173,11 +173,11 @@ argument-hint: "[story or feature description, or slug of a team plan to resume]
     </step>
 
     <step id="12" name="plan-approval">
-      Prompt the user via `<user_interaction>` asking whether they approve the plan or request modifications. If the user abandons the story instead, undo the spec edits and remove `docs/team-ai-tools/{SLUG}`.
+      Prompt the user via `<user_interaction>` asking whether they approve the plan or request modifications. If the user abandons the story instead, terminate the Architect, undo the spec edits, and remove `docs/team-ai-tools/{SLUG}`.
     </step>
 
     <step id="13" name="plan-iteration">
-      If modifications are requested, amend per `<rule id="spec-authority">` when behavior changes and update {STORY_FILE} if necessary, then dispatch the live Architect with {ACTION} = re-plan and the user requests as its feedback. Repeat `<step id="11">` and `<step id="12">` until the user approves.
+      If modifications are requested, amend per `<rule id="spec-authority">` when behavior changes and update {STORY_FILE} if necessary, then dispatch the live Architect once with {ACTION} = re-plan and the user requests and any amendment as its feedback. Repeat `<step id="11">` and `<step id="12">` until the user approves.
     </step>
 
     <step id="14" name="branch-and-commit">
@@ -185,7 +185,7 @@ argument-hint: "[story or feature description, or slug of a team plan to resume]
     </step>
 
     <step id="15" name="resolve-task">
-      Read `docs/team-ai-tools/{SLUG}/0-{SLUG}.md` and `docs/team-ai-tools/{SLUG}/story-{SLUG}.md`, taking {BASE_BRANCH} from the story. Locate the first task whose status is not `done` in the plan status table as {TASK_NUM}, with its {TASK_SLUG} and its assigned specialist role ({SPECIALIST_ROLE}), and set {TASK_FILE} = `docs/team-ai-tools/{SLUG}/{TASK_NUM}-{TASK_SLUG}.md`, {SPECIALIST_SUMMARY} from `<rule id="specialists-catalog">`, {ATTEMPT} = 1, and empty {FEEDBACK} and {REWORK_NOTES}:
+      Read `docs/team-ai-tools/{SLUG}/0-{SLUG}.md` and `docs/team-ai-tools/{SLUG}/story-{SLUG}.md`, taking {BASE_BRANCH} from the story. Locate the first task whose status is not `done` in the plan status table as {TASK_NUM}, with its {TASK_SLUG} and its assigned specialist role ({SPECIALIST_ROLE}), and set {TASK_FILE} = `docs/team-ai-tools/{SLUG}/{TASK_NUM}-{TASK_SLUG}.md`, or the existing task file of that number when the status is not blank, {SPECIALIST_SUMMARY} from `<rule id="specialists-catalog">`, {ATTEMPT} = 1, {STOPS} = 0, and empty {FEEDBACK} and {REWORK_NOTES}:
       1. Every task `done`: proceed to `<step id="22">`.
       2. Status blank: proceed to `<step id="16">`.
       3. Status `blocked`: escalate as in case 3 of `<step id="21">`.
@@ -207,7 +207,7 @@ argument-hint: "[story or feature description, or slug of a team plan to resume]
     <step id="19" name="implementer-execution-wait">
       Implementer executes per `<rule id="implementer-rules">`: changes, tests and verification commands, factual report appended to {TASK_FILE}, task status `validating` in `0-{SLUG}.md`, and outcome with {TASK_FILE} link. Branch on the signal that ends its return, without reading or validating anything:
       1. `<signal code="TASK_DELIVERED">`: proceed to `<step id="20">`.
-      2. `<signal code="TASK_STOPPED">`: on the third stop of the same task, escalate as in case 3 of `<step id="21">`. Otherwise the session sends the live specialist a request with {ACTION} = revise-task and the Implementer's line as its feedback; when none is alive for the task, it spawns a fresh `<template role="specialist">` with clean zeroed context for that request, passing {SLUG}, {TASK_NUM}, {TASK_SLUG}, {STORY_FILE}, {PLAN_FILE}, {TASK_FILE}, {SPECIALIST_ROLE}, {SPECIALIST_SUMMARY}, and {ATTEMPT}. The specialist verifies the line against actual code and the spec and records guidance in {TASK_FILE}; the session answers its questions, applying amendments per `<rule id="spec-authority">`, then repeats `<step id="18">` with a fresh implementer and the same {REWORK_NOTES}.
+      2. `<signal code="TASK_STOPPED">`: increment {STOPS}; when it reaches 3, escalate as in case 3 of `<step id="21">`. Otherwise the session sends the live specialist a request with {ACTION} = revise-task and the Implementer's line as its feedback; when none is alive for the task, it spawns a fresh `<template role="specialist">` with clean zeroed context for that request, passing {SLUG}, {TASK_NUM}, {TASK_SLUG}, {STORY_FILE}, {PLAN_FILE}, {TASK_FILE}, {SPECIALIST_ROLE}, {SPECIALIST_SUMMARY}, and {ATTEMPT}. The specialist verifies the line against actual code and the spec and records guidance in {TASK_FILE}; the session answers its questions, applying amendments per `<rule id="spec-authority">`, then repeats `<step id="18">` with a fresh implementer and the same {REWORK_NOTES}.
     </step>
 
     <step id="20" name="dispatch-validator">
@@ -218,11 +218,11 @@ argument-hint: "[story or feature description, or slug of a team plan to resume]
       Specialist judges the uncommitted `git diff` scenario by scenario against the spec files the story names, not only against the task file it wrote, compares it with the implementation report, explicitly verifying that tests were written and genuinely validate defined behaviors (unit tests, smoke tests, validation scripts, or pipeline checks per task type), runs the verification commands of {TASK_FILE}, appends a compliance table, and adversarially hunts for bugs, edge cases, misuse, security flaws, and scope deviations beyond the expected behavior. The session branches on the signal that ends its return:
       1. `<signal code="TASK_APPROVED">`: Specialist confirmed test presence and rigor, set task status to `done` in `0-{SLUG}.md`, staged the task's files with the plan and task files, committed locally with Conventional Commit message, and left the worktree clean. Session terminates the specialist per `<rule id="clean-context-lifecycle">`, and advances to the next task (`<step id="15">`).
       2. `<signal code="TASK_REWORK">` (missing tests, superficial verification, an `unmet` scenario, defects, unhandled edge cases, misuse paths, security flaws, or domain deviation): Specialist set status to `retry` plus the next attempt number in `0-{SLUG}.md` and appended rework items to {TASK_FILE}. Session increments {ATTEMPT} and repeats `<step id="18">` with a fresh implementer and {REWORK_NOTES} pointing at the rework items.
-      3. `<signal code="TASK_BLOCKED">`: Specialist set status to `blocked` in `0-{SLUG}.md`, left the task's uncommitted changes in place, and committed only the plan and task files. Session sends an atomic chat message linking {TASK_FILE}, followed by an interactive prompt via `<user_interaction>` asking the user for extra instructions or abort per `<rule id="retry-and-blocked">`. On extra instructions, apply any amendment they carry per `<rule id="spec-authority">`, set {FEEDBACK} to them, {ATTEMPT} = 1, and {REWORK_NOTES} = {FEEDBACK}, then repeat `<step id="18">` with a fresh implementer. On abort, terminate the Specialist and the Architect when alive, leave branch `team/{SLUG}` and the plan directory in place for inspection, and report the blocked task in one line.
+      3. `<signal code="TASK_BLOCKED">`: Specialist set status to `blocked` in `0-{SLUG}.md`, left the task's uncommitted changes in place, and committed only the plan and task files. Session sends an atomic chat message linking {TASK_FILE}, followed by an interactive prompt via `<user_interaction>` asking the user for extra instructions or abort per `<rule id="retry-and-blocked">`. On extra instructions, apply any amendment they carry per `<rule id="spec-authority">`, set {FEEDBACK} to them, {ATTEMPT} = 1, {STOPS} = 0, and {REWORK_NOTES} = {FEEDBACK}, then repeat `<step id="18">` with a fresh implementer. On abort, terminate the Specialist and the Architect when alive, leave branch `team/{SLUG}` and the plan directory in place for inspection, and report the blocked task in one line.
     </step>
 
     <step id="22" name="story-acceptance">
-      When {ROUND} is unset, set {ROUND} = 1 and empty {ACCEPTANCE_NOTES}. Announce the spawn in one chat line. Spawn `<template role="acceptor">` with clean zeroed context, inheriting session model and effort, passing {SLUG}, {ROUND}, {BASE_BRANCH}, {STORY_FILE}, {PLAN_FILE}, {ACCEPTANCE_NOTES}, and {SPECIALIST_SUMMARY} of `qa-eng` from `<rule id="specialists-catalog">`. It ends on its return; branch per `<rule id="story-acceptance">` without reading or validating anything:
+      When {ROUND} is unset, as on a first or a resumed run, set {ROUND} = 1 and empty {ACCEPTANCE_NOTES}. Announce the spawn in one chat line. Spawn `<template role="acceptor">` with clean zeroed context, inheriting session model and effort, passing {SLUG}, {ROUND}, {BASE_BRANCH}, {STORY_FILE}, {PLAN_FILE}, {ACCEPTANCE_NOTES}, and {SPECIALIST_SUMMARY} of `qa-eng` from `<rule id="specialists-catalog">`. It ends on its return; branch per `<rule id="story-acceptance">` without reading or validating anything:
       1. `<signal code="STORY_ACCEPTED">`: terminate the Architect when one is alive and proceed to `<step id="23">`.
       2. `<signal code="STORY_GAPS">`: increment {ROUND} and return to `<step id="15">`.
       3. `<signal code="STORY_BLOCKED">`: escalate. On extra instructions, set {ACCEPTANCE_NOTES} to them and {ROUND} = 1, and repeat this step. On an amendment, apply it per `<rule id="spec-authority">`, set {ROUND} = 1, and return to `<step id="15">`. On abort, terminate the Architect when one is alive, leave branch `team/{SLUG}` and the plan directory in place for inspection, and report the unmet checks in one line.
@@ -269,6 +269,7 @@ argument-hint: "[story or feature description, or slug of a team plan to resume]
         1. Read {STORY_FILE}, the spec files it names, existing {PLAN_FILE}, and user {FEEDBACK}.
         2. Inspect the code the change touches, then adjust architecture diagrams, task breakdown, specialist assignments, coverage, and decisions in {PLAN_FILE}, giving each new or changed task the entry a planned task gets and leaving every task whose status is not blank as it is.
         3. Return concise outcome: "Plan completed successfully: {PLAN_FILE}".
+        When {FEEDBACK} is a question rather than a change, answer it instead: record the answer under "Decisions" in {PLAN_FILE}, leave the tasks untouched, and return the answer in one line.
 
         While alive, answer the architecture questions the session relays and record settled ones under "Decisions" in {PLAN_FILE}.
       </instructions>
@@ -294,7 +295,7 @@ argument-hint: "[story or feature description, or slug of a team plan to resume]
         <feedback>{FEEDBACK}</feedback>
       </input>
       <instructions>
-        This payload is the brief; do not read sibling skill files. Act as {SPECIALIST_ROLE} applying domain principles: {SPECIALIST_SUMMARY}.
+        This payload is the brief; do not read sibling skill files. Act as {SPECIALIST_ROLE} applying domain principles: {SPECIALIST_SUMMARY}. Each request carries its own {FEEDBACK}, which replaces the previous one.
         When {ACTION} is detail-task:
         1. Read {STORY_FILE}, the spec files it names, and {PLAN_FILE} for plan {SLUG}: architecture, constraints and verification, decisions, and task {TASK_NUM} ({TASK_SLUG}) with its summary, requirement and scenario IDs, boundary, dependencies, and direction.
         2. Inspect relevant repository code in scope. If ambiguities arise, query the PO or Architect via session relay (up to 3 rounds).
@@ -315,9 +316,9 @@ argument-hint: "[story or feature description, or slug of a team plan to resume]
         3. Return concise outcome with link to {TASK_FILE}. Remain active on standby.
 
         When {ACTION} is validate-task:
-        1. Read {STORY_FILE}, the spec files it names, {PLAN_FILE}, and {TASK_FILE} with its implementation report. Treat a non-empty {FEEDBACK} as the user's extra instructions for this task. Read the uncommitted git diff and judge it scenario by scenario: for each scenario ID the plan assigns to task {TASK_NUM}, the behavior is delivered as its spec file states it and a test that would fail without it verifies it; a {TASK_FILE} that omits one of those IDs is a defect.
+        1. Read {STORY_FILE}, the spec files it names, {PLAN_FILE}, and {TASK_FILE} with its implementation report. Treat a non-empty {FEEDBACK} as the user's extra instructions for this task. Read the uncommitted git diff and judge it scenario by scenario: for each scenario ID the plan assigns to task {TASK_NUM} that its spec file still holds, the behavior is delivered as that file states it and a test that would fail without it verifies it; a {TASK_FILE} that omits one of those IDs is a defect.
         2. Verify that corresponding tests were actually written (e.g., unit tests for code; smoke tests, validation scripts, schema checks, or linters for non-code files, pipelines, or configs) and assert that they genuinely test the behaviors defined in {TASK_FILE}, failure paths and edge cases included, rather than superficial or happy-path-only assertions. Run the verification commands of {TASK_FILE} yourself.
-        3. Evaluate that the delivery adds no behavior the spec does not ask for, leaves every other requirement of the touched spec files holding, follows the plan's architecture, constraints, and decisions, stays inside the task's scope, and matches the report; then evaluate test coverage and execution results, code quality, and domain principles ({SPECIALIST_SUMMARY}).
+        3. Evaluate that the delivery adds no behavior the spec does not ask for, breaks no requirement of the touched spec files that held before this task, follows the plan's architecture, constraints, and decisions, stays inside the task's scope, and matches the report; then evaluate test coverage and execution results, code quality, and domain principles ({SPECIALIST_SUMMARY}).
         4. Review adversarially: assume the delivery hides defects until you have hunted them down, probing beyond the expected behavior for bugs and regressions, unhandled edge cases and boundary values, empty, null, and malformed input, misuse and malicious input, security flaws (injection, missing authorization, secret exposure, unsafe defaults), race conditions and partial failures, error handling, and scope creep or gaps, with the eye of {SPECIALIST_ROLE}. An unlikely but plausible failure in what the delivery touches is a defect.
         5. Append to {TASK_FILE} the compliance table for attempt {ATTEMPT}, each scenario ID with `met` or `unmet` and its evidence, then review observations, every defect found, and verdict.
         6. If approved: update task {TASK_NUM} status to `done` in {PLAN_FILE}, stage the task's files with the plan and task files, commit locally with a Conventional Commit message, leave the worktree clean, and return one line with {TASK_FILE}, ending with `<signal code="TASK_APPROVED">`.
@@ -353,9 +354,9 @@ argument-hint: "[story or feature description, or slug of a team plan to resume]
 
         When {ACTION} is rework-task:
         1. Read {STORY_FILE}, the spec files it names, {PLAN_FILE}, {TASK_FILE} with its reports and feedback appended to it, and {REWORK_NOTES}. The uncommitted changes in the worktree are the previous attempt; rework them in place.
-        2. Apply requested fixes to affected files, tests, or validation scripts. If blocked, stop immediately and return one line stating it, ending with `<signal code="TASK_STOPPED">`.
+        2. Apply requested fixes to affected files, tests, or validation scripts, authoring any test the defined behaviors still lack. If blocked, stop immediately and return one line stating it, ending with `<signal code="TASK_STOPPED">`.
         3. Re-run the verification commands of {TASK_FILE}, fixing any new failures.
-        4. Append rework summary to {TASK_FILE} and set task {TASK_NUM} status to `validating` in {PLAN_FILE}.
+        4. Append rework summary to {TASK_FILE}, with the table from each scenario ID to its test and result brought up to date, and set task {TASK_NUM} status to `validating` in {PLAN_FILE}.
         5. Do not commit changes locally. Return one line with link to {TASK_FILE}, ending with `<signal code="TASK_DELIVERED">`.
       </instructions>
       <constraints>
