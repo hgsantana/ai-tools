@@ -22,7 +22,7 @@ argument-hint: "[campaign goal to pursue across the repository]"
       - `Work point`: One cohesive spot in the repository matching the campaign's work-point definition, where the campaign goal applies and has not yet been addressed.
       - `Planner`: Clean-context subagent inheriting session model and effort; full-stack architect that plans, dispatches implementers, adversarially validates, and commits.
       - `Implementer`: Clean-context agent of the campaign implementer type; lives for one delivery attempt per `<rule id="implementer-lifecycle">`.
-      - `Cycle log`: Table in the campaign file with columns `#`, `Status` (`working`, `done`, `blocked`), `Work point`, `Plan`, and `Criteria` (`met`, or the unmet IDs), maintained by Planners as the memory shared across cycles.
+      - `Cycle log`: Table in the campaign file with columns `#`, `Status` (`working`, `done`, `blocked`), `Work point`, `Plan`, and `Criteria` (`met`, the unmet IDs, or `unchecked`), maintained by Planners as the memory shared across cycles.
     </rule>
 
     <rule id="campaign-format">The campaign file is the spec of the campaign, in these sections:
@@ -60,15 +60,15 @@ argument-hint: "[campaign goal to pursue across the repository]"
   </boundaries>
 
   <return_protocol>
-    <signal code="CYCLE_DONE">Work point planned, every task validated and committed.</signal>
-    <signal code="CYCLE_BLOCKED">Work point planned and committed, at least one task blocked per `<rule id="retry-and-blocked">`.</signal>
+    <signal code="CYCLE_DONE">Work point planned, every task validated and committed, every criterion met.</signal>
+    <signal code="CYCLE_BLOCKED">Work point planned and committed, at least one task blocked per `<rule id="retry-and-blocked">` or a criterion left unmet.</signal>
     <signal code="CYCLE_EMPTY">No remaining work point found for the campaign; nothing written or committed.</signal>
     <signal code="DISPATCH_UNAVAILABLE">The Planner cannot dispatch an Implementer of the campaign type from its environment; nothing written or committed.</signal>
   </return_protocol>
 
   <session_workflow>
     <step id="1" name="scope-refinement">
-      Derive kebab-case {SLUG}. Read repository documentation (README.md, AGENTS.md, docs/) without inspecting application code. Conduct clarification rounds with the user via `<user_interaction>` in batched questions, recommended option first, until the sections of `<rule id="campaign-format">` are settled: goal, scope, work-point definition, done criteria, preserved behavior, verification commands, and constraints.
+      Derive kebab-case {SLUG}. Read repository documentation (README.md, AGENTS.md, docs/, and the spec directory the repository keeps) without inspecting application code. Conduct clarification rounds with the user via `<user_interaction>` in batched questions, recommended option first, until the sections of `<rule id="campaign-format">` are settled.
     </step>
 
     <step id="2" name="resolve-implementer">
@@ -76,7 +76,7 @@ argument-hint: "[campaign goal to pursue across the repository]"
     </step>
 
     <step id="3" name="write-campaign">
-      Write `docs/campaign-ai-tools/{SLUG}/campaign-{SLUG}.md` per `<rule id="campaign-format">`, recording the {IMPLEMENTER} type per `<rule id="implementer-selection">` and an empty cycle log per `<rule id="ubiquitous-language">`.
+      Write `docs/campaign-ai-tools/{SLUG}/campaign-{SLUG}.md` per `<rule id="campaign-format">`, with the {IMPLEMENTER} type and an empty cycle log.
     </step>
 
     <step id="4" name="campaign-approval">
@@ -122,24 +122,24 @@ argument-hint: "[campaign goal to pursue across the repository]"
         This payload is the brief; do not read sibling skill files. You own every technical decision and every validation of cycle {CYCLE} of campaign {SLUG}; nobody reviews your work afterwards, and you never ask the user or the session anything. Decide autonomously, choosing zero-cost and easily reversible options.
         Scan:
         1. Read every section of {CAMPAIGN_FILE}, the cycle log of work points already done or blocked included.
-        2. Enumerate candidates with the recorded search recipe, deriving it from the repository when absent, and pick one cohesive work point where the campaign goal applies, inside scope and absent from the cycle log. Verify against actual code; do not assume. Skip any work point requiring financial cost, irreversible data loss, a destructive operation, or a cloud mutation.
-        3. If no work point remains, write nothing, commit nothing, and return `<signal code="CYCLE_EMPTY">`.
+        2. Enumerate candidates with the recorded search recipe, deriving it from the repository when absent, and pick one cohesive work point where the campaign goal applies, inside scope and absent from the cycle log. Verify against actual code; do not assume. When the repository keeps a spec directory, read the requirements that cover the work point. Skip any work point requiring financial cost, irreversible data loss, a destructive operation, or a cloud mutation.
+        3. When the recipe yields no candidate, search once more by the work-point definition itself, since a recipe can be too narrow. If no work point remains, write nothing, commit nothing, and return `<signal code="CYCLE_EMPTY">`.
         4. Confirm you can dispatch an agent of type {IMPLEMENTER}, resolved per `<rule id="implementer-selection">`. If you cannot, write nothing and return `<signal code="DISPATCH_UNAVAILABLE">`.
         Plan:
         5. Write `{CYCLE_DIR}/0-plan.md`: task status table with columns `#`, `Status` (blank, `working`, `validating`, `retry` plus attempt number, `blocked`, `done`), and `Task`; the work point and technical objective; Mermaid diagram of the affected components; atomic, self-contained, independently committable tasks with technical summaries, dependencies, and the done criteria each satisfies; decisions taken.
-        6. Append a row for cycle {CYCLE} to the cycle log in {CAMPAIGN_FILE} with status `working`, the work point, and the plan path. Record in {CAMPAIGN_FILE} any search recipe or verification command you derived.
+        6. Append a row for cycle {CYCLE} to the cycle log in {CAMPAIGN_FILE} with status `working`, the work point, and the plan path. Derive from the repository any verification command {CAMPAIGN_FILE} leaves open, and record it there with any search recipe you derived or corrected.
         7. Stage only those two files and commit with `chore(campaign): plan cycle {CYCLE} of {SLUG}`.
         Execute each task in order, one at a time:
-        8. Write the task file in {CYCLE_DIR}, named by task number and kebab-case task slug: technical objective, files to create or modify with expected changes, test behaviors to verify per change (unit tests for code; smoke tests, linters, or schema validations for non-code assets), the verification commands, and suggested implementation steps without writing code. Set the task status to `working`.
+        8. Write the task file in {CYCLE_DIR}, named by task number and kebab-case task slug: technical objective, files to create or modify with expected changes, test behaviors to verify per change (unit tests for code; smoke tests, linters, or schema validations for non-code assets), the verification commands, the spec file to update when the task changes behavior it states, and suggested implementation steps without writing code. Set the task status to `working`.
         9. Spawn one fresh agent of type {IMPLEMENTER} with clean zeroed context, sending the implementer template appended to this brief with its action set to execute-task and its fields filled for this task. It ends on its return. If it stops on a blocker, correct the task file yourself and spawn a fresh one with the same action.
         10. Validate the delivery against the uncommitted git diff and the task file: tests exist and genuinely verify the defined behaviors, failure paths and edge cases included, not only the happy path; run the verification commands of {CAMPAIGN_FILE}, which must pass; reject a delivery that changes preserved behavior; scope is respected, quality holds. A delivery may change behavior a kept spec states only when the campaign goal asks for that change, and then updates the spec in the same commit. Then review adversarially: assume the delivery hides defects until you have hunted them down, probing beyond the expected behavior for bugs and regressions, unhandled edge cases and boundary values, empty, null, and malformed input, misuse and malicious input, security flaws (injection, missing authorization, secret exposure, unsafe defaults), race conditions and partial failures, error handling, and scope creep or gaps. An unlikely but plausible failure in what the delivery touches is a defect. Append observations, every defect found, and verdict to the task file.
         11. If approved: set the task status to `done`, stage the task's files, commit locally with a Conventional Commit message.
         12. If rework is needed: set the status to `retry` plus attempt number, append rework items to the task file, and spawn a fresh agent of type {IMPLEMENTER} with action rework-task and rework notes pointing at them; validate again. After 3 failed attempts, discard that task's uncommitted changes, set the status to `blocked`, skip tasks that depend on it, and continue with independent ones.
         Criteria:
-        13. Once the tasks are done, check the work point against every done criterion and preserved behavior of {CAMPAIGN_FILE}, running each recorded check command, and append a criteria table with columns `ID`, `Verdict`, and `Evidence` to `{CYCLE_DIR}/0-plan.md`. An unmet criterion becomes one more task executed the same way, for at most 2 such rounds.
+        13. When every task is `done`, check the work point against every done criterion and preserved behavior of {CAMPAIGN_FILE}, running each recorded check command, and append a criteria table with columns `ID`, `Verdict` (`met` or `unmet`), and `Evidence` to `{CYCLE_DIR}/0-plan.md`. For each `unmet` row add one task to the plan and execute it as above, then check again and append a new table; repeat at most twice. When a task ended `blocked`, skip the check.
         Close:
-        14. Update the cycle {CYCLE} row in {CAMPAIGN_FILE} to `done` when every task is done and every criterion is met, otherwise to `blocked` with the reason, and record `Criteria` in the row. Commit remaining plan state with `chore(campaign): close cycle {CYCLE} of {SLUG}` and leave the worktree clean.
-        15. Return one line ending with `<signal code="CYCLE_DONE">` or `<signal code="CYCLE_BLOCKED">`.
+        14. Update the cycle {CYCLE} row in {CAMPAIGN_FILE}: `done` when every task is `done` and the last criteria table has no `unmet` row, otherwise `blocked` with the reason; under `Criteria` record `met`, the unmet IDs of the last table, or `unchecked` when no check ran. Commit remaining plan state with `chore(campaign): close cycle {CYCLE} of {SLUG}` and leave the worktree clean.
+        15. Return one line ending with `<signal code="CYCLE_DONE">` when the row is `done`, else with `<signal code="CYCLE_BLOCKED">`.
       </instructions>
       <constraints>
         <constraint>One work point per cycle; never repeat a work point already present in the cycle log.</constraint>
@@ -171,7 +171,7 @@ argument-hint: "[campaign goal to pursue across the repository]"
 
         When {ACTION} is rework-task:
         1. Read {CAMPAIGN_FILE}, {PLAN_FILE}, {TASK_FILE} with its reports and the feedback appended to it, and {REWORK_NOTES}. The uncommitted changes in the worktree are the previous attempt; rework them in place.
-        2. Apply the requested fixes, re-run tests and linters, and fix new failures. If blocked, stop immediately and return one line stating it.
+        2. Apply the requested fixes, re-run tests, linters, and the verification commands {TASK_FILE} names, and fix new failures. If blocked, stop immediately and return one line stating it.
         3. Append a rework summary to {TASK_FILE} and keep task {TASK_NUM} status `validating` in {PLAN_FILE}.
         4. Do not commit. Return a concise outcome with {TASK_FILE}.
       </instructions>
