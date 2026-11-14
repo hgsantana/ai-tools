@@ -348,6 +348,94 @@ Minimal edits; the skill was just hardened.
 - Consolidator: each remediation work package states the expected behavior, the invariants to preserve, and the check that proves the fix.
 </skill>
 
+<rework round="1">
+Corrections from the first adversarial evaluation. They amend the sections above and win over them. campaign, audit, `AI-TOOLS-AGENTS.md`, and `docs/USAGE.md` are already corrected and committed; this round is for plan, vibe, and team.
+
+<all_three_skills>
+Target text is given for plan-ai-tools; vibe and team apply it with their own paths, branch, commit prefix, and role names.
+
+1. `spec-format`, first bullet:
+`- {SPEC_DIR} is the spec directory the repository keeps: `docs/specs`, or its own, in the format and identifiers already used there. When the repository keeps none, a spec policy its documentation settles is followed; otherwise the PO asks the user once whether to keep one at `docs/specs`. Without a kept spec, {SPEC_DIR} is `docs/plan-ai-tools/{SLUG}/specs`, removed with the plan directory.`
+
+2. `story-format`, `Requirements` line:
+`- `Requirements`: per spec file, its repository-relative path and the IDs this story adds, changes, or removes, marking `existing` an added requirement that documents current behavior.`
+
+3. `spec-authority`, whole rule:
+```
+    <rule id="spec-authority">The spec is the authority on behavior and the story on the scope of this change, after approval too:
+      - A decision that adds, changes, or removes observable behavior is an amendment, whatever raised it: a Planner or Task Planner question, a plan modification, a blocked task, or an acceptance gap. Once the user confirms it, the session edits the spec files, updates `Requirements` in the story, and logs it under `Amendments`.
+      - When an amendment changes which requirements need a task, the session has the Planner re-plan with {ACTION} = re-plan and the amendment as its feedback: the live Planner before the plan is committed, afterwards a fresh `<template role="planner">` that ends on its return.
+      - When branch `plan/{SLUG}` exists, the session then commits only the spec files, the story, and the plan with `docs(spec): amend {SLUG}`.
+      - A decision that leaves behavior unchanged stays in the "Decisions" section of the plan or of the task file.
+    </rule>
+```
+
+4. The session variable {FEEDBACK} holds only the user's extra instructions for a blocked task. Wherever a step hands other text to a template's feedback input, say so in words without assigning {FEEDBACK}: `the gaps as its feedback`, `the user requests as its feedback`, `the Implementer's line as its feedback`.
+
+5. `session-role`: the documentation bullet ends `the PO includes its update as a mandatory `Documentation` item of the story.`; the plan-reading bullet says `the coverage table, to gate plan approval and to place amendments`. Step `po-doc-analysis` ends `If documentation is lacking or outdated, make its update a mandatory `Documentation` item of the story.`
+
+6. `retry-and-blocked`: append `A task whose Implementer stops 3 times is escalated the same way.`
+
+7. Signals: `STORY_ACCEPTED` reads `Acceptor: every check met on the whole branch; acceptance table committed in the plan.`; `STORY_GAPS` reads `Acceptor: unmet checks appended to the plan as convergence tasks and committed.`
+
+8. Step `resolve-entry`: `When branch `plan/{SLUG}` exists and holds `docs/plan-ai-tools/{SLUG}/0-{SLUG}.md` and `docs/plan-ai-tools/{SLUG}/story-{SLUG}.md`, the plan is already made: check it out, set {STORY_FILE} and {PLAN_FILE} to those paths, and go straight to `<step id="12">`.`
+
+9. Steps `story-approval` and `plan-approval` each end with: `If the user abandons the story instead, undo the spec edits and remove `docs/plan-ai-tools/{SLUG}`.`
+
+10. Step `plan-approval`, coverage gate: `Read the coverage table of the plan per `<rule id="session-role">`: every requirement the story adds, changes, or removes and every `Documentation` item names a task, or, for a requirement marked `existing`, the tests that already verify it. On gaps, dispatch the live Planner with {ACTION} = re-plan and the gaps as its feedback, and check again, up to 3 times; gaps that remain go to the user with the approval request.` The rest of the step keeps its text, with `the user requests as its feedback`.
+
+11. Step `dispatch-implementer`, case 2: `` `<signal code="TASK_STOPPED">`: spawn a fresh `<template role="task-planner">` with {ACTION} = revise-task and the Implementer's line as its feedback, answer its questions per `<rule id="planner-question-rounds">`, terminate it on `<signal code="TASK_PLANNED">`, then repeat this step with a fresh Implementer and the same {REWORK_NOTES}. On the third stop of the same task, proceed to `<step id="17">` instead.`` Step `blocked-escalation` terminates the Evaluator `when one is alive`.
+
+12. Step `story-acceptance`: the abort branch reports `the unmet checks`.
+
+13. Planner template. Plan step 4: "Constraints and verification" holds `the story's `Constraints`, the repository rules and invariants that bind the design (AGENTS.md, README.md, ADRs, CI), and the exact build, lint, typecheck, and test commands`; "Coverage" is `a table from each requirement the story adds, changes, or removes and each `Documentation` item to the tasks that deliver it, or, for a requirement marked `existing`, to the tests that already verify it or the task that adds them, marking `enabling` a task that serves none`. Re-plan step 2: `Inspect the code the change touches, then adjust the architecture, diagram, task separation, coverage, and decisions in {PLAN_FILE}, giving each new or changed task the entry a planned task gets and leaving every task whose status is not blank as it is.`
+
+14. Task Planner revise-task: step 1 also reads `the spec files it names`; step 2 starts `Verify it against actual code and the spec and correct {TASK_FILE} in place`.
+
+15. Implementer: step 3 starts `Author tests covering the defined behaviors, named by the behavior they verify with the scenario IDs staying in the report`. rework-task step 1 reads `the spec files it names` (already applied; now part of the design).
+
+16. Evaluator. Job: `Independent adversarial evaluator: hunt for defects in one task's delivery, beyond checking it against the spec, the plan, and the task file, and commit it only when none remain.` Step 1: `Read {STORY_FILE}, the spec files it names, {PLAN_FILE}, and {TASK_FILE} with its implementation report.` followed by the skill's existing sentence on {FEEDBACK}. Step 2:
+`2. Read the uncommitted git diff and judge it scenario by scenario: for each scenario ID the plan assigns to task {TASK_NUM}, the behavior is delivered as its spec file states it and a test that would fail without it verifies it; a {TASK_FILE} that omits one of those IDs is a defect. Then judge that the delivery adds no behavior the spec does not ask for, leaves every other requirement of the touched spec files holding, follows the plan's architecture, constraints, and decisions, stays inside the task's scope, matches the report, and holds in quality.`
+
+17. Acceptor, steps 3 to 7 and second constraint:
+```
+        3. Judge each check: every requirement the story adds or changes is delivered, scenario by scenario, and verified by tests that would fail without it; every requirement it removes is gone with its tests; every other requirement of the touched spec files still holds; every `Documentation` item is reflected in its document; every `Constraints` item of the story is respected; every verification command passes; the spec files changed only in the requirements the story lists, and their text matches the delivered behavior.
+        4. Append to {PLAN_FILE} an "Acceptance" section, numbered after those already there: a table with columns `Check`, `Verdict` (`met` or `unmet`), and `Evidence` (the test, the command output, or the diff location), with one row per requirement the story adds, changes, or removes, per `Documentation` item, per `Constraints` item, and per verification command, one row for the other requirements of the touched spec files, and one for the spec diff.
+        5. If every row is `met`: commit only {PLAN_FILE} with `chore(plan): accept {SLUG}` and return one line ending with `<signal code="STORY_ACCEPTED">`.
+        6. If a row is `unmet` and {ROUND} is below 3: append one convergence task per `unmet` row to {PLAN_FILE}, as a blank-status row in the task status table and an entry with technical summary, requirement and scenario IDs, boundary, dependencies, and direction, update the coverage table, commit only {PLAN_FILE} with `chore(plan): record acceptance gaps for {SLUG}`, and return one line ending with `<signal code="STORY_GAPS">`.
+        7. If a row is `unmet` and {ROUND} is 3: commit only {PLAN_FILE} with that same message and return one line naming the unmet checks and ending with `<signal code="STORY_BLOCKED">`.
+```
+`<constraint>Never accept while a scenario the story adds or changes lacks a test that genuinely verifies it or a verification command fails.</constraint>`
+</all_three_skills>
+
+<vibe_variants>
+- `story-format`, `Amendments`: `what, why, and who decided, the session or the user`.
+- `spec-authority`, first bullet: `... The session decides it per `<rule id="autonomous-decision-policy">`, edits the spec files, updates `Requirements` in the story, and logs it under `Amendments` as a deviation from what the user approved. The pull request lists every amendment.` Bullets 2 to 4 as in item 3 with `vibe/{SLUG}`.
+- `finalization-and-pr`: the pull request holds `the amendments, marking those the session decided as deviations from the approved story`.
+- `retry-and-blocked`: `A task whose Implementer stops 3 times is recovered or escalated the same way.`
+- Step `story-approval`: the exceptions to the last user interaction also name `<rule id="story-acceptance">`.
+- Step `plan-validation`: `... On gaps, dispatch the live Planner with {ACTION} = re-plan and the gaps as its feedback, and repeat this step, up to 3 times; gaps that remain are escalated to the user via `<user_interaction>`.` with the `existing` clause of item 10.
+- Step `dispatch-implementer`, case 2: questions are answered `on the user's behalf per `<rule id="autonomous-decision-policy">``; the third stop proceeds to `<step id="15">`.
+- Step `story-acceptance`, case 3: {ROUND} = 1 after an amendment too.
+- Task Planner revise-task: the spec question goes `to the session`, flagged for cost or irreversibility as vibe's other questions are.
+- Items 9 and 10: vibe has no plan approval by the user; the abandon sentence goes in `story-approval` only.
+</vibe_variants>
+
+<team_variants>
+Apply items 1 to 17 (Architect for Planner; the Specialist for Task Planner and Evaluator; `<step id>` numbers of this skill), then:
+
+- Attempts as in plan-ai-tools, replacing the count kept in the Specialist's memory: step 15 sets {ATTEMPT} = 1 and empty {FEEDBACK} and {REWORK_NOTES}; step 20 passes {STORY_FILE}, {ATTEMPT}, and {FEEDBACK}; a `TASK_REWORK` increments {ATTEMPT}; an escalation with extra instructions sets {FEEDBACK} to them and {ATTEMPT} = 1. The specialist template gains `<attempt>{ATTEMPT}</attempt>` and `<feedback>{FEEDBACK}</feedback>`, treats a non-empty {FEEDBACK} as the user's extra instructions, and ends validate-task as the plan evaluator does: rejecting attempt 1 or 2 sets `retry` plus the next attempt number and returns `<signal code="TASK_REWORK">`; rejecting attempt 3 sets `blocked`, leaves the uncommitted changes in place, commits only the plan and task files, and returns `<signal code="TASK_BLOCKED">`. State the cap once and align `retry-and-blocked`, the signals, and the status vocabulary everywhere (`retry` plus attempt number).
+- Approval: `stage the task's files with the plan and task files, commit locally with a Conventional Commit message, leave the worktree clean`.
+- Resume: step 1 as item 8 for `team/{SLUG}`, resuming at `<step id="15">`; step 15 branches on the task status as plan-ai-tools step 12 does (every task `done`, blank, `blocked`, any other status); step 20 spawns a fresh Specialist with validate-task when none is alive for the task.
+- Step 21: the blocked branch gets an abort outcome as plan step 17 has: terminate the Specialist, leave branch and plan directory in place, report the blocked task in one line.
+- Stop handling: when the session relays a stopped Implementer's line, the Specialist verifies it against actual code and the spec and records guidance in {TASK_FILE}; when only a change to the spec resolves it, it sends that as a batched question to the PO session first. Put this in the specialist template. The third stop of the same task is escalated as blocked.
+- Architect lifecycle: it stays alive to answer architecture questions the session relays and to re-plan, and is terminated once the story is accepted or aborted; a resumed session spawns a fresh `<template role="architect">` when it needs one. State it in `clean-context-lifecycle`, in `spec-authority` (the live Architect re-plans, a fresh one when none is alive), and in one line of the architect template: `While alive, answer the architecture questions the session relays and record settled ones under "Decisions" in {PLAN_FILE}.`
+- Decisions: the detail-task file list gains a "Decisions" section; step 9 appends to "Decisions" only what leaves behavior unchanged.
+- Coverage gate: the session checks the coverage table, with the capped re-plan loop of item 10, before it announces the plan in step 11.
+- Acceptor: items 7, 12, and 17 with `chore(team)` and the qa-eng framing already in place.
+</team_variants>
+</rework>
+
 <session_owned_files>
 Edited by the orchestrating session, not by implementers: `AI-TOOLS-AGENTS.md` (rule `living-spec` in `<engineering_rigor>`), `README.md` (version 0.0.92-ALPHA, rule 22), `docs/USAGE.md`.
 </session_owned_files>
