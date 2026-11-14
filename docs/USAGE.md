@@ -39,7 +39,7 @@ In `/audit-ai-tools`, the session settles the specialization depth (`general` fo
 
 ### Living spec
 
-`/plan-ai-tools`, `/vibe-ai-tools`, and `/team-ai-tools` are spec-driven. Requirements live in spec files, one per capability, in the spec directory the repository keeps (`docs/specs/` by default, or its own): each requirement is one sentence of observable behavior with Given/When/Then scenarios and a stable ID. A story edits those files in place on its branch, so the branch diff of the spec is the change, and the spec survives delivery while story, plan, and task files are removed. When the repository keeps no spec directory, the PO asks once whether to keep one; if declined, the spec lives in the plan directory and is removed with it. Outside the skills, the user-wide `living-spec` rule keeps the spec current, and `/audit-ai-tools` reports drift between a spec and its code.
+`/plan-ai-tools`, `/vibe-ai-tools`, and `/team-ai-tools` are spec-driven. Requirements live in spec files, one per capability, in the spec directory the repository keeps (`docs/specs/` by default, or its own): each requirement is one sentence of observable behavior with Given/When/Then scenarios and a stable ID. A story edits those files in place on its branch, so the branch diff of the spec is the change, and the spec survives delivery while story, plan, and task files are removed. When the repository keeps no spec directory, the PO follows the spec policy its documentation settles, or else asks once whether to keep one; without a kept spec, the spec lives in the plan directory and is removed with it. Outside the skills, the user-wide `living-spec` rule keeps the spec current, and `/audit-ai-tools` reports drift between a spec and its code.
 
 ### Agent dispatch
 

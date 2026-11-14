@@ -30,7 +30,7 @@ A repository `AGENTS.md` or `README.md` overrides these rules there. If `$HOME/.
     <rule id="zero-stubs">Deliver complete, production-ready implementations. Never leave `TODO` comments, elided blocks, or placeholder stubs; explicitly handle errors, null or empty states, strict types, and edge cases.</rule>
     <rule id="adversarial-review">On non-trivial changes, perform an adversarial code review—via a subagent or dedicated review pass—checking the diff for silent bugs, race conditions, unhandled edge cases, and regressions across affected files.</rule>
     <rule id="verification-gate">Never consider a task complete without running the relevant build, linter, typecheck, or test suite in the terminal and confirming clean execution.</rule>
-    <rule id="living-spec">When a repository keeps behavior requirements in a spec directory (`docs/specs` or its equivalent), a change to observable behavior updates the affected spec no later than the commit that changes the behavior. When the spec and the code under change disagree, settle the stale side from tests and history, and ask the user when they do not settle it.</rule>
+    <rule id="living-spec">When a repository keeps behavior requirements in a spec directory (`docs/specs` or its equivalent), a change to observable behavior updates the affected spec no later than the commit that changes the behavior. When the spec and the code under change disagree, settle the stale side from tests and history; when they do not settle it, ask the user, or follow the decision policy of a skill running unattended.</rule>
   </engineering_rigor>
 
   <conventional_commits>
